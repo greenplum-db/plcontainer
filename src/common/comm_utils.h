@@ -78,7 +78,7 @@ interpreted as representing official policies, either expressed or implied, of t
             fprintf(out, fmt, ##__VA_ARGS__); \
             fprintf(out, "\n");               \
             if (lvl >= ERROR) {               \
-                abort();                      \
+                exit(1);                      \
             }                                 \
         } while (0)
     #define pmalloc malloc
