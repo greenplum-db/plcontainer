@@ -21,6 +21,11 @@ typedef struct {
     char *value;
 } rawdata;
 
+/*
+ * Note:
+ * Must start from 0 since it is used as index to get type description. See plc_get_type_name().
+ * If you modify this, then you need to modify plcDatatypeName[] correspondingly.
+ */
 typedef enum {
     PLC_DATA_INT1    = 0,  // 1-byte integer
     PLC_DATA_INT2    = 1,  // 2-byte integer

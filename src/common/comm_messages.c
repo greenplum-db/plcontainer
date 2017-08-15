@@ -243,13 +243,21 @@ int plc_get_type_length(plcDatatype dt) {
     return res;
 }
 
+static const char *plcDatatypeName[] =
+{
+                        "PLC_DATA_INT1",
+                        "PLC_DATA_INT2",
+                        "PLC_DATA_INT4",
+                        "PLC_DATA_INT8",
+                        "PLC_DATA_FLOAT4",
+                        "PLC_DATA_FLOAT8",
+                        "PLC_DATA_TEXT",
+                        "PLC_DATA_ARRAY",
+                        "PLC_DATA_UDT",
+                        "PLC_DATA_BYTEA",
+                        "PLC_DATA_INVALID"
+};
+
 const char *plc_get_type_name(plcDatatype dt) {
-    const char * types[] = {"PLC_DATA_INT1", "PLC_DATA_INT2", "PLC_DATA_INT4", "PLC_DATA_INT8",
-                            "PLC_DATA_FLOAT4", "PLC_DATA_FLOAT8",
-                            "PLC_DATA_TEXT",
-                            "PLC_DATA_ARRAY",
-                            "PLC_DATA_UDT",
-                            "PLC_DATA_BYTEA",
-                            "PLC_DATA_INVALID"};
-    return (dt >= 0 && dt <= 10) ? types[dt] : "UNKNOWN";
+    return ((unsigned int) dt <= PLC_DATA_INVALID) ? plcDatatypeName[dt] : "UNKNOWN";
 }
