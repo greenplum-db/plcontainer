@@ -3,7 +3,7 @@ include $(PGXS)
 
 GP_VERSION_NUM := $(GP_MAJORVERSION)
 
-OS=$(word 1,$(subst _, ,$(BLD_ARCH)))
+OS_PL=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
 ARCH=$(shell uname -p)
 
 # e.g. 
@@ -49,7 +49,7 @@ PWD=$(shell pwd)
 	rm -rf RPMS BUILD SPECS
 
 gppkg_spec.yml: gppkg_spec.yml.in
-	cat $< | sed "s/#arch/$(ARCH)/g" | sed "s/#os/$(OS)/g" | sed 's/#gpver/$(GP_VERSION_NUM)/g' | sed "s/#plcver/$(PLC_GPPKG_VER)/g"> $@
+	cat $< | sed "s/#arch/$(ARCH)/g" | sed "s/#os/rhel$(OS_PL)/g" | sed 's/#gpver/$(GP_VERSION_NUM)/g' | sed "s/#plcver/$(PLC_GPPKG_VER)/g"> $@
 
 %.gppkg: gppkg_spec.yml $(MAIN_RPM) $(DEPENDENT_RPMS)
 	mkdir -p gppkg/deps 

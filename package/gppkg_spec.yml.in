@@ -2,7 +2,7 @@ Pkgname: plcontainer
 Architecture: #arch
 OS: #os
 Version: #plcver
-GPDBVersion: 5.0
+GPDBVersion: #gpver
 Description: Provides PL/Container procedural language implementation for the Greenplum Database.
 PostInstall:
 - Master: "echo '-';
