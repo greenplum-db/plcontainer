@@ -55,9 +55,9 @@
     <container>
         <name>plc_python_shared</name>
         <container_id>pivotaldata/plcontainer_python_shared:IMAGE_TAG</container_id>
-        <command>./client.sh</command>
+        <command>/clientdir/client.sh</command>
         <memory_mb>128</memory_mb>
-        <shared_directory host="/usr/local" container="/usr/local" access="ro"/>
+        <shared_directory host="/tmp/pyclient/bin" container="/clientdir" access="ro"/>
     </container>
 
     <container>

@@ -1,0 +1,8 @@
+FROM centos:7
+
+EXPOSE 8080
+ADD ./python-*.targz /opt/python/
+ADD ./DataSciencePython-*-x86_64.gppkg /opt/ds/
+ADD ./install_python.sh /opt/
+ADD ./python_env.sh /opt/
+RUN /opt/install_python.sh

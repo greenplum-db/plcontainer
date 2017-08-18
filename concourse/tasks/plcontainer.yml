@@ -1,0 +1,16 @@
+platform: linux
+image_resource:
+  type: docker-image
+inputs:
+  - name: gpdb_src
+  - name: plcontainer_src
+  - name: gpdb_binary
+  - name: ccp_src
+  - name: plcontainer_gpdb_build
+  - name: plcontainer_client_docker_image
+  - name: cluster_env_files
+  
+params:
+  platform:
+run:
+  path: plcontainer_src/concourse/scripts/plcontainer.sh

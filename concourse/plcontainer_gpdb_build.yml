@@ -2,12 +2,9 @@ platform: linux
 
 image_resource:
   type: docker-image
-  source:
-    repository: pivotaldata/plc_gpdb_centos7_curl749
-    tag: 'latest'
 
 inputs:
-  - name: bin_gpdb_centos7
+  - name: bin_gpdb
   - name: plcontainer_src
 
 outputs:
@@ -16,6 +13,6 @@ outputs:
 run:
   path: plcontainer_src/concourse/scripts/plcontainer_gpdb_build.sh
   args:
-    - bin_gpdb_centos7
+    - bin_gpdb
     - plcontainer_gpdb_build
     - test
