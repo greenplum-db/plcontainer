@@ -24,8 +24,11 @@
 static char *plc_docker_socket = "/var/run/docker.sock";
 
 // URL prefix specifies Docker API version
-static char *plc_docker_url_prefix = "http:/v1.21";
-
+#ifdef DOCKER_API_LOW
+    static char *plc_docker_url_prefix = "http:/v1.19";
+#else
+    static char *plc_docker_url_prefix = "http:/v1.21";
+#endif
 /* Static functions of the Docker API module */
 static plcCurlBuffer *plcCurlBufferInit();
 static void plcCurlBufferFree(plcCurlBuffer *buf);

@@ -53,9 +53,9 @@ PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 
 override CFLAGS += -Werror
 
-# detected the docker API version
-OS_VERSION=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
-ifneq ($(OS_VERSION), 7)
+# detected the docker API version, only for centos 6
+RHEL_MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
+ifeq ($(RHEL_MAJOR_OS), 6)
   override CFLAGS +=  -DDOCKER_API_LOW
 endif
 
