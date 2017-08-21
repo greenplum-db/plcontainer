@@ -55,4 +55,4 @@ VERSION
 *.gppkg
 /package/*.yml
 /concourse/secrets/
-clients_timestamp
+src/common/clients_timestamp
