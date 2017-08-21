@@ -319,7 +319,7 @@ Datum refresh_plcontainer_config(PG_FUNCTION_ARGS) {
 
 /* Function referenced from Postgres that can update configuration on
  * specific GPDB segment */
-Datum show_plcontainer_config(PG_FUNCTION_ARGS) {
+Datum show_plcontainer_config(pg_attribute_unused() PG_FUNCTION_ARGS) {
     int res = plc_show_container_config();
     if (res == 0) {
         PG_RETURN_TEXT_P(cstring_to_text("ok"));

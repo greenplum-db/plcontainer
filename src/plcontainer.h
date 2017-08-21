@@ -11,8 +11,6 @@
 
 #include "fmgr.h"
 
-#define UNUSED __attribute__ (( unused ))
-
 MemoryContext pl_container_caller_context;
 
 /* entrypoint for all plcontainer procedures */

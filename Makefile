@@ -51,7 +51,7 @@ endif
 
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 
-override CFLAGS += -Werror
+override CFLAGS += -Werror -Wextra -Wall
 
 # detected the docker API version, only for centos 6
 RHEL_MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )

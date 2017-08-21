@@ -306,7 +306,7 @@ int plc_docker_connect() {
     return 8080;
 }
 
-int plc_docker_create_container(int sockfd UNUSED, plcContainer *cont, char **name) {
+int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainer *cont, char **name) {
     char *createRequest =
             "{\n"
             "    \"AttachStdin\": false,\n"
@@ -357,7 +357,7 @@ int plc_docker_create_container(int sockfd UNUSED, plcContainer *cont, char **na
     return res;
 }
 
-int plc_docker_start_container(int sockfd UNUSED, char *name) {
+int plc_docker_start_container(pg_attribute_unused() int sockfd, char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/start";
     char *url = NULL;
@@ -374,7 +374,7 @@ int plc_docker_start_container(int sockfd UNUSED, char *name) {
     return res;
 }
 
-int plc_docker_kill_container(int sockfd UNUSED, char *name) {
+int plc_docker_kill_container(pg_attribute_unused() int sockfd, char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/kill?signal=KILL";
     char *url = NULL;
@@ -391,7 +391,7 @@ int plc_docker_kill_container(int sockfd UNUSED, char *name) {
     return res;
 }
 
-int plc_docker_inspect_container(int sockfd UNUSED, char *name, int *port) {
+int plc_docker_inspect_container(pg_attribute_unused() int sockfd, char *name, int *port) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/json";
     char *url = NULL;
@@ -415,7 +415,7 @@ int plc_docker_inspect_container(int sockfd UNUSED, char *name, int *port) {
     return res;
 }
 
-int plc_docker_wait_container(int sockfd UNUSED, char *name) {
+int plc_docker_wait_container(pg_attribute_unused() int sockfd, char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/wait";
     char *url = NULL;
@@ -432,7 +432,7 @@ int plc_docker_wait_container(int sockfd UNUSED, char *name) {
     return res;
 }
 
-int plc_docker_delete_container(int sockfd UNUSED, char *name) {
+int plc_docker_delete_container(pg_attribute_unused() int sockfd, char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s?v=1&force=1";
     char *url = NULL;
@@ -450,7 +450,7 @@ int plc_docker_delete_container(int sockfd UNUSED, char *name) {
 }
 
 /* Not used in Curl API */
-int plc_docker_disconnect(int sockfd UNUSED) {
+int plc_docker_disconnect(pg_attribute_unused() int sockfd) {
     return 0;
 }
 
