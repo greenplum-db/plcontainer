@@ -61,7 +61,9 @@ endif
 
 all: all-lib
 
-install: all clients installdirs install-lib install-extra install-clients
+install: installdirs install-lib install-extra install-clients
+
+clean: clean-clients
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
@@ -95,3 +97,18 @@ installcheck:
 clients:
 	$(MAKE) -C $(SRCDIR)/pyclient
 	$(MAKE) -C $(SRCDIR)/rclient
+	touch clients_timestamp
+
+all-lib: check-clients-make
+	@echo "Build PL/Container Done."
+
+.PHONY: check-clients-make
+check-clients-make:
+	if [ -f clients_timestamp ]; then \
+	    rm clients_timestamp && $(MAKE) clean ; \
+	fi
+
+.PHONY: clean-clients
+clean-clients:
+	$(MAKE) -C $(SRCDIR)/pyclient clean
+	$(MAKE) -C $(SRCDIR)/rclient clean
