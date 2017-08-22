@@ -15,6 +15,7 @@ docker_build() {
 	cp ~/Data*.gppkg $DockerFolder; \
 	pushd $DockerFolder; \
 	chmod +x install_python.sh
+	tar -zxvf Data*.gppkg
 	docker build -f Dockerfile.python.ds.centos7 -t pivotaldata/plcontainer_python_shared:devel ./ ; \
 	popd; \
 	docker save pivotaldata/plcontainer_python_shared:devel | gzip -c > ~/plcontainer-devel-images.tar.gz; \

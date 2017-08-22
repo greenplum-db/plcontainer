@@ -103,7 +103,7 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: pipeline
+    branch: master
     uri: https://github.com/greenplum-db/plcontainer.git
 
 - name: gpdb_src
