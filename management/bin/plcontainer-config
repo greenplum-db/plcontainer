@@ -3,12 +3,9 @@
 #------------------------------------------------------------------------------
 #
 # 
-# Copyright (c) 2016, Pivotal.
+# Copyright (c) 2016-Present Pivotal Software, Inc
 #
 #------------------------------------------------------------------------------
-
-
-
 
 import os
 import sys
@@ -16,6 +13,7 @@ import hashlib
 import tempfile
 import traceback
 import datetime
+import xml.dom.minidom
 from xml.etree import ElementTree
 from optparse import OptionParser
 
@@ -32,6 +30,7 @@ except ImportError, e:
 
 PLCONTAINER_CONFIG_FILE = 'plcontainer_configuration.xml'
 PLCONTAINER_GPDB_DIR = 'share/postgresql/plcontainer'
+PL_BATCH_SIZE = 3
 
 
 def parseargs():
@@ -43,7 +42,12 @@ def parseargs():
     parser.add_option('--reset', action='store_true', help='Reset the configuration file to default')
     parser.add_option('--restore', action='store_true', help='Restore the previous version of PL/Container configuration')
     parser.add_option('--cleanup', action='store_true', help='Remove all the backup files for PL/Container')
-    parser.add_option('--batch-size', type='int', default='3')
+
+    parser.add_option('-c', '--configure', dest='conf', action='store_true', help='Configure container image name and location as well as shared folder')
+    parser.add_option('-n', '--name', dest='name', type='string', help='Container image name')
+    parser.add_option('-i', '--image', dest='image', type='string', help='Configure container image name and location as well as shared folder')
+    parser.add_option('--volume', dest='shared', type='string', help='Set shared folder, format: HOST:CONTAINER:[RW|RO]')
+
 
     (options, args) = parser.parse_args()
     if options.show and (options.reset or options.restore or options.cleanup):
@@ -58,8 +62,96 @@ def parseargs():
     if options.cleanup and (options.show or options.reset or options.restore):
         logger.error(' --cleanup option cannot be combined with --show, --reset, --restore')
         sys.exit(1)
+    if options.conf and not (options.name or options.image):
+        logger.error(" --configure option needs image name and its location")
+        sys.exit(1)
+    if (options.name or options.image or options.shared) and not options.conf:
+        logger.error(" configuration options must combine with --configure")
+        sys.exit(1)
+
     return options
 
+def update_xml_check_shared_folder(container, elements):
+    '''
+    update shared folder settings
+    '''
+    if 'hasShared' in elements.keys():
+        shareDir = container.find('shared_directory')
+        if shareDir is not None:
+            container.remove(shareDir)
+        logger.info("try remove  a tag")
+        shareDir = ElementTree.Element("shared_directory", host=elements['host'], container=elements['con'], access=elements['access'])
+        container.append(shareDir)
+
+def update_xml_container(container, elements):
+    '''
+    update name and image by given a container node
+    '''
+    isNew = True
+    name = container.find('name').text
+    if name == elements['name']:
+        if userinput.ask_yesno(None, "This tag is already existed, do you want to overwrite?", 'N'):
+            isNew = False
+            image = container.find('image')
+            image.text = elements['image']
+            update_xml_check_shared_folder(container, elements)
+    return isNew
+
+def update_xml_new_container(elements):
+    '''
+    Create a new conatiner node
+    '''
+    container = ElementTree.Element("container")
+    name = ElementTree.Element("name")
+    name.text = elements['name']
+    image = ElementTree.Element("image")
+    image.text = elements['image']
+
+    container.append(name)
+    container.append(image)
+
+    update_xml_check_shared_folder(container, elements)
+
+    return container
+
+def update_reformat_xml(xmltree):
+    '''
+    reformat xml
+    '''
+    xmlString = ElementTree.tostring(xmltree)
+    reformatString = xml.dom.minidom.parseString(xmlString)
+    return reformatString.toprettyxml(indent = '    ') 
+
+def update_xml_config(filename, elements):
+    '''
+    Update the xml file by given elements dict, if the given tag is
+    not existed, then create a new tag. Otherwise, update the current
+    tag.
+    '''
+    isNew = True
+    try:
+        xmltree = ElementTree.parse(filename)
+        logger.info("file name is %s" % (filename))
+        root = xmltree.getroot()
+
+        for container in root.findall('container'):
+            isNew = update_xml_container(container, elements)
+            if not isNew:
+                break
+
+        if isNew:
+           container = update_xml_new_container(elements)
+           root.append(container)
+
+        newXMLTreeString = update_reformat_xml(root)
+        newXMLTreeString = os.linesep.join([s for s in newXMLTreeString.splitlines() if not s.strip() == ''])
+        xmlfile = open(filename, "w")
+        xmlfile.write(newXMLTreeString)
+        xmlfile.close()
+    except Exception, ex:
+        logger.error("Update XML file Error")
+        logger.error(str(ex))
+        raise Exception("Update XML file Error")
 
 def get_file_md5(file):
     '''
@@ -226,6 +318,27 @@ def show_file(filename):
     sys.stdout.write('%s\n' % f.read())
     f.close()
 
+def get_conf_elements(options):
+    '''
+    build an element dict for configuration
+    '''
+    elements = dict()
+    elements['name'] = options.name
+    elements['image'] = options.image
+    if options.shared:
+        elements['hasShared'] = True
+        shareStr = options.shared
+        strList = shareStr.split(":")
+        elements['host'] = strList[0]
+        elements['con'] = strList[1]
+        if len(strList) >= 3:
+            if strList[2] == "ro" or strList[2] == "rw":
+                elements['access'] = strList[2]
+            else:
+                raise Exception("Access type can only be \"ro\" or \"rw\". ")
+        else:
+            elements['access'] = "ro"
+    return elements
 
 def main():
     pool = None
@@ -249,64 +362,66 @@ def main():
 
         gpdb_locations = get_segment_locations(segs)
         logger.debug('GPDB Configuration is:')
+
+        remote_dir = gpdb_locations[0][1]
+        remote_host = gpdb_locations[0][0]
+        remote_filename = os.path.join(remote_dir, PLCONTAINER_CONFIG_FILE)
+        tmp_file = copy_file_to_tmp(remote_host, remote_filename)
+
         for host, directory in gpdb_locations:
             logger.debug('    host "%s" directory "%s"' % (host, directory))
 
         if options.show:
-            remote_filename = os.path.join(gpdb_locations[0][1], PLCONTAINER_CONFIG_FILE)
-            remote_host = gpdb_locations[0][0]
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
-            tmp_file = copy_file_to_tmp(remote_host, remote_filename)
-            if tmp_file:
-                show_file(tmp_file)
+            show_file(tmp_file)
 
         if options.reset:
             logger.info('Preparing the worker pool...')
-            pool = WorkerPool(options.batch_size)
+            pool = WorkerPool(PL_BATCH_SIZE)
             default_config = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, PLCONTAINER_CONFIG_FILE)
             logger.info('Distributing file %s to all locations...' % default_config)
             distribute_file(pool, default_config, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
 
         if options.restore:
-            remote_dir = gpdb_locations[0][1]
-            remote_host = gpdb_locations[0][0]
             logger.info('Getting list of configuration backups in %s:%s...' % (remote_host, remote_dir))
             filename = get_last_backup(pool, remote_host, remote_dir, PLCONTAINER_CONFIG_FILE)
             if filename and userinput.ask_yesno(None, "Continue restoring the backup configuration '%s'?" % filename, 'N'):
-                logger.info('Copying %s over...' % filename)
-                tmp_file = copy_file_to_tmp(remote_host, filename)
-                if tmp_file:
-                    logger.info('Preparing the worker pool...')
-                    pool = WorkerPool(options.batch_size)
-                    logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-                    distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-                    logger.info('Cleaning up old backup file...')
-                    remove_files(pool, gpdb_locations, os.path.basename(filename))
-                    new_config = True
+                pool = WorkerPool(PL_BATCH_SIZE)
+                logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+                distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+                logger.info('Cleaning up old backup file...')
+                remove_files(pool, gpdb_locations, os.path.basename(filename))
+                new_config = True
+
+        if options.conf:
+            elements = get_conf_elements(options)
+            update_xml_config(tmp_file, elements)
+            logger.info('Preparing the worker pool...')
+            pool = WorkerPool(PL_BATCH_SIZE)
+            logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
+            backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
+            logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+            distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+            new_config = True
 
         if options.cleanup:
             if userinput.ask_yesno(None, "Are you sure want to clean up the PL/Container backup configurations?", 'N'):
                 logger.info('Preparing the worker pool...')
-                pool = WorkerPool(options.batch_size)
+                pool = WorkerPool(PL_BATCH_SIZE)
                 logger.info('Cleaning up old backup files...')
                 remove_files(pool, gpdb_locations, '.' + PLCONTAINER_CONFIG_FILE + '.bak*')
 
-        if not options.reset and not options.restore and not options.show and not options.cleanup:
-            remote_filename = os.path.join(gpdb_locations[0][1], PLCONTAINER_CONFIG_FILE)
-            remote_host = gpdb_locations[0][0]
-            logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
-            tmp_file = copy_file_to_tmp(remote_host, remote_filename)
-            if tmp_file:
-                changed = edit_file(tmp_file, options.editor)
-                if changed:
-                    logger.info('Preparing the worker pool...')
-                    pool = WorkerPool(options.batch_size)
-                    logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
-                    backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
-                    logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-                    distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-                    new_config = True
+        if not options.reset and not options.restore and not options.show and not options.cleanup and not options.conf:
+            changed = edit_file(tmp_file, options.editor)
+            if changed:
+                logger.info('Preparing the worker pool...')
+                pool = WorkerPool(PL_BATCH_SIZE)
+                logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
+                backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
+                logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+                distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+                new_config = True
 
         if new_config:
             logger.info('Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions.' +
