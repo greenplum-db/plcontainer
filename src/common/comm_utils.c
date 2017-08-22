@@ -25,4 +25,13 @@
         return out;
     }
 
+#else
+
+	void *pmalloc(size_t size) {
+		void *addr = malloc(size);
+		if (addr == NULL)
+			lprintf(ERROR, "Fail to allocate %ld bytes", (unsigned long) size);
+		return addr;
+	}
+
 #endif /* COMM_STANDALONE */

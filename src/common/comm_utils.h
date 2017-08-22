@@ -39,6 +39,7 @@ interpreted as representing official policies, either expressed or implied, of t
 #ifdef COMM_STANDALONE
 
     #include <stdio.h>
+	#include <stdlib.h>
 
     /* Compatibility with R that defines WARNING and ERROR by itself */
     #undef WARNING
@@ -81,8 +82,8 @@ interpreted as representing official policies, either expressed or implied, of t
                 exit(1);                      \
             }                                 \
         } while (0)
-    #define pmalloc malloc
-    #define plc_top_alloc malloc
+	void *pmalloc(size_t size);
+    #define plc_top_alloc pmalloc
     #define pfree free
     #define pstrdup strdup
     #define plc_top_strdup strdup
