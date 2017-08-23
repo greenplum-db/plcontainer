@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+
 <configuration>
 
     <!--
@@ -18,6 +19,34 @@
         All the container names not manually defined in this file will not be
         available for use by endusers in PL/Container
     -->
+    <container>
+        <name>plc_python</name>
+        <image>pivotaldata/plcontainer_python:IMAGE_TAG</image>
+        <command>./client</command>
+        <memory_mb>128</memory_mb>
+    </container>
+
+    <container>
+        <name>plc_python3</name>
+        <image>pivotaldata/plcontainer_python3:IMAGE_TAG</image>
+        <command>./client</command>
+        <memory_mb>128</memory_mb>
+    </container>
+
+    <container>
+        <name>plc_r</name>
+        <image>pivotaldata/plcontainer_r:IMAGE_TAG</image>
+        <command>./client</command>
+        <memory_mb>256</memory_mb>
+    </container>
+
+    <container>
+        <name>plc_python_shared</name>
+        <image>pivotaldata/plcontainer_python_shared:IMAGE_TAG</image>
+        <command>/clientdir/client.sh</command>
+        <memory_mb>128</memory_mb>
+        <shared_directory host="/tmp/pyclient/bin" container="/clientdir" access="ro"/>
+    </container>
 
     <container>
         <name>plc_python_shared</name>
