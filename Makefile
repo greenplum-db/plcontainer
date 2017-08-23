@@ -9,18 +9,14 @@ MODULE_big = plcontainer
 # Release versions
 include release.mk
 
-ifeq ($(CIBUILD),1)
-  IMAGE_TAG=devel
-else
-  IMAGE_TAG=$(PLCONTAINER_VERSION).$(PLCONTAINER_RELEASE)-$(PLCONTAINER_IMAGE_VERSION)
-endif
-
 # Directories
 SRCDIR = ./src
+COMMONDIR = ./src/common
 MGMTDIR = ./management
-DOCKERFILEDIR = ./dockerfiles
 PYCLIENTDIR = src/pyclient/bin
 RCLIENTDIR = src/rclient/bin
+PYCLIENTINSTALL = pyclient/pyclient
+RCLIENTINSTALL = rclient/rclient
 
 # Files to build
 FILES = $(shell find $(SRCDIR) -not -path "*client*" -type f -name "*.c")
@@ -56,9 +52,19 @@ endif
 
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 
+override CFLAGS += -Werror -Wextra -Wall
+
+# detected the docker API version, only for centos 6
+RHEL_MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
+ifeq ($(RHEL_MAJOR_OS), 6)
+  override CFLAGS +=  -DDOCKER_API_LOW
+endif
+
 all: all-lib
 
-install: all installdirs install-lib install-extra
+install: installdirs install-lib install-extra install-clients
+
+clean: clean-clients
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
@@ -70,111 +76,40 @@ uninstall: uninstall-lib
 	rm -rf '$(PLCONTAINERDIR)'
 
 .PHONY: install-extra
-install-extra: xmlconfig
+install-extra:
 	# Management
 	$(INSTALL_PROGRAM) '$(MGMTDIR)/bin/plcontainer-config'               '$(DESTDIR)$(bindir)/plcontainer-config'
 	$(INSTALL_PROGRAM) '$(MGMTDIR)/bin/plcontainer'                      '$(DESTDIR)$(bindir)/plcontainer'
 	$(INSTALL_DATA)    '$(MGMTDIR)/config/plcontainer_configuration.xml' '$(PLCONTAINERDIR)'
 	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_install.sql'          '$(PLCONTAINERDIR)'
 
+.PHONY: install-clients
+install-clients: clients
+	$(MKDIR_P) '$(DESTDIR)$(bindir)/pyclient'
+	$(MKDIR_P) '$(DESTDIR)$(bindir)/rclient'
+	$(INSTALL_PROGRAM) '$(PYCLIENTDIR)/client'        '$(DESTDIR)$(bindir)/$(PYCLIENTINSTALL)'
+	$(INSTALL_PROGRAM) '$(RCLIENTDIR)/client'         '$(DESTDIR)$(bindir)/$(RCLIENTINSTALL)'
+
 .PHONY: installcheck
 installcheck:
 	$(MAKE) -C tests tests
-
-.PHONY: installcheck4
-installcheck4:
-	$(MAKE) -C tests tests4
 
 .PHONY: clients
 clients:
 	$(MAKE) -C $(SRCDIR)/pyclient
 	$(MAKE) -C $(SRCDIR)/rclient
+	touch $(COMMONDIR)/clients_timestamp
 
-.PHONY: xmlconfig
-xmlconfig:
-	cat $(MGMTDIR)/config/plcontainer_configuration.xml.in | sed "s/IMAGE_TAG/$(IMAGE_TAG)/g" > $(MGMTDIR)/config/plcontainer_configuration.xml
+all-lib: check-clients-make
+	@echo "Build PL/Container Done."
 
-.PHONY: container_r
-container_r:
-	docker build -f dockerfiles/Dockerfile.R -t pivotaldata/plcontainer_r:$(IMAGE_TAG) .
+.PHONY: check-clients-make
+check-clients-make:
+	if [ -f $(COMMONDIR)/clients_timestamp ]; then \
+	    rm $(COMMONDIR)/clients_timestamp && $(MAKE) clean ; \
+	fi
 
-.PHONY: container_python
-container_python:
-	docker build -f dockerfiles/Dockerfile.python -t pivotaldata/plcontainer_python:$(IMAGE_TAG) .
-
-.PHONY: container_python3
-container_python3:
-	docker build -f dockerfiles/Dockerfile.python3 -t pivotaldata/plcontainer_python3:$(IMAGE_TAG) .
-
-.PHONY: container_r_shared
-container_r_shared:
-	docker build -f dockerfiles/Dockerfile.R.shared -t pivotaldata/plcontainer_r_shared:$(IMAGE_TAG) .
-
-.PHONY: container_python_shared
-container_python_shared:
-	docker build -f dockerfiles/Dockerfile.python.shared -t pivotaldata/plcontainer_python_shared:$(IMAGE_TAG) .
-
-.PHONY: container_anaconda
-container_anaconda:
-	docker build -f dockerfiles/Dockerfile.python.anaconda -t pivotaldata/plcontainer_anaconda:$(IMAGE_TAG) .
-
-.PHONY: container_anaconda_base
-container_anaconda_base:
-	docker build -f dockerfiles/Dockerfile.python.anaconda.base -t pivotaldata/plcontainer_anaconda_base:0.2 .
-
-.PHONY: container_anaconda3
-container_anaconda3:
-	docker build -f dockerfiles/Dockerfile.python.anaconda3 -t pivotaldata/plcontainer_anaconda3:$(IMAGE_TAG) .
-
-.PHONY: container_anaconda3_base
-container_anaconda3_base:
-	docker build -f dockerfiles/Dockerfile.python.anaconda3.base -t pivotaldata/plcontainer_anaconda3_base:0.2 .
-
-.PHONY: container_r_base
-container_r_base:
-	docker build -f dockerfiles/Dockerfile.R.base -t pivotaldata/plcontainer_r_base:0.1 .
-
-.PHONY: containersonly
-containersonly: container_r container_python container_r_shared container_python_shared container_anaconda
-
-.PHONY: containers
-containers: clients containersonly
-
-.PHONY: cleancontainers
-cleancontainers:
-	-docker rmi -f pivotaldata/plcontainer_python:$(IMAGE_TAG)
-	-docker rmi -f pivotaldata/plcontainer_r:$(IMAGE_TAG)
-	-docker rmi -f pivotaldata/plcontainer_r_shared:$(IMAGE_TAG)
-	-docker rmi -f pivotaldata/plcontainer_python_shared:$(IMAGE_TAG)
-	-docker rmi -f pivotaldata/plcontainer_anaconda:$(IMAGE_TAG)
-	-docker ps -a | grep -v CONTAINER | awk '{ print $$1}' | xargs -i docker rm {}
-
-.PHONY: basecontainers
-basecontainers:
-	-docker rmi -f pivotaldata/plcontainer_r_base:0.1
-	-docker rmi -f pivotaldata/plcontainer_anaconda_base:0.2
-	docker pull pivotaldata/plcontainer_r_base:0.1
-	docker pull pivotaldata/plcontainer_anaconda_base:0.2
-
-.PHONY: retag
-retag:
-	docker tag pivotaldata/plcontainer_python:devel pivotaldata/plcontainer_python:$(IMAGE_TAG)
-	docker tag pivotaldata/plcontainer_python3:devel pivotaldata/plcontainer_python3:$(IMAGE_TAG)
-	docker tag pivotaldata/plcontainer_r:devel pivotaldata/plcontainer_r:$(IMAGE_TAG)
-	docker tag pivotaldata/plcontainer_r_shared:devel pivotaldata/plcontainer_r_shared:$(IMAGE_TAG)
-	docker tag pivotaldata/plcontainer_python_shared:devel pivotaldata/plcontainer_python_shared:$(IMAGE_TAG)
-	docker tag pivotaldata/plcontainer_anaconda:devel pivotaldata/plcontainer_anaconda:$(IMAGE_TAG)
-	docker tag pivotaldata/plcontainer_anaconda3:devel pivotaldata/plcontainer_anaconda3:$(IMAGE_TAG)
-
-.PHONY: push
-push:
-	docker push pivotaldata/plcontainer_python:$(IMAGE_TAG)
-	docker push pivotaldata/plcontainer_python3:$(IMAGE_TAG)
-	docker push pivotaldata/plcontainer_r:$(IMAGE_TAG)
-	docker push pivotaldata/plcontainer_r_shared:$(IMAGE_TAG)
-	docker push pivotaldata/plcontainer_python_shared:$(IMAGE_TAG)
-	docker push pivotaldata/plcontainer_anaconda:$(IMAGE_TAG)
-	docker push pivotaldata/plcontainer_anaconda3:$(IMAGE_TAG)
-
-.PHONY: pushdevel
-pushdevel: retag push
+.PHONY: clean-clients
+clean-clients:
+	$(MAKE) -C $(SRCDIR)/pyclient clean
+	$(MAKE) -C $(SRCDIR)/rclient clean

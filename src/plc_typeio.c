@@ -283,43 +283,43 @@ void free_type_info(plcTypeInfo *type) {
     }
 }
 
-static char *plc_datum_as_int1(Datum input, plcTypeInfo *type UNUSED) {
+static char *plc_datum_as_int1(Datum input, pg_attribute_unused() plcTypeInfo *type) {
     char *out = (char*)pmalloc(1);
     *((char*)out) = DatumGetBool(input);
     return out;
 }
 
-static char *plc_datum_as_int2(Datum input, plcTypeInfo *type UNUSED) {
+static char *plc_datum_as_int2(Datum input, pg_attribute_unused() plcTypeInfo *type) {
     char *out = (char*)pmalloc(2);
     *((int16*)out) = DatumGetInt16(input);
     return out;
 }
 
-static char *plc_datum_as_int4(Datum input, plcTypeInfo *type UNUSED) {
+static char *plc_datum_as_int4(Datum input, pg_attribute_unused() plcTypeInfo *type) {
     char *out = (char*)pmalloc(4);
     *((int32*)out) = DatumGetInt32(input);
     return out;
 }
 
-static char *plc_datum_as_int8(Datum input, plcTypeInfo *type UNUSED) {
+static char *plc_datum_as_int8(Datum input, pg_attribute_unused() plcTypeInfo *type) {
     char *out = (char*)pmalloc(8);
     *((int64*)out) = DatumGetInt64(input);
     return out;
 }
 
-static char *plc_datum_as_float4(Datum input, plcTypeInfo *type UNUSED) {
+static char *plc_datum_as_float4(Datum input, pg_attribute_unused() plcTypeInfo *type) {
     char *out = (char*)pmalloc(4);
     *((float4*)out) = DatumGetFloat4(input);
     return out;
 }
 
-static char *plc_datum_as_float8(Datum input, plcTypeInfo *type UNUSED) {
+static char *plc_datum_as_float8(Datum input, pg_attribute_unused() plcTypeInfo *type) {
     char *out = (char*)pmalloc(8);
     *((float8*)out) = DatumGetFloat8(input);
     return out;
 }
 
-static char *plc_datum_as_float8_numeric(Datum input, plcTypeInfo *type UNUSED) {
+static char *plc_datum_as_float8_numeric(Datum input, pg_attribute_unused() plcTypeInfo *type) {
     char *out = (char*)pmalloc(8);
     /* Numeric is casted to float8 which causes precision lost */
     Datum fdatum = DirectFunctionCall1(numeric_float8, input);
@@ -334,7 +334,7 @@ static char *plc_datum_as_text(Datum input, plcTypeInfo *type) {
                                             type->typmod));
 }
 
-static char *plc_datum_as_bytea(Datum input, plcTypeInfo *type) {
+static char *plc_datum_as_bytea(Datum input, pg_attribute_unused() plcTypeInfo *type) {
     text *txt = DatumGetByteaP(input);
     int len = VARSIZE(txt) - VARHDRSZ;
     char *out = (char*)pmalloc(len + 4);
@@ -464,31 +464,31 @@ static char *plc_datum_as_udt(Datum input, plcTypeInfo *type) {
     return (char*)res;
 }
 
-static Datum plc_datum_from_int1(char *input, plcTypeInfo *type UNUSED) {
+static Datum plc_datum_from_int1(char *input, pg_attribute_unused() plcTypeInfo *type) {
     return BoolGetDatum(*((bool*)input));
 }
 
-static Datum plc_datum_from_int2(char *input, plcTypeInfo *type UNUSED) {
+static Datum plc_datum_from_int2(char *input, pg_attribute_unused() plcTypeInfo *type) {
     return Int16GetDatum(*((int16*)input));
 }
 
-static Datum plc_datum_from_int4(char *input, plcTypeInfo *type UNUSED) {
+static Datum plc_datum_from_int4(char *input, pg_attribute_unused() plcTypeInfo *type) {
     return Int32GetDatum(*((int32*)input));
 }
 
-static Datum plc_datum_from_int8(char *input, plcTypeInfo *type UNUSED) {
+static Datum plc_datum_from_int8(char *input, pg_attribute_unused() plcTypeInfo *type) {
     return Int64GetDatum(*((int64*)input));
 }
 
-static Datum plc_datum_from_float4(char *input, plcTypeInfo *type UNUSED) {
+static Datum plc_datum_from_float4(char *input, pg_attribute_unused() plcTypeInfo *type) {
     return Float4GetDatum(*((float4*)input));
 }
 
-static Datum plc_datum_from_float8(char *input, plcTypeInfo *type UNUSED) {
+static Datum plc_datum_from_float8(char *input, pg_attribute_unused() plcTypeInfo *type) {
     return Float8GetDatum(*((float8*)input));
 }
 
-static Datum plc_datum_from_float8_numeric(char *input, plcTypeInfo *type UNUSED) {
+static Datum plc_datum_from_float8_numeric(char *input, pg_attribute_unused() plcTypeInfo *type) {
     Datum fdatum = Float8GetDatum(*((float8*)input));
     return DirectFunctionCall1(float8_numeric, fdatum);
 }
@@ -507,7 +507,7 @@ static Datum plc_datum_from_text_ptr(char *input, plcTypeInfo *type) {
                             type->typmod);
 }
 
-static Datum plc_datum_from_bytea(char *input, plcTypeInfo *type) {
+static Datum plc_datum_from_bytea(char *input, pg_attribute_unused() plcTypeInfo *type) {
     int size = *((int*)input);
     bytea *result = palloc(size + VARHDRSZ);
 

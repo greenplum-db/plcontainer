@@ -1,7 +1,6 @@
 /*------------------------------------------------------------------------------
  *
- *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2017-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -41,6 +40,7 @@ static container_t *containers;
 static void insert_container(char *image, char *dockerid, plcConn *conn);
 static void init_containers();
 static inline bool is_whitespace (const char c);
+static int check_container_name(const char *name);
 
 #ifndef CONTAINER_DEBUG
 
@@ -146,7 +146,7 @@ plcConn *find_container(const char *image) {
     return NULL;
 }
 
-plcConn *start_container(plcContainer *cont) {
+plcConn *start_container(plcContainerConf *conf) {
     int port;
     unsigned int sleepus = 25000;
     unsigned int sleepms = 0;
@@ -169,7 +169,7 @@ plcConn *start_container(plcContainer *cont) {
         return conn;
     }
 
-    res = plc_docker_create_container(sockfd, cont, &dockerid);
+    res = plc_docker_create_container(sockfd, conf, &dockerid);
     if (res < 0) {
         elog(ERROR, "Cannot create Docker container");
         return conn;
@@ -232,7 +232,7 @@ plcConn *start_container(plcContainer *cont) {
                     CONTAINER_CONNECT_TIMEOUT_MS);
         conn = NULL;
     } else {
-        insert_container(cont->name, dockerid, conn);
+        insert_container(conf->name, dockerid, conn);
     }
 
     pfree(dockerid);
@@ -282,7 +282,6 @@ static inline bool is_whitespace (const char c) {
 char *parse_container_meta(const char *source) {
     int first, last, len;
     char *name = NULL;
-    int nameptr = 0;
 
     first = 0;
     len = strlen(source);
@@ -297,19 +296,19 @@ char *parse_container_meta(const char *source) {
         last++;
 
     /* If the string is too small or not starting with hash - no declaration */
-    if (last - first < 12 || source[first] != '#') {
-        lprintf(ERROR, "No container declaration found");
+    if (last - first < DECLARATION_MIN_LENGTH || source[first] != '#') {
+        lprintf(ERROR, "Container declaration format should be '#container:container_name'");
         return name;
     }
 
-    /* Ignore whitespaces after the hash sign */
     first++;
+    /* Ignore whitespaces after the hash sign */
     while (first < len && is_whitespace(source[first]))
         first++;
 
     /* Line should be "# container :", fail if not so */
-    if (strncmp(&source[first], "container", 9) != 0) {
-        lprintf(ERROR, "Container declaration should start with '#container:'");
+    if (strncmp(&source[first], "container", strlen("container")) != 0) {
+        lprintf(ERROR, "Container declaration format should be '#container:container_name'");
         return name;
     }
 
@@ -320,30 +319,53 @@ char *parse_container_meta(const char *source) {
 
     /* If no colon found - bad declaration */
     if (first >= last) {
-        lprintf(ERROR, "No colon found in container declaration");
+        lprintf(ERROR, "Container declaration format should be '#container:container_name'");
         return name;
     }
 
-    /*
-     * Allocate container name variable and copy container name
-     * ignoring whitespaces, i.e. container name cannot contain whitespaces
-     */
-    name = (char*)pmalloc(last-first+1);
-    while (first < last && source[first] != ':') {
-        if (!is_whitespace(source[first])) {
-            name[nameptr] = source[first];
-            nameptr++;
-        }
+    /* Ignore whitespace after colon sign */
+    while (first < last && is_whitespace(source[first]))
         first++;
-    }
-
-    /* Name cannot be empty */
-    if (nameptr == 0) {
+    /* Ignore whitespace in the end of the line */
+    while (last > first && is_whitespace(source[last]))
+        last--;
+    /* when first meets last, the name is blankspace or only one char*/
+    if (first == last && is_whitespace(source[first])){
         lprintf(ERROR, "Container name cannot be empty");
-        pfree(name);
         return NULL;
     }
-    name[nameptr] = '\0';
+    /*
+     * Allocate container name variable and copy container name
+     * the character length of name is last-first+1
+     * +1 for terminator
+     */
+    name = (char*)pmalloc(last - first + 1 + 1);
+    memcpy(name, &source[first], last - first + 1);
+
+    name[last - first + 1] = '\0';
+
+    int regt = check_container_name(name);
+    if (regt == -1) {
+        lprintf(ERROR, "Container name '%s' contains illegal character for container.", name);
+    }
 
     return name;
+}
+
+/*
+ * check whether container name specified in function declaration
+ * satisfy the regex which follow docker container/image naming conventions.
+ */
+static int check_container_name(const char *name){
+    int    status;
+    regex_t    re;
+    if (regcomp(&re, "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$", REG_EXTENDED | REG_NOSUB | REG_NEWLINE) != 0) {
+        return -1;
+    }
+    status = regexec(&re, name, (size_t) 0, NULL, 0);
+    regfree(&re);
+    if (status != 0) {
+        return -1;
+    }
+    return 0;
 }

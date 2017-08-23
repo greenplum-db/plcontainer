@@ -1,7 +1,6 @@
 /*------------------------------------------------------------------------------
  *
- *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2017-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -24,8 +23,11 @@
 static char *plc_docker_socket = "/var/run/docker.sock";
 
 // URL prefix specifies Docker API version
-static char *plc_docker_url_prefix = "http:/v1.21";
-
+#ifdef DOCKER_API_LOW
+    static char *plc_docker_url_prefix = "http:/v1.19";
+#else
+    static char *plc_docker_url_prefix = "http:/v1.21";
+#endif
 /* Static functions of the Docker API module */
 static plcCurlBuffer *plcCurlBufferInit();
 static void plcCurlBufferFree(plcCurlBuffer *buf);
@@ -303,7 +305,7 @@ int plc_docker_connect() {
     return 8080;
 }
 
-int plc_docker_create_container(int sockfd UNUSED, plcContainer *cont, char **name) {
+int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainerConf *conf, char **name) {
     char *createRequest =
             "{\n"
             "    \"AttachStdin\": false,\n"
@@ -319,20 +321,20 @@ int plc_docker_create_container(int sockfd UNUSED, plcContainer *cont, char **na
             "        \"PublishAllPorts\": true\n"
             "    }\n"
             "}\n";
-    char *volumeShare = get_sharing_options(cont);
+    char *volumeShare = get_sharing_options(conf);
     char *messageBody = NULL;
     plcCurlBuffer *response = NULL;
     int res = 0;
 
     /* Get Docket API "create" call JSON message body */
-    messageBody = palloc(40 + strlen(createRequest) + strlen(cont->command)
-                            + strlen(cont->dockerid) + strlen(volumeShare));
+    messageBody = palloc(40 + strlen(createRequest) + strlen(conf->command)
+                            + strlen(conf->dockerid) + strlen(volumeShare));
     sprintf(messageBody,
             createRequest,
-            cont->command,
-            cont->dockerid,
+            conf->command,
+            conf->dockerid,
             volumeShare,
-            ((long long)cont->memoryMb) * 1024 * 1024);
+            ((long long)conf->memoryMb) * 1024 * 1024);
 
     /* Make a call */
     response = plcCurlRESTAPICall(PLC_CALL_POST, "/containers/create", messageBody, 201, false);
@@ -354,7 +356,7 @@ int plc_docker_create_container(int sockfd UNUSED, plcContainer *cont, char **na
     return res;
 }
 
-int plc_docker_start_container(int sockfd UNUSED, char *name) {
+int plc_docker_start_container(pg_attribute_unused() int sockfd, char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/start";
     char *url = NULL;
@@ -371,7 +373,7 @@ int plc_docker_start_container(int sockfd UNUSED, char *name) {
     return res;
 }
 
-int plc_docker_kill_container(int sockfd UNUSED, char *name) {
+int plc_docker_kill_container(pg_attribute_unused() int sockfd, char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/kill?signal=KILL";
     char *url = NULL;
@@ -388,7 +390,7 @@ int plc_docker_kill_container(int sockfd UNUSED, char *name) {
     return res;
 }
 
-int plc_docker_inspect_container(int sockfd UNUSED, char *name, int *port) {
+int plc_docker_inspect_container(pg_attribute_unused() int sockfd, char *name, int *port) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/json";
     char *url = NULL;
@@ -412,7 +414,7 @@ int plc_docker_inspect_container(int sockfd UNUSED, char *name, int *port) {
     return res;
 }
 
-int plc_docker_wait_container(int sockfd UNUSED, char *name) {
+int plc_docker_wait_container(pg_attribute_unused() int sockfd, char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/wait";
     char *url = NULL;
@@ -429,7 +431,7 @@ int plc_docker_wait_container(int sockfd UNUSED, char *name) {
     return res;
 }
 
-int plc_docker_delete_container(int sockfd UNUSED, char *name) {
+int plc_docker_delete_container(pg_attribute_unused() int sockfd, char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s?v=1&force=1";
     char *url = NULL;
@@ -447,7 +449,7 @@ int plc_docker_delete_container(int sockfd UNUSED, char *name) {
 }
 
 /* Not used in Curl API */
-int plc_docker_disconnect(int sockfd UNUSED) {
+int plc_docker_disconnect(pg_attribute_unused() int sockfd) {
     return 0;
 }
 

@@ -1,7 +1,6 @@
 /*------------------------------------------------------------------------------
  *
- *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2017-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -18,20 +17,20 @@
 #include "plcontainer.h"
 #include "plc_configuration.h"
 
-static plcContainer *plcContainerConf = NULL;
+static plcContainerConf *plcContConf = NULL;
 static int plcNumContainers = 0;
 
-static int parse_container(xmlNode *node, plcContainer *cont);
-static plcContainer *get_containers(xmlNode *node, int *size);
-static void free_containers(plcContainer *cont, int size);
-static void print_containers(plcContainer *cont, int size);
+static int parse_container(xmlNode *node, plcContainerConf *conf);
+static plcContainerConf *get_containers(xmlNode *node, int *size);
+static void free_containers(plcContainerConf *conf, int size);
+static void print_containers(plcContainerConf *conf, int size);
 
 PG_FUNCTION_INFO_V1(refresh_plcontainer_config);
 PG_FUNCTION_INFO_V1(show_plcontainer_config);
 
 /* Function parses the container XML definition and fills the passed
- * plcContainer structure that should be already allocated */
-static int parse_container(xmlNode *node, plcContainer *cont) {
+ * plcContainerConf structure that should be already allocated */
+static int parse_container(xmlNode *node, plcContainerConf *conf) {
     xmlNode *cur_node = NULL;
     xmlChar *value = NULL;
     int has_name = 0;
@@ -41,7 +40,7 @@ static int parse_container(xmlNode *node, plcContainer *cont) {
 
     /* First iteration - parse name, container_id and memory_mb and count the
      * number of shared directories for later allocation of related structure */
-    cont->memoryMb = -1;
+    conf->memoryMb = -1;
     for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             int processed = 0;
@@ -51,27 +50,27 @@ static int parse_container(xmlNode *node, plcContainer *cont) {
                 processed = 1;
                 has_name = 1;
                 value = xmlNodeGetContent(cur_node);
-                cont->name = plc_top_strdup((char*)value);
+                conf->name = plc_top_strdup((char*)value);
             }
 
             if (xmlStrcmp(cur_node->name, (const xmlChar *)"container_id") == 0) {
                 processed = 1;
                 has_id = 1;
                 value = xmlNodeGetContent(cur_node);
-                cont->dockerid = plc_top_strdup((char*)value);
+                conf->dockerid = plc_top_strdup((char*)value);
             }
 
             if (xmlStrcmp(cur_node->name, (const xmlChar *)"command") == 0) {
                 processed = 1;
                 has_command = 1;
                 value = xmlNodeGetContent(cur_node);
-                cont->command = plc_top_strdup((char*)value);
+                conf->command = plc_top_strdup((char*)value);
             }
 
             if (xmlStrcmp(cur_node->name, (const xmlChar *)"memory_mb") == 0) {
                 processed = 1;
                 value = xmlNodeGetContent(cur_node);
-                cont->memoryMb = pg_atoi((char*)value, sizeof(int), 0);
+                conf->memoryMb = pg_atoi((char*)value, sizeof(int), 0);
             }
 
             if (xmlStrcmp(cur_node->name, (const xmlChar *)"shared_directory") == 0) {
@@ -109,13 +108,13 @@ static int parse_container(xmlNode *node, plcContainer *cont) {
     }
 
     /* Process the shared directories */
-    cont->nSharedDirs = num_shared_dirs;
-    cont->sharedDirs = NULL;
+    conf->nSharedDirs = num_shared_dirs;
+    conf->sharedDirs = NULL;
     if (num_shared_dirs > 0) {
         int i = 0;
 
         /* Allocate in top context as it should live between function calls */
-        cont->sharedDirs = plc_top_alloc(num_shared_dirs * sizeof(plcSharedDir));
+        conf->sharedDirs = plc_top_alloc(num_shared_dirs * sizeof(plcSharedDir));
         for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
             if (cur_node->type == XML_ELEMENT_NODE && 
                     xmlStrcmp(cur_node->name, (const xmlChar *)"shared_directory") == 0) {
@@ -126,7 +125,7 @@ static int parse_container(xmlNode *node, plcContainer *cont) {
                          " 'host' that is not found");
                     return -1;
                 }
-                cont->sharedDirs[i].host = plc_top_strdup((char*)value);
+                conf->sharedDirs[i].host = plc_top_strdup((char*)value);
                 xmlFree(value);
 
                 value = xmlGetProp(cur_node, (const xmlChar *)"container");
@@ -135,7 +134,7 @@ static int parse_container(xmlNode *node, plcContainer *cont) {
                          " 'container' that is not found");
                     return -1;
                 }
-                cont->sharedDirs[i].container = plc_top_strdup((char*)value);
+                conf->sharedDirs[i].container = plc_top_strdup((char*)value);
                 xmlFree(value);
 
                 value = xmlGetProp(cur_node, (const xmlChar *)"access");
@@ -144,9 +143,9 @@ static int parse_container(xmlNode *node, plcContainer *cont) {
                          " 'access' that is not found");
                     return -1;
                 } else if (strcmp((char*)value, "ro") == 0) {
-                    cont->sharedDirs[i].mode = PLC_ACCESS_READONLY;
+                    conf->sharedDirs[i].mode = PLC_ACCESS_READONLY;
                 } else if (strcmp((char*)value, "rw") == 0) {
-                    cont->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
+                    conf->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
                 } else {
                     elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s'", value);
                     return -1;
@@ -161,14 +160,14 @@ static int parse_container(xmlNode *node, plcContainer *cont) {
     return 0;
 }
 
-/* Function returns an array of plcContainer structures based on the contents
+/* Function returns an array of plcContainerConf structures based on the contents
  * of passed XML document tree. Returns NULL on failure */
-static plcContainer *get_containers(xmlNode *node, int *size) {
+static plcContainerConf *get_containers(xmlNode *node, int *size) {
     xmlNode *cur_node = NULL;
     int nContainers = 0;
     int i = 0;
     int res = 0;
-    plcContainer* result = NULL;
+    plcContainerConf* result = NULL;
 
     /* Validation that the root node matches the expected specification */
     if (xmlStrcmp(node->name, (const xmlChar *)"configuration") != 0) {
@@ -191,9 +190,9 @@ static plcContainer *get_containers(xmlNode *node, int *size) {
         return result;
     }
 
-    result = plc_top_alloc(nContainers * sizeof(plcContainer));
+    result = plc_top_alloc(nContainers * sizeof(plcContainerConf));
 
-    /* Iterating through the list of containers to parse them into plcContainer */
+    /* Iterating through the list of containers to parse them into plcContainerConf */
     i = 0;
     res = 0;
     for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
@@ -215,27 +214,27 @@ static plcContainer *get_containers(xmlNode *node, int *size) {
 }
 
 /* Safe way to deallocate container configuration list structure */
-static void free_containers(plcContainer *cont, int size) {
+static void free_containers(plcContainerConf *conf, int size) {
     int i;
     for (i = 0; i < size; i++) {
-        if (cont[i].nSharedDirs > 0 && cont[i].sharedDirs != NULL) {
-            pfree(cont[i].sharedDirs);
+        if (conf[i].nSharedDirs > 0 && conf[i].sharedDirs != NULL) {
+            pfree(conf[i].sharedDirs);
         }
     }
-    pfree(cont);
+    pfree(conf);
 }
 
-static void print_containers(plcContainer *cont, int size) {
+static void print_containers(plcContainerConf *conf, int size) {
     int i, j;
     for (i = 0; i < size; i++) {
-        elog(INFO, "Container '%s' configuration", cont[i].name);
-        elog(INFO, "    container_id = '%s'", cont[i].dockerid);
-        elog(INFO, "    memory_mb = '%d'", cont[i].memoryMb);
-        for (j = 0; j < cont[i].nSharedDirs; j++) {
+        elog(INFO, "Container '%s' configuration", conf[i].name);
+        elog(INFO, "    container_id = '%s'", conf[i].dockerid);
+        elog(INFO, "    memory_mb = '%d'", conf[i].memoryMb);
+        for (j = 0; j < conf[i].nSharedDirs; j++) {
             elog(INFO, "    shared directory from host '%s' to container '%s'",
-                 cont[i].sharedDirs[j].host,
-                 cont[i].sharedDirs[j].container);
-            if (cont[i].sharedDirs[j].mode == PLC_ACCESS_READONLY) {
+                 conf[i].sharedDirs[j].host,
+                 conf[i].sharedDirs[j].container);
+            if (conf[i].sharedDirs[j].mode == PLC_ACCESS_READONLY) {
                 elog(INFO, "        access = readonly");
             } else {
                 elog(INFO, "        access = readwrite");
@@ -264,13 +263,13 @@ static int plc_refresh_container_config(bool verbose) {
     }
 
     /* Read the configuration */
-    if (plcContainerConf != NULL) {
-        free_containers(plcContainerConf, plcNumContainers);
-        plcContainerConf = NULL;
+    if (plcContConf != NULL) {
+        free_containers(plcContConf, plcNumContainers);
+        plcContConf = NULL;
         plcNumContainers = 0;
     }
 
-    plcContainerConf = get_containers(xmlDocGetRootElement(doc), &plcNumContainers);
+    plcContConf = get_containers(xmlDocGetRootElement(doc), &plcNumContainers);
 
     /* Free the document */
     xmlFreeDoc(doc);
@@ -278,12 +277,12 @@ static int plc_refresh_container_config(bool verbose) {
     /* Free the global variables that may have been allocated by the parser */
     xmlCleanupParser();
 
-    if (plcContainerConf == NULL) {
+    if (plcContConf == NULL) {
         return -1;
     }
 
     if (verbose) {
-        print_containers(plcContainerConf, plcNumContainers);
+        print_containers(plcContConf, plcNumContainers);
     }
 
     return 0;
@@ -292,17 +291,17 @@ static int plc_refresh_container_config(bool verbose) {
 static int plc_show_container_config() {
     int res = 0;
 
-    if (plcContainerConf == NULL) {
+    if (plcContConf == NULL) {
         res = plc_refresh_container_config(false);
         if (res != 0)
             return -1;
     }
 
-    if (plcContainerConf == NULL) {
+    if (plcContConf == NULL) {
         return -1;
     }
 
-    print_containers(plcContainerConf, plcNumContainers);
+    print_containers(plcContConf, plcNumContainers);
     return 0;
 }
 
@@ -319,7 +318,7 @@ Datum refresh_plcontainer_config(PG_FUNCTION_ARGS) {
 
 /* Function referenced from Postgres that can update configuration on
  * specific GPDB segment */
-Datum show_plcontainer_config(PG_FUNCTION_ARGS) {
+Datum show_plcontainer_config(pg_attribute_unused() PG_FUNCTION_ARGS) {
     int res = plc_show_container_config();
     if (res == 0) {
         PG_RETURN_TEXT_P(cstring_to_text("ok"));
@@ -328,12 +327,12 @@ Datum show_plcontainer_config(PG_FUNCTION_ARGS) {
     }
 }
 
-plcContainer *plc_get_container_config(char *name) {
+plcContainerConf *plc_get_container_config(char *name) {
     int res = 0;
     int i = 0;
-    plcContainer *result = NULL;
+    plcContainerConf *result = NULL;
 
-    if (plcContainerConf == NULL || plcNumContainers == 0) {
+    if (plcContConf == NULL || plcNumContainers == 0) {
         res = plc_refresh_container_config(0);
         if (res < 0) {
             return NULL;
@@ -341,8 +340,8 @@ plcContainer *plc_get_container_config(char *name) {
     }
 
     for (i = 0; i < plcNumContainers; i++) {
-        if (strcmp(name, plcContainerConf[i].name) == 0) {
-            result = &plcContainerConf[i];
+        if (strcmp(name, plcContConf[i].name) == 0) {
+            result = &plcContConf[i];
             break;
         }
     }
@@ -350,34 +349,34 @@ plcContainer *plc_get_container_config(char *name) {
     return result;
 }
 
-char *get_sharing_options(plcContainer *cont) {
+char *get_sharing_options(plcContainerConf *conf) {
     char *res = NULL;
 
-    if (cont->nSharedDirs > 0) {
+    if (conf->nSharedDirs > 0) {
         char **volumes = NULL;
         int totallen = 0;
         char *pos;
         int i;
 
-        volumes = palloc(cont->nSharedDirs * sizeof(char*));
-        for (i = 0; i < cont->nSharedDirs; i++) {
-            volumes[i] = palloc(10 + strlen(cont->sharedDirs[i].host) +
-                                 strlen(cont->sharedDirs[i].container));
-            if (cont->sharedDirs[i].mode == PLC_ACCESS_READONLY) {
-                sprintf(volumes[i], "\"%s:%s:ro\"", cont->sharedDirs[i].host,
-                        cont->sharedDirs[i].container);
-            } else if (cont->sharedDirs[i].mode == PLC_ACCESS_READWRITE) {
-                sprintf(volumes[i], "\"%s:%s:rw\"", cont->sharedDirs[i].host,
-                        cont->sharedDirs[i].container);
+        volumes = palloc(conf->nSharedDirs * sizeof(char*));
+        for (i = 0; i < conf->nSharedDirs; i++) {
+            volumes[i] = palloc(10 + strlen(conf->sharedDirs[i].host) +
+                                 strlen(conf->sharedDirs[i].container));
+            if (conf->sharedDirs[i].mode == PLC_ACCESS_READONLY) {
+                sprintf(volumes[i], "\"%s:%s:ro\"", conf->sharedDirs[i].host,
+                        conf->sharedDirs[i].container);
+            } else if (conf->sharedDirs[i].mode == PLC_ACCESS_READWRITE) {
+                sprintf(volumes[i], "\"%s:%s:rw\"", conf->sharedDirs[i].host,
+                        conf->sharedDirs[i].container);
             } else {
                 elog(ERROR, "Cannot determine directory sharing mode");
             }
             totallen += strlen(volumes[i]);
         }
 
-        res = palloc(totallen + 2*cont->nSharedDirs);
+        res = palloc(totallen + 2 * conf->nSharedDirs);
         pos = res;
-        for (i = 0; i < cont->nSharedDirs; i++) {
+        for (i = 0; i < conf->nSharedDirs; i++) {
             memcpy(pos, volumes[i], strlen(volumes[i]));
             pos += strlen(volumes[i]);
             *pos = ' ';

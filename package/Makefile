@@ -5,14 +5,14 @@ include $(PGXS)
 
 include ../release.mk
 
-OS=$(word 1,$(subst _, ,$(BLD_ARCH)))
+MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
 ARCH=$(shell uname -p)
 
 PLC_DIR=`cd .. && pwd`
-PLC_GPPKG_VER=$(PLCONTAINER_VERSION).$(PLCONTAINER_RELEASE)_gpdb4.3orca
+PLC_GPPKG_VER=$(PLCONTAINER_VERSION).$(PLCONTAINER_RELEASE)
 PLC_RPM_FLAGS="--define 'plc_dir $(PLC_DIR)' --define 'plc_ver $(PLCONTAINER_VERSION)' --define 'plc_rel $(PLCONTAINER_RELEASE)'"
 PLC_RPM=plcontainer-$(PLCONTAINER_VERSION)-$(PLCONTAINER_RELEASE).$(ARCH).rpm
-PLC_GPPKG=plcontainer-$(PLC_GPPKG_VER)-$(OS)-$(ARCH).gppkg
+PLC_GPPKG=plcontainer-$(PLC_GPPKG_VER)-rhel$(MAJOR_OS)-$(ARCH).gppkg
 
 TARGET_GPPKG=$(PLC_GPPKG)
 EXTRA_CLEAN+=$(R_RPM) $(PLR_RPM) $(PLR_GPPKG)

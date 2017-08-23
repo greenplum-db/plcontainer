@@ -1,7 +1,6 @@
 /*------------------------------------------------------------------------------
  *
- *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2017-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -27,19 +26,19 @@ typedef struct plcSharedDir {
     plcFsAccessMode  mode;
 } plcSharedDir;
 
-typedef struct plcContainer {
+typedef struct plcContainerConf {
     char         *name;
     char         *dockerid;
     char         *command;
     int           memoryMb;
     int           nSharedDirs;
     plcSharedDir *sharedDirs;
-} plcContainer;
+} plcContainerConf;
 
 /* entrypoint for all plcontainer procedures */
 Datum refresh_plcontainer_config(PG_FUNCTION_ARGS);
 Datum show_plcontainer_config(PG_FUNCTION_ARGS);
-plcContainer *plc_get_container_config(char *name);
-char *get_sharing_options(plcContainer *cont);
+plcContainerConf *plc_get_container_config(char *name);
+char *get_sharing_options(plcContainerConf *conf);
 
 #endif /* PLC_CONFIGURATION_H */

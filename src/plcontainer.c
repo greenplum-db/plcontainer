@@ -1,7 +1,6 @@
 /*------------------------------------------------------------------------------
  *
- *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2017-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -170,13 +169,13 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
     name = parse_container_meta(req->proc.src);
     conn = find_container(name);
     if (conn == NULL) {
-        plcContainer *cont = NULL;
-        cont = plc_get_container_config(name);
-        if (cont == NULL) {
+        plcContainerConf *conf = NULL;
+        conf = plc_get_container_config(name);
+        if (conf == NULL) {
             elog(ERROR, "Container '%s' is not defined in configuration "
                         "and cannot be used", name);
         } else {
-            conn = start_container(cont);
+            conn = start_container(conf);
         }
     }
     pfree(name);
