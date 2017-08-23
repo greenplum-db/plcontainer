@@ -44,8 +44,8 @@ def parseargs():
     parser.add_option('--cleanup', action='store_true', help='Remove all the backup files for PL/Container')
 
     parser.add_option('-c', '--configure', dest='conf', action='store_true', help='Configure container image name and location as well as shared folder')
-    parser.add_option('-n', '--name', dest='name', type='string', help='Container image name')
-    parser.add_option('-i', '--image', dest='image', type='string', help='Configure container image name and location as well as shared folder')
+    parser.add_option('-n', '--name', dest='name', type='string', help='Configure container image name')
+    parser.add_option('-i', '--image', dest='image', type='string', help='Configure container image location')
     parser.add_option('--volume', dest='shared', type='string', help='Set shared folder, format: HOST:CONTAINER:[RW|RO]')
 
 
