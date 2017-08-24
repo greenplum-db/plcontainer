@@ -43,10 +43,10 @@ def parseargs():
     parser.add_option('--restore', action='store_true', help='Restore the previous version of PL/Container configuration')
     parser.add_option('--cleanup', action='store_true', help='Remove all the backup files for PL/Container')
 
-    parser.add_option('-c', '--configure', dest='conf', action='store_true', help='Configure container image name and location as well as shared folder')
-    parser.add_option('-n', '--name', dest='name', type='string', help='Configure container image name')
-    parser.add_option('-i', '--image', dest='image', type='string', help='Configure container image location')
-    parser.add_option('--volume', dest='shared', type='string', help='Set shared folder, format: HOST:CONTAINER:[RW|RO]')
+    parser.add_option("-c", "--configure", dest="conf", action="store_true", help="Configure container image name and location as well as shared folder")
+    parser.add_option("-n", "--name", dest="name", type="string", help="Configure container image name")
+    parser.add_option("-i", "--image", dest="image", type="string", help="Configure container image location")
+    parser.add_option("--volume", dest="shared", type="string", action="append",help="Set shared folder, format: HOST:CONTAINER:[RW|RO]")
 
 
     (options, args) = parser.parse_args()
@@ -76,12 +76,12 @@ def update_xml_check_shared_folder(container, elements):
     update shared folder settings
     '''
     if 'hasShared' in elements.keys():
-        shareDir = container.find('shared_directory')
-        if shareDir is not None:
+        for shareDir in container.findall('shared_directory'):
             container.remove(shareDir)
         logger.info("try remove  a tag")
-        shareDir = ElementTree.Element("shared_directory", host=elements['host'], container=elements['con'], access=elements['access'])
-        container.append(shareDir)
+        for plHost, plConatiner, plAccess in elements['host'], elements['conatiner'], elements['access']:
+            shareDir = ElementTree.Element("shared_directory", host=elements['host'], container=elements['conatiner'], access=elements['access'])
+            container.append(shareDir)
 
 def update_xml_container(container, elements):
     '''
@@ -318,6 +318,28 @@ def show_file(filename):
     sys.stdout.write('%s\n' % f.read())
     f.close()
 
+def get_conf_shared_dir(options, elements):
+    '''
+    get the shared dirs
+    '''
+    elements['hasShared'] = True
+    shareStrs = options.shared
+    elements['host'] = list()
+    elements['container'] = list()
+    elements['access'] = list()
+    for shareStr in shareStrs:
+        strList = shareStr.split(":")
+        elements['host'].append(strList[0])
+        elements['container'].append(strList[1])
+        if len(strList) >= 3:
+            if strList[2] == "ro" or strList[2] == "rw":
+                elements['access'].append(strList[2])
+            else:
+                raise Exception("Access type can only be \"ro\" or \"rw\". ")
+        else:
+            elements['access'].append("ro")
+
+
 def get_conf_elements(options):
     '''
     build an element dict for configuration
@@ -326,18 +348,7 @@ def get_conf_elements(options):
     elements['name'] = options.name
     elements['image'] = options.image
     if options.shared:
-        elements['hasShared'] = True
-        shareStr = options.shared
-        strList = shareStr.split(":")
-        elements['host'] = strList[0]
-        elements['con'] = strList[1]
-        if len(strList) >= 3:
-            if strList[2] == "ro" or strList[2] == "rw":
-                elements['access'] = strList[2]
-            else:
-                raise Exception("Access type can only be \"ro\" or \"rw\". ")
-        else:
-            elements['access'] = "ro"
+       get_conf_shared_dir(options, elements)
     return elements
 
 def main():
