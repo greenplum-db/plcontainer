@@ -78,9 +78,12 @@ def update_xml_check_shared_folder(container, elements):
     if 'hasShared' in elements.keys():
         for shareDir in container.findall('shared_directory'):
             container.remove(shareDir)
-        logger.info("try remove  a tag")
-        for plHost, plConatiner, plAccess in elements['host'], elements['conatiner'], elements['access']:
-            shareDir = ElementTree.Element("shared_directory", host=elements['host'], container=elements['conatiner'], access=elements['access'])
+        count = 0
+        for plHost in elements['host']:
+            shareDir = ElementTree.Element("shared_directory",
+                    host=plHost, container=elements['container'][count],
+                    access=elements['access'][count])
+            count = count + 1
             container.append(shareDir)
 
 def update_xml_container(container, elements):
