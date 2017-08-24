@@ -53,7 +53,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
                 conf->name = plc_top_strdup((char*)value);
             }
 
-            if (xmlStrcmp(cur_node->name, (const xmlChar *)"container_id") == 0) {
+            if (xmlStrcmp(cur_node->name, (const xmlChar *)"image") == 0) {
                 processed = 1;
                 has_id = 1;
                 value = xmlNodeGetContent(cur_node);
@@ -98,7 +98,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
     }
 
     if (has_id == 0) {
-        elog(ERROR, "Container ID in tag <container_id> must be specified in configuration");
+        elog(ERROR, "Container ID in tag <image> must be specified in configuration");
         return -1;
     }
 

@@ -48,12 +48,4 @@
         <shared_directory host="/tmp/pyclient/bin" container="/clientdir" access="ro"/>
     </container>
 
-    <container>
-        <name>plc_python_shared</name>
-        <image>pivotaldata/plcontainer_python_shared:IMAGE_TAG</image>
-        <command>/clientdir/client.sh</command>
-        <memory_mb>128</memory_mb>
-        <shared_directory host="/tmp/pyclient/bin" container="/clientdir" access="ro"/>
-    </container>
-
 </configuration>

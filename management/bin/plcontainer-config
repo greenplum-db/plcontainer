@@ -43,10 +43,12 @@ def parseargs():
     parser.add_option('--restore', action='store_true', help='Restore the previous version of PL/Container configuration')
     parser.add_option('--cleanup', action='store_true', help='Remove all the backup files for PL/Container')
 
-    parser.add_option("-c", "--configure", dest="conf", action="store_true", help="Configure container image name and location as well as shared folder")
+    parser.add_option("-c", "--configure", dest="conf", action="store_true", help="Configure container image name and " +
+                        "location as well as shared folder, need to combine with -n and -i, usage: -c -n IMAGENAME -i IMAGEURL")
     parser.add_option("-n", "--name", dest="name", type="string", help="Configure container image name")
     parser.add_option("-i", "--image", dest="image", type="string", help="Configure container image location")
-    parser.add_option("--volume", dest="shared", type="string", action="append",help="Set shared folder, format: HOST:CONTAINER:[RW|RO]")
+    parser.add_option("--volume", dest="shared", type="string", action="append",help="Bind mount a volume, can work with multiple volumes" +
+                        " format: HOST:CONTAINER:[rw|ro]")
 
 
     (options, args) = parser.parse_args()
@@ -119,7 +121,7 @@ def update_xml_new_container(elements):
 
 def update_reformat_xml(xmltree):
     '''
-    reformat xml
+    reformat xml to a pretty print format
     '''
     xmlString = ElementTree.tostring(xmltree)
     reformatString = xml.dom.minidom.parseString(xmlString)
