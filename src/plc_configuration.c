@@ -8,12 +8,14 @@
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
+#include <unistd.h>
 
 #include "postgres.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 
 #include "common/comm_utils.h"
+#include "common/comm_connectivity.h"
 #include "plcontainer.h"
 #include "plc_configuration.h"
 
@@ -349,7 +351,7 @@ plcContainerConf *plc_get_container_config(char *name) {
     return result;
 }
 
-char *get_sharing_options(plcContainerConf *conf) {
+char *get_sharing_options(plcContainerConf *conf, int container_slot) {
     char *res = NULL;
 
     if (conf->nSharedDirs > 0) {
@@ -359,7 +361,7 @@ char *get_sharing_options(plcContainerConf *conf) {
         int i;
         char comma = ' ';
 
-        volumes = palloc(conf->nSharedDirs * sizeof(char*));
+        volumes = palloc((conf->nSharedDirs + 1) * sizeof(char*));
         for (i = 0; i < conf->nSharedDirs; i++) {
             volumes[i] = palloc(10 + strlen(conf->sharedDirs[i].host) +
                                  strlen(conf->sharedDirs[i].container));
@@ -378,9 +380,16 @@ char *get_sharing_options(plcContainerConf *conf) {
             totallen += strlen(volumes[i]);
         }
 
-        res = palloc(totallen + 2 * conf->nSharedDirs);
+		if (!conf->isNetworkConnection) {
+			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_id */
+			int sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1;
+			volumes[i] = pmalloc(10 + sz + strlen(IPC_CLIENT_DIR));
+			sprintf(volumes[i], " ,\"%s.%d.%d:%s:rw\"", IPC_GPDB_BASE_DIR, getpid(), container_slot, IPC_CLIENT_DIR);
+		}
+
+        res = palloc(totallen + 2 * (conf->nSharedDirs + 1));
         pos = res;
-        for (i = 0; i < conf->nSharedDirs; i++) {
+        for (i = 0; i < (conf->isNetworkConnection ? conf->nSharedDirs : conf->nSharedDirs + 1); i++) {
             memcpy(pos, volumes[i], strlen(volumes[i]));
             pos += strlen(volumes[i]);
             *pos = ' ';
@@ -390,8 +399,17 @@ char *get_sharing_options(plcContainerConf *conf) {
         *pos = '\0';
         pfree(volumes);
     } else {
-        res = palloc(1);
-        res[0] = '\0';
+		if (!conf->isNetworkConnection) {
+			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_id */
+			int sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1;
+			res = pmalloc(10 + sz + strlen(IPC_CLIENT_DIR));
+			sprintf(res, "\"%s.%d.%d:%s:rw\"", IPC_GPDB_BASE_DIR, getpid(), container_slot, IPC_CLIENT_DIR);
+		} else {
+			res = pmalloc(1);
+			res[0] = '\0';
+			return res;
+		}
     }
+
     return res;
 }

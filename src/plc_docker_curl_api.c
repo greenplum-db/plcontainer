@@ -305,7 +305,7 @@ int plc_docker_connect() {
     return 8080;
 }
 
-int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainerConf *conf, char **name) {
+int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainerConf *conf, char **name, int container_id) {
     char *createRequest =
             "{\n"
             "    \"AttachStdin\": false,\n"
@@ -321,7 +321,7 @@ int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainerCo
             "        \"PublishAllPorts\": true\n"
             "    }\n"
             "}\n";
-    char *volumeShare = get_sharing_options(conf);
+    char *volumeShare = get_sharing_options(conf, container_id);
     char *messageBody = NULL;
     plcCurlBuffer *response = NULL;
     int res = 0;

@@ -23,13 +23,24 @@ typedef struct plcBuffer {
 } plcBuffer;
 
 typedef struct plcConn {
+	int container_slot;
     int sock;
     plcBuffer* buffer[2];
 } plcConn;
 
-plcConn * plcConnect(int port);
-plcConn * plcConnInit(int sock);
+#define UDS_SHARED_FILE "unix.domain.socket.shared.file"
+#define IPC_CLIENT_DIR "/tmp/plcontainer"
+#define IPC_GPDB_BASE_DIR "/tmp/plcontainer"
+#define MAX_SHARED_FILE_SZ (strlen(UDS_SHARED_FILE))
+
+#ifndef COMM_STANDALONE
+void plc_init_ipc(void);
+void plc_deinit_ipc(void);
+plcConn * plcConnect_inet(int port);
+plcConn * plcConnect_ipc(int container_slot);
 void plcDisconnect(plcConn *conn);
+#endif
+plcConn * plcConnInit(int sock);
 
 int plcBufferAppend (plcConn *conn, char *prt, size_t len);
 int plcBufferRead (plcConn *conn, char *resBuffer, size_t len);

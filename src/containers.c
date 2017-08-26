@@ -17,6 +17,7 @@
 
 #include "common/comm_utils.h"
 #include "common/comm_channel.h"
+#include "common/comm_connectivity.h"
 #include "common/messages/messages.h"
 #include "plc_configuration.h"
 #include "containers.h"
@@ -109,21 +110,29 @@ static void cleanup(char *dockerid) {
 
 #endif /* not CONTAINER_DEBUG */
 
-static void insert_container(char *image, char *dockerid, plcConn *conn) {
-    size_t i;
+static int find_container_slot() {
+	int i;
+
     for (i = 0; i < CONTAINER_NUMBER; i++) {
         if (containers[i].name == NULL) {
-            containers[i].name     = plc_top_strdup(image);
-            containers[i].conn     = conn;
-            containers[i].dockerid = NULL;
-            if (dockerid != NULL) {
-                containers[i].dockerid = plc_top_strdup(dockerid);
-            }
-            return;
+            return i;
         }
     }
     // Fatal would cause the session to be closed
     elog(FATAL, "Single session cannot handle more than %d open containers simultaneously", CONTAINER_NUMBER);
+
+}
+
+static void insert_container(char *image, char *dockerid, plcConn *conn) {
+	int slot = conn->container_slot;
+
+	containers[slot].name     = plc_top_strdup(image);
+	containers[slot].conn     = conn;
+	containers[slot].dockerid = NULL;
+	if (dockerid != NULL) {
+		containers[slot].dockerid = plc_top_strdup(dockerid);
+	}
+	return;
 }
 
 static void init_containers() {
@@ -134,8 +143,9 @@ static void init_containers() {
 
 plcConn *find_container(const char *image) {
     size_t i;
-    if (containers_init == 0)
+    if (containers_init == 0) {
         init_containers();
+	}
     for (i = 0; i < CONTAINER_NUMBER; i++) {
         if (containers[i].name != NULL &&
             strcmp(containers[i].name, image) == 0) {
@@ -153,15 +163,12 @@ plcConn *start_container(plcContainerConf *conf) {
     plcMsgPing *mping = NULL;
     plcConn *conn = NULL;
     char *dockerid = NULL;
-
-#ifdef CONTAINER_DEBUG
-
-    port = 8080;
-
-#else
+	int        container_slot;
 
     int sockfd;
     int res = 0;
+
+	container_slot = find_container_slot();
 
     sockfd = plc_docker_connect();
     if (sockfd < 0) {
@@ -169,7 +176,7 @@ plcConn *start_container(plcContainerConf *conf) {
         return conn;
     }
 
-    res = plc_docker_create_container(sockfd, conf, &dockerid);
+    res = plc_docker_create_container(sockfd, conf, &dockerid, container_slot);
     if (res < 0) {
         elog(ERROR, "Cannot create Docker container");
         return conn;
@@ -181,11 +188,14 @@ plcConn *start_container(plcContainerConf *conf) {
         return conn;
     }
 
-    res = plc_docker_inspect_container(sockfd, dockerid, &port);
-    if (res < 0) {
-        elog(ERROR, "Cannot parse host port exposed by Docker container");
-        return conn;
-    }
+	/* For network connection only. */
+	if (conf->isNetworkConnection) {
+		res = plc_docker_inspect_container(sockfd, dockerid, &port);
+		if (res < 0) {
+			elog(ERROR, "Cannot parse host port exposed by Docker container");
+			return conn;
+		}
+	}
 
     res = plc_docker_disconnect(sockfd);
     if (res < 0) {
@@ -195,8 +205,6 @@ plcConn *start_container(plcContainerConf *conf) {
 
     /* Create a process to clean up the container after it finishes */
     cleanup(dockerid);
-
-#endif // CONTAINER_DEBUG
 
     /* Making a series of connection attempts unless connection timeout of
      * CONTAINER_CONNECT_TIMEOUT_MS is reached. Exponential backoff for
@@ -208,8 +216,13 @@ plcConn *start_container(plcContainerConf *conf) {
         int         res = 0;
         plcMessage *mresp = NULL;
 
-        conn = plcConnect(port);
+		if (!conf->isNetworkConnection)
+	        conn = plcConnect_ipc(container_slot);
+		else
+			conn = plcConnect_inet(port);
+
         if (conn != NULL) {
+			conn->container_slot = container_slot;
             res = plcontainer_channel_send(conn, (plcMessage*)mping);
             if (res == 0) {
                 res = plcontainer_channel_receive(conn, &mresp);
@@ -272,6 +285,7 @@ void stop_containers() {
             }
         }
     }
+
     containers_init = 0;
 }
 

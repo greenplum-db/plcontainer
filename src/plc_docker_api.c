@@ -461,7 +461,7 @@ int plc_docker_connect() {
     return sockfd;
 }
 
-int plc_docker_create_container(int sockfd, plcContainerConf *conf, char **name) {
+int plc_docker_create_container(int sockfd, plcContainerConf *conf, char **name, int container_slot) {
     char *message      = NULL;
     char *message_body = NULL;
     char *apiendpoint  = NULL;
@@ -477,7 +477,7 @@ int plc_docker_create_container(int sockfd, plcContainerConf *conf, char **name)
             plc_docker_api_version);
 
     /* Get Docket API "create" call JSON message body */
-    sharing = get_sharing_options(conf);
+    sharing = get_sharing_options(conf, container_slot);
     message_body = palloc(40 + strlen(plc_docker_create_request) + strlen(conf->command)
                              + strlen(conf->dockerid) + strlen(sharing));
     sprintf(message_body,
