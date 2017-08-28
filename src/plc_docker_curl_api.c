@@ -313,6 +313,7 @@ int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainerCo
             "    \"AttachStderr\": false,\n"
             "    \"Tty\": false,\n"
             "    \"Cmd\": [\"%s\"],\n"
+            "    \"Env\": [\"USE_NETWORK=%s\"],\n"
             "    \"Image\": \"%s\",\n"
             "    \"DisableNetwork\": false,\n"
             "    \"HostConfig\": {\n"
@@ -328,10 +329,11 @@ int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainerCo
 
     /* Get Docket API "create" call JSON message body */
     messageBody = palloc(40 + strlen(createRequest) + strlen(conf->command)
-                            + strlen(conf->dockerid) + strlen(volumeShare));
+                            + 3 + strlen(conf->dockerid) + strlen(volumeShare));
     sprintf(messageBody,
             createRequest,
             conf->command,
+            conf->isNetworkConnection ? "yes" : "no",
             conf->dockerid,
             volumeShare,
             ((long long)conf->memoryMb) * 1024 * 1024);
