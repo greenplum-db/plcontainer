@@ -143,9 +143,8 @@ static void init_containers() {
 
 plcConn *find_container(const char *image) {
     size_t i;
-    if (containers_init == 0) {
+    if (containers_init == 0)
         init_containers();
-	}
     for (i = 0; i < CONTAINER_NUMBER; i++) {
         if (containers[i].name != NULL &&
             strcmp(containers[i].name, image) == 0) {

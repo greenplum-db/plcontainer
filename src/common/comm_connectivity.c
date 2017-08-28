@@ -344,6 +344,7 @@ plcConn * plcConnInit(int sock) {
     return conn;
 }
 
+/* FIXME: Move out of src/common later. */
 #ifndef COMM_STANDALONE
 /*
  *  Connect to the specified host of the localhost and initialize the plcConn

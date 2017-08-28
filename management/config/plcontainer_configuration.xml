@@ -16,6 +16,9 @@
             container can usilize all the available OS memory
         6. "shared_directory" - a series of tags, each one defines a single
             directory shared between host and container. Optional
+        7. "use_network" - set to "yes" or "no" to specify whether use tcp or ipc
+            for communication between gpdb process and container process. Optional.
+            By default, we set "no".
         All the container names not manually defined in this file will not be
         available for use by endusers in PL/Container
     -->
