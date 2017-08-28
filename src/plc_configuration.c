@@ -395,11 +395,21 @@ char *get_sharing_options(plcContainerConf *conf, int container_slot) {
             if (i > 0)
                 comma = ',';
 			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
-			int gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1;
+			int gpdb_dir_sz;
+			char uds_dir;
+
+			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1;
+			uds_dir = pmalloc(gpdb_dir_sz);
+			sprintf(uds_dir, "%s.%d.%d", IPC_GPDB_BASE_DIR, getpid(), container_slot);
 			volumes[i] = pmalloc(10 + gpdb_dir_sz + strlen(IPC_CLIENT_DIR));
-			sprintf(volumes[i], " %c\"%s.%d.%d:%s:rw\"", comma,IPC_GPDB_BASE_DIR,
-					getpid(), container_slot, IPC_CLIENT_DIR);
+			sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, uds_dir, IPC_CLIENT_DIR);
             totallen += strlen(volumes[i]);
+
+			/* Create the directory. */
+			if (mkdir(uds_dir, S_IRUSR | S_IWUSR) < 0 && errno != EEXIST) {
+				elog(ERROR, "PLContainer: Cannot create directory %s: %s",
+						uds_dir, strerror(errno));
+			}
 		}
 
         res = palloc(totallen + conf->nSharedDirs + 1 + 1);

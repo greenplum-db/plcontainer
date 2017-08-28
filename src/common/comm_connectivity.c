@@ -418,13 +418,6 @@ plcConn *plcConnect_ipc(int container_slot) {
 		return NULL;
 	}
 
-	/* Create the directory. */
-	if (mkdir(dirname(uds_fn), S_IRUSR | S_IWUSR) < 0 && errno != EEXIST) {
-		lprintf(ERROR, "PLContainer: Cannot create directory for file %s: %s",
-				uds_fn, strerror(errno));
-		return NULL;
-	}
-
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
 		lprintf(ERROR, "PLContainer: Cannot create unix domain socket: %s",

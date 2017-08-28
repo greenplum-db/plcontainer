@@ -84,7 +84,7 @@ int start_listener_ipc() {
 		lprintf(ERROR, "Cannot delete the file for unix domain socket connection: %s", uds_fn);
 
     if (bind(sock, (const struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        lprintf(ERROR, "Cannot bind the port: %s", strerror(errno));
+        lprintf(ERROR, "Cannot bind the addr: %s", strerror(errno));
     }
 
 	pfree(uds_fn);
