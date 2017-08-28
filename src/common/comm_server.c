@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------------
  *
  *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2016-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
 
 #include "comm_channel.h"
 #include "comm_utils.h"
@@ -18,15 +20,15 @@
 #include "messages/messages.h"
 
 /*
- * Functoin binds the socket and starts listening on it
+ * Functoin binds the socket and starts listening on it: tcp
  */
-int start_listener() {
+int start_listener_inet() {
     struct sockaddr_in addr;
     int                sock;
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
-        lprintf(ERROR, "%s", strerror(errno));
+        lprintf(ERROR, "system call socket() fails: %s", strerror(errno));
     }
 
     addr = (struct sockaddr_in){
@@ -37,6 +39,56 @@ int start_listener() {
     if (bind(sock, (const struct sockaddr *)&addr, sizeof(addr)) == -1) {
         lprintf(ERROR, "Cannot bind the port: %s", strerror(errno));
     }
+#ifdef _DEBUG_CLIENT
+    int enable = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0){
+        lprintf(ERROR, "setsockopt(SO_REUSEADDR) failed");
+    }
+#endif
+    if (listen(sock, 10) == -1) {
+        lprintf(ERROR, "Cannot listen the socket: %s", strerror(errno));
+    }
+
+    return sock;
+}
+
+/*
+ * Functoin binds the socket and starts listening on it: unix domain socket.
+ */
+int start_listener_ipc() {
+    struct sockaddr_un addr;
+    int                sock;
+	char              *uds_fn;
+	int                sz;
+
+	/* filename: IPC_CLIENT_DIR + '/' + UDS_SHARED_FILE */
+	sz = strlen(IPC_CLIENT_DIR) + 1 + MAX_SHARED_FILE_SZ + 1;
+	uds_fn = pmalloc(sz);
+	sprintf(uds_fn, "%s/%s", IPC_CLIENT_DIR, UDS_SHARED_FILE);
+	if (strlen(uds_fn) >= sizeof(addr.sun_path)) {
+		lprintf(ERROR, "PLContainer: The path for unix domain socket "
+				"connection is too long: %s", uds_fn);
+	}
+
+    sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sock == -1) {
+        lprintf(ERROR, "system call socket() fails: %s", strerror(errno));
+    }
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, uds_fn);
+
+	unlink(uds_fn);
+	if (access(uds_fn, F_OK) == 0)
+		lprintf(ERROR, "Cannot delete the file for unix domain socket connection: %s", uds_fn);
+
+    if (bind(sock, (const struct sockaddr *)&addr, sizeof(addr)) == -1) {
+        lprintf(ERROR, "Cannot bind the port: %s", strerror(errno));
+    }
+
+	pfree(uds_fn);
+
 #ifdef _DEBUG_CLIENT
     int enable = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0){

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------------
  *
  *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2016-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -18,7 +18,8 @@
 // Timeout in seconds for server to wait for client connection
 #define TIMEOUT_SEC 20
 
-int  start_listener(void);
+int  start_listener_inet(void);
+int  start_listener_ipc(void);
 void connection_wait(int sock);
 plcConn* connection_init(int sock);
 void receive_loop( void (*handle_call)(plcMsgCallreq*, plcConn*), plcConn* conn);

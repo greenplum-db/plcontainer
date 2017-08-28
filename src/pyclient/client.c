@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------------
  *
  *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2016-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -33,7 +33,11 @@ int main(int argc UNUSED, char **argv UNUSED) {
     assert(sizeof(double) == 8);
 
     // Bind the socket and start listening the port
-    sock = start_listener();
+	if (strcasecmp("yes", getenv("USE_NETWORK"))) {
+		sock = start_listener_ipc();
+	} else {
+		sock = start_listener_inet();
+	}
 
     // Initialize Python
     status = python_init();

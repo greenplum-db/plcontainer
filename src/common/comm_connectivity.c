@@ -19,6 +19,8 @@
 #include <assert.h>
 #include <sys/un.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <libgen.h>
 
 #include "comm_utils.h"
 #include "comm_connectivity.h"
@@ -318,7 +320,8 @@ int plcBufferFlush (plcConn *conn) {
 }
 
 /*
- *  Initialize plcConn data structure and input/output buffers
+ *  Initialize plcConn data structure and input/output buffers.
+ *  For network connection, uds_fn means nothing.
  */
 plcConn * plcConnInit(int sock) {
     plcConn *conn;
@@ -381,7 +384,8 @@ plcConn *plcConnect_inet(int port) {
         return result;
     }
 
-    /* Set socker receive timeout to 500ms */
+	/* FIXME: Do we need them? */
+    /* Set socket receive timeout to 500ms */
     tv.tv_sec  = 0;
     tv.tv_usec = 500000;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
@@ -401,7 +405,6 @@ plcConn *plcConnect_ipc(int container_slot) {
     struct timeval      tv;
 	char               *uds_fn = NULL;
 	int                 sock;
-
 	struct sockaddr_un  raddr;
 	int sz;
 
@@ -412,6 +415,13 @@ plcConn *plcConnect_ipc(int container_slot) {
 	if (strlen(uds_fn) >= sizeof(raddr.sun_path)) {
 		lprintf(ERROR, "PLContainer: The path for unix domain socket "
 				"connection is too long: %s", uds_fn);
+		return NULL;
+	}
+
+	/* Create the directory. */
+	if (mkdir(dirname(uds_fn), S_IRUSR | S_IWUSR) < 0 || errno != EEXIST) {
+		lprintf(ERROR, "PLContainer: Cannot create directory for file %s: %s",
+				uds_fn, strerror(errno));
 		return NULL;
 	}
 
