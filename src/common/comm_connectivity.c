@@ -419,7 +419,7 @@ plcConn *plcConnect_ipc(int container_slot) {
 	}
 
 	/* Create the directory. */
-	if (mkdir(dirname(uds_fn), S_IRUSR | S_IWUSR) < 0 || errno != EEXIST) {
+	if (mkdir(dirname(uds_fn), S_IRUSR | S_IWUSR) < 0 && errno != EEXIST) {
 		lprintf(ERROR, "PLContainer: Cannot create directory for file %s: %s",
 				uds_fn, strerror(errno));
 		return NULL;
