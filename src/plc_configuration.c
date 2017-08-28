@@ -75,6 +75,17 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
                 conf->memoryMb = pg_atoi((char*)value, sizeof(int), 0);
             }
 
+            if (xmlStrcmp(cur_node->name, (const xmlChar *)"use_network") == 0) {
+                processed = 1;
+                value = xmlNodeGetContent(cur_node);
+				if (strcasecmp((char *) value, "no") == 0)
+					conf->isNetworkConnection = false;
+				else if (strcasecmp((char *) value, "yes") == 0)
+					conf->isNetworkConnection = true;
+				else
+					processed = 0;
+            }
+
             if (xmlStrcmp(cur_node->name, (const xmlChar *)"shared_directory") == 0) {
                 num_shared_dirs += 1;
                 processed = 1;
@@ -232,6 +243,7 @@ static void print_containers(plcContainerConf *conf, int size) {
         elog(INFO, "Container '%s' configuration", conf[i].name);
         elog(INFO, "    container_id = '%s'", conf[i].dockerid);
         elog(INFO, "    memory_mb = '%d'", conf[i].memoryMb);
+        elog(INFO, "    use network = '%d'", conf[i].isNetworkConnection);
         for (j = 0; j < conf[i].nSharedDirs; j++) {
             elog(INFO, "    shared directory from host '%s' to container '%s'",
                  conf[i].sharedDirs[j].host,
