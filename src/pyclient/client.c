@@ -34,9 +34,9 @@ int main(int argc UNUSED, char **argv UNUSED) {
 
     // Bind the socket and start listening the port
 	if (strcasecmp("yes", getenv("USE_NETWORK"))) {
-		sock = start_listener_ipc();
-	} else {
 		sock = start_listener_inet();
+	} else {
+		sock = start_listener_ipc();
 	}
 
     // Initialize Python

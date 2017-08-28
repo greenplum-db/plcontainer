@@ -8,7 +8,7 @@
         2. "name" - container name that can be referenced in database creating the
             function in PL/Container language. Might not match the container name
             in Docker. Mandatory field
-        3. "container_id" - container name in Docker, used for starting and stopping
+        3. "image" - container image in Docker, used for starting and stopping
             the containers. Mandatory field
         4. "command" - command used to start the client process inside of the
             container. Mandatory field

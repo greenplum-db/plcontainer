@@ -394,7 +394,7 @@ char *get_sharing_options(plcContainerConf *conf, int container_slot) {
 		if (!conf->isNetworkConnection) {
             if (i > 0)
                 comma = ',';
-			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_id */
+			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
 			int gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1;
 			volumes[i] = pmalloc(10 + gpdb_dir_sz + strlen(IPC_CLIENT_DIR));
 			sprintf(volumes[i], " %c\"%s.%d.%d:%s:rw\"", comma,IPC_GPDB_BASE_DIR,
