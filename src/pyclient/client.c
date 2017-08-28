@@ -33,7 +33,7 @@ int main(int argc UNUSED, char **argv UNUSED) {
     assert(sizeof(double) == 8);
 
     // Bind the socket and start listening the port
-	if (strcasecmp("yes", getenv("USE_NETWORK"))) {
+	if (strcasecmp("yes", getenv("USE_NETWORK")) == 0) {
 		sock = start_listener_inet();
 	} else {
 		sock = start_listener_ipc();
