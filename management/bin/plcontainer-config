@@ -14,6 +14,7 @@ import tempfile
 import traceback
 import datetime
 import xml.dom.minidom
+import commands
 from xml.etree import ElementTree
 from optparse import OptionParser
 
@@ -31,7 +32,10 @@ except ImportError, e:
 PLCONTAINER_CONFIG_FILE = 'plcontainer_configuration.xml'
 PLCONTAINER_GPDB_DIR = 'share/postgresql/plcontainer'
 PL_BATCH_SIZE = 3
+TMP = '/tmp'
+TAR_GZ = '.tar.gz'
 
+global GPHOME
 
 def parseargs():
     parser = OptionParser()
@@ -44,34 +48,113 @@ def parseargs():
     parser.add_option('--cleanup', action='store_true', help='Remove all the backup files for PL/Container')
 
     parser.add_option("-c", "--configure", dest="conf", action="store_true", help="Configure container image name and " +
-                        "location as well as shared folder, need to combine with -n and -i, usage: -c -n IMAGENAME -i IMAGEURL")
+                        "location as well as shared folder, need to combine with -n and -l, usage: -c -n IMAGENAME -i IMAGEURL")
+    parser.add_option('-i', '--install', dest='install', action="store_true", help='Install a dokcer image and add it to configuration file')
     parser.add_option("-n", "--name", dest="name", type="string", help="Configure container image name")
-    parser.add_option("-i", "--image", dest="image", type="string", help="Configure container image location")
+    parser.add_option("-l", "--location", dest="image", type="string", help="Configure container image location, support Tar.gz image" +
+                        " file or docker image url")
     parser.add_option("--volume", dest="shared", type="string", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")
 
 
     (options, args) = parser.parse_args()
-    if options.show and (options.reset or options.restore or options.cleanup):
-        logger.error(' --show option cannot be combined with --reset, --restore, --cleanup')
+    if options.show and (options.reset or options.restore or options.cleanup or options.conf or options.install):
+        logger.error(' --show option cannot be combined with --reset, --restore, --cleanup, --configure, --install')
         sys.exit(1)
-    if options.reset and (options.show or options.restore or options.cleanup):
-        logger.error(' --reset option cannot be combined with --show, --restore, --cleanup')
+    if options.reset and (options.show or options.restore or options.cleanup or options.conf or options.install):
+        logger.error(' --reset option cannot be combined with --show, --restore, --cleanup, --configure, --install')
         sys.exit(1)
-    if options.restore and (options.show or options.reset or options.cleanup):
-        logger.error(' --restore option cannot be combined with --show, --reset, --cleanup')
+    if options.restore and (options.show or options.reset or options.cleanup or options.conf or options.install):
+        logger.error(' --restore option cannot be combined with --show, --reset, --cleanup, --configure, --install')
         sys.exit(1)
-    if options.cleanup and (options.show or options.reset or options.restore):
-        logger.error(' --cleanup option cannot be combined with --show, --reset, --restore')
+    if options.cleanup and (options.show or options.reset or options.restore or options.conf or options.install):
+        logger.error(' --cleanup option cannot be combined with --show, --reset, --restore, --configure, --install')
         sys.exit(1)
-    if options.conf and not (options.name or options.image):
+    if options.conf and not (options.name and options.image):
         logger.error(" --configure option needs image name and its location")
         sys.exit(1)
-    if (options.name or options.image or options.shared) and not options.conf:
-        logger.error(" configuration options must combine with --configure")
+    if options.install and not (options.name and options.image):
+        logger.error(" --install option needs image name and its location")
+        sys.exit(1)
+    if (options.name or options.image or options.shared) and not (options.conf or options.install):
+        logger.error(" configuration options must combine with --configure or --install")
         sys.exit(1)
 
     return options
+
+def distribut_docker_file(pool, d_file, dest, hosts):
+    if dest is None:
+        dest = os.path.join(TMP, d_file)
+    for host in hosts:
+        cmd = Scp('Distribute docker image file.',
+                    d_file,
+                    dest,
+                    None,
+                    host.strip())
+        pool.addCommand(cmd)
+    pool.join()
+    pool.check_results()
+
+def remote_cmd(pool, cmd_str, hosts):
+    for host in hosts:
+        cmd = Command('Execute remote cmd on all hosts.',
+                        cmd_str,
+                        ctxt = REMOTE,
+                        remoteHost = host.strip())
+        pool.addCommand(cmd)
+    pool.join()
+    pool.check_results()
+
+def get_docker_image(url):
+    '''
+    download docker image from given url
+    '''
+    logger.info("Getting docker image from %s" % url)
+    (ok, out) = commands.getstatusoutput('docker pull %s' % url)
+    if ok != 0:
+        logger.error("Cannot pull docker image from %s" % url)
+        sys.exit(1)
+    name_tag = url.split("/")[-1]
+    image_name = "".join([name_tag.replace(":", "_"), TAR_GZ])
+    image_path = os.path.join(TMP, image_name)
+    logger.info("Saving docker image to %s" % image_path)
+    (ok, out) = commands.getstatusoutput('docker save -o %s %s' % (image_path, url))
+    if ok != 0:
+        logger.error("Cannot save docker image %s to %s" % (url, image_path))
+        sys.exit(1)
+
+    return image_path
+
+def install_images(options, pool, hosts):
+    '''
+    install docker image either form url or file
+    '''
+    logger.info('Starting to install images %s' % (options.image))
+    docker_image = options.image
+
+    if docker_image is None:
+        logger.error('Docker image cannot be none.')
+        sys.exit(1)
+    if not docker_image.endswith(TAR_GZ):
+        docker_image = get_docker_image(options.image)
+
+    try:
+        logger.info('Checking docker installed on all hosts...')
+        check_docker_cmd = 'which docker'
+        remote_cmd(pool, check_docker_cmd, hosts)
+        
+
+        logger.info('Distributing image file %s to all hosts...' % docker_image)
+        dest = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, docker_image)
+        distribut_docker_file(pool, docker_image, dest, hosts)
+        
+
+        logger.info('Loading image on all hosts...')
+        docker_load_cmd = " ".join(["docker load -i ", dest])
+        remote_cmd(pool, docker_load_cmd, hosts)
+
+    except Exception, ex:
+        raise(ex)
 
 def update_xml_check_shared_folder(container, elements):
     '''
@@ -261,6 +344,11 @@ def backup_file(pool, gpdb_locations, file):
     pool.join()
     pool.check_results()
 
+def get_all_host(array):
+    hosts = set()
+    for hostname in array.get_hostlist():
+       hosts.add(hostname)
+    return hosts
 
 def get_segment_locations(seg_list):
     """
@@ -362,6 +450,8 @@ def main():
     options = None
     new_config = False
 
+    global GPHOME
+
     options = parseargs()
     if options.verbose:
         gplog.enable_verbose_logging()
@@ -375,6 +465,7 @@ def main():
         url = dbconn.DbURL()
         array = gparray.GpArray.initFromCatalog(url, True)
         segs = array.getDbList()
+        hosts = get_all_host(array)
 
         gpdb_locations = get_segment_locations(segs)
         logger.debug('GPDB Configuration is:')
@@ -420,6 +511,19 @@ def main():
             logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
+        
+        if options.install:
+            logger.info('Preparing the worker pool...')
+            pool = WorkerPool(PL_BATCH_SIZE)
+            install_images(options, pool, hosts)
+            elements = get_conf_elements(options)
+            update_xml_config(tmp_file, elements)
+            logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
+            backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
+            logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+            distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+            new_config = True
+
 
         if options.cleanup:
             if userinput.ask_yesno(None, "Are you sure want to clean up the PL/Container backup configurations?", 'N'):
@@ -428,7 +532,7 @@ def main():
                 logger.info('Cleaning up old backup files...')
                 remove_files(pool, gpdb_locations, '.' + PLCONTAINER_CONFIG_FILE + '.bak*')
 
-        if not options.reset and not options.restore and not options.show and not options.cleanup and not options.conf:
+        if not options.reset and not options.restore and not options.show and not options.cleanup and not options.conf and not options.install:
             changed = edit_file(tmp_file, options.editor)
             if changed:
                 logger.info('Preparing the worker pool...')
@@ -443,8 +547,8 @@ def main():
             logger.info('Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions.' +
                         ' New sessions will get new configuration automatically')
 
-    except Exception, e:
-        logger.fatal("%s failed. (Reason='%s') exiting..." % (execname, e))
+    except Exception, ex:
+        logger.fatal("%s failed. (Reason='%s') exiting..." % (execname, ex))
         if options.verbose:
             logger.exception(e)
 
