@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "comm_channel.h"
@@ -86,6 +87,12 @@ int start_listener_ipc() {
     if (bind(sock, (const struct sockaddr *)&addr, sizeof(addr)) == -1) {
         lprintf(ERROR, "Cannot bind the addr: %s", strerror(errno));
     }
+
+	/* So that QE can access this socket file.
+	 * FIXME: Is there solution or is it necessary to set less permission?
+	 * Dynamically create uid same as that in GPDB in container?
+	 */
+	chmod(uds_fn, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH); /* 0666*/
 
 	pfree(uds_fn);
 

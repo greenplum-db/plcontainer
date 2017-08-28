@@ -376,7 +376,7 @@ plcConn *plcConnect_inet(int port) {
 
     raddr.sin_port = htons(port);
     if (connect(sock, (const struct sockaddr *)&raddr,
-            sizeof(struct sockaddr_in)) < 0) {
+            sizeof(raddr)) < 0) {
         char ipAddr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(raddr.sin_addr), ipAddr, INET_ADDRSTRLEN);
         lprintf(DEBUG1, "PLContainer: Failed to connect to %s", ipAddr);
@@ -430,7 +430,7 @@ plcConn *plcConnect_ipc(int container_slot) {
 	strcpy(raddr.sun_path, uds_fn);
 
 	if (connect(sock, (const struct sockaddr *)&raddr,
-			sizeof(struct sockaddr_in)) < 0) {
+			sizeof(raddr)) < 0) {
 		lprintf(DEBUG1, "PLContainer: Failed to connect to %s: %s",
 				uds_fn, strerror(errno));
 		return NULL;

@@ -407,7 +407,7 @@ char *get_sharing_options(plcContainerConf *conf, int container_slot) {
             totallen += strlen(volumes[i]);
 
 			/* Create the directory. */
-			if (mkdir(uds_dir, S_IRUSR | S_IWUSR) < 0 && errno != EEXIST) {
+			if (mkdir(uds_dir, S_IRWXU) < 0 && errno != EEXIST) {
 				elog(ERROR, "PLContainer: Cannot create directory %s: %s",
 						uds_dir, strerror(errno));
 			}
