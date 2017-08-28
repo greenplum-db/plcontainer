@@ -9,6 +9,7 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "postgres.h"
 #include "utils/builtins.h"
@@ -396,7 +397,7 @@ char *get_sharing_options(plcContainerConf *conf, int container_slot) {
                 comma = ',';
 			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
 			int gpdb_dir_sz;
-			char uds_dir;
+			char *uds_dir;
 
 			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1;
 			uds_dir = pmalloc(gpdb_dir_sz);

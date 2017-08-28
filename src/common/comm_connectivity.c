@@ -19,7 +19,6 @@
 #include <assert.h>
 #include <sys/un.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
 #include <libgen.h>
 
 #include "comm_utils.h"
