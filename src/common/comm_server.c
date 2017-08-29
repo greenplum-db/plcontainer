@@ -56,7 +56,7 @@ int start_listener_inet() {
 /*
  * Functoin binds the socket and starts listening on it: unix domain socket.
  */
-int start_listener_ipc() {
+int start_listener_ipc(char **puds_fn) {
     struct sockaddr_un addr;
     int                sock;
 	char              *uds_fn;
@@ -94,7 +94,12 @@ int start_listener_ipc() {
 	 */
 	chmod(uds_fn, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH); /* 0666*/
 
-	pfree(uds_fn);
+	/* Save it since we need to unlink the file when container process exits. */
+	if (puds_fn != NULL) {
+		unlink(*puds_fn);
+		pfree(*puds_fn);
+	}
+	*puds_fn = uds_fn;
 
 #ifdef _DEBUG_CLIENT
     int enable = 1;
