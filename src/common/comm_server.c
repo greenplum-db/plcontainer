@@ -20,10 +20,13 @@
 #include "comm_server.h"
 #include "messages/messages.h"
 
+/* For unix domain socket connection only. */
+static char *uds_client_fn;
+
 /*
  * Function binds the socket and starts listening on it: tcp
  */
-int start_listener_inet() {
+static int start_listener_inet() {
     struct sockaddr_in addr;
     int                sock;
 
@@ -56,7 +59,7 @@ int start_listener_inet() {
 /*
  * Function binds the socket and starts listening on it: unix domain socket.
  */
-int start_listener_ipc(char **puds_fn) {
+static int start_listener_ipc(char **puds_fn) {
     struct sockaddr_un addr;
     int                sock;
 	char              *uds_fn;
@@ -112,6 +115,29 @@ int start_listener_ipc(char **puds_fn) {
     }
 
     return sock;
+}
+
+static void atexit_cleanup_udsfile()
+{
+	if (uds_client_fn != NULL) {
+		unlink(uds_client_fn);
+		pfree(uds_client_fn);
+	}
+}
+
+int start_listener()
+{
+	int sock;
+
+	if (strcasecmp("true", getenv("USE_NETWORK")) == 0 ||
+		strcasecmp("yes", getenv("USE_NETWORK")) == 0) {
+		sock = start_listener_inet();
+	} else {
+		sock = start_listener_ipc(&uds_client_fn);
+		atexit(atexit_cleanup_udsfile);
+	}
+
+	return sock;
 }
 
 /*

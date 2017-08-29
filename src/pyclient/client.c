@@ -20,18 +20,6 @@
 #include "pycall.h"
 #include "pyerror.h"
 
-/* For unix domain socket connection only. */
-static char *uds_client_fn;
-
-void
-client_on_proc_exit(void)
-{
-	if (uds_client_fn != NULL) {
-		unlink(uds_client_fn);
-		pfree(uds_client_fn);
-	}
-}
-
 int main(int argc UNUSED, char **argv UNUSED) {
     int      sock;
     plcConn* conn;
@@ -44,15 +32,7 @@ int main(int argc UNUSED, char **argv UNUSED) {
     assert(sizeof(float) == 4);
     assert(sizeof(double) == 8);
 
-    // Bind the socket and start listening the port
-	if (strcasecmp("true", getenv("USE_NETWORK")) == 0 ||
-		strcasecmp("yes", getenv("USE_NETWORK")) == 0) {
-		sock = start_listener_inet();
-	} else {
-		sock = start_listener_ipc(&uds_client_fn);
-	}
-
-	atexit(client_on_proc_exit);
+	sock = start_listener();
 
     // Initialize Python
     status = python_init();
