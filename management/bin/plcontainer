@@ -45,7 +45,7 @@ def parseargs():
 
 
     config_parser = subparsers.add_parser('configure', help="Configure container image name and " +
-                        "location as well as shared folder, need to combine with -n and -l, usage: -c -n IMAGENAME -i IMAGEURL")
+                        "location as well as shared folder, need to combine with -n and -i, usage: -n IMAGENAME -i IMAGEURL")
     install_parser = subparsers.add_parser('install', help='Install a dokcer image and add it to configuration file')
 
     # for configure
