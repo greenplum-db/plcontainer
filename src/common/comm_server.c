@@ -53,6 +53,8 @@ static int start_listener_inet() {
         lprintf(ERROR, "Cannot listen the socket: %s", strerror(errno));
     }
 
+	lprintf(DEBUG1, "Listening via network with port: %d", SERVER_PORT);
+
     return sock;
 }
 
@@ -113,6 +115,8 @@ static int start_listener_ipc(char **puds_fn) {
     if (listen(sock, 10) == -1) {
         lprintf(ERROR, "Cannot listen the socket: %s", strerror(errno));
     }
+
+	lprintf(DEBUG1, "Listening via unix domain socket with file: %s", uds_fn);
 
     return sock;
 }
