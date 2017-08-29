@@ -79,18 +79,6 @@ def parseargs():
             sys.exit(1)
 
     elif options.subparser_name == "configure":
-            if options.show and (options.reset or options.restore or options.cleanup):
-                logger.error(' --show option cannot be combined with --reset, --restore, --cleanup')
-                sys.exit(1)
-            if options.reset and (options.show or options.restore or options.cleanup):
-                logger.error(' --reset option cannot be combined with --show, --restore, --cleanup')
-                sys.exit(1)
-            if options.restore and (options.show or options.reset or options.cleanup):
-                logger.error(' --restore option cannot be combined with --show, --reset, --cleanup')
-                sys.exit(1)
-            if options.cleanup and (options.show or options.reset or options.restore):
-                logger.error(' --cleanup option cannot be combined with --show, --reset, --restore')
-                sys.exit(1)
             if options.name and not options.image:
                 logger.error('container namd and image must provied')
                 sys.exit(1)
