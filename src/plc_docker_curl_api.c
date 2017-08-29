@@ -334,7 +334,7 @@ int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainerCo
             createRequest,
             conf->command,
             conf->isNetworkConnection ? "true" : "false",
-            conf->isNetworkConnection ? "true" : "false",
+            conf->isNetworkConnection ? "false" : "true",
             conf->dockerid,
             volumeShare,
             ((long long)conf->memoryMb) * 1024 * 1024);

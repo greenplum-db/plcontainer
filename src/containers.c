@@ -246,7 +246,7 @@ plcConn *start_container(plcContainerConf *conf) {
 			conn = plcConnect_inet(port);
 
         if (conn != NULL) {
-			elog(DEBUG1, "Connnected to container via %s",
+			elog(DEBUG1, "Connected to container via %s",
 				conf->isNetworkConnection ? "network" : "unix domain socket");
 			conn->container_slot = container_slot;
             res = plcontainer_channel_send(conn, (plcMessage*)mping);

@@ -485,7 +485,7 @@ int plc_docker_create_container(int sockfd, plcContainerConf *conf, char **name,
             plc_docker_create_request,
             conf->command,
             conf->isNetworkConnection ? "true" : "false",
-            conf->isNetworkConnection ? "true" : "false",
+            conf->isNetworkConnection ? "false" : "true",
             conf->dockerid,
             sharing,
             ((long long)conf->memoryMb) * 1024 * 1024);
@@ -499,7 +499,7 @@ int plc_docker_create_container(int sockfd, plcContainerConf *conf, char **name,
             strlen(message_body),         // Content-length
             message_body);                // POST message JSON content
 
-    docker_call(sockfd, message, &response, 1);
+    docker_call(sockfd, message, &response, 0);
 
     pfree(apiendpoint);
     pfree(sharing);
