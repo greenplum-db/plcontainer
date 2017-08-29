@@ -490,11 +490,11 @@ def main():
         for host, directory in gpdb_locations:
             logger.debug('    host "%s" directory "%s"' % (host, directory))
 
-        if options.show:
+        if options.show and options.subparser_name == "configure":
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
             show_file(tmp_file)
 
-        if options.reset:
+        if options.reset and options.subparser_name == "configure":
             logger.info('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
             default_config = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, PLCONTAINER_CONFIG_FILE)
@@ -502,7 +502,7 @@ def main():
             distribute_file(pool, default_config, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
 
-        if options.restore:
+        if options.restore and options.subparser_name == "configure":
             logger.info('Getting list of configuration backups in %s:%s...' % (remote_host, remote_dir))
             filename = get_last_backup(pool, remote_host, remote_dir, PLCONTAINER_CONFIG_FILE)
             if filename and userinput.ask_yesno(None, "Continue restoring the backup configuration '%s'?" % filename, 'N'):
@@ -537,14 +537,14 @@ def main():
             new_config = True
 
 
-        if options.cleanup:
+        if options.cleanup and options.subparser_name == "configure":
             if userinput.ask_yesno(None, "Are you sure want to clean up the PL/Container backup configurations?", 'N'):
                 logger.info('Preparing the worker pool...')
                 pool = WorkerPool(PL_BATCH_SIZE)
                 logger.info('Cleaning up old backup files...')
                 remove_files(pool, gpdb_locations, '.' + PLCONTAINER_CONFIG_FILE + '.bak*')
 
-        if options.editor and not options.name:
+        if options.editor and not options.name and options.subparser_name == "configure":
             changed = edit_file(tmp_file, options.editor)
             if changed:
                 logger.info('Preparing the worker pool...')
