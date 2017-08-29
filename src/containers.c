@@ -241,7 +241,7 @@ plcConn *start_container(plcContainerConf *conf) {
         plcMessage *mresp = NULL;
 
 		if (!conf->isNetworkConnection)
-	        conn = plcConnect_ipc(uds_fn);
+			conn = plcConnect_ipc(uds_fn);
 		else
 			conn = plcConnect_inet(port);
 

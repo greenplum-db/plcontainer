@@ -394,7 +394,6 @@ plcConn *plcConnect_inet(int port) {
     return result;
 }
 
-
 /*
  *  Connect to the specified host of the localhost and initialize the plcConn
  *  data structure
