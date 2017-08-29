@@ -15,8 +15,8 @@ import traceback
 import datetime
 import xml.dom.minidom
 import commands
+import argparse
 from xml.etree import ElementTree
-from optparse import OptionParser
 
 try:
     from gppylib import gplog
@@ -38,47 +38,57 @@ TAR_GZ = '.tar.gz'
 global GPHOME
 
 def parseargs():
-    parser = OptionParser()
+    parser = argparse.ArgumentParser()
 
-    parser.add_option('-s', '--show', action='store_true', help='Show the contents of configuration file without changing it')
-    parser.add_option('-v', '--verbose', action='store_true', help='Enable verbose logging')
-    parser.add_option('-e', '--editor', type='string', default='vi', help='Editor to use')
-    parser.add_option('--reset', action='store_true', help='Reset the configuration file to default')
-    parser.add_option('--restore', action='store_true', help='Restore the previous version of PL/Container configuration')
-    parser.add_option('--cleanup', action='store_true', help='Remove all the backup files for PL/Container')
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    subparsers = parser.add_subparsers(dest='subparser_name')
 
-    parser.add_option("-c", "--configure", dest="conf", action="store_true", help="Configure container image name and " +
+
+    config_parser = subparsers.add_parser('configure', help="Configure container image name and " +
                         "location as well as shared folder, need to combine with -n and -l, usage: -c -n IMAGENAME -i IMAGEURL")
-    parser.add_option('-i', '--install', dest='install', action="store_true", help='Install a dokcer image and add it to configuration file')
-    parser.add_option("-n", "--name", dest="name", type="string", help="Configure container image name")
-    parser.add_option("-l", "--location", dest="image", type="string", help="Configure container image location, support Tar.gz image" +
+    install_parser = subparsers.add_parser('install', help='Install a dokcer image and add it to configuration file')
+
+    config_parser.add_argument("-n", "--name", dest="name", type="string", help="Configure container image name")
+    config_parser.add_argument("-i", "--image", dest="image", type="string", help="Configure container image location, support Tar.gz image" +
                         " file or docker image url")
-    parser.add_option("--volume", dest="shared", type="string", action="append",help="Bind mount a volume, can work with multiple volumes" +
+    config_parser.add_argument("-v", "--volume", dest="shared", type="string", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")
+    config_parser.add_argument("-e", "--editor", type="string", default="vi", help="Editor to use")
+    config_parser.add_argument('--reset', action='store_true', help='Reset the configuration file to default')
+    config_parser.add_argument("--restore", action="store_true", help="Restore the previous version of PL/Container configuration")
+    config_parser.add_argument("--cleanup", action="store_true", help="Remove all the backup files for PL/Container")
 
+    install_parser.add_argument("-i", "--image", dest="image", type="string", help="Configure container image location, support Tar.gz image" +
+                        " file or docker image url")
+    install_parser.add_argument("-n", "--name", dest="name", type="string", help="Configure container image name")
+    install_parser.add_argument("--volume", dest="shared", type="string", action="append",help="Bind mount a volume, can work with multiple volumes" +
+                        " format: HOST:CONTAINER:[rw|ro]")                    
 
-    (options, args) = parser.parse_args()
-    if options.show and (options.reset or options.restore or options.cleanup or options.conf or options.install):
-        logger.error(' --show option cannot be combined with --reset, --restore, --cleanup, --configure, --install')
-        sys.exit(1)
-    if options.reset and (options.show or options.restore or options.cleanup or options.conf or options.install):
-        logger.error(' --reset option cannot be combined with --show, --restore, --cleanup, --configure, --install')
-        sys.exit(1)
-    if options.restore and (options.show or options.reset or options.cleanup or options.conf or options.install):
-        logger.error(' --restore option cannot be combined with --show, --reset, --cleanup, --configure, --install')
-        sys.exit(1)
-    if options.cleanup and (options.show or options.reset or options.restore or options.conf or options.install):
-        logger.error(' --cleanup option cannot be combined with --show, --reset, --restore, --configure, --install')
-        sys.exit(1)
-    if options.conf and not (options.name and options.image):
-        logger.error(" --configure option needs image name and its location")
-        sys.exit(1)
-    if options.install and not (options.name and options.image):
-        logger.error(" --install option needs image name and its location")
-        sys.exit(1)
-    if (options.name or options.image or options.shared) and not (options.conf or options.install):
-        logger.error(" configuration options must combine with --configure or --install")
-        sys.exit(1)
+    options = parser.parse_args()
+    if options.subparser_name == "install":
+        if not (options.name or options.image or options.shared):
+            logger.error('unkown options')
+            sys.exit(1)
+        
+        if not (options.name and options.image):
+            logger.error('container namd and image must provied')
+            sys.exit(1)
+    elif options.subparser_name == "configure":
+            if options.show and (options.reset or options.restore or options.cleanup):
+                logger.error(' --show option cannot be combined with --reset, --restore, --cleanup')
+                sys.exit(1)
+            if options.reset and (options.show or options.restore or options.cleanup):
+                logger.error(' --reset option cannot be combined with --show, --restore, --cleanup')
+                sys.exit(1)
+            if options.restore and (options.show or options.reset or options.cleanup):
+                logger.error(' --restore option cannot be combined with --show, --reset, --cleanup')
+                sys.exit(1)
+            if options.cleanup and (options.show or options.reset or options.restore):
+                logger.error(' --cleanup option cannot be combined with --show, --reset, --restore')
+                sys.exit(1)
+            if not (options.name and options.image):
+                logger.error('container namd and image must provied')
+                sys.exit(1)
 
     return options
 
