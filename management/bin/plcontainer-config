@@ -48,20 +48,21 @@ def parseargs():
                         "location as well as shared folder, need to combine with -n and -l, usage: -c -n IMAGENAME -i IMAGEURL")
     install_parser = subparsers.add_parser('install', help='Install a dokcer image and add it to configuration file')
 
-    config_parser.add_argument("-n", "--name", dest="name", type="string", help="Configure container image name")
-    config_parser.add_argument("-i", "--image", dest="image", type="string", help="Configure container image location, support Tar.gz image" +
+    config_parser.add_argument("-n", "--name", dest="name", help="Configure container image name")
+    config_parser.add_argument("-i", "--image", dest="image", help="Configure container image location, support Tar.gz image" +
                         " file or docker image url")
-    config_parser.add_argument("-v", "--volume", dest="shared", type="string", action="append",help="Bind mount a volume, can work with multiple volumes" +
+    config_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")
-    config_parser.add_argument("-e", "--editor", type="string", default="vi", help="Editor to use")
+    config_parser.add_argument("-e", "--editor", default="vi", help="Editor to use")
     config_parser.add_argument('--reset', action='store_true', help='Reset the configuration file to default')
     config_parser.add_argument("--restore", action="store_true", help="Restore the previous version of PL/Container configuration")
     config_parser.add_argument("--cleanup", action="store_true", help="Remove all the backup files for PL/Container")
+    config_parser.add_argument('-s', '--show', action='store_true', help='Show the contents of configuration file without changing it')
 
-    install_parser.add_argument("-i", "--image", dest="image", type="string", help="Configure container image location, support Tar.gz image" +
+    install_parser.add_argument("-i", "--image", dest="image", help="Configure container image location, support Tar.gz image" +
                         " file or docker image url")
-    install_parser.add_argument("-n", "--name", dest="name", type="string", help="Configure container image name")
-    install_parser.add_argument("--volume", dest="shared", type="string", action="append",help="Bind mount a volume, can work with multiple volumes" +
+    install_parser.add_argument("-n", "--name", dest="name", help="Configure container image name")
+    install_parser.add_argument("--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")                    
 
     options = parser.parse_args()
@@ -73,6 +74,7 @@ def parseargs():
         if not (options.name and options.image):
             logger.error('container namd and image must provied')
             sys.exit(1)
+
     elif options.subparser_name == "configure":
             if options.show and (options.reset or options.restore or options.cleanup):
                 logger.error(' --show option cannot be combined with --reset, --restore, --cleanup')
@@ -86,7 +88,7 @@ def parseargs():
             if options.cleanup and (options.show or options.reset or options.restore):
                 logger.error(' --cleanup option cannot be combined with --show, --reset, --restore')
                 sys.exit(1)
-            if not (options.name and options.image):
+            if options.name and not options.image:
                 logger.error('container namd and image must provied')
                 sys.exit(1)
 
