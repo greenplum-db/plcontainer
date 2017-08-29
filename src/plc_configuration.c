@@ -79,9 +79,11 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
             if (xmlStrcmp(cur_node->name, (const xmlChar *)"use_network") == 0) {
                 processed = 1;
                 value = xmlNodeGetContent(cur_node);
-				if (strcasecmp((char *) value, "no") == 0)
+				if (strcasecmp((char *) value, "false") == 0 ||
+					strcasecmp((char *) value, "no") == 0)
 					conf->isNetworkConnection = false;
-				else if (strcasecmp((char *) value, "yes") == 0)
+				else if (strcasecmp((char *) value, "true") == 0 ||
+						 strcasecmp((char *) value, "yes") == 0)
 					conf->isNetworkConnection = true;
 				else
 					processed = 0;

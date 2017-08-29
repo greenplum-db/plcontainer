@@ -62,8 +62,8 @@ static char *plc_docker_create_request =
         "    \"Tty\": false,\n"
         "    \"Cmd\": [\"%s\"],\n"
         "    \"Env\": [\"USE_NETWORK=%s\"],\n"
+        "    \"NetworkDisabled\": %s,\n"
         "    \"Image\": \"%s\",\n"
-        "    \"DisableNetwork\": false,\n"
         "    \"HostConfig\": {\n"
         "        \"Binds\": [%s],\n"
         "        \"Memory\": %lld,\n"
@@ -480,11 +480,12 @@ int plc_docker_create_container(int sockfd, plcContainerConf *conf, char **name,
     /* Get Docket API "create" call JSON message body */
     sharing = get_sharing_options(conf, container_slot);
     message_body = palloc(40 + strlen(plc_docker_create_request) + strlen(conf->command)
-                             + 3 + strlen(conf->dockerid) + strlen(sharing));
+                             + strlen(conf->dockerid) + strlen(sharing));
     sprintf(message_body,
             plc_docker_create_request,
             conf->command,
-            conf->isNetworkConnection ? "yes" : "no",
+            conf->isNetworkConnection ? "true" : "false",
+            conf->isNetworkConnection ? "true" : "false",
             conf->dockerid,
             sharing,
             ((long long)conf->memoryMb) * 1024 * 1024);

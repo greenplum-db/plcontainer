@@ -31,7 +31,7 @@ typedef struct plcConn {
 #define UDS_SHARED_FILE "unix.domain.socket.shared.file"
 #define IPC_CLIENT_DIR "/tmp/plcontainer"
 #define IPC_GPDB_BASE_DIR "/tmp/plcontainer"
-#define MAX_SHARED_FILE_SZ (strlen(UDS_SHARED_FILE))
+#define MAX_SHARED_FILE_SZ strlen(UDS_SHARED_FILE)
 
 #ifndef COMM_STANDALONE
 void plc_init_ipc(void);
