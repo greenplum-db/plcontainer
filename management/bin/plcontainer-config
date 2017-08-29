@@ -48,17 +48,20 @@ def parseargs():
                         "location as well as shared folder, need to combine with -n and -l, usage: -c -n IMAGENAME -i IMAGEURL")
     install_parser = subparsers.add_parser('install', help='Install a dokcer image and add it to configuration file')
 
+    # for configure
     config_parser.add_argument("-n", "--name", dest="name", help="Configure container image name")
     config_parser.add_argument("-i", "--image", dest="image", help="Configure container image location, support Tar.gz image" +
                         " file or docker image url")
     config_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")
-    config_parser.add_argument("-e", "--editor", dest="editor", default="vi", help="Editor to use")
-    config_parser.add_argument('--reset', action='store_true', help='Reset the configuration file to default')
-    config_parser.add_argument("--restore", action="store_true", help="Restore the previous version of PL/Container configuration")
-    config_parser.add_argument("--cleanup", action="store_true", help="Remove all the backup files for PL/Container")
-    config_parser.add_argument('-s', '--show', action='store_true', help='Show the contents of configuration file without changing it')
+    single_option = config_parser.add_mutually_exclusive_group()
+    single_option.add_argument("-e", "--editor", dest="editor", default="vi", help="Editor to use")
+    single_option.add_argument('--reset', action='store_true', help='Reset the configuration file to default')
+    single_option.add_argument("--restore", action="store_true", help="Restore the previous version of PL/Container configuration")
+    single_option.add_argument("--cleanup", action="store_true", help="Remove all the backup files for PL/Container")
+    single_option.add_argument('-s', '--show', action='store_true', help='Show the contents of configuration file without changing it')
 
+    # for install
     install_parser.add_argument("-i", "--image", dest="image", help="Configure container image location, support Tar.gz image" +
                         " file or docker image url")
     install_parser.add_argument("-n", "--name", dest="name", help="Configure container image name")
