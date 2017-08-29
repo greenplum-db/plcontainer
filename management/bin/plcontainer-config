@@ -53,7 +53,7 @@ def parseargs():
                         " file or docker image url")
     config_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")
-    config_parser.add_argument("-e", "--editor", default="vi", help="Editor to use")
+    config_parser.add_argument("-e", "--editor", dest="editor", default="vi", help="Editor to use")
     config_parser.add_argument('--reset', action='store_true', help='Reset the configuration file to default')
     config_parser.add_argument("--restore", action="store_true", help="Restore the previous version of PL/Container configuration")
     config_parser.add_argument("--cleanup", action="store_true", help="Remove all the backup files for PL/Container")
@@ -62,7 +62,7 @@ def parseargs():
     install_parser.add_argument("-i", "--image", dest="image", help="Configure container image location, support Tar.gz image" +
                         " file or docker image url")
     install_parser.add_argument("-n", "--name", dest="name", help="Configure container image name")
-    install_parser.add_argument("--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
+    install_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")                    
 
     options = parser.parse_args()
@@ -513,7 +513,7 @@ def main():
                 remove_files(pool, gpdb_locations, os.path.basename(filename))
                 new_config = True
 
-        if options.conf:
+        if options.name and options.subparser_name == "configure":
             elements = get_conf_elements(options)
             update_xml_config(tmp_file, elements)
             logger.info('Preparing the worker pool...')
@@ -524,7 +524,7 @@ def main():
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
         
-        if options.install:
+        if options.name and options.subparser_name == "install":
             logger.info('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
             install_images(options, pool, hosts)
@@ -544,7 +544,7 @@ def main():
                 logger.info('Cleaning up old backup files...')
                 remove_files(pool, gpdb_locations, '.' + PLCONTAINER_CONFIG_FILE + '.bak*')
 
-        if not options.reset and not options.restore and not options.show and not options.cleanup and not options.conf and not options.install:
+        if options.editor and not options.name:
             changed = edit_file(tmp_file, options.editor)
             if changed:
                 logger.info('Preparing the worker pool...')
