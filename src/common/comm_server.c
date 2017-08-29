@@ -21,7 +21,7 @@
 #include "messages/messages.h"
 
 /*
- * Functoin binds the socket and starts listening on it: tcp
+ * Function binds the socket and starts listening on it: tcp
  */
 int start_listener_inet() {
     struct sockaddr_in addr;
@@ -54,7 +54,7 @@ int start_listener_inet() {
 }
 
 /*
- * Functoin binds the socket and starts listening on it: unix domain socket.
+ * Function binds the socket and starts listening on it: unix domain socket.
  */
 int start_listener_ipc(char **puds_fn) {
     struct sockaddr_un addr;
@@ -115,7 +115,7 @@ int start_listener_ipc(char **puds_fn) {
 }
 
 /*
- * Fuction waits for the socket to accept connection for finite amount of time
+ * Function waits for the socket to accept connection for finite amount of time
  * and errors out when the timeout is reached and no client connected
  */
 void connection_wait(int sock) {
