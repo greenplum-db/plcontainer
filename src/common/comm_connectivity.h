@@ -37,7 +37,7 @@ typedef struct plcConn {
 void plc_init_ipc(void);
 void plc_deinit_ipc(void);
 plcConn * plcConnect_inet(int port);
-plcConn * plcConnect_ipc(int container_slot);
+plcConn * plcConnect_ipc(char *uds_fn);
 void plcDisconnect(plcConn *conn);
 #endif
 plcConn * plcConnInit(int sock);

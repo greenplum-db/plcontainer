@@ -11,6 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <libgen.h>
 
 #include "postgres.h"
 #include "utils/ps_status.h"
@@ -45,7 +46,14 @@ static int check_container_name(const char *name);
 
 #ifndef CONTAINER_DEBUG
 
-static void cleanup(char *dockerid) {
+static void cleanup4uds(char *uds_fn) {
+	if (uds_fn != NULL) {
+		unlink(uds_fn);
+		rmdir(dirname(uds_fn));
+	}
+}
+
+static void cleanup(char *dockerid, char *uds_fn) {
     pid_t pid = 0;
 
     /* We fork the process to syncronously wait for container to exit */
@@ -99,11 +107,13 @@ static void cleanup(char *dockerid) {
         if (sockfd > 0) {
             res = plc_docker_delete_container(sockfd, dockerid);
             if (res < 0) {
+				cleanup4uds(uds_fn);
                 _exit(1);
             }
         }
         plc_docker_disconnect(sockfd);
 
+		cleanup4uds(uds_fn);
         _exit(0);
     }
 }
@@ -155,6 +165,18 @@ plcConn *find_container(const char *image) {
     return NULL;
 }
 
+static char *get_uds_fn(int container_slot) {
+	char *uds_fn = NULL;
+	int   sz;
+
+	/* filename: IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot / UDS_SHARED_FILE */
+	sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1 + MAX_SHARED_FILE_SZ + 1;
+	uds_fn = pmalloc(sz);
+	snprintf(uds_fn, sz, "%s.%d.%d/%s", IPC_GPDB_BASE_DIR, getpid(), container_slot, UDS_SHARED_FILE);
+
+	return uds_fn;
+}
+
 plcConn *start_container(plcContainerConf *conf) {
     int port;
     unsigned int sleepus = 25000;
@@ -162,10 +184,10 @@ plcConn *start_container(plcContainerConf *conf) {
     plcMsgPing *mping = NULL;
     plcConn *conn = NULL;
     char *dockerid = NULL;
-	int        container_slot;
-
-    int sockfd;
-    int res = 0;
+	char *uds_fn = NULL;
+	int   container_slot;
+    int   sockfd;
+    int   res = 0;
 
 	container_slot = find_container_slot();
 
@@ -202,8 +224,11 @@ plcConn *start_container(plcContainerConf *conf) {
         return conn;
     }
 
+	if (!conf->isNetworkConnection)
+		uds_fn = get_uds_fn(container_slot);
+
     /* Create a process to clean up the container after it finishes */
-    cleanup(dockerid);
+    cleanup(dockerid, uds_fn);
 
     /* Making a series of connection attempts unless connection timeout of
      * CONTAINER_CONNECT_TIMEOUT_MS is reached. Exponential backoff for
@@ -216,7 +241,7 @@ plcConn *start_container(plcContainerConf *conf) {
         plcMessage *mresp = NULL;
 
 		if (!conf->isNetworkConnection)
-	        conn = plcConnect_ipc(container_slot);
+	        conn = plcConnect_ipc(uds_fn);
 		else
 			conn = plcConnect_inet(port);
 
@@ -248,6 +273,8 @@ plcConn *start_container(plcContainerConf *conf) {
     }
 
     pfree(dockerid);
+	if (uds_fn != NULL)
+		pfree(uds_fn);
 
     return conn;
 }

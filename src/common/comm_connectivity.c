@@ -399,18 +399,12 @@ plcConn *plcConnect_inet(int port) {
  *  Connect to the specified host of the localhost and initialize the plcConn
  *  data structure
  */
-plcConn *plcConnect_ipc(int container_slot) {
+plcConn *plcConnect_ipc(char *uds_fn) {
     plcConn            *result = NULL;
     struct timeval      tv;
-	char               *uds_fn = NULL;
 	int                 sock;
 	struct sockaddr_un  raddr;
-	int sz;
 
-	/* filename: IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot / UDS_SHARED_FILE */
-	sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1 + MAX_SHARED_FILE_SZ + 1;
-	uds_fn = pmalloc(sz);
-	snprintf(uds_fn, sz, "%s.%d.%d/%s", IPC_GPDB_BASE_DIR, getpid(), container_slot, UDS_SHARED_FILE);
 	if (strlen(uds_fn) >= sizeof(raddr.sun_path)) {
 		lprintf(ERROR, "PLContainer: The path for unix domain socket "
 				"connection is too long: %s", uds_fn);
