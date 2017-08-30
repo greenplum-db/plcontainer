@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------------
 #
 #  
-#  Copyright (c) 2016, Pivotal.
+# Copyright (c) 2016-Present Pivotal Software, Inc
 # 
 # 
 
@@ -45,7 +45,7 @@ debug: CUSTOMFLAGS = -D_DEBUG_CLIENT -g -O0
 debug: client
 
 .PHONY: all
-all: CUSTOMFLAGS = -O3
+all: CUSTOMFLAGS = -O3 -g
 all: client
 
 clean: clean_common
