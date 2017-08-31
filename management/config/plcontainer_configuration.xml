@@ -45,10 +45,10 @@
 
     <container>
         <name>plc_python_shared</name>
-        <image>pivotaldata/plcontainer_python_shared:IMAGE_TAG</image>
-        <command>/clientdir/client.sh</command>
+        <image>pivotaldata/plcontainer_python_shared:devel</image>
+        <command>/clientdir/pyclient</command>
         <memory_mb>128</memory_mb>
-        <shared_directory host="/tmp/pyclient/bin" container="/clientdir" access="ro"/>
+        <shared_directory host="/usr/local/greenplum-db-devel/bin/pyclient/" container="/clientdir" access="ro"/>
     </container>
 
 </configuration>

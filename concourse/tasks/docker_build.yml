@@ -7,6 +7,7 @@ inputs:
   - name: cluster_env_files
   - name: python
   - name: datascience-python
+  - name: openssl
 outputs:
   - name: plcontainer_docker_image
 params:

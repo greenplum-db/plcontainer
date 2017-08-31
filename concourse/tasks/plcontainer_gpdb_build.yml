@@ -5,13 +5,15 @@ image_resource:
 
 inputs:
   - name: bin_gpdb
+  - name: gpdb_src
   - name: plcontainer_src
+  - name: plr
 
 outputs:
   - name: plcontainer_gpdb_build
 
 run:
-  path: plcontainer_src/concourse/scripts/plcontainer_gpdb_build.sh
+  path: plcontainer_src/concourse/scripts/plcontainer_gpdb_build_prepare.sh
   args:
     - bin_gpdb
     - plcontainer_gpdb_build

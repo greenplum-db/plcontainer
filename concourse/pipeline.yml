@@ -44,7 +44,7 @@ debug_sleep_anchor6: &debug_sleep6
           tag: latest
       run:
         path: 'sh'
-        args: ['-c', 'sleep 2h']
+        args: ['-c', 'sleep 6h']
     ensure:
       <<: *ccp_destroy6
 
@@ -103,8 +103,8 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: master
-    uri: https://github.com/greenplum-db/plcontainer.git
+    branch: hz
+    uri: https://github.com/zhangh43/plcontainer.git
 
 - name: gpdb_src
   type: git
@@ -177,6 +177,31 @@ resources:
     secret_access_key: {{bucket-secret-access-key}}
     versioned_file: plperf/perf_py1
 
+- name: plr_gpdb5_centos6_build
+  type: s3
+  source:
+    bucket: {{pl-bucket-name}}
+    region_name: {{aws-region}}
+    access_key_id: {{bucket-access-key-id}}
+    secret_access_key: {{bucket-secret-access-key}}
+    versioned_file: release/gpdb5/plr/plr-2.3.0-gp5-rhel6-x86_64.gppkg
+- name: plr_gpdb5_centos7_build
+  type: s3
+  source:
+    bucket: {{pl-bucket-name}}
+    region_name: {{aws-region}}
+    access_key_id: {{bucket-access-key-id}}
+    secret_access_key: {{bucket-secret-access-key}}
+    versioned_file: release/gpdb5/plr/plr-2.3.0-gp5-rhel7-x86_64.gppkg
+
+- name: openssl
+  type: s3
+  source:
+    access_key_id: {{artifact-bucket-access-key-id}}
+    bucket: toolsmiths-concourse-artifacts
+    region_name: {{aws-region}}
+    secret_access_key: {{artifact-bucket-secret-access-key}}
+    versioned_file: gpdb-build-artifacts/openssl-rhel7_x86_64-1.0.2l-for-linux.tar.gz 
 
 - name: python-gp5
   type: s3
@@ -204,7 +229,6 @@ resources:
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
     versioned_file: plcontainer_docker_image/plcontainer-devel-images.tar.gz
-
 
 - name: bin_gpdb_centos7
   type: s3
@@ -255,11 +279,15 @@ jobs:
   plan:
   - aggregate:
     - get: bin_gpdb_centos6
+      trigger: true
+    - get: gpdb_src
     - get: plcontainer_src
       trigger: true
     - get: centos-gpdb-dev-6
+    - get: plr
+      resource: plr_gpdb5_centos6_build
   - task: plcontainer_gpdb_build
-    file: plcontainer_src/concourse/plcontainer_gpdb_build.yml
+    file: plcontainer_src/concourse/tasks/plcontainer_gpdb_build.yml
     image: centos-gpdb-dev-6
     input_mapping:
       bin_gpdb: bin_gpdb_centos6
@@ -273,11 +301,13 @@ jobs:
   plan:
   - aggregate:
     - get: bin_gpdb_centos7
+    - get: gpdb_src
     - get: plcontainer_src
-      trigger: true
     - get: centos-gpdb-dev-7
+    - get: plr
+      resource: plr_gpdb5_centos7_build
   - task: plcontainer_gpdb_build
-    file: plcontainer_src/concourse/plcontainer_gpdb_build.yml
+    file: plcontainer_src/concourse/tasks/plcontainer_gpdb_build.yml
     image: centos-gpdb-dev-7
     input_mapping:
       bin_gpdb: bin_gpdb_centos7
@@ -297,12 +327,12 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos6
     - get: ccp_src
-      passed:
-      - plcontainer_build_python_image
-      trigger: true
+      passed: [plcontainer_build_python_image]
     - get: centos-gpdb-dev-6
     - get: plcontainer_client_docker_image
       resource: plcontainer_docker_image_centos_python
+      passed: [plcontainer_build_python_image]
+      trigger: true
     - get: plcontainer_gpdb_centos6_build
       passed: [plcontainer_build_centos6]
       trigger: true
@@ -349,9 +379,9 @@ jobs:
     - get: centos-gpdb-dev-6
     - get: plcontainer_client_docker_image
       resource: plcontainer_docker_image_centos_python
+      passed: [plcontainer_function_test_centos6]
     - get: plcontainer_gpdb_centos6_build
       passed: [plcontainer_function_test_centos6]
-      trigger: true
   - put: terraform
     params:
       action: create
@@ -397,12 +427,12 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos7
     - get: ccp_src
-      passed:
-      - plcontainer_build_python_image
-      trigger: true
+      passed: [plcontainer_build_python_image]
     - get: centos-gpdb-dev-7
     - get: plcontainer_client_docker_image
       resource: plcontainer_docker_image_centos_python
+      passed: [plcontainer_build_python_image]
+      trigger: true
     - get: plcontainer_gpdb_centos7_build
       passed: [plcontainer_build_centos7]
       trigger: true
@@ -449,9 +479,9 @@ jobs:
     - get: centos-gpdb-dev-7
     - get: plcontainer_client_docker_image
       resource: plcontainer_docker_image_centos_python
+      passed: [plcontainer_function_test_centos7]
     - get: plcontainer_gpdb_centos7_build
       passed: [plcontainer_function_test_centos7]
-      trigger: true
   - put: terraform
     params:
       action: create
@@ -491,12 +521,10 @@ jobs:
   plan:
   - aggregate:
     - get: plcontainer_src
-      trigger: true
     - get: gpdb_src
     - get: gpdb_binary
       resource: bin_gpdb_centos6
     - get: ccp_src
-      trigger: true
     - get: centos-gpdb-dev-6
     - get: python
       trigger: true
@@ -504,6 +532,8 @@ jobs:
     - get: datascience-python 
       trigger: true
       resource: datascience-python-gp5
+    - get: openssl
+      trigger: true
   - put: terraform
     params:
       action: create

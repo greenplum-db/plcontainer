@@ -1,7 +1,6 @@
 #!/bin/bash
 
-set -ex
-
+set -exo pipefail
 
 DockerFolder="plcontainer_src/dockerfiles/python/centos7/ds/"
 docker_build() {
@@ -9,8 +8,10 @@ docker_build() {
 	scp -r datascience-python/Data*.gppkg $node:~/
 	scp -r python/python*.targz $node:~/
 	scp -r plcontainer_src $node:~/
+	scp -r openssl/openssl*.gz $node:~/
 
 	ssh $node "bash -c \" \
+	cp ~/openssl*.gz $DockerFolder; \
 	cp ~/python*.targz $DockerFolder; \
 	cp ~/Data*.gppkg $DockerFolder; \
 	pushd $DockerFolder; \

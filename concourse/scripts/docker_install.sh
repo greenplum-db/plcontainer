@@ -1,5 +1,6 @@
 #!/bin/bash
-set -ex
+
+set -exo pipefail
 
 install_docker() {
     local node=$1

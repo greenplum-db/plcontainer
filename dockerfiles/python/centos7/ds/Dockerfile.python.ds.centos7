@@ -2,7 +2,12 @@ FROM centos:7
 
 EXPOSE 8080
 ADD ./python-*.targz /opt/python/
+ADD ./openssl*.gz /usr/local/
 ADD ./DataSciencePython-*x86_64.rpm /opt/ds/
 ADD ./install_python.sh /opt/
 ADD ./python_env.sh /opt/
 RUN /opt/install_python.sh
+ENV PYTHONHOME "/opt/python/rhel6_x86_64/python-2.7.12"
+ENV PYTHONPATH "/opt/ds/lib/python2.7/site-packages:/opt/python/rhel6_x86_64/python-2.7.12/lib/python"
+ENV PATH "/opt/python/rhel6_x86_64/python-2.7.12/bin:$PATH"
+ENV LD_LIBRARY_PATH "/opt/python/rhel6_x86_64/python-2.7.12/lib:/usr/local/lib:$LD_LIBRARY_PATH"
