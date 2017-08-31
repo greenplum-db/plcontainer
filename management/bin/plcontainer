@@ -31,6 +31,8 @@ except ImportError, e:
 
 PLCONTAINER_CONFIG_FILE = 'plcontainer_configuration.xml'
 PLCONTAINER_GPDB_DIR = 'share/postgresql/plcontainer'
+PLCONTAINER_PYCLIENT_FILE = "pyclient"
+PLCONTAINER_PYCLIENT_DIR = "bin/pyclient"
 PL_BATCH_SIZE = 3
 TMP = '/tmp'
 TAR_GZ = '.tar.gz'
@@ -106,7 +108,9 @@ def remote_cmd(pool, cmd_str, hosts):
                         remoteHost = host.strip())
         pool.addCommand(cmd)
     pool.join()
+    results = pool.getCompletedItems()[0].get_results().stdout
     pool.check_results()
+    return results
 
 def get_docker_image(url):
     '''
@@ -146,7 +150,6 @@ def install_images(options, pool, hosts):
         check_docker_cmd = 'which docker'
         remote_cmd(pool, check_docker_cmd, hosts)
         
-
         logger.info('Distributing image file %s to all hosts...' % docker_image)
         dest = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, docker_image)
         distribut_docker_file(pool, docker_image, dest, hosts)
@@ -154,7 +157,7 @@ def install_images(options, pool, hosts):
 
         logger.info('Loading image on all hosts...')
         docker_load_cmd = " ".join(["docker load -i ", dest])
-        remote_cmd(pool, docker_load_cmd, hosts)
+        return remote_cmd(pool, docker_load_cmd, hosts)
 
     except Exception, ex:
         raise(ex)
@@ -163,10 +166,17 @@ def update_xml_check_shared_folder(container, elements):
     '''
     update shared folder settings
     '''
+    for shareDir in container.findall('shared_directory'):
+        container.remove(shareDir)
+    count = 0
+    # default shared dir
+    dest = os.path.join(GPHOME, PLCONTAINER_PYCLIENT_DIR)
+    shareDir = ElementTree.Element("shared_directory",
+            host=dest, container="/clientdir",
+            access="ro")
+    container.append(shareDir)
+
     if 'hasShared' in elements.keys():
-        for shareDir in container.findall('shared_directory'):
-            container.remove(shareDir)
-        count = 0
         for plHost in elements['host']:
             shareDir = ElementTree.Element("shared_directory",
                     host=plHost, container=elements['container'][count],
@@ -186,6 +196,8 @@ def update_xml_container(container, elements):
             image = container.find('image')
             image.text = elements['image']
             update_xml_check_shared_folder(container, elements)
+        else:
+            raise Exception("User interrupted")
     return isNew
 
 def update_xml_new_container(elements):
@@ -198,8 +210,13 @@ def update_xml_new_container(elements):
     image = ElementTree.Element("image")
     image.text = elements['image']
 
+    # default command
+    command = ElementTree.Element("command")
+    command.text = "/clientdir/pyclient"
+
     container.append(name)
     container.append(image)
+    container.append(command)
 
     update_xml_check_shared_folder(container, elements)
 
@@ -266,6 +283,10 @@ def copy_file_to_tmp(host, file):
     temp filename is so remote that this is acceptable.
     """
     tmp_file = tempfile.mktemp()
+    if not os.path.exists(file):
+        default_config = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, PLCONTAINER_CONFIG_FILE)
+        cmd = Scp('copy conf file from GPDB folder', default_config, file, host)
+        cmd.run()
     cmd = Scp('copy conf file', file, tmp_file, host)
     cmd.run()
     if not os.path.exists(tmp_file):
@@ -436,13 +457,17 @@ def get_conf_shared_dir(options, elements):
             elements['access'].append("ro")
 
 
-def get_conf_elements(options):
+def get_conf_elements(options, isInstall = None):
     '''
     build an element dict for configuration
     '''
     elements = dict()
     elements['name'] = options.name
-    elements['image'] = options.image
+    if isInstall:
+        dockerUrl = isInstall.split(": ", 1)[1]
+        elements['image'] = dockerUrl.strip()
+    else: 
+        elements['image'] = options.image
     if options.shared:
        get_conf_shared_dir(options, elements)
     return elements
@@ -518,11 +543,10 @@ def main():
         if options.name and options.subparser_name == "install":
             logger.info('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
-            install_images(options, pool, hosts)
-            elements = get_conf_elements(options)
+            dockerImageName = install_images(options, pool, hosts)
+            elements = get_conf_elements(options, dockerImageName)
             update_xml_config(tmp_file, elements)
             logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
-            backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
             logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
