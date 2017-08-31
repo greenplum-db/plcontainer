@@ -44,7 +44,7 @@ debug_sleep_anchor6: &debug_sleep6
           tag: latest
       run:
         path: 'sh'
-        args: ['-c', 'sleep 6h']
+        args: ['-c', 'sleep 2h']
     ensure:
       <<: *ccp_destroy6
 
@@ -103,8 +103,8 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: hz
-    uri: https://github.com/zhangh43/plcontainer.git
+    branch: master
+    uri: https://github.com/greenplum-db/plcontainer.git
 
 - name: gpdb_src
   type: git
