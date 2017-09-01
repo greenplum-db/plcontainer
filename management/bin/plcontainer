@@ -28,7 +28,6 @@ try:
 except ImportError, e:
     sys.exit('ERROR: Cannot import Greenplum modules.  Please check that you have sourced greenplum_path.sh.  Detail: ' + str(e))
 
-
 PLCONTAINER_CONFIG_FILE = 'plcontainer_configuration.xml'
 PLCONTAINER_GPDB_DIR = 'share/postgresql/plcontainer'
 PLCONTAINER_PYCLIENT_FILE = "pyclient"
@@ -44,7 +43,6 @@ def parseargs():
 
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     subparsers = parser.add_subparsers(dest='subparser_name')
-
 
     config_parser = subparsers.add_parser('configure', help="Configure container image name and " +
                         "location as well as shared folder, need to combine with -n and -i, usage: -n IMAGENAME -i IMAGEURL")
@@ -153,11 +151,12 @@ def install_images(options, pool, hosts):
         logger.info('Distributing image file %s to all hosts...' % docker_image)
         dest = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, docker_image)
         distribut_docker_file(pool, docker_image, dest, hosts)
-        
 
         logger.info('Loading image on all hosts...')
         docker_load_cmd = " ".join(["docker load -i ", dest])
-        return remote_cmd(pool, docker_load_cmd, hosts)
+        dockerUrl = remote_cmd(pool, docker_load_cmd, hosts)
+        # the returned format is "Loaded image: image:tag"
+        return dockerUrl.split(":", 1)[1]
 
     except Exception, ex:
         raise(ex)
@@ -457,15 +456,14 @@ def get_conf_shared_dir(options, elements):
             elements['access'].append("ro")
 
 
-def get_conf_elements(options, isInstall = None):
+def get_conf_elements(options, dockImage = None):
     '''
     build an element dict for configuration
     '''
     elements = dict()
     elements['name'] = options.name
-    if isInstall:
-        dockerUrl = isInstall.split(": ", 1)[1]
-        elements['image'] = dockerUrl.strip()
+    if dockImage:
+        elements['image'] = dockImage.strip()
     else: 
         elements['image'] = options.image
     if options.shared:
@@ -546,7 +544,6 @@ def main():
             dockerImageName = install_images(options, pool, hosts)
             elements = get_conf_elements(options, dockerImageName)
             update_xml_config(tmp_file, elements)
-            logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
             logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
