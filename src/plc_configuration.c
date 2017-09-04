@@ -44,7 +44,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
     /* First iteration - parse name, container_id and memory_mb and count the
      * number of shared directories for later allocation of related structure */
 	memset((void *) conf, 0, sizeof(plcContainerConf));
-    conf->memoryMb = 256;
+    conf->memoryMb = 1024;
     for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             int processed = 0;

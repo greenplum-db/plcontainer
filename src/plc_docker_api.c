@@ -71,19 +71,25 @@ static char *plc_docker_create_request =
         "    }\n"
         "}\n";
 
+//"DELETE /%s/containers/%s?v=1 HTTP/1.1\r\n\r\n";
 // Request for deleting the container
 static char *plc_docker_delete_request =
-        "DELETE /%s/containers/%s HTTP/1.1\r\n\r\n";
+        "DELETE /%s/containers/%s?v=1&force=1 HTTP/1.1\r\n"
+        "Host: http\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: %d\r\n"
+        "\r\n"
+        "%s";
 
 /* End of templates */
 
 /* Static functions of the Docker API module */
 static int docker_parse_container_id(char* response, char **name);
-static int docker_parse_port_mapping(char* response, int *port);
+static int docker_parse_string_mapping(char *response, char **element, char *plc_docker_regex);
 static int get_content_length(char *msg, int *len);
 static int send_message(int sockfd, char *message);
 static int recv_message(int sockfd, char **response);
-static int recv_port_mapping(int sockfd, int *port);
+static int recv_string_mapping(int sockfd, char **element, int type);
 static int docker_call(int sockfd, char *request, char **response, int silent);
 static int plc_docker_container_command(int sockfd, char *name, const char *cmd, int silent);
 
@@ -92,6 +98,7 @@ static int docker_parse_container_id(char* response, char **name) {
     // Regular expression for parsing "create" call JSON response
     char *plc_docker_containerid_regex =
             "\\{\\s*\"[Ii][Dd]\\s*\"\\:\\s*\"(\\w+)\"\\s*,\\s*\"[Ww]arnings\"\\s*\\:([^\\}]*)\\s*\\}";
+
     regex_t     preg;
     regmatch_t  pmatch[3];
     int         res = 0;
@@ -153,10 +160,9 @@ static int docker_parse_container_id(char* response, char **name) {
     return 0;
 }
 
-static int docker_parse_port_mapping(char* response, int *port) {
+static int docker_parse_string_mapping(char *response, char **element, char *plc_docker_regex) {
     // Regular expression for parsing container inspection JSON response
-    char *plc_docker_port_regex =
-            "\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
+
     regex_t     preg;
     regmatch_t  pmatch[2];
     int         res = 0;
@@ -165,11 +171,10 @@ static int docker_parse_port_mapping(char* response, int *port) {
     pg_wchar   *mask;
     int         wdatalen, datalen;
     pg_wchar   *data;
-    char       *portstr;
 
-    masklen = strlen(plc_docker_port_regex);
+    masklen = strlen(plc_docker_regex);
     mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
-    wmasklen = pg_mb2wchar_with_len(plc_docker_port_regex, mask, masklen);
+    wmasklen = pg_mb2wchar_with_len(plc_docker_regex, mask, masklen);
 
     res = pg_regcomp(&preg, mask, wmasklen, REG_ADVANCED);
     pfree(mask);
@@ -200,11 +205,10 @@ static int docker_parse_port_mapping(char* response, int *port) {
     }
 
     len = pmatch[1].rm_eo - pmatch[1].rm_so;
-    portstr = malloc(len + 1);
-    memcpy(portstr, response + pmatch[1].rm_so, len);
-    portstr[len] = '\0';
+    *element = palloc(len + 1);
+    memcpy(*element, response + pmatch[1].rm_so, len);
+    (*element)[len] = '\0';
 
-    *port = strtol(portstr, NULL, 10);
     return 0;
 }
 
@@ -292,9 +296,9 @@ static int recv_message(int sockfd, char **response) {
             status =  get_return_status(buf);
 
             if (status >= 300){
-                ereport(ERROR,
-                        (errcode(ERRCODE_CONNECTION_FAILURE),
-                        errmsg("Error from docker api response code %d", status)));
+                //ereport(ERROR,
+                //        (errcode(ERRCODE_CONNECTION_FAILURE),
+                //        errmsg("Error from docker api response code %d", status)));
                 *response = buf;
                 return status;
             }
@@ -325,11 +329,12 @@ static int recv_message(int sockfd, char **response) {
     return 0;
 }
 
-static int recv_port_mapping(int sockfd, int *port) {
+static int recv_string_mapping(int sockfd, char **element, int type) {
     int   received = 0;
     char *buf;
     int   buflen = 16384;
     int   headercheck = 0;
+    char *regex;
 
     buf = palloc(buflen);
     memset(buf, 0, buflen);
@@ -352,13 +357,21 @@ static int recv_port_mapping(int sockfd, int *port) {
             }
             headercheck = 1;
         }
+        if (type == 1) {
+            regex =
+                    "\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
+        } else if (type == 2) {
+            regex =
+                    "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
+        }
 
-        if (docker_parse_port_mapping(buf, port) == 0) {
+
+        if (docker_parse_string_mapping(buf, element, regex) == 0) {
             break;
         }
 
         if (strstr(buf, "\r\n0\r\n")) {
-            elog(ERROR, "Error - cannot find port mapping information for container: %s", buf);
+            elog(ERROR, "Error - cannot inspect information for container: %s", buf);
             return -1;
         }
 
@@ -530,7 +543,7 @@ int plc_docker_kill_container(int sockfd, char *name) {
     return plc_docker_container_command(sockfd, name, "kill?signal=KILL", 0);
 }
 
-int plc_docker_inspect_container(int sockfd, char *name, int *port) {
+int plc_docker_inspect_container(int sockfd, char *name, char **element, int type) {
     char *message;
     int  res = 0;
 
@@ -550,7 +563,7 @@ int plc_docker_inspect_container(int sockfd, char *name, int *port) {
         return -1;
     }
 
-    res = recv_port_mapping(sockfd, port);
+    res = recv_string_mapping(sockfd, element, type);
     if (res < 0) {
         elog(ERROR, "Error receiving data from the Docker API socket during container delete call");
         return -1;
@@ -574,7 +587,9 @@ int plc_docker_delete_container(int sockfd, char *name) {
     sprintf(message,
             plc_docker_delete_request, // Delete message template
             plc_docker_api_version,    // API version
-            name);                     // Container name
+            name,
+	    0,
+	    "");                     // Container name
 
     docker_call(sockfd, message, &response, 1);
 

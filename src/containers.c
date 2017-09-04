@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <libgen.h>
+#include <signal.h>
 
 #include "postgres.h"
 #include "utils/ps_status.h"
@@ -32,6 +33,7 @@ typedef struct {
 } container_t;
 
 #define CONTAINER_NUMBER 10
+#define CONATINER_WAIT_TIMEOUT 2
 static int containers_init = 0;
 static container_t *containers;
 
@@ -41,6 +43,44 @@ static inline bool is_whitespace (const char c);
 static int check_container_name(const char *name);
 
 #ifndef CONTAINER_DEBUG
+
+static int check_pid(pid_t ppid, char *dockerid) {
+
+    int return_code = 1;
+    int sockfd;
+
+    if (ppid != getppid()){
+        /* backend exited, call docker delete API */
+        sockfd = plc_backend_connect();
+        if (sockfd > 0) {
+            return_code = plc_backend_delete(sockfd, dockerid);
+            plc_backend_disconnect(sockfd);
+        }
+    }
+    return return_code;
+}
+
+static int check_conatiner(char *dockerid) {
+    char *element = NULL;
+    int return_code = 1;
+    int sockfd;
+
+    sockfd = plc_backend_connect();
+    if (sockfd > 0) {
+        int res;
+        res = plc_backend_inspect(sockfd, dockerid, &element, 2);
+        if (res < 0) {
+            return_code = res;
+        }
+        if (element != NULL && strcmp("exited", element) == 0){
+            return_code = plc_backend_delete(sockfd, dockerid);
+        }
+        plc_backend_disconnect(sockfd);
+    }
+
+    return return_code;
+
+}
 
 static void cleanup4uds(char *uds_fn) {
 	if (uds_fn != NULL) {
@@ -57,59 +97,62 @@ static void cleanup(char *dockerid, char *uds_fn) {
     if (pid == 0) {
         char    psname[200];
         int     res;
-        int     sockfd;
-        int     attempt = 0;
-        clock_t start;
-        clock_t end;
+        pid_t   ppid = getppid();
 
         /* Setting application name to let the system know it is us */
         sprintf(psname, "plcontainer cleaner %s", dockerid);
         set_ps_display(psname, false);
 
-        /* We make 5 attempts to start waiting for the backend*/
-        for (attempt = 0; attempt < 5; attempt++) {
+        while(1) {
 
-            /* Connect to backend and wait command for the
-             * target backend to wait for its termination */
-            start = clock();
-            sockfd = plc_backend_connect();
-            if (sockfd > 0) {
-                res = plc_backend_wait(sockfd, dockerid);
-                plc_backend_disconnect(sockfd);
-            } else {
+            /* Check parent pid whether parent process is alive or not
+             * if not, kill and remove the container
+             */
+            PG_TRY();
+            {
+                res = check_pid(ppid, dockerid);
+            }
+			PG_CATCH();
+            {
                 res = -1;
             }
-            end = clock();
+			PG_END_TRY();
 
-            /* If "wait" has finished successfully - backend has finished
-             * and we can remove the backend  */
-            if (res == 0) {
+            /* res = 0, backend exited, container has been successfully deleted
+             * res < 0, backend exited, docker API report an error
+             */
+            if (res <= 0) {
+                break;
+            }
+			/* check whether conatiner is exited or not
+			 * if exited, remove the container
+			 */
+			PG_TRY();
+            {
+                res = check_conatiner(dockerid);
+            }
+			PG_CATCH();
+            {
+                res = -1;
+            }
+			PG_END_TRY();
+
+            /* res = 0, backend exited, container has been successfully deleted
+             * res < 0, backend exited, docker API report an error
+             */
+            if (res <= 0) {
                 break;
             }
 
-            /* If we "waited" for more than 1 minute and wait failed, this might
-             * happen due to network issue and we should reset the attempt
-             * counter and start over */
-            if ( (end - start) / CLOCKS_PER_SEC > 60 ) {
-                attempt = 0;
-            }
+            /* check every CONATINER_WAIT_TIMEOUT*/
+	        sleep(CONATINER_WAIT_TIMEOUT);
 
-            /* Sleep for 1 second in case of failed attempt */
-            sleep(1);
         }
 
-        /* Connect to backend to remove it */
-        sockfd = plc_backend_connect();
-        if (sockfd > 0) {
-            res = plc_backend_delete(sockfd, dockerid);
-            if (res < 0) {
-				cleanup4uds(uds_fn);
-                _exit(1);
-            }
+        cleanup4uds(uds_fn);
+        if (res < 0){
+            _exit(1);
         }
-        plc_backend_disconnect(sockfd);
-
-		cleanup4uds(uds_fn);
         _exit(0);
     }
 }
@@ -204,13 +247,17 @@ plcConn *start_container(plcContainerConf *conf) {
 
     res = plc_backend_start(sockfd, dockerid);
     if (res < 0) {
+        /* if a container start failed, but already created, the it need to be deleted */
+        plc_backend_delete(sockfd, dockerid);
         elog(ERROR, "Cannot start Docker container");
         return conn;
     }
 
 	/* For network connection only. */
 	if (conf->isNetworkConnection) {
-		res = plc_backend_inspect(sockfd, dockerid, &port);
+        char *element = NULL;
+		res = plc_backend_inspect(sockfd, dockerid, &element, 1);
+        port = (int) strtol(element, NULL, 10);
 		if (res < 0) {
 			elog(ERROR, "Cannot parse host port exposed by Docker container");
 			return conn;
