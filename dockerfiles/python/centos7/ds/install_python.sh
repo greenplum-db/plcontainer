@@ -1,5 +1,5 @@
 pushd /opt/ds
-rpm2cpio DataSciencePython-*.x86_64.rpm| cpio -div
+rpm2cpio DataSciencePython-*.x86_64.rpm| cpio -di
 mv temp/ext/DataSciencePython/* ./
 popd
 
