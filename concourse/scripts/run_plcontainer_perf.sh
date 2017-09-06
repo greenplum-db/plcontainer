@@ -19,7 +19,7 @@ set -eox pipefail; \
 export MASTER_DATA_DIRECTORY=/data/gpdata/master/gpseg-1; \
 source /usr/local/greenplum-db-devel/greenplum_path.sh; \
 plcontainer install -n plc_python_shared -i /usr/local/greenplum-db-devel/share/postgresql/plcontainer/plcontainer-devel-images.tar.gz; \
-
+gpstop -arf
 psql -d postgres -f /usr/local/greenplum-db-devel/share/postgresql/plcontainer/plcontainer_install.sql; \
 psql -d postgres -f plcontainer_src/concourse/scripts/function_setup.sql; \
 psql -d postgres -f plcontainer_src/concourse/scripts/perf_prepare1.sql; \

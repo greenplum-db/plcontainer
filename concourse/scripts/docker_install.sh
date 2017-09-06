@@ -21,6 +21,8 @@ install_docker() {
            sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo; \
            sudo yum makecache fast; \
            sudo yum install -y docker-ce; \
+           sudo yum install -y cpan; \
+           sudo yum install -y perl-Module-CoreList; \
            sudo systemctl start docker; \
            sudo groupadd docker; \
            sudo chown root:docker /var/run/docker.sock; \
