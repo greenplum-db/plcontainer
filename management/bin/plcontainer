@@ -65,7 +65,8 @@ def parseargs():
     # for install
     install_parser.add_argument("-i", "--image", dest="image", help="Configure container image location, support Tar.gz image" +
                         " file or docker image url")
-    install_parser.add_argument("-n", "--name", dest="name", help="Configure container image name")
+    install_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer type name")
+    install_parser.add_argument("-c", "--imagename", dest="imagename", help="Configure container image name")
     install_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")                    
 
@@ -156,8 +157,17 @@ def install_images(options, pool, hosts):
         logger.info('Loading image on all hosts...')
         docker_load_cmd = " ".join(["docker load -i ", dest])
         dockerUrl = remote_cmd(pool, docker_load_cmd, hosts)
-        # the returned format is "Loaded image: image:tag"
-        return dockerUrl.split(":", 1)[1]
+        tag=""
+        if not dockerUrl:
+            if not options.imagename:
+                logger.error("Old Dokcer verion need to specify image name by -c option")
+                raise Exception("Failed to get image name")
+            else:
+                tag = options.imagename
+        else:
+            # the returned format is "Loaded image: image:tag"
+            tag = dockerUrl.split(":", 1)[1]
+        return tag
 
     except Exception, ex:
         raise(ex)
