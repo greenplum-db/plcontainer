@@ -338,7 +338,8 @@ static int recv_port_mapping(int sockfd, int *port) {
 
         bytes = recv(sockfd, buf + received, buflen - received, 0);
         if (bytes < 0) {
-            elog(ERROR, "Error reading response from Docker API socket");
+            elog(ERROR, "Error reading response from Docker API socket: %s",
+				strerror(errno));
             return -1;
         }
         received += bytes;
@@ -444,7 +445,8 @@ int plc_docker_connect() {
     /* Create the socket */
     sockfd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        elog(ERROR, "Error creating UNIX socket for Docker API");
+        elog(ERROR, "Error creating UNIX socket for Docker API: %s",
+			 strerror(errno));
         return -1;
     }
 
@@ -455,7 +457,8 @@ int plc_docker_connect() {
 
     /* connect the socket */
     if (connect(sockfd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        elog(ERROR, "Error connecting to the Docker API socket '%s'", plc_docker_socket);
+        elog(ERROR, "Error connecting to the Docker API socket '%s': %s",
+			plc_docker_socket, strerror(errno));
         return -1;
     }
 

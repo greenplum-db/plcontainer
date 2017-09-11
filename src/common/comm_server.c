@@ -87,7 +87,8 @@ static int start_listener_ipc(char **puds_fn) {
 
 	unlink(uds_fn);
 	if (access(uds_fn, F_OK) == 0)
-		lprintf(ERROR, "Cannot delete the file for unix domain socket connection: %s", uds_fn);
+		lprintf(ERROR, "Cannot delete the file for unix domain socket "
+				"connection: %s", uds_fn);
 
     if (bind(sock, (const struct sockaddr *)&addr, sizeof(addr)) == -1) {
         lprintf(ERROR, "Cannot bind the addr: %s", strerror(errno));
@@ -163,7 +164,8 @@ void connection_wait(int sock) {
         lprintf(ERROR, "Failed to select() socket: %s", strerror(errno));
     }
     if (rv == 0) {
-        lprintf(ERROR, "Socket timeout - no client connected within %d seconds", TIMEOUT_SEC);
+        lprintf(ERROR, "Socket timeout - no client connected within %d "
+				"seconds", TIMEOUT_SEC);
     }
 }
 
@@ -197,7 +199,8 @@ void receive_loop( void (*handle_call)(plcMsgCallreq*, plcConn*), plcConn* conn)
         return;
     }
     if (msg->msgtype != MT_PING) {
-        lprintf(ERROR, "First received message should be 'ping' message, got '%c' instead", msg->msgtype);
+        lprintf(ERROR, "First received message should be 'ping' message, "
+				"got '%c' instead", msg->msgtype);
         return;
     } else {
         res = plcontainer_channel_send(conn, msg);

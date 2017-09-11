@@ -131,7 +131,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
                 curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE"); 
                 break;
             default:
-                elog(ERROR, "Unsupported call type for PL/Container Docker Curl API");
+                elog(ERROR, "Unsupported call type for PL/Container Docker Curl API: %d", cType);
                 buffer->status = -1;
                 break;
         }

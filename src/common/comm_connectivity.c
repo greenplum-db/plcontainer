@@ -41,7 +41,8 @@ static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
 
         /* If receive command is terminated by SIGINT */
         if (sz < 0 && errno == EINTR) {
-            lprintf(ERROR, "Query and PL/Container connections are terminated by user request");
+            lprintf(ERROR, "Query and PL/Container connections are terminated "
+					"by user request: %s", strerror(errno));
         }
 
         /* If the command is terminated by another reason - standard handler */
@@ -61,7 +62,8 @@ static ssize_t plcSocketSend(plcConn *conn, const void *ptr, size_t len) {
 
     /* If receive command is terminated by SIGINT */
     if (sz < 0 && errno == EINTR) {
-        lprintf(ERROR, "Query and PL/Container connections are terminated by user request");
+        lprintf(ERROR, "Query and PL/Container connections are terminated by "
+				"user request: %s", strerror(errno));
     }
 
     return sz;
@@ -346,7 +348,6 @@ plcConn * plcConnInit(int sock) {
     return conn;
 }
 
-/* FIXME: Move out of src/common later. */
 #ifndef COMM_STANDALONE
 /*
  *  Connect to the specified host of the localhost and initialize the plcConn
@@ -360,13 +361,14 @@ plcConn *plcConnect_inet(int port) {
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
-        lprintf(ERROR, "PLContainer: Cannot create socket");
+        lprintf(ERROR, "PLContainer: Cannot create socket: %s", strerror(errno));
         return result;
     }
 
     server = gethostbyname("localhost");
     if (server == NULL) {
-        lprintf(ERROR, "PLContainer: Failed to call gethostbyname('localhost')");
+        lprintf(ERROR, "PLContainer: Failed to call gethostbyname('localhost'):"
+				" %s", hstrerror(h_errno));
         return result;
     }
 
@@ -379,7 +381,8 @@ plcConn *plcConnect_inet(int port) {
             sizeof(raddr)) < 0) {
         char ipAddr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(raddr.sin_addr), ipAddr, INET_ADDRSTRLEN);
-        lprintf(DEBUG1, "PLContainer: Failed to connect to %s", ipAddr);
+        lprintf(DEBUG1, "PLContainer: Failed to connect to %s: %s", ipAddr,
+				strerror(errno));
         return result;
     }
 

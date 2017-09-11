@@ -536,7 +536,8 @@ static int receive_array(plcConn *conn, plcType *type, rawdata *obj) {
                         res |= receive_udt(conn, type, &((char**)arr->data)[i]);
                         break;
                     default:
-                        lprintf(ERROR, "Should not get here");
+                        lprintf(ERROR, "Should not get here (type: %d)",
+								arr->meta->type);
                         break;
                 }
             }

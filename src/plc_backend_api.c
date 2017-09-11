@@ -23,7 +23,7 @@ void plc_backend_prepareImplementation(enum PLC_BACKEND_TYPE imptype) {
             plc_docker_init(&CurrentPLCImp);
             break;
         default:
-            elog(ERROR, "Unsupported plc backend type");
+            elog(ERROR, "Unsupported plc backend type: %d", imptype);
     }
 }
 

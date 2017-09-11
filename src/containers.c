@@ -281,16 +281,13 @@ plcConn *start_container(plcContainerConf *conf) {
 }
 
 void stop_containers() {
-    size_t i;
+    int i;
 
     if (containers_init != 0) {
         for (i = 0; i < CONTAINER_NUMBER; i++) {
             if (containers[i].name != NULL) {
 
-                /* Terminate connection to the container */
-                if (containers[i].conn != NULL) {
-                    plcDisconnect(containers[i].conn);
-                }
+                plcDisconnect(containers[i].conn);
 
                 /* Terminate container process */
                 if (containers[i].dockerid != NULL) {
