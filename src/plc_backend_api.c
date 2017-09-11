@@ -43,7 +43,7 @@ int plc_backend_kill(int sockfd, char *name){
     return CurrentPLCImp.kill != NULL ? CurrentPLCImp.kill(sockfd, name) : FUNC_RETURN_OK;
 }
 
-int plc_backend_inspect(int sockfd, char *name, char **element, int type){
+int plc_backend_inspect(int sockfd, char *name, char **element, plcInspectionMode type){
     return CurrentPLCImp.inspect != NULL ? CurrentPLCImp.inspect(sockfd, name, element, type) : FUNC_RETURN_OK;
 }
 

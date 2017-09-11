@@ -38,7 +38,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
                                          long expectedReturn,
                                          bool silent);
 static int docker_parse_container_id(char *response, char **name);
-static int docker_parse_port_mapping(char *response, int *port);
+static int recv_string_mapping(int sockfd, char **element, plcInspectionMode type)
 
 /* Initialize Curl response receiving buffer */
 static plcCurlBuffer *plcCurlBufferInit() {
@@ -244,61 +244,66 @@ static int docker_parse_container_id(char* response, char **name) {
     return 0;
 }
 
-/* Parse host port out of JSON response */
-static int docker_parse_port_mapping(char* response, int *port) {
-    // Regular expression for parsing container inspection JSON response
-    char *plc_docker_port_regex =
-            "\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
-    regex_t     preg;
-    regmatch_t  pmatch[2];
-    int         res = 0;
-    int         len = 0;
-    int         wmasklen, masklen;
-    pg_wchar   *mask;
-    int         wdatalen, datalen;
-    pg_wchar   *data;
-    char       *portstr;
 
-    masklen = strlen(plc_docker_port_regex);
-    mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
-    wmasklen = pg_mb2wchar_with_len(plc_docker_port_regex, mask, masklen);
+static int recv_string_mapping(int sockfd, char **element, plcInspectionMode type) {
+    int   received = 0;
+    char *buf;
+    int   buflen = 16384;
+    int   headercheck = 0;
+    char *regex;
 
-    res = pg_regcomp(&preg, mask, wmasklen, REG_ADVANCED);
-    pfree(mask);
-    if (res < 0) {
-        elog(ERROR, "Cannot compile Postgres regular expression: '%s'", strerror(errno));
-        return -1;
+    buf = palloc(buflen);
+    memset(buf, 0, buflen);
+    while (received < buflen) {
+        int bytes = 0;
+
+        bytes = recv(sockfd, buf + received, buflen - received, 0);
+        if (bytes < 0) {
+            elog(ERROR, "Error reading response from Docker API socket");
+            return -1;
+        }
+        received += bytes;
+
+        /* Check that the message contain correct HTTP response header */
+        if (!headercheck) {
+            if (strncmp(buf, "HTTP/1.1 200 OK", 15) != 0) {
+                elog(ERROR, "Error in response from Docker API socket: '%s'", buf);
+                return -1;
+            }
+            headercheck = 1;
+        }
+        if (type == PLC_INSPECT_PORT) {
+            regex =
+                    "\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
+        } else if (type == PLC_INSPECT_STATUS) {
+            regex =
+                    "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
+        }
+
+
+        if (docker_parse_string_mapping(buf, element, regex) == 0) {
+            break;
+        }
+
+        if (strstr(buf, "\r\n0\r\n")) {
+            elog(ERROR, "Error - cannot inspect information for container: %s", buf);
+            return -1;
+        }
+
+        /* If the buffer is close to the end, we shift it to the beginning */
+        if (buflen - received < 1000) {
+            memcpy(buf, buf + received - 1000, 1000);
+            received = 1000;
+            memset(buf + received, 0, buflen - received);
+        }
     }
 
-    datalen = strlen(response);
-    data = (pg_wchar *) palloc((datalen + 1) * sizeof(pg_wchar));
-    wdatalen = pg_mb2wchar_with_len(response, data, datalen);
+    /* Print Docker response */
+    elog(DEBUG1, "Docker API response:\n%s", buf);
 
-    res = pg_regexec(&preg,
-                     data,
-                     wdatalen,
-                     0,
-                     NULL,
-                     2,
-                     pmatch,
-                     0);
-    pfree(data);
-    if(res == REG_NOMATCH) {
-        return -1;
-    }
-
-    if (pmatch[1].rm_so == -1) {
-        return -1;
-    }
-
-    len = pmatch[1].rm_eo - pmatch[1].rm_so;
-    portstr = malloc(len + 1);
-    memcpy(portstr, response + pmatch[1].rm_so, len);
-    portstr[len] = '\0';
-
-    *port = strtol(portstr, NULL, 10);
     return 0;
 }
+
 
 /* Not used in Curl API */
 int plc_docker_connect() {
@@ -393,7 +398,7 @@ int plc_docker_kill_container(pg_attribute_unused() int sockfd, char *name) {
     return res;
 }
 
-int plc_docker_inspect_container(pg_attribute_unused() int sockfd, char *name, int *port) {
+int plc_docker_inspect_container(pg_attribute_unused() int sockfd, char *name, char **element, plcInspectionMode type) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/json";
     char *url = NULL;
@@ -406,7 +411,7 @@ int plc_docker_inspect_container(pg_attribute_unused() int sockfd, char *name, i
     res = response->status;
 
     if (res == 0) {
-        res = docker_parse_port_mapping(response->data, port);
+        res = recv_string_mapping(response->data, port, type);
         if (res < 0) {
             elog(ERROR, "Error finding container port mapping in response '%s'", response->data);
         }

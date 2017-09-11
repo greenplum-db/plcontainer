@@ -20,6 +20,12 @@ typedef enum {
     PLC_ACCESS_READWRITE = 1
 } plcFsAccessMode;
 
+typedef enum {
+	PLC_INSPECT_STATUS = 0,
+	PLC_INSPECT_PORT = 1,
+	PLC_INSPECT_PORT_UNKNOWN,
+} plcInspectionMode;
+
 typedef struct plcSharedDir {
     char            *host;
     char            *container;

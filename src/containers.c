@@ -16,6 +16,7 @@
 
 #include "postgres.h"
 #include "utils/ps_status.h"
+#include "utils/faultinjector.h"
 
 #include "common/comm_utils.h"
 #include "common/comm_channel.h"
@@ -34,6 +35,8 @@ typedef struct {
 
 #define CONTAINER_NUMBER 10
 #define CONATINER_WAIT_TIMEOUT 2
+#define CONATINER_CONNECT_TIMEOUT 120
+
 static int containers_init = 0;
 static container_t *containers;
 
@@ -44,31 +47,38 @@ static int check_container_name(const char *name);
 
 #ifndef CONTAINER_DEBUG
 
-static int check_pid(pid_t ppid, char *dockerid) {
+static int qe_is_alive(char *dockerid) {
 
+	/*
+	 * default return code to tell cleanup process that everything
+	 * is normal
+	 */
     int return_code = 1;
     int sockfd;
 
-    if (ppid != getppid()){
+    if (getppid() == 1){
         /* backend exited, call docker delete API */
         sockfd = plc_backend_connect();
         if (sockfd > 0) {
             return_code = plc_backend_delete(sockfd, dockerid);
             plc_backend_disconnect(sockfd);
-        }
+        } else {
+			return_code = -1;
+		}
     }
     return return_code;
 }
 
-static int check_conatiner(char *dockerid) {
+static int container_is_alive(char *dockerid) {
     char *element = NULL;
-    int return_code = 1;
+    
+	int return_code = 1;
     int sockfd;
 
     sockfd = plc_backend_connect();
     if (sockfd > 0) {
         int res;
-        res = plc_backend_inspect(sockfd, dockerid, &element, 2);
+        res = plc_backend_inspect(sockfd, dockerid, &element, PLC_INSPECT_STATUS);
         if (res < 0) {
             return_code = res;
         }
@@ -76,7 +86,9 @@ static int check_conatiner(char *dockerid) {
             return_code = plc_backend_delete(sockfd, dockerid);
         }
         plc_backend_disconnect(sockfd);
-    }
+    } else if (sockfd <= 0) {
+		return_code = -1;
+	}
 
     return return_code;
 
@@ -97,7 +109,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
     if (pid == 0) {
         char    psname[200];
         int     res;
-        pid_t   ppid = getppid();
+		int     wait_time = 0;
 
         /* Setting application name to let the system know it is us */
         sprintf(psname, "plcontainer cleaner %s", dockerid);
@@ -110,7 +122,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
              */
             PG_TRY();
             {
-                res = check_pid(ppid, dockerid);
+                res = qe_is_alive(dockerid);
             }
 			PG_CATCH();
             {
@@ -120,30 +132,46 @@ static void cleanup(char *dockerid, char *uds_fn) {
 
             /* res = 0, backend exited, container has been successfully deleted
              * res < 0, backend exited, docker API report an error
+			 * res > 0, backend still alive, check container status
              */
-            if (res <= 0) {
+            if (res == 0) {
                 break;
-            }
+            } else if (res < 0) {
+				wait_time += CONATINER_WAIT_TIMEOUT;
+			} else {
+				wait_time = 0;
+			}
 			/* check whether conatiner is exited or not
 			 * if exited, remove the container
 			 */
 			PG_TRY();
             {
-                res = check_conatiner(dockerid);
+                res = container_is_alive(dockerid);
             }
 			PG_CATCH();
             {
-                res = -1;
+                /* need to retry the connection to container */
+				res = -1;
             }
 			PG_END_TRY();
 
-            /* res = 0, backend exited, container has been successfully deleted
-             * res < 0, backend exited, docker API report an error
+            /* res = 0, container exited, container has been successfully deleted
+             * res < 0, docker API report an error
+			 * res > 0, container still alive, sleep and check again
              */
-            if (res <= 0) {
+            if (res == 0) {
                 break;
-            }
+            } else if (res < 0) {
+				wait_time += CONATINER_WAIT_TIMEOUT;
+			} else {
+				wait_time = 0;
+			}
 
+			if (wait_time >= CONATINER_CONNECT_TIMEOUT) {
+				 elog(WARNING, "Could not connnect to docker deamon for %d seconds, cleanup process will exited"
+					  , wait_time);
+				 break;
+			}
             /* check every CONATINER_WAIT_TIMEOUT*/
 	        sleep(CONATINER_WAIT_TIMEOUT);
 
@@ -154,6 +182,8 @@ static void cleanup(char *dockerid, char *uds_fn) {
             _exit(1);
         }
         _exit(0);
+    } else if (pid < 0) {
+        elog(ERROR, "Could not create cleanup process for container %s", dockerid);
     }
 }
 
@@ -194,7 +224,10 @@ plcConn *find_container(const char *image) {
     size_t i;
     if (containers_init == 0)
         init_containers();
-    for (i = 0; i < CONTAINER_NUMBER; i++) {
+
+	SIMPLE_FAULT_INJECTOR(PlcontainerBeforeContainerConnected);
+    
+	for (i = 0; i < CONTAINER_NUMBER; i++) {
         if (containers[i].name != NULL &&
             strcmp(containers[i].name, image) == 0) {
             return containers[i].conn;
@@ -246,6 +279,7 @@ plcConn *start_container(plcContainerConf *conf) {
     }
 
     res = plc_backend_start(sockfd, dockerid);
+
     if (res < 0) {
         /* if a container start failed, but already created, the it need to be deleted */
         plc_backend_delete(sockfd, dockerid);
@@ -256,7 +290,7 @@ plcConn *start_container(plcContainerConf *conf) {
 	/* For network connection only. */
 	if (conf->isNetworkConnection) {
         char *element = NULL;
-		res = plc_backend_inspect(sockfd, dockerid, &element, 1);
+		res = plc_backend_inspect(sockfd, dockerid, &element, PLC_INSPECT_PORT);
         port = (int) strtol(element, NULL, 10);
 		if (res < 0) {
 			elog(ERROR, "Cannot parse host port exposed by Docker container");
@@ -275,6 +309,8 @@ plcConn *start_container(plcContainerConf *conf) {
 
     /* Create a process to clean up the container after it finishes */
     cleanup(dockerid, uds_fn);
+
+    SIMPLE_FAULT_INJECTOR(PlcontainerBeforeContainerStarted);
 
     /* Making a series of connection attempts unless connection timeout of
      * CONTAINER_CONNECT_TIMEOUT_MS is reached. Exponential backoff for

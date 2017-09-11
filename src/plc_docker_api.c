@@ -89,7 +89,7 @@ static int docker_parse_string_mapping(char *response, char **element, char *plc
 static int get_content_length(char *msg, int *len);
 static int send_message(int sockfd, char *message);
 static int recv_message(int sockfd, char **response);
-static int recv_string_mapping(int sockfd, char **element, int type);
+static int recv_string_mapping(int sockfd, char **element, plcInspectionMode type);
 static int docker_call(int sockfd, char *request, char **response, int silent);
 static int plc_docker_container_command(int sockfd, char *name, const char *cmd, int silent);
 
@@ -296,9 +296,9 @@ static int recv_message(int sockfd, char **response) {
             status =  get_return_status(buf);
 
             if (status >= 300){
-                //ereport(ERROR,
-                //        (errcode(ERRCODE_CONNECTION_FAILURE),
-                //        errmsg("Error from docker api response code %d", status)));
+                ereport(ERROR,
+                        (errcode(ERRCODE_CONNECTION_FAILURE),
+                         errmsg("Error from docker api response code %d", status)));
                 *response = buf;
                 return status;
             }
@@ -329,7 +329,7 @@ static int recv_message(int sockfd, char **response) {
     return 0;
 }
 
-static int recv_string_mapping(int sockfd, char **element, int type) {
+static int recv_string_mapping(int sockfd, char **element, plcInspectionMode type) {
     int   received = 0;
     char *buf;
     int   buflen = 16384;
@@ -357,10 +357,10 @@ static int recv_string_mapping(int sockfd, char **element, int type) {
             }
             headercheck = 1;
         }
-        if (type == 1) {
+        if (type == PLC_INSPECT_PORT) {
             regex =
                     "\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
-        } else if (type == 2) {
+        } else if (type == PLC_INSPECT_STATUS) {
             regex =
                     "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
         }
@@ -543,7 +543,7 @@ int plc_docker_kill_container(int sockfd, char *name) {
     return plc_docker_container_command(sockfd, name, "kill?signal=KILL", 0);
 }
 
-int plc_docker_inspect_container(int sockfd, char *name, char **element, int type) {
+int plc_docker_inspect_container(int sockfd, char *name, char **element, plcInspectionMode type) {
     char *message;
     int  res = 0;
 
