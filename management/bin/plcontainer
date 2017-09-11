@@ -586,7 +586,7 @@ def main():
     except Exception, ex:
         logger.fatal("%s failed. (Reason='%s') exiting..." % (execname, ex))
         if options.verbose:
-            logger.exception(e)
+            logger.exception(ex)
 
     finally:
         if tmp_file:

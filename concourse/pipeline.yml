@@ -279,7 +279,6 @@ jobs:
   plan:
   - aggregate:
     - get: bin_gpdb_centos6
-      trigger: true
     - get: gpdb_src
     - get: plcontainer_src
       trigger: true
@@ -303,6 +302,7 @@ jobs:
     - get: bin_gpdb_centos7
     - get: gpdb_src
     - get: plcontainer_src
+      trigger: true
     - get: centos-gpdb-dev-7
     - get: plr
       resource: plr_gpdb5_centos7_build
