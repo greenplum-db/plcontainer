@@ -39,7 +39,7 @@ static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
     while (sz <= 0) {
         sz = recv(conn->sock, ptr, len, 0);
 
-        /* If receive command is terminated by SIGINT */
+        /* If receive command is terminated by SIGINT/SIGTERM, etc. */
         if (sz < 0 && errno == EINTR) {
             lprintf(ERROR, "Query and PL/Container connections are terminated "
 					"by user request: %s", strerror(errno));
@@ -75,7 +75,7 @@ static ssize_t plcSocketSend(plcConn *conn, const void *ptr, size_t len) {
  *
  * Returns 0 on success, -1 on failure
  */
-static int plcBufferMaybeFlush (plcConn *conn, bool isForse) {
+static int plcBufferMaybeFlush(plcConn *conn, bool isForse) {
     int res = 0;
     plcBuffer *buf = conn->buffer[PLC_OUTPUT_BUFFER];
 

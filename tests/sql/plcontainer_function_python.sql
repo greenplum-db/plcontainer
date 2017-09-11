@@ -238,7 +238,7 @@ CREATE OR REPLACE FUNCTION pyreturnsetoftextarr(num int) RETURNS setof text[] AS
 # container: plc_python_shared
 def get_texts(n):
     return ['n'+str(x) for x in range(n)]
-    
+ 
 return [get_texts(x+1) for x in range(num)]
 $BODY$ LANGUAGE plcontainer;
 
@@ -566,4 +566,17 @@ CREATE OR REPLACE FUNCTION pyversion() RETURNS varchar AS $$
 # container : plc_python_shared
 import sys
 return str(sys.version_info)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pykillself() RETURNS integer AS $$
+# container: plc_python_shared
+import os
+import signal
+pid=os.getpid()
+os.kill(pid, signal.SIGKILL)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pyzero() RETURNS integer AS $$
+# container: plc_python_shared
+return 0
 $$ LANGUAGE plcontainer;

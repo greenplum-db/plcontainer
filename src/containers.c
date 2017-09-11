@@ -250,7 +250,7 @@ static char *get_uds_fn(int container_slot) {
 }
 
 plcConn *start_container(plcContainerConf *conf) {
-    int port;
+    int port = 0;
     unsigned int sleepus = 25000;
     unsigned int sleepms = 0;
     plcMsgPing *mping = NULL;
@@ -363,7 +363,7 @@ plcConn *start_container(plcContainerConf *conf) {
     return conn;
 }
 
-void stop_containers() {
+void delete_containers() {
     int i;
 
     if (containers_init != 0) {
@@ -378,7 +378,7 @@ void stop_containers() {
 
                     sockfd = plc_backend_connect();
                     if (sockfd > 0) {
-                        plc_backend_kill(sockfd, containers[i].dockerid);
+                        plc_backend_delete(sockfd, containers[i].dockerid);
                         plc_backend_disconnect(sockfd);
                     }
                     pfree(containers[i].dockerid);

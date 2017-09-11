@@ -11,4 +11,6 @@ m/^[0-9]{8}:[0-9]{2}:[0-9]{2}:[0-9]{2}.*/
 -- start_matchsubs
 m/ls: cannot access '.*'.*/
 s/ls: cannot access '(.*)'(.*)/ls: cannot access $1$2/
+m/plcontainer.c:\d+\)/
+s/plcontainer.c:\d+\)/plcontainer.c:xxx/
 -- end_matchsubs

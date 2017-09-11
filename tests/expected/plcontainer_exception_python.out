@@ -77,3 +77,18 @@ NOTICE:  Success:
  t
 (1 row)
 
+-- Test container kill-9-ed.
+select pyzero();
+ pyzero 
+--------
+      0
+(1 row)
+
+select pykillself();
+ERROR:  Error receiving data from the client: -3. Maybe retry later. (plcontainer.c:206)
+select pyzero();
+ pyzero 
+--------
+      0
+(1 row)
+

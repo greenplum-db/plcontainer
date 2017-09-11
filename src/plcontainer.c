@@ -40,6 +40,8 @@ static void plcontainer_process_exception(plcMsgError *msg);
 static void plcontainer_process_sql(plcMsgSQL *msg, plcConn* conn);
 static void plcontainer_process_log(plcMsgLog *log);
 
+static bool DeleteBackendsRequired;
+
 Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
     Datum datumreturn = (Datum) 0;
     MemoryContext oldMC = NULL;
@@ -71,10 +73,12 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
     }
     PG_CATCH();
     {
-        /* If the reason is Cancel or Termination */
-        if (InterruptPending || QueryCancelPending || QueryFinishPending) {
+        /* If the reason is Cancel or Termination or Backend error. */
+        if (InterruptPending || QueryCancelPending || QueryFinishPending ||
+			DeleteBackendsRequired) {
             //elog(DEBUG1, "Terminating containers due to user request");
-            stop_containers();
+            delete_containers();
+			DeleteBackendsRequired = false;
         }
         PG_RE_THROW();
     }
@@ -181,16 +185,25 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
     pfree(name);
 
     if (conn != NULL) {
-        plcontainer_channel_send(conn, (plcMessage*)req);
+        int res;
+
+		res  = plcontainer_channel_send(conn, (plcMessage*)req);
+		if (res < 0) {
+			DeleteBackendsRequired = true;
+			elog(ERROR, "Error sending data to the client: %d. "
+				"Maybe retry later.", res);
+			return NULL;
+		}
         free_callreq(req, true, true);
 
         while (1) {
-            int res = 0;
             plcMessage *answer;
 
             res = plcontainer_channel_receive(conn, &answer);
             if (res < 0) {
-                elog(ERROR, "Error receiving data from the client, %d", res);
+				DeleteBackendsRequired = true;
+                elog(ERROR, "Error receiving data from the client: %d. "
+					"Maybe retry later.", res);
                 break;
             }
 
@@ -273,6 +286,7 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn* conn) {
     plcMessage *res;
     volatile MemoryContext oldcontext;
     volatile ResourceOwner oldowner;
+	int retval;
 
     oldcontext = CurrentMemoryContext;
     oldowner = CurrentResourceOwner;
@@ -280,7 +294,13 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn* conn) {
 
     res = handle_sql_message(msg);
     if (res != NULL) {
-        plcontainer_channel_send(conn, res);
+        retval = plcontainer_channel_send(conn, res);
+		if (retval < 0) {
+			DeleteBackendsRequired = true;
+			elog(ERROR, "Error sending data to the client: %d. "
+				"Maybe retry later.", retval);
+			return;
+		}
         switch (res->msgtype) {
             case MT_RESULT:
                 free_result((plcMsgResult*)res, true);

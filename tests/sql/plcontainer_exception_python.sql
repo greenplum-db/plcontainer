@@ -37,3 +37,8 @@ SELECT pg_sleep(5);
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 2);
 SELECT gp_inject_fault('plcontainer_before_container_connected', 'reset', 2);
+
+-- Test container kill-9-ed.
+select pyzero();
+select pykillself();
+select pyzero();

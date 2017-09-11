@@ -30,7 +30,7 @@ plcConn *find_container(const char *image);
 /* start a new docker container using the given image  */
 plcConn *start_container(plcContainerConf *conf);
 
-/* Function terminates all the container connections */
-void stop_containers(void);
+/* Function deletes all the containers */
+void delete_containers(void);
 
 #endif /* PLC_CONTAINERS_H */
