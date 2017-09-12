@@ -24,6 +24,7 @@ REGRESS_PYTHON = plcontainer_function_python \
 REGRESS_PYTHON_TESTS = plcontainer_test_python \
 	plcontainer_test_python_gpdb5 \
 	plcontainer_exception_python \
+	plcontainer_faultinject_python \
 	plcontainer_function_python_network
 
 # Regression Tests for GPDB5

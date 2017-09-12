@@ -13,6 +13,7 @@
 #include <time.h>
 #include <libgen.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 #include "postgres.h"
 #include "utils/ps_status.h"
@@ -260,6 +261,7 @@ plcConn *start_container(plcContainerConf *conf) {
 	int   container_slot;
     int   sockfd;
     int   res = 0;
+	int   wait_status;
 
 	container_slot = find_container_slot();
 
@@ -306,6 +308,19 @@ plcConn *start_container(plcContainerConf *conf) {
 
 	if (!conf->isNetworkConnection)
 		uds_fn = get_uds_fn(container_slot);
+
+	/*
+	 * Give chance to reap some possible <defunct> cleanup processes here.
+	 * <defunct> occurs only when container exits abnormally and QE process
+	 * exists, which should not happen often. We could daemonize the cleanup
+	 * process to avoid this but having QE as its parent seems to be more
+	 * debug-friendly.
+	 */
+#ifdef HAVE_WAITPID
+	while (waitpid(-1, &wait_status, WNOHANG) > 0);
+#else
+	while (wait3(&wait_status, WNOHANG, NULL) > 0);
+#endif
 
     /* Create a process to clean up the container after it finishes */
     cleanup(dockerid, uds_fn);
