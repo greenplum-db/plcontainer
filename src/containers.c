@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <libgen.h>
-#include <signal.h>
 #include <sys/wait.h>
 
 #include "postgres.h"
@@ -83,7 +82,8 @@ static int container_is_alive(char *dockerid) {
         if (res < 0) {
             return_code = res;
         }
-        if (element != NULL && strcmp("exited", element) == 0){
+        if (element != NULL && (strcmp("exited", element) == 0 ||
+			strcmp("false", element) == 0 )){
             return_code = plc_backend_delete(sockfd, dockerid);
         }
         plc_backend_disconnect(sockfd);
