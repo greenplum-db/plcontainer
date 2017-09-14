@@ -13,10 +13,8 @@
 #include <sys/un.h>
 
 #include "postgres.h"
-#include "regex/regex.h"
 
-#include "plc_docker_api.h"
-#include "plc_configuration.h"
+#include "plc_docker_api_common.h"
 
 /* Templates for Docker API communication */
 
@@ -84,133 +82,12 @@ static char *plc_docker_delete_request =
 /* End of templates */
 
 /* Static functions of the Docker API module */
-static int docker_parse_container_id(char* response, char **name);
-static int docker_parse_string_mapping(char *response, char **element, char *plc_docker_regex);
 static int get_content_length(char *msg, int *len);
 static int send_message(int sockfd, char *message);
 static int recv_message(int sockfd, char **response);
 static int recv_string_mapping(int sockfd, char **element, plcInspectionMode type);
 static int docker_call(int sockfd, char *request, char **response, int silent);
 static int plc_docker_container_command(int sockfd, char *name, const char *cmd, int silent);
-
-/* Parse container ID out of JSON response */
-static int docker_parse_container_id(char* response, char **name) {
-    // Regular expression for parsing "create" call JSON response
-    char *plc_docker_containerid_regex =
-            "\\{\\s*\"[Ii][Dd]\\s*\"\\:\\s*\"(\\w+)\"\\s*,\\s*\"[Ww]arnings\"\\s*\\:([^\\}]*)\\s*\\}";
-
-    regex_t     preg;
-    regmatch_t  pmatch[3];
-    int         res = 0;
-    int         len = 0;
-    int         wmasklen, masklen;
-    pg_wchar   *mask;
-    int         wdatalen, datalen;
-    pg_wchar   *data;
-
-    masklen = strlen(plc_docker_containerid_regex);
-    mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
-    wmasklen = pg_mb2wchar_with_len(plc_docker_containerid_regex, mask, masklen);
-
-    res = pg_regcomp(&preg, mask, wmasklen, REG_ADVANCED);
-    pfree(mask);
-    if (res < 0) {
-        elog(ERROR, "Cannot compile Postgres regular expression: '%s'", strerror(errno));
-        return -1;
-    }
-
-    datalen = strlen(response);
-    data = (pg_wchar *) palloc((datalen + 1) * sizeof(pg_wchar));
-    wdatalen = pg_mb2wchar_with_len(response, data, datalen);
-
-    res = pg_regexec(&preg,
-                     data,
-                     wdatalen,
-                     0,
-                     NULL,
-                     3,
-                     pmatch,
-                     0);
-    pfree(data);
-    if (res == REG_NOMATCH) {
-        elog(ERROR, "Docker API response does not match regular expression: '%s'", response);
-        return -1;
-    }
-
-    if (pmatch[1].rm_so == -1) {
-        elog(ERROR, "Postgres regex failed to extract created container name from Docker API response: '%s'", response);
-        return -1;
-    }
-
-    len = pmatch[1].rm_eo - pmatch[1].rm_so;
-    *name = palloc(len + 1);
-    memcpy(*name, response + pmatch[1].rm_so, len);
-    (*name)[len] = '\0';
-
-    if (pmatch[2].rm_so != -1 && pmatch[2].rm_eo - pmatch[2].rm_so > 10) {
-        char *err = NULL;
-        len = pmatch[2].rm_eo - pmatch[2].rm_so;
-        err = palloc(len+1);
-        memcpy(err, response + pmatch[2].rm_so, len);
-        err[len] = '\0';
-        elog(WARNING, "Docker API 'create' call returned warning message: '%s'", err);
-    }
-
-    pg_regfree(&preg);
-    return 0;
-}
-
-static int docker_parse_string_mapping(char *response, char **element, char *plc_docker_regex) {
-    // Regular expression for parsing container inspection JSON response
-
-    regex_t     preg;
-    regmatch_t  pmatch[2];
-    int         res = 0;
-    int         len = 0;
-    int         wmasklen, masklen;
-    pg_wchar   *mask;
-    int         wdatalen, datalen;
-    pg_wchar   *data;
-
-    masklen = strlen(plc_docker_regex);
-    mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
-    wmasklen = pg_mb2wchar_with_len(plc_docker_regex, mask, masklen);
-
-    res = pg_regcomp(&preg, mask, wmasklen, REG_ADVANCED);
-    pfree(mask);
-    if (res < 0) {
-        elog(ERROR, "Cannot compile Postgres regular expression: '%s'", strerror(errno));
-        return -1;
-    }
-
-    datalen = strlen(response);
-    data = (pg_wchar *) palloc((datalen + 1) * sizeof(pg_wchar));
-    wdatalen = pg_mb2wchar_with_len(response, data, datalen);
-
-    res = pg_regexec(&preg,
-                     data,
-                     wdatalen,
-                     0,
-                     NULL,
-                     2,
-                     pmatch,
-                     0);
-    pfree(data);
-    if(res == REG_NOMATCH) {
-        return -1;
-    }
-
-    if (pmatch[1].rm_so == -1) {
-        return -1;
-    }
-
-    len = pmatch[1].rm_eo - pmatch[1].rm_so;
-    *element = palloc(len + 1);
-    memcpy(*element, response + pmatch[1].rm_so, len);
-    (*element)[len] = '\0';
-
-    return 0;
-}
 
 static int get_return_status( char * msg )
 {

@@ -11,6 +11,7 @@
 #include "postgres.h"
 
 #include "plc_configuration.h"
+#include "plc_docker_api_common.h"
 
 #define FUNC_RETURN_OK 0
 
