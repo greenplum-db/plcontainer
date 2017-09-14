@@ -407,8 +407,11 @@ int plc_docker_inspect_container(pg_attribute_unused() int sockfd, char *name, c
             regex =
                     "\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
         } else if (type == PLC_INSPECT_STATUS) {
-            regex =
-                    "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
+#ifdef DOCKER_API_LOW
+			regex = "\\s*\"Running\\s*\"\\:\\s*(\\w+)\\s*";
+#else
+			regex = "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
+#endif
         }
 
         res = docker_parse_string_mapping(response->data, element, regex);

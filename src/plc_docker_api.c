@@ -26,7 +26,7 @@
 #ifdef DOCKER_API_LOW
     static char *plc_docker_api_version = "v1.19";
 #else
-    static char *plc_docker_api_version = "v1.21";
+    static char *plc_docker_api_version = "v1.27";
 #endif
 
 // Default location of the Docker API unix socket
@@ -361,11 +361,11 @@ static int recv_string_mapping(int sockfd, char **element, plcInspectionMode typ
             regex =
                     "\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
         } else if (type == PLC_INSPECT_STATUS) {
-			if (strcmp(plc_docker_api_version, "v1.19") == 0){
-				regex = "\\s*\"Running\\s*\"\\:\\s*(\\w+)\\s*";
-			}else{
-				regex = "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
-			}
+#ifdef DOCKER_API_LOW
+			regex = "\\s*\"Running\\s*\"\\:\\s*(\\w+)\\s*";
+#else
+			regex = "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
+#endif
         }
 
 
