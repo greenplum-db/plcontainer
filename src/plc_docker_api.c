@@ -368,7 +368,7 @@ int plc_docker_start_container(int sockfd, char *name) {
 
 int plc_docker_kill_container(int sockfd, char *name) {
 	elog(FATAL, "Not finished yet. Do not call it.");
-    return plc_docker_container_command(sockfd, name, "kill?signal=KILL", 0);
+    return plc_docker_container_command(sockfd, name, "kill?signal=KILL");
 }
 
 int plc_docker_inspect_container(int sockfd, char *name, char **element, plcInspectionMode type) {
@@ -399,7 +399,7 @@ int plc_docker_inspect_container(int sockfd, char *name, char **element, plcInsp
 		return -1;
 	}
 
-    res = docker_inspect_string(response->data, element, type);
+    res = docker_inspect_string(response, element, type);
     if (res < 0) {
 		snprintf(api_error_message, sizeof(api_error_message),
 				"Failed to inspect the container.");
@@ -411,7 +411,7 @@ int plc_docker_inspect_container(int sockfd, char *name, char **element, plcInsp
 
 int plc_docker_wait_container(int sockfd, char *name) {
 	elog(FATAL, "Not finished yet. Do not call it.");
-    return plc_docker_container_command(sockfd, name, "wait", 1);
+    return plc_docker_container_command(sockfd, name, "wait");
 }
 
 int plc_docker_delete_container(int sockfd, char *name) {
