@@ -169,6 +169,11 @@ static int recv_message(int sockfd, char **response) {
         if (len == 0) {
             status =  get_return_status(buf);
 
+			if (status >= 300){
+				*response = buf;
+				return status;
+			}
+
             /* Parse the message to find Content-Length */
             get_content_length(buf, &len);
 
