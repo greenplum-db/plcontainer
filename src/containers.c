@@ -81,10 +81,13 @@ static int container_is_alive(char *dockerid) {
         res = plc_backend_inspect(sockfd, dockerid, &element, PLC_INSPECT_STATUS);
         if (res < 0) {
             return_code = res;
-        }
-        if (element != NULL && (strcmp("exited", element) == 0 ||
-			strcmp("false", element) == 0 )){
-            return_code = plc_backend_delete(sockfd, dockerid);
+        } else if (element != NULL) {
+			if ((strcmp("exited", element) == 0 ||
+				strcmp("false", element) == 0 )) {
+				return_code = plc_backend_delete(sockfd, dockerid);
+			} else if (strcmp("unexist", element) == 0) {
+				return_code = 0;
+			}
         }
         plc_backend_disconnect(sockfd);
     } else if (sockfd <= 0) {
@@ -118,18 +121,10 @@ static void cleanup(char *dockerid, char *uds_fn) {
 
         while(1) {
 
-            /* Check parent pid whether parent process is alive or not
-             * if not, kill and remove the container
-             */
-            PG_TRY();
-            {
-                res = qe_is_alive(dockerid);
-            }
-			PG_CATCH();
-            {
-                res = -1;
-            }
-			PG_END_TRY();
+			/* Check parent pid whether parent process is alive or not
+			 * if not, kill and remove the container
+			 */
+			res = qe_is_alive(dockerid);
 
             /* res = 0, backend exited, container has been successfully deleted
              * res < 0, backend exited, docker API report an error
@@ -139,22 +134,16 @@ static void cleanup(char *dockerid, char *uds_fn) {
                 break;
             } else if (res < 0) {
 				wait_time += CONATINER_WAIT_TIMEOUT;
+				elog(LOG, "Failed to delete container in cleanup process (%s). "
+					"Will retry later.", api_error_message);
 			} else {
 				wait_time = 0;
 			}
+
 			/* check whether conatiner is exited or not
 			 * if exited, remove the container
 			 */
-			PG_TRY();
-            {
-                res = container_is_alive(dockerid);
-            }
-			PG_CATCH();
-            {
-                /* need to retry the connection to container */
-				res = -1;
-            }
-			PG_END_TRY();
+			res = container_is_alive(dockerid);
 
             /* res = 0, container exited, container has been successfully deleted
              * res < 0, docker API report an error
@@ -164,18 +153,20 @@ static void cleanup(char *dockerid, char *uds_fn) {
                 break;
             } else if (res < 0) {
 				wait_time += CONATINER_WAIT_TIMEOUT;
+				elog(LOG, "Failed to delete container in cleanup process (%s). "
+					"Will retry later.", api_error_message);
 			} else {
 				wait_time = 0;
 			}
 
 			if (wait_time >= CONATINER_CONNECT_TIMEOUT) {
-				 elog(WARNING, "Could not connnect to docker deamon for %d seconds, cleanup process will exited"
-					  , wait_time);
+				 elog(WARNING, "Docker API fails for %d seconds. cleanup "
+				 	"process will exit.", wait_time);
 				 break;
 			}
+
             /* check every CONATINER_WAIT_TIMEOUT*/
 	        sleep(CONATINER_WAIT_TIMEOUT);
-
         }
 
         cleanup4uds(uds_fn);
@@ -270,22 +261,22 @@ plcConn *start_container(plcContainerConf *conf) {
 
     sockfd = plc_backend_connect();
     if (sockfd < 0) {
-        elog(ERROR, "Cannot connect to the Docker API socket");
+        elog(ERROR, "%s", api_error_message);
         return conn;
     }
 
     res = plc_backend_create(sockfd, conf, &dockerid, container_slot);
     if (res < 0) {
-        elog(ERROR, "Cannot create Docker container");
+        elog(ERROR, "%s", api_error_message);
         return conn;
     }
 
     res = plc_backend_start(sockfd, dockerid);
-
     if (res < 0) {
         /* if a container start failed, but already created, the it need to be deleted */
+		char *errmsg = pstrdup(api_error_message);
         plc_backend_delete(sockfd, dockerid);
-        elog(ERROR, "Cannot start Docker container");
+        elog(ERROR, "%s", errmsg);
         return conn;
     }
 
@@ -293,16 +284,16 @@ plcConn *start_container(plcContainerConf *conf) {
 	if (conf->isNetworkConnection) {
         char *element = NULL;
 		res = plc_backend_inspect(sockfd, dockerid, &element, PLC_INSPECT_PORT);
-        port = (int) strtol(element, NULL, 10);
 		if (res < 0) {
-			elog(ERROR, "Cannot parse host port exposed by Docker container");
+			elog(ERROR, "%s", api_error_message);
 			return conn;
 		}
+        port = (int) strtol(element, NULL, 10);
 	}
 
     res = plc_backend_disconnect(sockfd);
     if (res < 0) {
-        elog(ERROR, "Cannot disconnect from the Docker API socket");
+        elog(ERROR, "%s", api_error_message);
         return conn;
     }
 

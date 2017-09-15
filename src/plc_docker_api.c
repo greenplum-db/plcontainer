@@ -395,7 +395,7 @@ int plc_docker_inspect_container(int sockfd, char *name, char **element, plcInsp
 	if (res != 200) {
 		elog(DEBUG1, "Docker cannot inspect container, response: %s", response);
 		snprintf(api_error_message, sizeof(api_error_message),
-				"Docker inspect api returns http code %d.", res);
+				"Docker inspect api returns code %d.", res);
 		return -1;
 	}
 
