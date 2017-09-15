@@ -85,9 +85,8 @@ static char *plc_docker_delete_request =
 static int get_content_length(char *msg, int *len);
 static int send_message(int sockfd, char *message);
 static int recv_message(int sockfd, char **response);
-static int recv_string_mapping(int sockfd, char **element, plcInspectionMode type);
-static int docker_call(int sockfd, char *request, char **response, int silent);
-static int plc_docker_container_command(int sockfd, char *name, const char *cmd, int silent);
+static int docker_call(int sockfd, char *request, char **response);
+static int plc_docker_container_command(int sockfd, char *name, const char *cmd);
 
 static int get_return_status( char * msg )
 {
@@ -137,8 +136,8 @@ static int send_message(int sockfd, char *message) {
 
         bytes = send(sockfd, message+sent, len-sent, 0);
         if (bytes < 0) {
-            elog(ERROR, "Error writing message to the Docker API socket: '%s'", strerror(errno));
-            return -1;
+            snprintf(api_error_message, sizeof(api_error_message), "Error writing message to the Docker API socket: '%s'", strerror(errno));
+			return bytes;
         }
 
         sent += bytes;
@@ -162,23 +161,14 @@ static int recv_message(int sockfd, char **response) {
 
         bytes = recv(sockfd, buf + received, buflen - received, 0);
         if (bytes < 0) {
-            ereport(ERROR,
-                    (errcode(ERRCODE_CONNECTION_FAILURE),
-                    errmsg("Error reading response from Docker API socket")));
-            return -1;
+			snprintf(api_error_message, sizeof(api_error_message), "Error reading message from the Docker API socket: '%s'", strerror(errno));
+            return bytes;
         }
         received += bytes;
 
         if (len == 0) {
             status =  get_return_status(buf);
 
-            if (status >= 300){
-                ereport(ERROR,
-                        (errcode(ERRCODE_CONNECTION_FAILURE),
-                         errmsg("Error from docker api response code %d", status)));
-                *response = buf;
-                return status;
-            }
             /* Parse the message to find Content-Length */
             get_content_length(buf, &len);
 
@@ -203,100 +193,26 @@ static int recv_message(int sockfd, char **response) {
     }
 
     *response = buf;
-    return 0;
+    return status;
 }
 
-static int recv_string_mapping(int sockfd, char **element, plcInspectionMode type) {
-    int   received = 0;
-    char *buf;
-    int   buflen = 16384;
-    int   headercheck = 0;
-    char *regex;
-
-    buf = palloc(buflen);
-    memset(buf, 0, buflen);
-    while (received < buflen) {
-        int bytes = 0;
-
-        bytes = recv(sockfd, buf + received, buflen - received, 0);
-        if (bytes < 0) {
-            elog(ERROR, "Error reading response from Docker API socket: %s",
-				strerror(errno));
-            return -1;
-        }
-        received += bytes;
-
-        /* Check that the message contain correct HTTP response header */
-        if (!headercheck) {
-            if (strncmp(buf, "HTTP/1.1 200 OK", 15) != 0) {
-                elog(ERROR, "Error in response from Docker API socket: '%s'", buf);
-                return -1;
-            }
-            headercheck = 1;
-        }
-        if (type == PLC_INSPECT_PORT) {
-            regex =
-                    "\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
-        } else if (type == PLC_INSPECT_STATUS) {
-#ifdef DOCKER_API_LOW
-			regex = "\\s*\"Running\\s*\"\\:\\s*(\\w+)\\s*";
-#else
-			regex = "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
-#endif
-        }
-
-
-        if (docker_parse_string_mapping(buf, element, regex) == 0) {
-            break;
-        }
-
-        if (strstr(buf, "\r\n0\r\n")) {
-            elog(ERROR, "Error - cannot inspect information for container: %s", buf);
-            return -1;
-        }
-
-        /* If the buffer is close to the end, we shift it to the beginning */
-        if (buflen - received < 1000) {
-            memcpy(buf, buf + received - 1000, 1000);
-            received = 1000;
-            memset(buf + received, 0, buflen - received);
-        }
-    }
-
-    /* Print Docker response */
-    elog(DEBUG1, "Docker API response:\n%s", buf);
-
-    return 0;
-}
-
-static int docker_call(int sockfd, char *request, char **response, int silent) {
+static int docker_call(int sockfd, char *request, char **response) {
     int res = 0;
-
-    if (!silent) {
-        elog(DEBUG1, "Docker API request:\n%s", request);
-    }
 
     res = send_message(sockfd, request);
     if (res < 0) {
-        elog(ERROR, "Error sending data to the Docker API socket during container create call");
-        return -1;
+        return res;
     }
 
     res = recv_message(sockfd, response);
     if (res < 0) {
-        elog(ERROR, "Error receiving data from the Docker API socket during container create call");
-        return -1;
+        return res;
     }
 
-    /* Print Docker response */
-    if (!silent) {
-        elog(DEBUG1, "Docker API response:\n%s", *response);
-    }
-
-    return 0;
+    return res;
 }
 
-static int plc_docker_container_command(int sockfd, char *name, const char *cmd, int silent) {
+static int plc_docker_container_command(int sockfd, char *name, const char *cmd) {
     char *message     = NULL;
     char *apiendpoint = NULL;
     char *response    = NULL;
@@ -320,7 +236,7 @@ static int plc_docker_container_command(int sockfd, char *name, const char *cmd,
             0,                            // Content-Length of the message we passing
             "");                          // Content of the message (empty message)
 
-    docker_call(sockfd, message, &response, silent);
+    res = docker_call(sockfd, message, &response);
 
     pfree(apiendpoint);
     pfree(message);
@@ -338,8 +254,8 @@ int plc_docker_connect() {
     /* Create the socket */
     sockfd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        elog(ERROR, "Error creating UNIX socket for Docker API: %s",
-			 strerror(errno));
+		snprintf(api_error_message, sizeof(api_error_message),
+        		"Error creating UNIX socket for Docker API: %s", strerror(errno));
         return -1;
     }
 
@@ -350,8 +266,9 @@ int plc_docker_connect() {
 
     /* connect the socket */
     if (connect(sockfd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        elog(ERROR, "Error connecting to the Docker API socket '%s': %s",
-			plc_docker_socket, strerror(errno));
+		snprintf(api_error_message, sizeof(api_error_message),
+        		"Error connecting to the Docker API socket '%s': %s",
+				plc_docker_socket, strerror(errno));
         return -1;
     }
 
@@ -366,6 +283,7 @@ int plc_docker_create_container(int sockfd, plcContainerConf *conf, char **name,
     char *sharing      = NULL;
     char *apiendpointtemplate = "/%s/containers/create";
     int   res = 0;
+	bool  has_error;
 
     /* Get Docker API endpoint for current API version */
     apiendpoint = palloc(20 + strlen(apiendpointtemplate) + strlen(plc_docker_api_version));
@@ -374,7 +292,11 @@ int plc_docker_create_container(int sockfd, plcContainerConf *conf, char **name,
             plc_docker_api_version);
 
     /* Get Docket API "create" call JSON message body */
-    sharing = get_sharing_options(conf, container_slot);
+    sharing = get_sharing_options(conf, container_slot, &has_error);
+	if (has_error == true) {
+		return -1;
+	}
+
     message_body = palloc(40 + strlen(plc_docker_create_request) + strlen(conf->command)
                              + strlen(conf->dockerid) + strlen(sharing));
     sprintf(message_body,
@@ -395,19 +317,33 @@ int plc_docker_create_container(int sockfd, plcContainerConf *conf, char **name,
             strlen(message_body),         // Content-length
             message_body);                // POST message JSON content
 
-    docker_call(sockfd, message, &response, 0);
-
+    res = docker_call(sockfd, message, &response);
     pfree(apiendpoint);
     pfree(sharing);
     pfree(message_body);
     pfree(message);
 
+	if (res == 201) {
+		res = 0;
+	} else if (res >= 0) {
+		elog(DEBUG1, "Docker can not create container, response: %s", response);
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Failed to create container (return code: %d).", res);
+		res = -1;
+	}
+	
+	if (res < 0) {
+		goto cleanup;
+	}
+
     res = docker_parse_container_id(response, name);
     if (res < 0) {
-        elog(ERROR, "Error parsing container ID");
-        return -1;
+		snprintf(api_error_message, sizeof(api_error_message),
+				 "Error parsing container ID during creating container");
+		goto cleanup;
     }
 
+cleanup:
     if (response) {
         pfree(response);
     }
@@ -416,15 +352,28 @@ int plc_docker_create_container(int sockfd, plcContainerConf *conf, char **name,
 }
 
 int plc_docker_start_container(int sockfd, char *name) {
-    return plc_docker_container_command(sockfd, name, "start", 0);
+    int res;
+	
+	res = plc_docker_container_command(sockfd, name, "start");
+	if (res == 204 || res == 304) {
+		res = 0;
+	} else if (res >= 0) {
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Failed to start container (return code: %d)", res);
+		res = -1;
+	}
+
+	return res;
 }
 
 int plc_docker_kill_container(int sockfd, char *name) {
+	elog(FATAL, "Not finished yet. Do not call it.");
     return plc_docker_container_command(sockfd, name, "kill?signal=KILL", 0);
 }
 
 int plc_docker_inspect_container(int sockfd, char *name, char **element, plcInspectionMode type) {
     char *message;
+    char *response;
     int  res = 0;
 
     /* Fill in the HTTP message */
@@ -434,18 +383,26 @@ int plc_docker_inspect_container(int sockfd, char *name, char **element, plcInsp
             plc_docker_get_message,
             plc_docker_api_version,
             name);
-    elog(DEBUG1, "Docker API request:\n%s", message);
 
-    res = send_message(sockfd, message);
+    res = docker_call(sockfd, message, &response);
     pfree(message);
-    if (res < 0) {
-        elog(ERROR, "Error sending data to the Docker API socket during container delete call");
-        return -1;
-    }
 
-    res = recv_string_mapping(sockfd, element, type);
+	/* We will need to handle the "no such container" case specially. */
+	if (res == 404 && type == PLC_INSPECT_STATUS) {
+		*element = pstrdup("unexist");
+		return 0;
+	}
+	if (res != 200) {
+		elog(DEBUG1, "Docker cannot inspect container, response: %s", response);
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Docker inspect api returns http code %d.", res);
+		return -1;
+	}
+
+    res = docker_inspect_string(response->data, element, type);
     if (res < 0) {
-        elog(ERROR, "Error receiving data from the Docker API socket during container delete call");
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Failed to inspect the container.");
         return -1;
     }
 
@@ -453,6 +410,7 @@ int plc_docker_inspect_container(int sockfd, char *name, char **element, plcInsp
 }
 
 int plc_docker_wait_container(int sockfd, char *name) {
+	elog(FATAL, "Not finished yet. Do not call it.");
     return plc_docker_container_command(sockfd, name, "wait", 1);
 }
 
@@ -471,12 +429,19 @@ int plc_docker_delete_container(int sockfd, char *name) {
 	    0,
 	    "");                     // Container name
 
-    docker_call(sockfd, message, &response, 1);
-
+    res = docker_call(sockfd, message, &response);
     pfree(message);
     if (response) {
         pfree(response);
     }
+
+	if (res == 204 || res == 404) {
+		res = 0;
+	} else if (res >= 0) {
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Failed to delete container (return code: %d)", res);
+		res = -1;
+	}
 
     return res;
 }

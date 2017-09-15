@@ -27,7 +27,7 @@ int docker_parse_string_mapping(char *response, char **element, char *plc_docker
     res = pg_regcomp(&preg, mask, wmasklen, REG_ADVANCED);
     pfree(mask);
     if (res < 0) {
-        elog(ERROR, "Cannot compile Postgres regular expression: '%s'", strerror(errno));
+        elog(LOG, "Cannot compile Postgres regular expression: '%s'", strerror(errno));
         return -1;
     }
 
@@ -45,10 +45,12 @@ int docker_parse_string_mapping(char *response, char **element, char *plc_docker
                      0);
     pfree(data);
     if(res == REG_NOMATCH) {
+        elog(LOG, "No regex match '%s' for '%s'", plc_docker_regex, response);
         return -1;
     }
 
     if (pmatch[1].rm_so == -1) {
+        elog(LOG, "Could not find regex match '%s' for '%s'", plc_docker_regex, response);
         return -1;
     }
 
@@ -60,6 +62,25 @@ int docker_parse_string_mapping(char *response, char **element, char *plc_docker
     return 0;
 }
 
+int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
+    char *regex = NULL;
+	int res = 0;
+
+	if (type == PLC_INSPECT_PORT) {
+		regex =
+				"\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
+	} else if (type == PLC_INSPECT_STATUS) {
+#ifdef DOCKER_API_LOW
+		regex = "\\s*\"Running\\s*\"\\:\\s*(\\w+)\\s*";
+#else
+		regex = "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
+#endif
+	}
+
+	res = docker_parse_string_mapping(buf, element, regex);
+
+    return res;
+}
 
 /* Parse container ID out of JSON response */
 int docker_parse_container_id(char* response, char **name) {
@@ -82,7 +103,7 @@ int docker_parse_container_id(char* response, char **name) {
     res = pg_regcomp(&preg, mask, wmasklen, REG_ADVANCED);
     pfree(mask);
     if (res < 0) {
-        elog(ERROR, "Cannot compile Postgres regular expression: '%s'", strerror(errno));
+        elog(LOG, "Cannot compile Postgres regular expression: '%s'", strerror(errno));
         return -1;
     }
 
@@ -100,12 +121,12 @@ int docker_parse_container_id(char* response, char **name) {
                      0);
     pfree(data);
     if (res == REG_NOMATCH) {
-        elog(ERROR, "Docker API response does not match regular expression: '%s'", response);
+        elog(LOG, "Docker API response does not match regular expression: '%s'", response);
         return -1;
     }
 
     if (pmatch[1].rm_so == -1) {
-        elog(ERROR, "Postgres regex failed to extract created container name from Docker API response: '%s'", response);
+        elog(LOG, "Postgres regex failed to extract created container name from Docker API response: '%s'", response);
         return -1;
     }
 
@@ -120,7 +141,7 @@ int docker_parse_container_id(char* response, char **name) {
         err = palloc(len+1);
         memcpy(err, response + pmatch[2].rm_so, len);
         err[len] = '\0';
-        elog(WARNING, "Docker API 'create' call returned warning message: '%s'", err);
+        elog(LOG, "Docker API 'create' call returned warning message: '%s'", err);
     }
 
     pg_regfree(&preg);

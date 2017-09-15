@@ -385,8 +385,6 @@ void delete_containers() {
         for (i = 0; i < CONTAINER_NUMBER; i++) {
             if (containers[i].name != NULL) {
 
-                plcDisconnect(containers[i].conn);
-
                 /* Terminate container process */
                 if (containers[i].dockerid != NULL) {
                     int sockfd;
@@ -398,6 +396,8 @@ void delete_containers() {
                     }
                     pfree(containers[i].dockerid);
                 }
+
+                plcDisconnect(containers[i].conn);
 
                 /* Set all fields to NULL as part of cleanup */
                 pfree(containers[i].name);

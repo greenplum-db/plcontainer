@@ -46,6 +46,6 @@ typedef struct plcContainerConf {
 Datum refresh_plcontainer_config(PG_FUNCTION_ARGS);
 Datum show_plcontainer_config(PG_FUNCTION_ARGS);
 plcContainerConf *plc_get_container_config(char *name);
-char *get_sharing_options(plcContainerConf *conf, int container_slot);
+char *get_sharing_options(plcContainerConf *conf, int container_slot, bool *has_error);
 
 #endif /* PLC_CONFIGURATION_H */
