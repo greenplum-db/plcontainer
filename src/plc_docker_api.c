@@ -201,6 +201,84 @@ static int recv_message(int sockfd, char **response) {
     return status;
 }
 
+static int inspect_string_mapping(int sockfd, char **element, plcInspectionMode type) {
+    int   received = 0;
+    char *buf;
+    int   buflen = 16384;
+    bool  headercheck = false;
+    char *regex;
+
+    buf = palloc(buflen);
+    memset(buf, 0, buflen);
+    while (received < buflen) {
+        int bytes = 0;
+
+        bytes = recv(sockfd, buf + received, buflen - received, 0);
+        if (bytes < 0) {
+			snprintf(api_error_message, sizeof(api_error_message),
+					"Error reading message from the Docker API socket: '%s'",
+					strerror(errno));
+			pfree(buf);
+            return bytes;
+        }
+        received += bytes;
+
+        /* Check that the message contain correct HTTP response header */
+        if (!headercheck) {
+
+            if (strncmp(buf, "HTTP/1.1 404 ", strlen("HTTP/1.1 404 ") == 0) &&
+				type == PLC_INSPECT_STATUS) {
+				*element = pstrdup("unexist");
+				pfree(buf);
+				return 0;
+			}
+
+            if (strncmp(buf, "HTTP/1.1 200 ", strlen("HTTP/1.1 200 ") != 0)) {
+				elog(LOG, "Cannot inspect docker container, response: %s", buf);
+				snprintf(api_error_message, sizeof(api_error_message),
+						"Cannot inspect docker container");
+				pfree(buf);
+                return -1;
+            }
+
+            headercheck = true;
+        }
+
+        if (type == PLC_INSPECT_PORT) {
+            regex =
+                    "\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
+        } else if (type == PLC_INSPECT_STATUS) {
+#ifdef DOCKER_API_LOW
+			regex = "\\s*\"Running\\s*\"\\:\\s*(\\w+)\\s*";
+#else
+			regex = "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
+#endif
+        }
+
+        if (docker_parse_string_mapping(buf, element, regex) == 0) {
+            break;
+        }
+
+		/* If we reach the end of the http packet. */
+        if (strstr(buf, "\r\n0\r\n")) {
+			elog(LOG, "Cannot inspect container information: %s", buf);
+			snprintf(api_error_message, sizeof(api_error_message),
+					"Cannot inspect docker information.");
+            return -1;
+        }
+
+        /* If the buffer is close to the end, we shift it to the beginning */
+        if (buflen - received < 1000) {
+            memcpy(buf, buf + received - 1000, 1000);
+            received = 1000;
+            memset(buf + received, 0, buflen - received);
+        }
+    }
+
+	pfree(buf);
+    return 0;
+}
+
 static int docker_call(int sockfd, char *request, char **response) {
     int res = 0;
 
@@ -378,7 +456,6 @@ int plc_docker_kill_container(int sockfd, char *name) {
 
 int plc_docker_inspect_container(int sockfd, char *name, char **element, plcInspectionMode type) {
     char *message;
-    char *response;
     int  res = 0;
 
     /* Fill in the HTTP message */
@@ -389,27 +466,13 @@ int plc_docker_inspect_container(int sockfd, char *name, char **element, plcInsp
             plc_docker_api_version,
             name);
 
-    res = docker_call(sockfd, message, &response);
+    res = send_message(sockfd, message);
     pfree(message);
-
-	/* We will need to handle the "no such container" case specially. */
-	if (res == 404 && type == PLC_INSPECT_STATUS) {
-		*element = pstrdup("unexist");
-		return 0;
-	}
-	if (res != 200) {
-		elog(DEBUG1, "Docker cannot inspect container, response: %s", response);
-		snprintf(api_error_message, sizeof(api_error_message),
-				"Docker inspect api returns code %d.", res);
-		return -1;
-	}
-
-    res = docker_inspect_string(response, element, type);
     if (res < 0) {
-		snprintf(api_error_message, sizeof(api_error_message),
-				"Failed to inspect the container.");
-        return -1;
+        return res;
     }
+
+    res = inspect_string_mapping(sockfd, element, type);
 
     return res;
 }
