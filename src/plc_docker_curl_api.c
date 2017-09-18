@@ -48,7 +48,8 @@ static plcCurlBuffer *plcCurlBufferInit() {
 /* Free Curl response receiving buffer */
 static void plcCurlBufferFree(plcCurlBuffer *buf) {
 	if (buf != NULL) {
-		pfree(buf->data);
+		if (buf->data)
+			pfree(buf->data);
 		pfree(buf);
 	}
 }
@@ -214,7 +215,7 @@ int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainerCo
 	if (res == 201) {
 		res = 0;
 	} else if (res >= 0) {
-		elog(DEBUG1, "Docker fails to create container, response: %s", response->data);
+		elog(LOG, "Docker fails to create container, response: %s", response->data);
 		snprintf(api_error_message, sizeof(api_error_message),
 				"Failed to create container (return code: %d).", res);
 		res = -1;
@@ -300,7 +301,7 @@ int plc_docker_inspect_container(pg_attribute_unused() int sockfd, char *name, c
 	}
 
 	if (res != 200) {
-		elog(DEBUG1, "Docker cannot inspect container, response: %s", response->data);
+		elog(LOG, "Docker cannot inspect container, response: %s", response->data);
 		snprintf(api_error_message, sizeof(api_error_message),
 				"Docker inspect api returns http code %d.", res);
 		res = -1;
