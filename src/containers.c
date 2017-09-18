@@ -40,7 +40,6 @@ typedef struct {
 static int containers_init = 0;
 static container_t *containers;
 
-static void insert_container(char *image, char *dockerid, plcConn *conn);
 static void init_containers();
 static inline bool is_whitespace (const char c);
 static int check_container_name(const char *name);
@@ -194,11 +193,14 @@ static int find_container_slot() {
 
 }
 
-static void insert_container(char *image, char *dockerid, plcConn *conn) {
+static void set_container_conn(plcConn *conn) {
 	int slot = conn->container_slot;
 
-	containers[slot].name     = plc_top_strdup(image);
 	containers[slot].conn     = conn;
+}
+
+static void insert_container(char *image, char *dockerid, int slot) {
+	containers[slot].name     = plc_top_strdup(image);
 	containers[slot].dockerid = NULL;
 	if (dockerid != NULL) {
 		containers[slot].dockerid = plc_top_strdup(dockerid);
@@ -271,12 +273,16 @@ plcConn *start_container(plcContainerConf *conf) {
         return conn;
     }
 
+	/* Insert it into containers[] so that in case below operations fails,
+	 * it could longjump to plcontainer_call_handler()->delete_containers()
+	 * to delete all the containers. We will fill in conn after the connection is
+	 * established.
+	 */
+	insert_container(conf->name, dockerid, container_slot);
+
     res = plc_backend_start(sockfd, dockerid);
     if (res < 0) {
-        /* if a container start failed, but already created, the it need to be deleted */
-		char *errmsg = pstrdup(api_error_message);
-        plc_backend_delete(sockfd, dockerid);
-        elog(ERROR, "%s", errmsg);
+        elog(ERROR, "%s", api_error_message);
         return conn;
     }
 
@@ -359,7 +365,7 @@ plcConn *start_container(plcContainerConf *conf) {
                     CONTAINER_CONNECT_TIMEOUT_MS);
         conn = NULL;
     } else {
-        insert_container(conf->name, dockerid, conn);
+        set_container_conn(conn);
     }
 
     pfree(dockerid);
