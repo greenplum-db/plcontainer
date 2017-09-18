@@ -226,7 +226,7 @@ plcConn *find_container(const char *image) {
     if (containers_init == 0)
         init_containers();
 
-	SIMPLE_FAULT_INJECTOR(PlcontainerBeforeContainerConnected);
+	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_connected");
     
 	for (i = 0; i < CONTAINER_NUMBER; i++) {
         if (containers[i].name != NULL &&
@@ -325,7 +325,7 @@ plcConn *start_container(plcContainerConf *conf) {
     /* Create a process to clean up the container after it finishes */
     cleanup(dockerid, uds_fn);
 
-    SIMPLE_FAULT_INJECTOR(PlcontainerBeforeContainerStarted);
+    SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_started");
 
     /* Making a series of connection attempts unless connection timeout of
      * CONTAINER_CONNECT_TIMEOUT_MS is reached. Exponential backoff for
