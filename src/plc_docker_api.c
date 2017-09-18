@@ -226,14 +226,14 @@ static int inspect_string_mapping(int sockfd, char **element, plcInspectionMode 
         /* Check that the message contain correct HTTP response header */
         if (!headercheck) {
 
-            if (strncmp(buf, "HTTP/1.1 404 ", strlen("HTTP/1.1 404 ") == 0) &&
+            if (strncmp(buf, "HTTP/1.1 404 ", strlen("HTTP/1.1 404 ")) == 0 &&
 				type == PLC_INSPECT_STATUS) {
 				*element = pstrdup("unexist");
 				pfree(buf);
 				return 0;
 			}
 
-            if (strncmp(buf, "HTTP/1.1 200 ", strlen("HTTP/1.1 200 ") != 0)) {
+            if (strncmp(buf, "HTTP/1.1 200 ", strlen("HTTP/1.1 200 ")) != 0) {
 				elog(LOG, "Cannot inspect docker container, response: %s", buf);
 				snprintf(api_error_message, sizeof(api_error_message),
 						"Cannot inspect docker container");
