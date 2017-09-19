@@ -12,12 +12,8 @@
 
 #include "plc_backend_api.h"
 
-#ifdef CURL_DOCKER_API
-    #include "plc_docker_curl_api.h"
-#else
-    #include "plc_docker_api.h"
-#endif
-
-void plc_docker_init(PLC_FunctionEntries entries);
+int docker_parse_string_mapping(char *response, char **element, char *plc_docker_regex);
+int docker_parse_container_id(char* response, char **name);
+int docker_inspect_string(char *buf, char **element, plcInspectionMode type);
 
 #endif /* PLC_DOCKER_COMMON_H */

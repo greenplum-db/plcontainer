@@ -11,8 +11,9 @@
 #include "postgres.h"
 
 #include "plc_configuration.h"
+#include "plc_docker_api_common.h"
 
-#define FUNC_RETURN_OK 0
+extern char api_error_message[256];
 
 typedef int ( * PLC_FPTR_connect)    (void);
 typedef int ( * PLC_FPTR_create)     (int sockfd, plcContainerConf *conf, char **name, int container_slot);

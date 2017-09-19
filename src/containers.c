@@ -40,7 +40,6 @@ typedef struct {
 static int containers_init = 0;
 static container_t *containers;
 
-static void insert_container(char *image, char *dockerid, plcConn *conn);
 static void init_containers();
 static inline bool is_whitespace (const char c);
 static int check_container_name(const char *name);
@@ -81,10 +80,13 @@ static int container_is_alive(char *dockerid) {
         res = plc_backend_inspect(sockfd, dockerid, &element, PLC_INSPECT_STATUS);
         if (res < 0) {
             return_code = res;
-        }
-        if (element != NULL && (strcmp("exited", element) == 0 ||
-			strcmp("false", element) == 0 )){
-            return_code = plc_backend_delete(sockfd, dockerid);
+        } else if (element != NULL) {
+			if ((strcmp("exited", element) == 0 ||
+				strcmp("false", element) == 0 )) {
+				return_code = plc_backend_delete(sockfd, dockerid);
+			} else if (strcmp("unexist", element) == 0) {
+				return_code = 0;
+			}
         }
         plc_backend_disconnect(sockfd);
     } else if (sockfd <= 0) {
@@ -118,18 +120,10 @@ static void cleanup(char *dockerid, char *uds_fn) {
 
         while(1) {
 
-            /* Check parent pid whether parent process is alive or not
-             * if not, kill and remove the container
-             */
-            PG_TRY();
-            {
-                res = qe_is_alive(dockerid);
-            }
-			PG_CATCH();
-            {
-                res = -1;
-            }
-			PG_END_TRY();
+			/* Check parent pid whether parent process is alive or not
+			 * if not, kill and remove the container
+			 */
+			res = qe_is_alive(dockerid);
 
             /* res = 0, backend exited, container has been successfully deleted
              * res < 0, backend exited, docker API report an error
@@ -139,22 +133,16 @@ static void cleanup(char *dockerid, char *uds_fn) {
                 break;
             } else if (res < 0) {
 				wait_time += CONATINER_WAIT_TIMEOUT;
+				elog(LOG, "Failed to delete container in cleanup process (%s). "
+					"Will retry later.", api_error_message);
 			} else {
 				wait_time = 0;
 			}
+
 			/* check whether conatiner is exited or not
 			 * if exited, remove the container
 			 */
-			PG_TRY();
-            {
-                res = container_is_alive(dockerid);
-            }
-			PG_CATCH();
-            {
-                /* need to retry the connection to container */
-				res = -1;
-            }
-			PG_END_TRY();
+			res = container_is_alive(dockerid);
 
             /* res = 0, container exited, container has been successfully deleted
              * res < 0, docker API report an error
@@ -164,18 +152,20 @@ static void cleanup(char *dockerid, char *uds_fn) {
                 break;
             } else if (res < 0) {
 				wait_time += CONATINER_WAIT_TIMEOUT;
+				elog(LOG, "Failed to delete container in cleanup process (%s). "
+					"Will retry later.", api_error_message);
 			} else {
 				wait_time = 0;
 			}
 
 			if (wait_time >= CONATINER_CONNECT_TIMEOUT) {
-				 elog(WARNING, "Could not connnect to docker deamon for %d seconds, cleanup process will exited"
-					  , wait_time);
+				 elog(WARNING, "Docker API fails for %d seconds. cleanup "
+				 	"process will exit.", wait_time);
 				 break;
 			}
+
             /* check every CONATINER_WAIT_TIMEOUT*/
 	        sleep(CONATINER_WAIT_TIMEOUT);
-
         }
 
         cleanup4uds(uds_fn);
@@ -203,11 +193,14 @@ static int find_container_slot() {
 
 }
 
-static void insert_container(char *image, char *dockerid, plcConn *conn) {
+static void set_container_conn(plcConn *conn) {
 	int slot = conn->container_slot;
 
-	containers[slot].name     = plc_top_strdup(image);
 	containers[slot].conn     = conn;
+}
+
+static void insert_container(char *image, char *dockerid, int slot) {
+	containers[slot].name     = plc_top_strdup(image);
 	containers[slot].dockerid = NULL;
 	if (dockerid != NULL) {
 		containers[slot].dockerid = plc_top_strdup(dockerid);
@@ -270,22 +263,26 @@ plcConn *start_container(plcContainerConf *conf) {
 
     sockfd = plc_backend_connect();
     if (sockfd < 0) {
-        elog(ERROR, "Cannot connect to the Docker API socket");
+        elog(ERROR, "%s", api_error_message);
         return conn;
     }
 
     res = plc_backend_create(sockfd, conf, &dockerid, container_slot);
     if (res < 0) {
-        elog(ERROR, "Cannot create Docker container");
+        elog(ERROR, "%s", api_error_message);
         return conn;
     }
 
-    res = plc_backend_start(sockfd, dockerid);
+	/* Insert it into containers[] so that in case below operations fails,
+	 * it could longjump to plcontainer_call_handler()->delete_containers()
+	 * to delete all the containers. We will fill in conn after the connection is
+	 * established.
+	 */
+	insert_container(conf->name, dockerid, container_slot);
 
+    res = plc_backend_start(sockfd, dockerid);
     if (res < 0) {
-        /* if a container start failed, but already created, the it need to be deleted */
-        plc_backend_delete(sockfd, dockerid);
-        elog(ERROR, "Cannot start Docker container");
+        elog(ERROR, "%s", api_error_message);
         return conn;
     }
 
@@ -293,16 +290,16 @@ plcConn *start_container(plcContainerConf *conf) {
 	if (conf->isNetworkConnection) {
         char *element = NULL;
 		res = plc_backend_inspect(sockfd, dockerid, &element, PLC_INSPECT_PORT);
-        port = (int) strtol(element, NULL, 10);
 		if (res < 0) {
-			elog(ERROR, "Cannot parse host port exposed by Docker container");
+			elog(ERROR, "%s", api_error_message);
 			return conn;
 		}
+        port = (int) strtol(element, NULL, 10);
 	}
 
     res = plc_backend_disconnect(sockfd);
     if (res < 0) {
-        elog(ERROR, "Cannot disconnect from the Docker API socket");
+        elog(ERROR, "%s", api_error_message);
         return conn;
     }
 
@@ -368,7 +365,7 @@ plcConn *start_container(plcContainerConf *conf) {
                     CONTAINER_CONNECT_TIMEOUT_MS);
         conn = NULL;
     } else {
-        insert_container(conf->name, dockerid, conn);
+        set_container_conn(conn);
     }
 
     pfree(dockerid);
@@ -385,8 +382,6 @@ void delete_containers() {
         for (i = 0; i < CONTAINER_NUMBER; i++) {
             if (containers[i].name != NULL) {
 
-                plcDisconnect(containers[i].conn);
-
                 /* Terminate container process */
                 if (containers[i].dockerid != NULL) {
                     int sockfd;
@@ -398,6 +393,8 @@ void delete_containers() {
                     }
                     pfree(containers[i].dockerid);
                 }
+
+                plcDisconnect(containers[i].conn);
 
                 /* Set all fields to NULL as part of cleanup */
                 pfree(containers[i].name);

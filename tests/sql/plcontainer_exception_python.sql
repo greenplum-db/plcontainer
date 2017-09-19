@@ -2,8 +2,9 @@
 select pykillself();
 select pykillself();
 SELECT pg_sleep(5);
--- Then start the backend.
+-- Wait for 5 seconds so that cleanup processes exit.
 \!ps -ef |grep [p]ostgres|grep defunct |wc -l
+-- Then start the backend so that those <defunct> processes could be reaped.
 select pyzero();
 \!ps -ef |grep [p]ostgres|grep defunct |wc -l
 

@@ -9,9 +9,10 @@ SELECT pg_sleep(5);
  
 (1 row)
 
--- Then start the backend.
+-- Wait for 5 seconds so that cleanup processes exit.
 \!ps -ef |grep [p]ostgres|grep defunct |wc -l
-2
+1
+-- Then start the backend so that those <defunct> processes could be reaped.
 select pyzero();
  pyzero 
 --------

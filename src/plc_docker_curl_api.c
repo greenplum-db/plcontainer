@@ -9,10 +9,8 @@
 #ifdef CURL_DOCKER_API
 
 #include "postgres.h"
-#include "regex/regex.h"
 
-#include "plc_docker_curl_api.h"
-#include "plc_configuration.h"
+#include "plc_docker_api_common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,11 +32,7 @@ static void plcCurlBufferFree(plcCurlBuffer *buf);
 static size_t plcCurlCallback(void *contents, size_t size, size_t nmemb, void *userp);
 static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
                                          char *url,
-                                         char *body,
-                                         long expectedReturn,
-                                         bool silent);
-static int docker_parse_container_id(char *response, char **name);
-static int docker_parse_string_mapping(char *response, char **element, char *plc_docker_regex);
+                                         char *body);
 
 /* Initialize Curl response receiving buffer */
 static plcCurlBuffer *plcCurlBufferInit() {
@@ -53,8 +47,11 @@ static plcCurlBuffer *plcCurlBufferInit() {
 
 /* Free Curl response receiving buffer */
 static void plcCurlBufferFree(plcCurlBuffer *buf) {
-    pfree(buf->data);
-    pfree(buf);
+	if (buf != NULL) {
+		if (buf->data)
+			pfree(buf->data);
+		pfree(buf);
+	}
 }
 
 /* Curl callback for receiving a chunk of data into buffer */
@@ -65,11 +62,6 @@ static size_t plcCurlCallback(void *contents, size_t size, size_t nmemb, void *u
     if (mem->size + realsize + 1 > mem->bufsize) {
         mem->data = repalloc(mem->data, 3 * (mem->size + realsize + 1) / 2);
         mem->bufsize = 3 * (mem->size + realsize + 1) / 2;
-        if (mem->data == NULL) {
-            /* out of memory! */ 
-            elog(ERROR, "not enough memory (realloc returned NULL)");
-            return 0;
-        }
     }
 
     memcpy(&(mem->data[mem->size]), contents, realsize);
@@ -82,9 +74,7 @@ static size_t plcCurlCallback(void *contents, size_t size, size_t nmemb, void *u
 /* Function for calling Docker REST API using Curl */
 static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
                                          char *url,
-                                         char *body,
-                                         long expectedReturn,
-                                         bool silent) {
+                                         char *body) {
     CURL *curl;
     CURLcode res;
     plcCurlBuffer *buffer = plcCurlBufferInit();
@@ -93,11 +83,12 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
     memset(errbuf, 0, CURL_ERROR_SIZE);
 
     curl = curl_easy_init();
-    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
     if (curl) {
         char *fullurl;
         struct curl_slist *headers = NULL; // init to NULL is important
+
+    	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
         /* Setting Docker API endpoint */
         curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, plc_docker_socket);
@@ -131,9 +122,10 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
                 curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE"); 
                 break;
             default:
-                elog(ERROR, "Unsupported call type for PL/Container Docker Curl API: %d", cType);
+            	snprintf(api_error_message, sizeof(api_error_message),
+						"Unsupported call type for PL/Container Docker Curl API: %d", cType);
                 buffer->status = -1;
-                break;
+				goto cleanup;
         }
 
         /* Setting up response receive callback */
@@ -144,156 +136,29 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
         res = curl_easy_perform(curl);
         if (res != CURLE_OK) {
             size_t len = strlen(errbuf);
-            if (!silent) {
-                elog(ERROR, "PL/Container libcurl return code %d, error '%s'", res,
-                    (len > 0) ? errbuf : curl_easy_strerror(res));
-            }
-            buffer->status = -2;
+
+			snprintf(api_error_message, sizeof(api_error_message),
+					"PL/Container libcurl return code %d, error '%s'", res,
+					(len > 0) ? errbuf : curl_easy_strerror(res));
+			buffer->status = -2;
+			goto cleanup;
         } else {
             long http_code = 0;
 
             curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
-            if (http_code == expectedReturn) {
-                if (!silent) {
-                    elog(DEBUG1, "Call '%s' succeeded\n", fullurl);
-                    elog(DEBUG1, "Returned data: %s\n", buffer->data);
-                }
-                buffer->status = 0;
-            } else {
-                if (!silent) {
-                    elog(ERROR, "Curl call to '%s' returned error code %ld, error '%s'\n",
-                           fullurl, http_code, buffer->data);
-                }
-                buffer->status = -3;
-            }
+			buffer->status = http_code;
         }
 
-        /* Freeing up full URL */
+cleanup:
         pfree(fullurl);
-    }
-
-    /* cleanup curl stuff */ 
-    curl_easy_cleanup(curl);
+    	curl_easy_cleanup(curl);
+    } else {
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Failed to start a curl session for unknown reason");
+		buffer->status = -1;
+	}
 
     return buffer;
-}
-
-/* Parse container ID out of JSON response */
-static int docker_parse_container_id(char* response, char **name) {
-    // Regular expression for parsing "create" call JSON response
-    char *plc_docker_containerid_regex =
-            "\\{\\s*\"[Ii][Dd]\\s*\"\\:\\s*\"(\\w+)\"\\s*,\\s*\"[Ww]arnings\"\\s*\\:([^\\}]*)\\s*\\}";
-    regex_t     preg;
-    regmatch_t  pmatch[3];
-    int         res = 0;
-    int         len = 0;
-    int         wmasklen, masklen;
-    pg_wchar   *mask;
-    int         wdatalen, datalen;
-    pg_wchar   *data;
-
-    masklen = strlen(plc_docker_containerid_regex);
-    mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
-    wmasklen = pg_mb2wchar_with_len(plc_docker_containerid_regex, mask, masklen);
-
-    res = pg_regcomp(&preg, mask, wmasklen, REG_ADVANCED);
-    pfree(mask);
-    if (res < 0) {
-        elog(ERROR, "Cannot compile Postgres regular expression: '%s'", strerror(errno));
-        return -1;
-    }
-
-    datalen = strlen(response);
-    data = (pg_wchar *) palloc((datalen + 1) * sizeof(pg_wchar));
-    wdatalen = pg_mb2wchar_with_len(response, data, datalen);
-
-    res = pg_regexec(&preg,
-                     data,
-                     wdatalen,
-                     0,
-                     NULL,
-                     3,
-                     pmatch,
-                     0);
-    pfree(data);
-    if (res == REG_NOMATCH) {
-        elog(ERROR, "Docker API response does not match regular expression: '%s'", response);
-        return -1;
-    }
-
-    if (pmatch[1].rm_so == -1) {
-        elog(ERROR, "Postgres regex failed to extract created container name from Docker API response: '%s'", response);
-        return -1;
-    }
-
-    len = pmatch[1].rm_eo - pmatch[1].rm_so;
-    *name = palloc(len + 1);
-    memcpy(*name, response + pmatch[1].rm_so, len);
-    (*name)[len] = '\0';
-
-    if (pmatch[2].rm_so != -1 && pmatch[2].rm_eo - pmatch[2].rm_so > 10) {
-        char *err = NULL;
-        len = pmatch[2].rm_eo - pmatch[2].rm_so;
-        err = palloc(len+1);
-        memcpy(err, response + pmatch[2].rm_so, len);
-        err[len] = '\0';
-        elog(WARNING, "Docker API 'create' call returned warning message: '%s'", err);
-    }
-
-    pg_regfree(&preg);
-    return 0;
-}
-
-static int docker_parse_string_mapping(char *response, char **element, char *plc_docker_regex) {
-    // Regular expression for parsing container inspection JSON response
-
-    regex_t     preg;
-    regmatch_t  pmatch[2];
-    int         res = 0;
-    int         len = 0;
-    int         wmasklen, masklen;
-    pg_wchar   *mask;
-    int         wdatalen, datalen;
-    pg_wchar   *data;
-
-    masklen = strlen(plc_docker_regex);
-    mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
-    wmasklen = pg_mb2wchar_with_len(plc_docker_regex, mask, masklen);
-
-    res = pg_regcomp(&preg, mask, wmasklen, REG_ADVANCED);
-    pfree(mask);
-    if (res < 0) {
-        elog(ERROR, "Cannot compile Postgres regular expression: '%s'", strerror(errno));
-        return -1;
-    }
-
-    datalen = strlen(response);
-    data = (pg_wchar *) palloc((datalen + 1) * sizeof(pg_wchar));
-    wdatalen = pg_mb2wchar_with_len(response, data, datalen);
-
-    res = pg_regexec(&preg,
-                     data,
-                     wdatalen,
-                     0,
-                     NULL,
-                     2,
-                     pmatch,
-                     0);
-    pfree(data);
-    if(res == REG_NOMATCH) {
-        return -1;
-    }
-
-    if (pmatch[1].rm_so == -1) {
-        return -1;
-    }
-
-    len = pmatch[1].rm_eo - pmatch[1].rm_so;
-    *element = palloc(len + 1);
-    memcpy(*element, response + pmatch[1].rm_so, len);
-    (*element)[len] = '\0';
-
-    return 0;
 }
 
 /* Not used in Curl API */
@@ -318,10 +183,15 @@ int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainerCo
             "        \"PublishAllPorts\": true\n"
             "    }\n"
             "}\n";
-    char *volumeShare = get_sharing_options(conf, container_id);
+	bool  has_error;
+    char *volumeShare = get_sharing_options(conf, container_id, &has_error);
     char *messageBody = NULL;
     plcCurlBuffer *response = NULL;
     int res = 0;
+
+	if (has_error == true) {
+		return -1;
+	}
 
     /* Get Docket API "create" call JSON message body */
     messageBody = palloc(40 + strlen(createRequest) + strlen(conf->command)
@@ -336,20 +206,33 @@ int plc_docker_create_container(pg_attribute_unused() int sockfd, plcContainerCo
             ((long long)conf->memoryMb) * 1024 * 1024);
 
     /* Make a call */
-    response = plcCurlRESTAPICall(PLC_CALL_POST, "/containers/create", messageBody, 201, false);
-    res = response->status;
-
+    response = plcCurlRESTAPICall(PLC_CALL_POST, "/containers/create", messageBody);
     /* Free up intermediate data */
     pfree(messageBody);
     pfree(volumeShare);
+    res = response->status;
 
-    if (res == 0) {
-        res = docker_parse_container_id(response->data, name);
-        if (res < 0) {
-            elog(ERROR, "Error parsing container ID");
-        }
-    }
+	if (res == 201) {
+		res = 0;
+	} else if (res >= 0) {
+		elog(LOG, "Docker fails to create container, response: %s", response->data);
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Failed to create container (return code: %d).", res);
+		res = -1;
+	}
 
+	if (res < 0) {
+		goto cleanup;
+	}
+
+	res = docker_parse_container_id(response->data, name);
+	if (res < 0) {
+		snprintf(api_error_message, sizeof(api_error_message),
+				 "Error parsing container ID during creating container");
+		goto cleanup;
+	}
+
+cleanup:
     plcCurlBufferFree(response);
 
     return res;
@@ -364,10 +247,17 @@ int plc_docker_start_container(pg_attribute_unused() int sockfd, char *name) {
     url = palloc(strlen(method) + strlen(name) + 2);
     sprintf(url, method, name);
 
-    response = plcCurlRESTAPICall(PLC_CALL_POST, url, NULL, 204, false);
+    response = plcCurlRESTAPICall(PLC_CALL_POST, url, NULL);
     res = response->status;
-
     plcCurlBufferFree(response);
+
+	if (res == 204 || res == 304) {
+		res = 0;
+	} else if (res >= 0) {
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Failed to start container (return code: %d)", res);
+		res = -1;
+	}
 
     return res;
 }
@@ -378,10 +268,12 @@ int plc_docker_kill_container(pg_attribute_unused() int sockfd, char *name) {
     char *url = NULL;
     int res = 0;
 
+	elog(FATAL, "Not finished yet. Do not call it.");
+
     url = palloc(strlen(method) + strlen(name) + 2);
     sprintf(url, method, name);
 
-    response = plcCurlRESTAPICall(PLC_CALL_POST, url, NULL, 204, false);
+    response = plcCurlRESTAPICall(PLC_CALL_POST, url, NULL);
     res = response->status;
 
     plcCurlBufferFree(response);
@@ -398,28 +290,32 @@ int plc_docker_inspect_container(pg_attribute_unused() int sockfd, char *name, c
     url = palloc(strlen(method) + strlen(name) + 2);
     sprintf(url, method, name);
 
-    response = plcCurlRESTAPICall(PLC_CALL_HTTPGET, url, NULL, 200, false);
+    response = plcCurlRESTAPICall(PLC_CALL_HTTPGET, url, NULL);
     res = response->status;
 
-    if (res == 0) {
-		char* regex = NULL;
-        if (type == PLC_INSPECT_PORT) {
-            regex =
-                    "\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
-        } else if (type == PLC_INSPECT_STATUS) {
-#ifdef DOCKER_API_LOW
-			regex = "\\s*\"Running\\s*\"\\:\\s*(\\w+)\\s*";
-#else
-			regex = "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
-#endif
-        }
+	/* We will need to handle the "no such container" case specially. */
+	if (res == 404 && type == PLC_INSPECT_STATUS) {
+		*element = pstrdup("unexist");
+		res = 0;
+		goto cleanup;
+	}
 
-        res = docker_parse_string_mapping(response->data, element, regex);
-        if (res < 0) {
-            elog(ERROR, "Error finding container port mapping in response '%s'", response->data);
-        }
+	if (res != 200) {
+		elog(LOG, "Docker cannot inspect container, response: %s", response->data);
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Docker inspect api returns http code %d.", res);
+		res = -1;
+		goto cleanup;
+	}
+
+    res = docker_inspect_string(response->data, element, type);
+    if (res < 0) {
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Failed to inspect the container.");
+		goto cleanup;
     }
 
+cleanup:
     plcCurlBufferFree(response);
 
     return res;
@@ -431,10 +327,12 @@ int plc_docker_wait_container(pg_attribute_unused() int sockfd, char *name) {
     char *url = NULL;
     int res = 0;
 
+	elog(FATAL, "Not finished yet. Do not call it.");
+
     url = palloc(strlen(method) + strlen(name) + 2);
     sprintf(url, method, name);
 
-    response = plcCurlRESTAPICall(PLC_CALL_POST, url, NULL, 200, true);
+    response = plcCurlRESTAPICall(PLC_CALL_POST, url, NULL);
     res = response->status;
 
     plcCurlBufferFree(response);
@@ -451,10 +349,17 @@ int plc_docker_delete_container(pg_attribute_unused() int sockfd, char *name) {
     url = palloc(strlen(method) + strlen(name) + 2);
     sprintf(url, method, name);
 
-    response = plcCurlRESTAPICall(PLC_CALL_DELETE, url, NULL, 204, true);
+    response = plcCurlRESTAPICall(PLC_CALL_DELETE, url, NULL);
     res = response->status;
-
     plcCurlBufferFree(response);
+
+	if (res == 204 || res == 404) {
+		res = 0;
+	} else if (res >= 0) {
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Failed to delete container (return code: %d)", res);
+		res = -1;
+	}
 
     return res;
 }

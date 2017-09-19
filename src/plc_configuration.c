@@ -18,6 +18,7 @@
 #include "common/comm_utils.h"
 #include "common/comm_connectivity.h"
 #include "plcontainer.h"
+#include "plc_backend_api.h"
 #include "plc_configuration.h"
 
 static plcContainerConf *plcContConf = NULL;
@@ -367,8 +368,10 @@ plcContainerConf *plc_get_container_config(char *name) {
     return result;
 }
 
-char *get_sharing_options(plcContainerConf *conf, int container_slot) {
+char *get_sharing_options(plcContainerConf *conf, int container_slot, bool *has_error) {
     char *res = NULL;
+
+	*has_error = false;
 
     if (conf->nSharedDirs >= 0) {
         char **volumes = NULL;
@@ -390,7 +393,11 @@ char *get_sharing_options(plcContainerConf *conf, int container_slot) {
                 sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, conf->sharedDirs[i].host,
                         conf->sharedDirs[i].container);
             } else {
-                elog(ERROR, "Cannot determine directory sharing mode");
+				snprintf(api_error_message, sizeof(api_error_message),
+                		"Cannot determine directory sharing mode: %d",
+						conf->sharedDirs[i].mode);
+				*has_error = true;
+				return NULL;
             }
             totallen += strlen(volumes[i]);
         }
@@ -411,8 +418,11 @@ char *get_sharing_options(plcContainerConf *conf, int container_slot) {
 
 			/* Create the directory. */
 			if (mkdir(uds_dir, S_IRWXU) < 0 && errno != EEXIST) {
-				elog(ERROR, "PLContainer: Cannot create directory %s: %s",
+				snprintf(api_error_message, sizeof(api_error_message),
+						"PLContainer: Cannot create directory %s: %s",
 						uds_dir, strerror(errno));
+				*has_error = true;
+				return NULL;
 			}
 		}
 
