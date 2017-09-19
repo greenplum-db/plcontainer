@@ -1,8 +1,6 @@
 --  Test <defunct> processes are reaped after a new backend is created.
 select pykillself();
 ERROR:  Error receiving data from the client: -3. Maybe retry later. (plcontainer.c:206)
-select pykillself();
-ERROR:  Error receiving data from the client: -3. Maybe retry later. (plcontainer.c:206)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------

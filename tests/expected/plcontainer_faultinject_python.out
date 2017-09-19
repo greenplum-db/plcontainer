@@ -28,7 +28,7 @@ SELECT pg_sleep(5);
 -- end_ignore
 \! docker ps -a | wc -l
 1
-\! ps -ef | grep plcontainer | grep -v pg_regress | wc -l
+\! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
 1
 -- start_ignore
 -- Start a container
@@ -60,7 +60,7 @@ SELECT pg_sleep(5);
 -- end_ignore
 \! docker ps -a | wc -l
 1
-\! ps -ef | grep plcontainer | grep -v pg_regress | wc -l
+\! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
 1
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 2);

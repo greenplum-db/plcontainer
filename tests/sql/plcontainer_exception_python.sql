@@ -1,6 +1,5 @@
 --  Test <defunct> processes are reaped after a new backend is created.
 select pykillself();
-select pykillself();
 SELECT pg_sleep(5);
 -- Wait for 5 seconds so that cleanup processes exit.
 \!ps -ef |grep [p]ostgres|grep defunct |wc -l
