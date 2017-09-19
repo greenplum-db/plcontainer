@@ -225,9 +225,14 @@ static int inspect_string_mapping(int sockfd, char **element, plcInspectionMode 
 
         /* Check that the message contain correct HTTP response header */
         if (!headercheck) {
-
             if (strncmp(buf, "HTTP/1.1 404 ", strlen("HTTP/1.1 404 ")) == 0 &&
 				type == PLC_INSPECT_STATUS) {
+
+				/*
+				 * container does not exist, might be already deleted,
+				 * return OK with message
+				 */
+
 				*element = pstrdup("unexist");
 				pfree(buf);
 				return 0;
@@ -502,7 +507,7 @@ int plc_docker_delete_container(int sockfd, char *name) {
     if (response) {
         pfree(response);
     }
-
+	/* 200 = deleted success, 404 = container not found, both are OK for delete */
 	if (res == 204 || res == 404) {
 		res = 0;
 	} else if (res >= 0) {

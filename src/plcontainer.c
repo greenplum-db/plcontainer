@@ -13,6 +13,7 @@
 #include "miscadmin.h"
 #include "executor/spi.h"
 #include "commands/trigger.h"
+#include "utils/faultinjector.h"
 
 /* PLContainer Headers */
 #include "common/comm_channel.h"
@@ -157,6 +158,7 @@ static Datum plcontainer_call_hook(PG_FUNCTION_ARGS) {
         free_result(presult->resmsg, false);
         pfree(presult);
     }
+    SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_udf_finish");
 
     return result;
 }
@@ -188,6 +190,8 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
         int res;
 
 		res  = plcontainer_channel_send(conn, (plcMessage*)req);
+        SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_send_request");
+
 		if (res < 0) {
 			DeleteBackendsRequired = true;
 			elog(ERROR, "Error sending data to the client: %d. "
@@ -200,6 +204,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
             plcMessage *answer;
 
             res = plcontainer_channel_receive(conn, &answer);
+            SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_recv_request");
             if (res < 0) {
 				DeleteBackendsRequired = true;
                 elog(ERROR, "Error receiving data from the client: %d. "

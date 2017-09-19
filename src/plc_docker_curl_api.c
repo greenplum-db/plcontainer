@@ -353,6 +353,7 @@ int plc_docker_delete_container(pg_attribute_unused() int sockfd, char *name) {
     res = response->status;
     plcCurlBufferFree(response);
 
+    /* 200 = deleted success, 404 = container not found, both are OK for delete */
 	if (res == 204 || res == 404) {
 		res = 0;
 	} else if (res >= 0) {

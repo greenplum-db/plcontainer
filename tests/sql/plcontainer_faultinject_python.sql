@@ -34,6 +34,36 @@ SELECT pg_sleep(5);
 \! docker ps -a | wc -l
 \! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
 
+-- start_ignore
+SELECT gp_inject_fault('plcontainer_after_send_request', 'fatal', 2);
+SELECT pyint(i) from tbl;
+SELECT pg_sleep(5);
+-- end_ignore
+
+\! docker ps -a | wc -l
+\! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
+
+-- start_ignore
+SELECT gp_inject_fault('plcontainer_after_recv_request', 'fatal', 2);
+SELECT pyint(i) from tbl;
+SELECT pg_sleep(5);
+-- end_ignore
+
+\! docker ps -a | wc -l
+\! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
+
+-- start_ignore
+SELECT gp_inject_fault('plcontainer_before_udf_finish', 'fatal', 2);
+SELECT pyint(i) from tbl;
+SELECT pg_sleep(5);
+-- end_ignore
+
+\! docker ps -a | wc -l
+\! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
+
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 2);
 SELECT gp_inject_fault('plcontainer_before_container_connected', 'reset', 2);
+SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 2);
+SELECT gp_inject_fault('plcontainer_after_recv_request', 'reset', 2);
+SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
