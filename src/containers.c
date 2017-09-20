@@ -243,7 +243,7 @@ static char *get_uds_fn(int container_slot) {
 	return uds_fn;
 }
 
-plcConn *start_container(plcContainerConf *conf) {
+plcConn *start_backend(plcContainerConf *conf) {
     int port = 0;
     unsigned int sleepus = 25000;
     unsigned int sleepms = 0;
@@ -306,9 +306,8 @@ plcConn *start_container(plcContainerConf *conf) {
 	if (!conf->isNetworkConnection)
 		uds_fn = get_uds_fn(container_slot);
 
-	/*
-	 * Give chance to reap some possible <defunct> cleanup processes here.
-	 * <defunct> occurs only when container exits abnormally and QE process
+	/* Give chance to reap some possible zoombie cleanup processes here.
+	 * zoombie occurs only when container exits abnormally and QE process
 	 * exists, which should not happen often. We could daemonize the cleanup
 	 * process to avoid this but having QE as its parent seems to be more
 	 * debug-friendly.

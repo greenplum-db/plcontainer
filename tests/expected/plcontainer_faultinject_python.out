@@ -19,7 +19,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=32639)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=15262)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -31,23 +31,23 @@ SELECT pg_sleep(5);
 1
 \! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
 1
--- start_ignore
--- Start a container
-SELECT pyint(i) from tbl;
+SELECT pyint(i) from tbl order by i;
  pyint 
 -------
      2
-     4
-     6
-     8
-    10
      3
+     4
      5
+     6
      7
+     8
      9
+    10
     11
 (10 rows)
 
+-- start_ignore
+-- Start a container
 -- QE crash when connnecting to an existing container
 SELECT gp_inject_fault('plcontainer_before_container_connected', 'fatal', 2);
 NOTICE:  Success:
@@ -57,7 +57,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=300)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=15363)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -69,6 +69,21 @@ SELECT pg_sleep(5);
 1
 \! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
 1
+SELECT pyint(i) from tbl order by i;
+ pyint 
+-------
+     2
+     3
+     4
+     5
+     6
+     7
+     8
+     9
+    10
+    11
+(10 rows)
+
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_send_request', 'fatal', 2);
 NOTICE:  Success:
@@ -78,7 +93,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=453)
+ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=15442)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -90,6 +105,21 @@ SELECT pg_sleep(5);
 1
 \! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
 1
+SELECT pyint(i) from tbl order by i;
+ pyint 
+-------
+     2
+     3
+     4
+     5
+     6
+     7
+     8
+     9
+    10
+    11
+(10 rows)
+
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_recv_request', 'fatal', 2);
 NOTICE:  Success:
@@ -99,7 +129,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=580)
+ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=15522)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -111,6 +141,21 @@ SELECT pg_sleep(5);
 1
 \! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
 1
+SELECT pyint(i) from tbl order by i;
+ pyint 
+-------
+     2
+     3
+     4
+     5
+     6
+     7
+     8
+     9
+    10
+    11
+(10 rows)
+
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_before_udf_finish', 'fatal', 2);
 NOTICE:  Success:
@@ -120,7 +165,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=731)
+ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=15602)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -162,6 +207,76 @@ NOTICE:  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
+NOTICE:  Success:
+ gp_inject_fault 
+-----------------
+ t
+(1 row)
+
+-- After QE log(error, ...), related docker containers should be deleted.
+-- start_ignore
+SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
+NOTICE:  Success:
+ gp_inject_fault 
+-----------------
+ t
+(1 row)
+
+SELECT pyint(0);
+ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'error'
+SELECT pg_sleep(5);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+-- end_ignore
+\! docker ps -a | wc -l
+1
+\! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
+1
+SELECT pyint(0);
+ pyint 
+-------
+     1
+(1 row)
+
+-- start_ignore
+SELECT gp_inject_fault('plcontainer_after_send_request', 'error', 1);
+NOTICE:  Success:
+ gp_inject_fault 
+-----------------
+ t
+(1 row)
+
+SELECT pyint(0);
+ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'error'
+SELECT pg_sleep(5);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+-- end_ignore
+\! docker ps -a | wc -l
+1
+\! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
+1
+SELECT pyint(0);
+ pyint 
+-------
+     1
+(1 row)
+
+-- reset the injection points
+SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 1);
+NOTICE:  Success:
+ gp_inject_fault 
+-----------------
+ t
+(1 row)
+
+SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 1);
 NOTICE:  Success:
  gp_inject_fault 
 -----------------

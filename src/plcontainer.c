@@ -41,7 +41,7 @@ static void plcontainer_process_exception(plcMsgError *msg);
 static void plcontainer_process_sql(plcMsgSQL *msg, plcConn* conn);
 static void plcontainer_process_log(plcMsgLog *log);
 
-static bool DeleteBackendsRequired;
+static bool DeleteBackendsWhenError;
 
 Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
     Datum datumreturn = (Datum) 0;
@@ -76,10 +76,10 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
     {
         /* If the reason is Cancel or Termination or Backend error. */
         if (InterruptPending || QueryCancelPending || QueryFinishPending ||
-			DeleteBackendsRequired) {
+			DeleteBackendsWhenError) {
             //elog(DEBUG1, "Terminating containers due to user request");
             delete_containers();
-			DeleteBackendsRequired = false;
+			DeleteBackendsWhenError = false;
         }
         PG_RE_THROW();
     }
@@ -181,11 +181,15 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
             elog(ERROR, "Container '%s' is not defined in configuration "
                         "and cannot be used", name);
         } else {
-            conn = start_container(conf);
+			/* TODO: We could only remove this backend when error occurs. */
+			DeleteBackendsWhenError = true;
+			conn = start_backend(conf);
+			DeleteBackendsWhenError = false;
         }
     }
     pfree(name);
 
+	DeleteBackendsWhenError = true;
     if (conn != NULL) {
         int res;
 
@@ -193,7 +197,6 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
         SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_send_request");
 
 		if (res < 0) {
-			DeleteBackendsRequired = true;
 			elog(ERROR, "Error sending data to the client: %d. "
 				"Maybe retry later.", res);
 			return NULL;
@@ -206,7 +209,6 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
             res = plcontainer_channel_receive(conn, &answer);
             SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_recv_request");
             if (res < 0) {
-				DeleteBackendsRequired = true;
                 elog(ERROR, "Error receiving data from the client: %d. "
 					"Maybe retry later.", res);
                 break;
@@ -220,8 +222,10 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
                     result->resrow = 0;
                     break;
                 case MT_EXCEPTION:
-                    plcontainer_process_exception((plcMsgError*)answer);
-                    break;
+					/* For exception, no need to delete containers. */
+					DeleteBackendsWhenError = false;
+					plcontainer_process_exception((plcMsgError*)answer);
+					break;
                 case MT_SQL:
                     plcontainer_process_sql((plcMsgSQL*)answer, conn);
                     break;
@@ -237,7 +241,12 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
             if (message_type != MT_SQL && message_type != MT_LOG)
                 break;
         }
-    }
+    } else {
+		/* If conn == NULL, it should have longjump-ed earlier. */
+		elog(ERROR, "Could not create or connect to container.");
+	}
+
+	DeleteBackendsWhenError = false;
     return result;
 }
 
@@ -301,7 +310,6 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn* conn) {
     if (res != NULL) {
         retval = plcontainer_channel_send(conn, res);
 		if (retval < 0) {
-			DeleteBackendsRequired = true;
 			elog(ERROR, "Error sending data to the client: %d. "
 				"Maybe retry later.", retval);
 			return;
