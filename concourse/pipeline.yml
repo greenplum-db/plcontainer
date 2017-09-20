@@ -228,7 +228,7 @@ resources:
     bucket: {{pl-bucket-name}}
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: plcontainer_docker_image/plcontainer-devel-images.tar.gz
+    versioned_file: build/gpdb5/plcontainer/plcontainer-devel-images.tar.gz
 
 - name: bin_gpdb_centos7
   type: s3
@@ -255,7 +255,7 @@ resources:
     region_name: {{aws-region}}
     access_key_id: {{bucket-access-key-id}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: gppkgs/gpdb/plcontainer-concourse-centos7.gppkg
+    versioned_file: build/gpdb5/plcontainer/plcontainer-concourse-centos7.gppkg
 
 - name: plcontainer_gpdb_centos6_build
   type: s3
@@ -264,7 +264,7 @@ resources:
     region_name: {{aws-region}}
     access_key_id: {{bucket-access-key-id}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: gppkgs/gpdb/plcontainer-concourse-centos6.gppkg
+    versioned_file: build/gpdb5/plcontainer/plcontainer-concourse-centos6.gppkg
 
 
 
