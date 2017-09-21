@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------------
  *
  *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2016-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -14,44 +14,44 @@
 
 #include <Python.h>
 
-static PyObject *plpy_output(volatile int, PyObject*, PyObject*);
+static PyObject *PLy_output(volatile int, PyObject*, PyObject*);
 
-PyObject *plpy_debug(PyObject *self, PyObject *args)
+PyObject *PLy_debug(PyObject *self, PyObject *args)
 {
-    return plpy_output(DEBUG2, self, args);
+    return PLy_output(DEBUG2, self, args);
 }
 
-PyObject *plpy_log(PyObject *self, PyObject *args)
+PyObject *PLy_log(PyObject *self, PyObject *args)
 {
-    return plpy_output(LOG, self, args);
+    return PLy_output(LOG, self, args);
 }
 
-PyObject *plpy_info(PyObject *self, PyObject *args)
+PyObject *PLy_info(PyObject *self, PyObject *args)
 {
-    return plpy_output(INFO, self, args);
+    return PLy_output(INFO, self, args);
 }
 
-PyObject *plpy_notice(PyObject *self, PyObject *args)
+PyObject *PLy_notice(PyObject *self, PyObject *args)
 {
-    return plpy_output(NOTICE, self, args);
+    return PLy_output(NOTICE, self, args);
 }
 
-PyObject *plpy_warning(PyObject *self, PyObject *args)
+PyObject *PLy_warning(PyObject *self, PyObject *args)
 {
-    return plpy_output(WARNING, self, args);
+    return PLy_output(WARNING, self, args);
 }
 
-PyObject *plpy_error(PyObject *self, PyObject *args)
+PyObject *PLy_error(PyObject *self, PyObject *args)
 {
-    return plpy_output(ERROR, self, args);
+    return PLy_output(ERROR, self, args);
 }
 
-PyObject *plpy_fatal(PyObject *self, PyObject *args)
+PyObject *PLy_fatal(PyObject *self, PyObject *args)
 {
-    return plpy_output(FATAL, self, args);
+    return PLy_output(FATAL, self, args);
 }
 
-static PyObject *plpy_output(volatile int level, PyObject *self UNUSED, PyObject *args)
+static PyObject *PLy_output(volatile int level, PyObject *self UNUSED, PyObject *args)
 {
     PyObject *volatile so;
     char     *volatile sv;

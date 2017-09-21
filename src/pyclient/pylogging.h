@@ -2,6 +2,7 @@
  *
  *
  * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2016-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -11,12 +12,12 @@
 
 #include <Python.h>
 
-PyObject *plpy_debug(PyObject *self, PyObject *args);
-PyObject *plpy_log(PyObject *self, PyObject *args);
-PyObject *plpy_info(PyObject *self, PyObject *args);
-PyObject *plpy_notice(PyObject *self, PyObject *args);
-PyObject *plpy_warning(PyObject *self, PyObject *args);
-PyObject *plpy_error(PyObject *self, PyObject *args);
-PyObject *plpy_fatal(PyObject *self, PyObject *args);
+PyObject *PLy_debug(PyObject *self, PyObject *args);
+PyObject *PLy_log(PyObject *self, PyObject *args);
+PyObject *PLy_info(PyObject *self, PyObject *args);
+PyObject *PLy_notice(PyObject *self, PyObject *args);
+PyObject *PLy_warning(PyObject *self, PyObject *args);
+PyObject *PLy_error(PyObject *self, PyObject *args);
+PyObject *PLy_fatal(PyObject *self, PyObject *args);
 
 #endif /* PLC_PYLOGGING_H */

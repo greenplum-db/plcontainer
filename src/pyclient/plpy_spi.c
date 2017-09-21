@@ -13,8 +13,6 @@
 
 #include <Python.h>
 
-PyObject *plpy_execute(PyObject *self UNUSED, PyObject *pyquery);
-
 static plcMsgResult *receive_from_backend();
 
 static plcMsgResult *receive_from_backend() {
@@ -43,7 +41,7 @@ static plcMsgResult *receive_from_backend() {
 }
 
 /* plpy methods */
-PyObject *plpy_execute(PyObject *self UNUSED, PyObject *pyquery) {
+PyObject *PLy_spi_execute(PyObject *self UNUSED, PyObject *pyquery) {
     int           i, j;
     plcMsgSQL    *msg;
     plcMsgResult *resp;

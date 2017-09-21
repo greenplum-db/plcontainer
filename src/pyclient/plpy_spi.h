@@ -10,6 +10,6 @@
 
 #include <Python.h>
 
-PyObject *plpy_execute(PyObject *self, PyObject *pyquery);
+PyObject *PLy_spi_execute(PyObject *self, PyObject *pyquery);
 
 #endif /* PLC_PYSPI_H */

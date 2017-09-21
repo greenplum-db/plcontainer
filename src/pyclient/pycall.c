@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------------
  *
  *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2016-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include "pyerror.h"
 #include "pyconversions.h"
 #include "pylogging.h"
-#include "pyspi.h"
+#include "plpy_spi.h"
 #include "pycache.h"
 
 #include <Python.h>
@@ -33,18 +33,18 @@ static PyMethodDef moddef[] = {
     /*
      * logging methods
      */
-    {"debug",   plpy_debug,   METH_VARARGS, NULL},
-    {"log",     plpy_log,     METH_VARARGS, NULL},
-    {"info",    plpy_info,    METH_VARARGS, NULL},
-    {"notice",  plpy_notice,  METH_VARARGS, NULL},
-    {"warning", plpy_warning, METH_VARARGS, NULL},
-    {"error",   plpy_error,   METH_VARARGS, NULL},
-    {"fatal",   plpy_fatal,   METH_VARARGS, NULL},
+    {"debug",   PLy_debug,   METH_VARARGS, NULL},
+    {"log",     PLy_log,     METH_VARARGS, NULL},
+    {"info",    PLy_info,    METH_VARARGS, NULL},
+    {"notice",  PLy_notice,  METH_VARARGS, NULL},
+    {"warning", PLy_warning, METH_VARARGS, NULL},
+    {"error",   PLy_error,   METH_VARARGS, NULL},
+    {"fatal",   PLy_fatal,   METH_VARARGS, NULL},
 
     /*
      * query execution
      */
-    {"execute", plpy_execute, METH_O,      NULL},
+    {"execute", PLy_spi_execute, METH_O,      NULL},
 
     {NULL, NULL, 0, NULL}
 };
