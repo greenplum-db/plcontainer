@@ -220,12 +220,8 @@ void receive_loop( void (*handle_call)(plcMsgCallreq*, plcConn*), plcConn* conn)
     while (1) {
         res = plcontainer_channel_receive(conn, &msg);
         
-        if (res == -3) {
-            lprintf(NOTICE, "Backend must have closed the connection");
-            break;
-        }
         if (res < 0) {
-            lprintf(ERROR, "Error receiving data from the backend, %d", res);
+            lprintf(ERROR, "Error receiving data from the peer: %d", res);
             break;
         }
 

@@ -121,9 +121,7 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg) {
     char cType;
 
     res = receive_message_type(conn, &cType);
-    if (res < 0) {
-        res = -3;
-    } else {
+    if (res >= 0) {
         switch (cType) {
             case MT_PING:
                 res = receive_ping(conn, msg);

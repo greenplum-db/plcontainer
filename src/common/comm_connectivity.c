@@ -36,20 +36,27 @@ static int plcBufferMaybeResize (plcConn *conn, int bufType, size_t bufAppend);
 static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
     ssize_t sz = 0;
 
-    while (sz <= 0) {
-        sz = recv(conn->sock, ptr, len, 0);
+	while (true) {
+		sz = recv(conn->sock, ptr, len, 0);
 
-        /* If receive command is terminated by SIGINT/SIGTERM, etc. */
-        if (sz < 0 && errno == EINTR) {
-            lprintf(ERROR, "Query and PL/Container connections are terminated "
-					"by user request: %s", strerror(errno));
-        }
+		/* Only retry when needed. */
+		if (!(sz == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)))
+			break;
+	}
 
-        /* If the command is terminated by another reason - standard handler */
-        if ( !(sz == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) ) {
-            break;
-        }
-    }
+	/* If receive command is terminated by SIGINT/SIGTERM, etc. */
+	if (sz == -1 && errno == EINTR) {
+		lprintf(ERROR, "Query and PL/Container connections are terminated "
+				"by user request: %s", strerror(errno));
+	}
+
+	/* Log info if needed. */
+	if (sz < 0) {
+		lprintf(LOG, "Query and PL/Container connections are terminated "
+				"due to: %s", strerror(errno));
+	} else if (sz == 0) {
+		lprintf(LOG, "The peer has shut down the connection.");
+	}
 
     return sz;
 }
@@ -248,7 +255,7 @@ int plcBufferAppend (plcConn *conn, char *srcBuffer, size_t nBytes) {
  * Read some data from the buffer. If buffer does not have enough data in it,
  * it will ask the socket to receive more data and put it into the buffer
  *
- * Returns 0 on success, -1 or -2 if failed
+ * Returns 0 on success, -1 if failed
  */
 int plcBufferRead (plcConn *conn, char *resBuffer, size_t nBytes) {
     plcBuffer *buf = conn->buffer[PLC_INPUT_BUFFER];
@@ -258,10 +265,6 @@ int plcBufferRead (plcConn *conn, char *resBuffer, size_t nBytes) {
     if (res == 0) {
         memcpy(resBuffer, buf->data + buf->pStart, nBytes);
         buf->pStart = buf->pStart + nBytes;
-    } else {
-        lprintf(LOG, "plcBufferRead: Socket read failed, "
-                     "received return code is %d, error message is '%s'",
-                     res, strerror(errno));
     }
 
     return res;
@@ -271,7 +274,7 @@ int plcBufferRead (plcConn *conn, char *resBuffer, size_t nBytes) {
  * Function checks whether we have nBytes bytes in the buffer. If not, it reads
  * the data from the socket. If the buffer is too small, it would be grown
  *
- * Returns 0 on success, -1 if failed and -2 if socket read has returned no data
+ * Returns 0 on success, -1 if failed.
  */
 int plcBufferReceive (plcConn *conn, size_t nBytes) {
     int res = 0;
