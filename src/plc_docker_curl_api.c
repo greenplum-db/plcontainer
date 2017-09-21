@@ -217,8 +217,8 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
 	if (res < 0) {
 		goto cleanup;
 	}
+    res = docker_inspect_string(response->data, name, PLC_INSPECT_NAME);
 
-	res = docker_parse_container_id(response->data, name);
 	if (res < 0) {
 		snprintf(api_error_message, sizeof(api_error_message),
 				 "Error parsing container ID during creating container");

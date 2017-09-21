@@ -23,6 +23,7 @@ typedef enum {
 typedef enum {
 	PLC_INSPECT_STATUS = 0,
 	PLC_INSPECT_PORT = 1,
+	PLC_INSPECT_NAME = 2,
 	PLC_INSPECT_PORT_UNKNOWN,
 } plcInspectionMode;
 
