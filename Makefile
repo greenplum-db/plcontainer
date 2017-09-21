@@ -28,14 +28,13 @@ ifneq ($(CURL_CONFIG),no)
   CURL_VERSION  = $(shell $(CURL_CONFIG) --version | cut -d" " -f2)
   VERSION_CHECK = $(shell expr $(CURL_VERSION) \>\= 7.40.0)
 ifeq ($(VERSION_CHECK),1)
-  override CFLAGS += -DCURL_DOCKER_API $(shell $(CURL_CONFIG) --cflags)
+  override CFLAGS += $(shell $(CURL_CONFIG) --cflags)
   SHLIB_LINK = $(shell $(CURL_CONFIG) --libs)
-  $(info curl version is >= 7.40, building with Curl Docker API interface)
 else
-  $(info curl version is < 7.40, falling back to default Docker API interface)
+  $(error curl version is < 7.40, please update your libcurl installation.)
 endif
 else
-  $(info curl-config is not found, building with default Docker API interface)
+  $(error curl-config is not found, please check libcurl installation.)
 endif
 
 #libxml

@@ -53,17 +53,10 @@ static int qe_is_alive(char *dockerid) {
 	 * is normal
 	 */
     int return_code = 1;
-    int sockfd;
 
     if (getppid() == 1){
         /* backend exited, call docker delete API */
-        sockfd = plc_backend_connect();
-        if (sockfd > 0) {
-            return_code = plc_backend_delete(sockfd, dockerid);
-            plc_backend_disconnect(sockfd);
-        } else {
-			return_code = -1;
-		}
+        return_code = plc_backend_delete(dockerid);
     }
     return return_code;
 }
@@ -72,26 +65,19 @@ static int container_is_alive(char *dockerid) {
     char *element = NULL;
     
 	int return_code = 1;
-    int sockfd;
 
-    sockfd = plc_backend_connect();
-    if (sockfd > 0) {
-        int res;
-        res = plc_backend_inspect(sockfd, dockerid, &element, PLC_INSPECT_STATUS);
-        if (res < 0) {
-            return_code = res;
-        } else if (element != NULL) {
-			if ((strcmp("exited", element) == 0 ||
-				strcmp("false", element) == 0 )) {
-				return_code = plc_backend_delete(sockfd, dockerid);
-			} else if (strcmp("unexist", element) == 0) {
-				return_code = 0;
-			}
+    int res;
+    res = plc_backend_inspect(dockerid, &element, PLC_INSPECT_STATUS);
+    if (res < 0) {
+        return_code = res;
+    } else if (element != NULL) {
+        if ((strcmp("exited", element) == 0 ||
+             strcmp("false", element) == 0 )) {
+            return_code = plc_backend_delete(dockerid);
+        } else if (strcmp("unexist", element) == 0) {
+            return_code = 0;
         }
-        plc_backend_disconnect(sockfd);
-    } else if (sockfd <= 0) {
-		return_code = -1;
-	}
+    }
 
     return return_code;
 
@@ -252,7 +238,6 @@ plcConn *start_container(plcContainerConf *conf) {
     char *dockerid = NULL;
 	char *uds_fn = NULL;
 	int   container_slot;
-    int   sockfd;
     int   res = 0;
 	int   wait_status;
 
@@ -261,13 +246,8 @@ plcConn *start_container(plcContainerConf *conf) {
     enum PLC_BACKEND_TYPE plc_backend_type = BACKEND_DOCKER;
     plc_backend_prepareImplementation(plc_backend_type);
 
-    sockfd = plc_backend_connect();
-    if (sockfd < 0) {
-        elog(ERROR, "%s", api_error_message);
-        return conn;
-    }
 
-    res = plc_backend_create(sockfd, conf, &dockerid, container_slot);
+    res = plc_backend_create(conf, &dockerid, container_slot);
     if (res < 0) {
         elog(ERROR, "%s", api_error_message);
         return conn;
@@ -280,7 +260,7 @@ plcConn *start_container(plcContainerConf *conf) {
 	 */
 	insert_container(conf->name, dockerid, container_slot);
 
-    res = plc_backend_start(sockfd, dockerid);
+    res = plc_backend_start(dockerid);
     if (res < 0) {
         elog(ERROR, "%s", api_error_message);
         return conn;
@@ -289,19 +269,13 @@ plcConn *start_container(plcContainerConf *conf) {
 	/* For network connection only. */
 	if (conf->isNetworkConnection) {
         char *element = NULL;
-		res = plc_backend_inspect(sockfd, dockerid, &element, PLC_INSPECT_PORT);
+		res = plc_backend_inspect(dockerid, &element, PLC_INSPECT_PORT);
 		if (res < 0) {
 			elog(ERROR, "%s", api_error_message);
 			return conn;
 		}
         port = (int) strtol(element, NULL, 10);
 	}
-
-    res = plc_backend_disconnect(sockfd);
-    if (res < 0) {
-        elog(ERROR, "%s", api_error_message);
-        return conn;
-    }
 
 	if (!conf->isNetworkConnection)
 		uds_fn = get_uds_fn(container_slot);
@@ -384,13 +358,7 @@ void delete_containers() {
 
                 /* Terminate container process */
                 if (containers[i].dockerid != NULL) {
-                    int sockfd;
-
-                    sockfd = plc_backend_connect();
-                    if (sockfd > 0) {
-                        plc_backend_delete(sockfd, containers[i].dockerid);
-                        plc_backend_disconnect(sockfd);
-                    }
+                    plc_backend_delete(containers[i].dockerid);
                     pfree(containers[i].dockerid);
                 }
 
