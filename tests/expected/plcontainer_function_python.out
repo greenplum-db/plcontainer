@@ -296,6 +296,7 @@ plpy.info('this is the info message')
 plpy.notice('this is the notice message')
 plpy.warning('this is the warning message')
 plpy.error('this is the error message')
+plpy.log('this is the log message')
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pylogging2() RETURNS void AS $$
 # container: plc_python_shared
