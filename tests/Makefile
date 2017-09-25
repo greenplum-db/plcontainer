@@ -41,7 +41,7 @@ all: tests
 
 .PHONY: tests
 tests:
-	$(top_builddir)/src/test/regress/pg_regress \
+	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
 				--psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS_GPDB5) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
 
 .PHONY: submake
