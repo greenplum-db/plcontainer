@@ -114,3 +114,5 @@ select pybadudt2();
 select pybadarr();
 select pybadarr2();
 select pyinvalid_function();
+select pyspi();
+select pyspi_invalid();

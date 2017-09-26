@@ -13,6 +13,8 @@
 
 #include <Python.h>
 
+PyObject *plpy_execute(PyObject *self UNUSED, PyObject *args);
+
 static plcMsgResult *receive_from_backend();
 
 static plcMsgResult *receive_from_backend() {
@@ -41,7 +43,7 @@ static plcMsgResult *receive_from_backend() {
 }
 
 /* plpy methods */
-PyObject *PLy_spi_execute(PyObject *self UNUSED, PyObject *pyquery) {
+PyObject *PLy_spi_execute(PyObject *self UNUSED, PyObject *args) {
     int           i, j;
     plcMsgSQL    *msg;
     plcMsgResult *resp;
@@ -50,21 +52,24 @@ PyObject *PLy_spi_execute(PyObject *self UNUSED, PyObject *pyquery) {
                  *pyval;
     plcPyResult  *result;
     plcConn      *conn = plcconn_global;
-
-    if (!PyString_Check(pyquery)) {
-        raise_execution_error("plpy module 'execute()' expected string object as input query");
-        return NULL;
-    }
+	char       *query;
+	long        limit = 0;
 
     /* If the execution was terminated we don't need to proceed with SPI */
     if (plc_is_execution_terminated != 0) {
         return NULL;
     }
 
+	if (PyArg_ParseTuple(args, "s|l", &query, &limit)) {
+		raise_execution_error("Argument error for plpy module 'execute()'");
+		return NULL;
+	}
+
     msg            = malloc(sizeof(plcMsgSQL));
     msg->msgtype   = MT_SQL;
     msg->sqltype   = SQL_TYPE_STATEMENT;
-    msg->statement = PyString_AsString(pyquery);
+	msg->limit     = limit;
+    msg->statement = query;
 
     plcontainer_channel_send(conn, (plcMessage*)msg);
 

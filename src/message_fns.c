@@ -34,6 +34,7 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "postgres.h"
 #include "executor/spi.h"
 #include "access/transam.h"
+#include "catalog/pg_proc.h"
 
 /* message and function definitions */
 #include "common/comm_utils.h"
@@ -59,6 +60,7 @@ plcProcInfo * get_proc_info(FunctionCallInfo fcinfo) {
                   textHeapTup = NULL;
     Form_pg_type  typeTup;
     plcProcInfo  *pinfo = NULL;
+	Form_pg_proc  procStruct;
 
     procoid = fcinfo->flinfo->fn_oid;
     procHeapTup = SearchSysCache(PROCOID, procoid, 0, 0, 0);
@@ -88,6 +90,8 @@ plcProcInfo * get_proc_info(FunctionCallInfo fcinfo) {
         pinfo->fn_xmin = HeapTupleHeaderGetXmin(procHeapTup->t_data);
         pinfo->fn_tid  = procHeapTup->t_self;
         pinfo->retset  = fcinfo->flinfo->fn_retset;
+		procStruct = (Form_pg_proc) GETSTRUCT(procHeapTup);
+        pinfo->fn_readonly = (procStruct->provolatile != PROVOLATILE_VOLATILE);
         pinfo->hasChanged = 1;
 
         procTup = (Form_pg_proc)GETSTRUCT(procHeapTup);

@@ -38,7 +38,7 @@ static Datum plcontainer_process_result(FunctionCallInfo  fcinfo,
                                         plcProcInfo      *pinfo,
                                         plcProcResult    *presult);
 static void plcontainer_process_exception(plcMsgError *msg);
-static void plcontainer_process_sql(plcMsgSQL *msg, plcConn* conn);
+static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo);
 static void plcontainer_process_log(plcMsgLog *log);
 
 static bool DeleteBackendsWhenError;
@@ -227,7 +227,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
 					plcontainer_process_exception((plcMsgError*)answer);
 					break;
                 case MT_SQL:
-                    plcontainer_process_sql((plcMsgSQL*)answer, conn);
+                    plcontainer_process_sql((plcMsgSQL*)answer, conn, pinfo);
                     break;
                 case MT_LOG:
                     plcontainer_process_log((plcMsgLog*)answer);
@@ -296,7 +296,7 @@ static void plcontainer_process_log(plcMsgLog *log) {
 /*
  * Processing client SQL query message
  */
-static void plcontainer_process_sql(plcMsgSQL *msg, plcConn* conn) {
+static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo) {
     plcMessage *res;
     volatile MemoryContext oldcontext;
     volatile ResourceOwner oldowner;
@@ -306,7 +306,7 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn* conn) {
     oldowner = CurrentResourceOwner;
     MemoryContextSwitchTo(pl_container_caller_context);
 
-    res = handle_sql_message(msg);
+    res = handle_sql_message(msg, pinfo);
     if (res != NULL) {
         retval = plcontainer_channel_send(conn, res);
 		if (retval < 0) {

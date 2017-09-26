@@ -11,7 +11,8 @@
 #define PLC_SQLHANDLER_H
 
 #include "common/messages/messages.h"
+#include "message_fns.h"
 
-plcMessage *handle_sql_message(plcMsgSQL *msg);
+plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo);
 
 #endif /* PLC_SQLHANDLER_H */

@@ -49,6 +49,7 @@ typedef struct {
     int              nargs;
     char           **argnames;
     plcTypeInfo     *argtypes;
+    bool             fn_readonly;
 } plcProcInfo;
 
 plcProcInfo *get_proc_info(FunctionCallInfo fcinfo);

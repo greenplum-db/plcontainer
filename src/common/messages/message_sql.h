@@ -25,6 +25,7 @@ typedef enum {
 typedef struct plcMsgSQL {
     base_message_content;
     plcSqlType  sqltype;
+	long long   limit;
     char       *statement;
 } plcMsgSQL;
 

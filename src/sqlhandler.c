@@ -71,14 +71,14 @@ static plcMsgResult *create_sql_result() {
     return result;
 }
 
-plcMessage *handle_sql_message(plcMsgSQL *msg) {
+plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
     int retval;
     plcMessage   *result = NULL;
 
     PG_TRY();
     {
         BeginInternalSubTransaction(NULL);
-        retval = SPI_exec(msg->statement, 0);
+        retval = SPI_execute(msg->statement, pinfo->fn_readonly, (long) msg->limit);
         switch (retval) {
             case SPI_OK_SELECT:
             case SPI_OK_INSERT_RETURNING:

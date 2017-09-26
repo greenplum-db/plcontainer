@@ -710,6 +710,7 @@ static int send_sql(plcConn *conn, plcMsgSQL *msg) {
     if (msg->sqltype == SQL_TYPE_STATEMENT) {
         res |= message_start(conn, MT_SQL);
         res |= send_int32(conn, ((plcMsgSQL*)msg)->sqltype);
+        res |= send_int64(conn, ((plcMsgSQL*)msg)->limit);
         res |= send_cstring(conn, ((plcMsgSQL*)msg)->statement);
         res |= message_end(conn);
     } else {
@@ -813,7 +814,8 @@ static int receive_sql_statement(plcConn *conn, plcMessage **mStmt) {
     ret          = (plcMsgSQL*) *mStmt;
     ret->msgtype = MT_SQL;
     ret->sqltype = SQL_TYPE_STATEMENT;
-    res = receive_cstring(conn, &ret->statement);
+    res = receive_int64(conn, &ret->limit);
+    res |= receive_cstring(conn, &ret->statement);
     return res;
 }
 

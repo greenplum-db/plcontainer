@@ -555,7 +555,7 @@ return math.log10(100)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyanaconda() RETURNS double precision AS $$
-# container: plc_python_shared
+# container: plc_anaconda_shared
 import sklearn
 import numpy
 import scipy
@@ -579,5 +579,22 @@ $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyzero() RETURNS integer AS $$
 # container: plc_python_shared
+return 0
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pyspi() RETURNS integer AS $$
+# container: plc_python_shared
+rv = plpy.execute("select datname from pg_database order by datname");
+for r in rv:
+    plpy.notice(str(r))
+rv = plpy.execute("select datname from pg_database order by datname", 2);
+for r in rv:
+    plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pyspi_invalid() RETURNS integer AS $$
+# container: plc_python_shared
+plpy.execute("select datname from pg_database_invalid");
 return 0
 $$ LANGUAGE plcontainer;
