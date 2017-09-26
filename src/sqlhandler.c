@@ -88,7 +88,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
                 result = (plcMessage*)create_sql_result();
                 break;
             default:
-                lprintf(ERROR, "cannot handle non-select sql at the moment");
+                lprintf(ERROR, "cannot handle non-select sql at the moment: %d", retval);
                 break;
         }
 
