@@ -584,17 +584,30 @@ $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi() RETURNS integer AS $$
 # container: plc_python_shared
+
 rv = plpy.execute("select datname from pg_database order by datname");
+plpy.notice("Showing all databases in pg_database...");
 for r in rv:
     plpy.notice(str(r))
+
 rv = plpy.execute("select datname from pg_database order by datname", 2);
+plpy.notice("Showing previous 2 databases in pg_database...");
 for r in rv:
     plpy.notice(str(r))
+
 return 0
 $$ LANGUAGE plcontainer;
 
-CREATE OR REPLACE FUNCTION pyspi_invalid() RETURNS integer AS $$
+CREATE OR REPLACE FUNCTION pyspi_illegal_sql() RETURNS integer AS $$
 # container: plc_python_shared
 plpy.execute("select datname from pg_database_invalid");
+return 0
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pyspi_bad_limit() RETURNS integer AS $$
+# container: plc_python_shared
+rv = plpy.execute("select datname from pg_database order by datname", -2);
+for r in rv:
+    plpy.notice(str(r))
 return 0
 $$ LANGUAGE plcontainer;

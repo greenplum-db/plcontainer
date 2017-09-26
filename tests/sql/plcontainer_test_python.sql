@@ -115,4 +115,5 @@ select pybadarr();
 select pybadarr2();
 select pyinvalid_function();
 select pyspi();
-select pyspi_invalid();
+select pyspi_illegal_sql();
+select pyspi_bad_limit();
