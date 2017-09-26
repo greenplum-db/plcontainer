@@ -60,7 +60,7 @@ PyObject *PLy_spi_execute(PyObject *self UNUSED, PyObject *args) {
         return NULL;
     }
 
-	if (PyArg_ParseTuple(args, "s|l", &query, &limit)) {
+	if (!PyArg_ParseTuple(args, "s|l", &query, &limit)) {
 		raise_execution_error("Argument error for plpy module 'execute()'");
 		return NULL;
 	}
