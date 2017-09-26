@@ -117,3 +117,5 @@ select pyinvalid_function();
 select pyspi();
 select pyspi_illegal_sql();
 select pyspi_bad_limit();
+select pyspi_bad_limit_immutable();
+select pyspi_bad_limit_stable();

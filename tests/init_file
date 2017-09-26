@@ -13,4 +13,6 @@ m/ls: cannot access '.*'.*/
 s/ls: cannot access '(.*)'(.*)/ls: cannot access $1$2/
 m/plcontainer.c:\d+\)/
 s/plcontainer.c:\d+\)/plcontainer.c:xxx/
+m/sqlhandler.c:\d+\)/
+s/sqlhandler.c:\d+\)/sqlhandler.c:xxx/
 -- end_matchsubs

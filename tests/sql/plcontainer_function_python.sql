@@ -611,3 +611,19 @@ for r in rv:
     plpy.notice(str(r))
 return 0
 $$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pyspi_bad_limit_stable() RETURNS integer AS $$
+# container: plc_python_shared
+rv = plpy.execute("select datname from pg_database order by datname", -2);
+for r in rv:
+    plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer STABLE;
+
+CREATE OR REPLACE FUNCTION pyspi_bad_limit_immutable() RETURNS integer AS $$
+# container: plc_python_shared
+rv = plpy.execute("select datname from pg_database order by datname", -2);
+for r in rv:
+    plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer IMMUTABLE;
