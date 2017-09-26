@@ -1,5 +1,4 @@
 select pylog100();
-WARNING:  Docker API 'create' call returned warning message: '["Your kernel does not support swap limit capabilities, memory limited without swap."]'
  pylog100 
 ----------
         2
@@ -397,10 +396,8 @@ select pywriteFile();
 (1 row)
 
 \! ls -l /tmp/foo
-ls: cannot access '/tmp/foo': No such file or directory
+ls: cannot access /tmp/foo: No such file or directory
 select pyconcat(fname, lname) from users order by 1;
-WARNING:  Docker API 'create' call returned warning message: '["Your kernel does not support swap limit capabilities, memory limited without swap."]'  (seg0 slice1 127.0.1.1:25435 pid=9419)
-WARNING:  Docker API 'create' call returned warning message: '["Your kernel does not support swap limit capabilities, memory limited without swap."]'  (seg1 slice1 127.0.1.1:25436 pid=9420)
  pyconcat  
 -----------
  janedoe
@@ -683,3 +680,24 @@ DETAIL:
  Traceback (most recent call last):
   File "<string>", line 5, in pyinvalid_function
 AttributeError: 'module' object has no attribute 'foobar'
+select pyspi();
+NOTICE:  Showing all databases in pg_database...
+NOTICE:  {'datname': 'pl_regression'}
+NOTICE:  {'datname': 'postgres'}
+NOTICE:  {'datname': 'template0'}
+NOTICE:  {'datname': 'template1'}
+NOTICE:  Showing previous 2 databases in pg_database...
+NOTICE:  {'datname': 'pl_regression'}
+NOTICE:  {'datname': 'postgres'}
+ pyspi 
+-------
+     0
+(1 row)
+
+select pyspi_illegal_sql();
+ERROR:  relation "pg_database_invalid" does not exist
+LINE 1: select datname from pg_database_invalid
+                            ^
+QUERY:  select datname from pg_database_invalid
+select pyspi_bad_limit();
+ERROR:  Cannot handle sql (select datname from pg_database order by datname) with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:91)
