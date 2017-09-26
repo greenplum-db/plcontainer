@@ -4,7 +4,7 @@
  * SQL message handler implementation.
  *
  *
- * Copyright (c) 2016, Pivotal.
+ * Copyright (c) 2016-Present Pivotal Software, Inc
  *
  *------------------------------------------------------------------------------
  */
