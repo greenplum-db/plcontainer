@@ -89,7 +89,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
                 break;
             default:
                 lprintf(ERROR, "Cannot handle sql (%s) with fn_readonly (%d) "
-						"and limit (%ld). Returns %d", msg->statement,
+						"and limit (%lld). Returns %d", msg->statement,
 						pinfo->fn_readonly, msg->limit, retval);
                 break;
         }

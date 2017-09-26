@@ -44,7 +44,7 @@ static PyMethodDef moddef[] = {
     /*
      * query execution
      */
-    {"execute", PLy_spi_execute, METH_O,      NULL},
+    {"execute", PLy_spi_execute, METH_VARARGS, NULL},
 
     {NULL, NULL, 0, NULL}
 };
