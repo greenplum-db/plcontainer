@@ -33,8 +33,8 @@ install_docker() {
 }
 
 rm -f install_docker.done.mdw install_docker.done.sdw1
-nohup install_docker mdw &
-nohup install_docker sdw1 &
+install_docker mdw &
+install_docker sdw1 &
 
 # monitor install progress.
 times=0
