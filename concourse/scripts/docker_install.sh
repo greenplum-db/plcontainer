@@ -29,24 +29,8 @@ install_docker() {
         \""
         ;;
     esac 
-    touch install_docker.done.$node
 }
 
-rm -f install_docker.done.mdw install_docker.done.sdw1
-install_docker mdw &
-install_docker sdw1 &
+install_docker mdw
+install_docker sdw1
 
-# monitor install progress.
-times=0
-while true; do
-    if [ -f install_docker.done.mdw -a -f install_docker.done.sdw1 ]; then
-        echo "Install docker finished."
-        break
-    fi
-    sleep 5
-    ((times++))
-    if [ $times -gt 720 ]; then
-        echo "Install docker timeout. Exiting."
-        exit 1
-    fi
-done
