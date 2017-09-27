@@ -104,8 +104,8 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: master
-    uri: https://github.com/greenplum-db/plcontainer.git
+    branch: pi
+    uri: https://github.com/paul-guo-/plcontainer.git
 
 - name: gpdb_src
   type: git
