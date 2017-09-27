@@ -79,7 +79,7 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
                 "\\{\\s*\"[Ii][Dd]\\s*\"\\:\\s*\"(\\w+)\"\\s*,\\s*\"[Ww]arnings\"\\s*\\:([^\\}]*)\\s*\\}";
             break;
         default:
-            elog(LOG, "Error PLC inspection mode");
+            elog(LOG, "Error PLC inspection mode, unacceptable inpsection type %d", type);
             return -1;
     }
 
