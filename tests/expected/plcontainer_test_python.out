@@ -705,3 +705,9 @@ select pyspi_bad_limit_immutable();
 ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:91)
 select pyspi_bad_limit_stable();
 ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:91)
+select pysubtransaction('t');
+ pysubtransaction
+------------------
+ t
+(1 row)
+

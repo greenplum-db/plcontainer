@@ -627,3 +627,9 @@ for r in rv:
     plpy.notice(str(r))
 return 0
 $$ LANGUAGE plcontainer IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION pysubtransaction(b bool) RETURNS bool AS $$
+# container: plc_python_shared
+subxact = plpy.subtransaction()
+return b
+$$ LANGUAGE plcontainer;

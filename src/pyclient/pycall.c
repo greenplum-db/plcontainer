@@ -46,6 +46,11 @@ static PyMethodDef moddef[] = {
      */
     {"execute", PLy_spi_execute, METH_VARARGS, NULL},
 
+    /*
+     * create the subtransaction context manager
+     */
+    {"subtransaction", PLy_subtransaction, METH_NOARGS, NULL},
+
     {NULL, NULL, 0, NULL}
 };
 

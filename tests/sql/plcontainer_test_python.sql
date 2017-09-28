@@ -119,3 +119,4 @@ select pyspi_illegal_sql();
 select pyspi_bad_limit();
 select pyspi_bad_limit_immutable();
 select pyspi_bad_limit_stable();
+select pysubtransaction('t');
