@@ -12,9 +12,9 @@ inputs:
 outputs:
   - name: plcontainer_gpdb_build
 
+params:
+  DEV_RELEASE: devel
+  OUTPUT: plcontainer_gpdb_build
+
 run:
   path: plcontainer_src/concourse/scripts/build_plcontainer_prepare.sh
-  args:
-    - bin_gpdb
-    - plcontainer_gpdb_build
-    - test

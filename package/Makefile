@@ -3,8 +3,12 @@ all: gppkg
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 
-include ../release.mk
-
+ifndef PLCONTAINER_VERSION
+  PLCONTAINER_VERSION="0.0"
+endif
+ifndef PLCONTAINER_RELEASE
+  PLCONTAINER_RELEASE="0"
+endif
 MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
 ARCH=$(shell uname -p)
 

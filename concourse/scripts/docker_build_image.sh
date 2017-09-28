@@ -3,6 +3,15 @@
 set -exo pipefail
 
 DockerFolder="~/plcontainer_src/dockerfiles/$language/"
+pushd plcontainer_src
+if [ "$DEV_RELEASE" == "devel" ]; then
+	IMAGE_NAME="plcontainer-$language-images-devel.tar.gz"
+else
+	PLCONTAINER_VERSION=$(git describe)
+	IMAGE_NAME="plcontainer-$language-images-${PLCONTAINER_VERSION}.tar.gz"
+fi
+popd
+
 docker_build() {
 	local node=$1
 	ssh $node "bash -c \" mkdir -p ~/artifacts_$language\" "
@@ -26,8 +35,9 @@ docker_build() {
 	chmod +x *.sh; \
 	docker build -f Dockerfile.$language -t pivotaldata/plcontainer_${language}_shared:devel ./ ; \
 	popd; \
-	docker save pivotaldata/plcontainer_${language}_shared:devel | gzip -c > ~/plcontainer-$language-devel-images.tar.gz; \""
+	docker save pivotaldata/plcontainer_${language}_shared:devel | gzip -c > ~/${IMAGE_NAME}; \
+	\""
 }
 
 docker_build mdw
-scp mdw:~/plcontainer-$language-devel-images.tar.gz plcontainer_docker_image/plcontainer-$language-devel-images.tar.gz
+scp mdw:~/plcontainer-*.tar.gz plcontainer_docker_image/

@@ -13,5 +13,6 @@ outputs:
 params:
   platform:
   language:
+  DEV_RELEASE: devel
 run:
   path: plcontainer_src/concourse/scripts/plcontainer_docker_build.sh

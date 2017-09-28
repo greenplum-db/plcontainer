@@ -2,10 +2,6 @@
 
 set -exo pipefail
 
-GPDBBIN=$1
-OUTPUT=$2
-MODE=$3
-
 CWDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TOP_DIR=${CWDIR}/../../../
 source "${TOP_DIR}/gpdb_src/concourse/scripts/common.bash"
@@ -21,7 +17,7 @@ function _main() {
   chown -R gpadmin:gpadmin ${TOP_DIR}
   chown gpadmin:gpadmin ${CWDIR}/build_plcontainer.sh
   su gpadmin -c "OUTPUT=${OUTPUT} \
-                 MODE=${MODE} \
+                 DEV_RELEASE=${DEV_RELEASE} \
                  bash ${CWDIR}/build_plcontainer.sh $(pwd)"
 }
 

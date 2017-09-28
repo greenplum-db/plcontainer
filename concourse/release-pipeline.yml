@@ -17,18 +17,6 @@ groups:
 ################################################################################
 ################################## RESOURCES ###################################
 ################################################################################
-ccp_create_params_anchor: &ccp_default_params
-  action: create
-  delete_on_failure: true
-  generate_random_name: true
-  terraform_source: ccp_src/aws/
-
-ccp_gen_cluster_default_params_anchor: &ccp_gen_cluster_default_params
-  AWS_ACCESS_KEY_ID: {{tf-machine-access-key-id}}
-  AWS_SECRET_ACCESS_KEY: {{tf-machine-secret-access-key}}
-  AWS_DEFAULT_REGION: {{aws-region}}
-  BUCKET_PATH: {{tf-bucket-path-plcontainer}}
-  BUCKET_NAME: {{tf-bucket-name}}
 
 ccp_options_anchor6: &ccp_options6
   terraform_source: ccp_src/aws/
@@ -112,13 +100,13 @@ resources:
     branch: {{ccp-git-branch}}
     private_key: {{ccp-git-key}}
     uri: {{ccp-git-remote}}
-    tag_filter: 1.0.0
 
 - name: plcontainer_src
   type: git
   source:
     branch: master
     uri: https://github.com/greenplum-db/plcontainer.git
+    tag_filter: 1.*
 
 - name: gpdb_src
   type: git
@@ -141,7 +129,7 @@ resources:
       region_name: {{aws-region}}
       # This is not parameterized, on purpose. All tfstates will go to this spot,
       # and different teams will place there clusters' tfstate files under different paths
-      bucket: {{tf-bucket-name}}
+      bucket: gpdb5-pipeline-dynamic-terraform
       ###########################################################
       # Two conventions are allowed for bucket_path:            #
       # 1) Cluster are expected to be destroyed automatically   #
@@ -252,7 +240,6 @@ resources:
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
     versioned_file: release/gpdb5/data-science/DataScienceR-1.0.0-gp5-rhel7-x86_64.gppkg
-
 - name: plcontainer_docker_image_centos_python
   type: s3
   source:
@@ -260,7 +247,7 @@ resources:
     bucket: {{pl-bucket-name}}
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: build/gpdb5/plcontainer/plcontainer-python-images-devel.tar.gz
+    regexp: release/gpdb5/plcontainer/plcontainer-python-image(.*).tar.gz
 
 - name: plcontainer_docker_image_centos_r
   type: s3
@@ -269,7 +256,7 @@ resources:
     bucket: {{pl-bucket-name}}
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: build/gpdb5/plcontainer/plcontainer-r-images-devel.tar.gz
+    regexp: release/gpdb5/plcontainer/plcontainer-r-image(.*).tar.gz
 
 - name: bin_gpdb_centos7
   type: s3
@@ -296,7 +283,7 @@ resources:
     region_name: {{aws-region}}
     access_key_id: {{bucket-access-key-id}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: build/gpdb5/plcontainer/plcontainer-concourse-centos7.gppkg
+    regexp: release/gpdb5/plcontainer/plcontainer-(.*)-rhel7-x86_64.gppkg
 
 - name: plcontainer_gpdb_centos6_build
   type: s3
@@ -305,7 +292,7 @@ resources:
     region_name: {{aws-region}}
     access_key_id: {{bucket-access-key-id}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: build/gpdb5/plcontainer/plcontainer-concourse-centos6.gppkg
+    regexp: release/gpdb5/plcontainer/plcontainer-(.*)-rhel6-x86_64.gppkg
 
 
 
@@ -327,14 +314,16 @@ jobs:
     - get: plr
       resource: plr_gpdb5_centos6_build
   - task: plcontainer_gpdb_build
-    file: plcontainer_src/concourse/tasks/plcontainer_build.yml
+    file: plcontainer_src/concourse/tasks/plcontainer_gpdb_build.yml
     image: centos-gpdb-dev-6
+    params: 
+      DEV_RELEASE: release
     input_mapping:
       bin_gpdb: bin_gpdb_centos6
   - aggregate:
     - put: plcontainer_gpdb_centos6_build
       params:
-        file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
+        file: plcontainer_gpdb_build/plcontainer*.gppkg
 
 - name: plcontainer_build_centos7
   max_in_flight: 4
@@ -348,14 +337,16 @@ jobs:
     - get: plr
       resource: plr_gpdb5_centos7_build
   - task: plcontainer_gpdb_build
-    file: plcontainer_src/concourse/tasks/plcontainer_build.yml
+    file: plcontainer_src/concourse/tasks/plcontainer_gpdb_build.yml
     image: centos-gpdb-dev-7
+    params:
+      DEV_RELEASE: release
     input_mapping:
       bin_gpdb: bin_gpdb_centos7
   - aggregate:
     - put: plcontainer_gpdb_centos7_build
       params:
-        file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
+        file: plcontainer_gpdb_build/plcontainer*.gppkg
 
 
 - name: plcontainer_function_test_centos6
@@ -368,34 +359,32 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos6
     - get: ccp_src
-      passed: [plcontainer_build_python_image, plcontainer_build_r_image]
+      passed: [plcontainer_build_python_image]
     - get: centos-gpdb-dev-6
-    - get: plcontainer_pyclient_docker_image
+    - get: plcontainer_client_docker_image
       resource: plcontainer_docker_image_centos_python
       passed: [plcontainer_build_python_image]
-      trigger: true
-    - get: plcontainer_rclient_docker_image
-      resource: plcontainer_docker_image_centos_r
-      passed: [plcontainer_build_r_image]
       trigger: true
     - get: plcontainer_gpdb_centos6_build
       passed: [plcontainer_build_centos6]
       trigger: true
   - put: terraform
     params:
-      <<: *ccp_default_params
+      action: create
+      delete_on_failure: true
+      generate_random_name: true
+      terraform_source: ccp_src/aws/
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos6
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
-      <<: *ccp_gen_cluster_default_params
       platform: centos6
     on_failure:
       <<: *ccp_destroy6
   - task: plcontainer
-    file: plcontainer_src/concourse/tasks/plcontainer_tests.yml
+    file: plcontainer_src/concourse/tasks/plcontainer.yml
     params:
       platform: centos6
     image: centos-gpdb-dev-6
@@ -420,24 +409,23 @@ jobs:
       passed:
       - plcontainer_function_test_centos6
     - get: centos-gpdb-dev-6
-    - get: plcontainer_pyclient_docker_image
+    - get: plcontainer_client_docker_image
       resource: plcontainer_docker_image_centos_python
-      passed: [plcontainer_function_test_centos6]
-    - get: plcontainer_rclient_docker_image
-      resource: plcontainer_docker_image_centos_r
       passed: [plcontainer_function_test_centos6]
     - get: plcontainer_gpdb_centos6_build
       passed: [plcontainer_function_test_centos6]
   - put: terraform
     params:
-      <<: *ccp_default_params
+      action: create
+      delete_on_failure: true
+      generate_random_name: true
+      terraform_source: ccp_src/aws/
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos6
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
-      <<: *ccp_gen_cluster_default_params
       platform: centos6
     on_failure:
       <<: *ccp_destroy6
@@ -471,34 +459,32 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos7
     - get: ccp_src
-      passed: [plcontainer_build_python_image, plcontainer_build_r_image]
+      passed: [plcontainer_build_python_image]
     - get: centos-gpdb-dev-7
-    - get: plcontainer_pyclient_docker_image
+    - get: plcontainer_client_docker_image
       resource: plcontainer_docker_image_centos_python
       passed: [plcontainer_build_python_image]
-      trigger: true
-    - get: plcontainer_rclient_docker_image
-      resource: plcontainer_docker_image_centos_r
-      passed: [plcontainer_build_r_image]
       trigger: true
     - get: plcontainer_gpdb_centos7_build
       passed: [plcontainer_build_centos7]
       trigger: true
   - put: terraform
     params:
-      <<: *ccp_default_params
+      action: create
+      delete_on_failure: true
+      generate_random_name: true
+      terraform_source: ccp_src/aws/
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
-      <<: *ccp_gen_cluster_default_params
       platform: centos7
     on_failure:
       <<: *ccp_destroy7
   - task: plcontainer
-    file: plcontainer_src/concourse/tasks/plcontainer_tests.yml
+    file: plcontainer_src/concourse/tasks/plcontainer.yml
     params:
       platform: centos7
     image: centos-gpdb-dev-7
@@ -523,24 +509,23 @@ jobs:
       passed:
       - plcontainer_function_test_centos7
     - get: centos-gpdb-dev-7
-    - get: plcontainer_pyclient_docker_image
+    - get: plcontainer_client_docker_image
       resource: plcontainer_docker_image_centos_python
-      passed: [plcontainer_function_test_centos7]
-    - get: plcontainer_rclient_docker_image
-      resource: plcontainer_docker_image_centos_r
       passed: [plcontainer_function_test_centos7]
     - get: plcontainer_gpdb_centos7_build
       passed: [plcontainer_function_test_centos7]
   - put: terraform
     params:
-      <<: *ccp_default_params
+      action: create
+      delete_on_failure: true
+      generate_random_name: true
+      terraform_source: ccp_src/aws/
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
-      <<: *ccp_gen_cluster_default_params
       platform: centos7
     on_failure:
       <<: *ccp_destroy7
@@ -568,35 +553,36 @@ jobs:
   plan:
   - aggregate:
     - get: plcontainer_src
+      trigger: true
     - get: gpdb_src
     - get: gpdb_binary
       resource: bin_gpdb_centos6
     - get: ccp_src
     - get: centos-gpdb-dev-6
     - get: python
-      trigger: true
       resource: python-gp5
-    - get: datascience
-      trigger: true
+    - get: datascience-python 
       resource: datascience-python-gp5
     - get: openssl
-      trigger: true
   - put: terraform
     params:
-      <<: *ccp_default_params
+      action: create
+      delete_on_failure: true
+      generate_random_name: true
+      terraform_source: ccp_src/aws/
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
-      <<: *ccp_gen_cluster_default_params
       platform: centos7
     on_failure:
       <<: *ccp_destroy7
   - task: docker_build
     file: plcontainer_src/concourse/tasks/docker_build_python.yml
     params:
+      DEV_RELEASE: release
       platform: centos7
       language: python
     image: centos-gpdb-dev-6
@@ -606,7 +592,7 @@ jobs:
       <<: *debug_sleep7
   - put: plcontainer_docker_image_centos_python
     params:
-      file: plcontainer_docker_image/plcontainer-python-images-devel.tar.gz
+      file: plcontainer_docker_image/plcontainer*.tar.gz
   - *ccp_destroy7
 
 
@@ -627,20 +613,23 @@ jobs:
       resource: datascience-r-gp5
   - put: terraform
     params:
-      <<: *ccp_default_params
+      action: create
+      delete_on_failure: true
+      generate_random_name: true
+      terraform_source: ccp_src/aws/
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
-      <<: *ccp_gen_cluster_default_params
       platform: centos7
     on_failure:
       <<: *ccp_destroy7
   - task: docker_build
     file: plcontainer_src/concourse/tasks/docker_build_r.yml
     params:
+      DEV_RELEASE: release
       platform: centos7
       language: r
     image: centos-gpdb-dev-6
@@ -650,5 +639,5 @@ jobs:
       <<: *debug_sleep7
   - put: plcontainer_docker_image_centos_r
     params:
-      file: plcontainer_docker_image/plcontainer-r-images-devel.tar.gz
+     file: plcontainer_docker_image/plcontainer*.tar.gz
   - *ccp_destroy7

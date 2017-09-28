@@ -15,19 +15,24 @@ build_plcontainer() {
   gppkg -i plr*.gppkg
   popd
   source /usr/local/greenplum-db/greenplum_path.sh
-  if [ "$MODE" == "test" ]; then
-      export CIBUILD=1
-  fi
-  
+ 
   # build plcontainer
   pushd plcontainer_src
-  make clean
+  if [ "${DEV_RELEASE}" == "release" ]; then
+      PLCONTAINER_VERSION=$(git describe | awk -F. '{printf("%d.%d", $1, $2)}')
+      PLCONTAINER_RELEASE=$(git describe | awk -F. '{print $3}')
+  else
+      PLCONTAINER_VERSION="0.0"
+      PLCONTAINER_RELEASE="0"
+  fi
+  PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make clean
   pushd package
-  make cleanall && make
+  PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make cleanall;
+  PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make
   popd
   popd
   
-  if [ "$MODE" == "test" ]; then
+  if [ "${DEV_RELEASE}" == "devel" ]; then
       cp plcontainer_src/package/plcontainer-*.gppkg $OUTPUT/plcontainer-concourse.gppkg
   else
       cp plcontainer_src/package/plcontainer-*.gppkg $OUTPUT/
