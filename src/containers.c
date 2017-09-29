@@ -246,7 +246,6 @@ plcConn *start_backend(plcContainerConf *conf) {
     enum PLC_BACKEND_TYPE plc_backend_type = BACKEND_DOCKER;
     plc_backend_prepareImplementation(plc_backend_type);
 
-
     res = plc_backend_create(conf, &dockerid, container_slot);
     if (res < 0) {
         elog(ERROR, "%s", api_error_message);

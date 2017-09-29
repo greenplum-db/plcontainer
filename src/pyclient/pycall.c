@@ -41,10 +41,15 @@ static PyMethodDef moddef[] = {
     {"error",   PLy_error,   METH_VARARGS, NULL},
     {"fatal",   PLy_fatal,   METH_VARARGS, NULL},
 
-    /*
-     * query execution
-     */
-    {"execute", PLy_spi_execute, METH_VARARGS, NULL},
+	/*
+	 * create a stored plan
+	 */
+	{"prepare", PLy_spi_prepare, METH_VARARGS, NULL},
+
+	/*
+	 * execute a plan or query
+	 */
+	{"execute", PLy_spi_execute, METH_VARARGS, NULL},
 
     /*
      * create the subtransaction context manager
@@ -75,6 +80,14 @@ int python_init() {
 
     plc_Py_SetProgramName("PythonContainer");
     Py_Initialize();
+
+	/*
+	 * initialize plpy module
+	 */
+	if (PyType_Ready(&PLy_PlanType) < 0)
+		lprintf(ERROR, "could not initialize PLy_PlanType");
+	if (PyType_Ready(&PLy_SubtransactionType) < 0)
+		lprintf(ERROR, "could not initialize PLy_SubtransactionType");
 
     /* create the plpy module */
     #if PY_MAJOR_VERSION >= 3

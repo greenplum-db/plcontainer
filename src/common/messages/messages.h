@@ -12,6 +12,7 @@
 #include "message_base.h"
 #include "message_callreq.h"
 #include "message_result.h"
+#include "message_raw.h"
 #include "message_sql.h"
 #include "message_error.h"
 #include "message_log.h"

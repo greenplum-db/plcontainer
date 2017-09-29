@@ -44,8 +44,8 @@ static int plc_pyobject_as_bytea(PyObject *input, char **output, plcPyType *type
 static void plc_pyobject_iter_free (plcIterator *iter);
 static rawdata *plc_pyobject_as_array_next (plcIterator *iter);
 
-static plcPyInputFunc plc_get_input_function(plcDatatype dt, bool isArrayElement);
-static plcPyOutputFunc plc_get_output_function(plcDatatype dt);
+static plcPyInputFunc Ply_get_input_function(plcDatatype dt, bool isArrayElement);
+plcPyOutputFunc Ply_get_output_function(plcDatatype dt);
 static void plc_parse_type(plcPyType *pytype, plcType *type, char* argName, bool isArrayElement);
 
 static PyObject *plc_pyobject_from_int1(char *input, plcPyType *type UNUSED) {
@@ -399,7 +399,7 @@ static int plc_pyobject_as_array(PyObject *input, char **output, plcPyType *type
         meta = (plcPyArrMeta*)pmalloc(sizeof(plcPyArrMeta));
         meta->ndims = ndims;
         meta->dims  = (size_t*)pmalloc(ndims * sizeof(size_t));
-        meta->outputfunc = plc_get_output_function(type->subTypes[0].type);
+        meta->outputfunc = Ply_get_output_function(type->subTypes[0].type);
         meta->type = &type->subTypes[0];
 
         for (i = 0; i < ndims; i++) {
@@ -518,7 +518,7 @@ static int plc_pyobject_as_bytea(PyObject *input, char **output, plcPyType *type
     return 0;
 }
 
-static plcPyInputFunc plc_get_input_function(plcDatatype dt, bool isArrayElement) {
+static plcPyInputFunc Ply_get_input_function(plcDatatype dt, bool isArrayElement) {
     plcPyInputFunc res = NULL;
     switch (dt) {
         case PLC_DATA_INT1:
@@ -564,14 +564,14 @@ static plcPyInputFunc plc_get_input_function(plcDatatype dt, bool isArrayElement
             }
             break;
         default:
-            raise_execution_error("Type %s [%d] cannot be passed plc_get_input_function function",
+            raise_execution_error("Type %s [%d] cannot be passed Ply_get_input_function function",
                                   plc_get_type_name(dt), (int)dt);
             break;
     }
     return res;
 }
 
-static plcPyOutputFunc plc_get_output_function(plcDatatype dt) {
+plcPyOutputFunc Ply_get_output_function(plcDatatype dt) {
     plcPyOutputFunc res = NULL;
     switch (dt) {
         case PLC_DATA_INT1:
@@ -605,7 +605,7 @@ static plcPyOutputFunc plc_get_output_function(plcDatatype dt) {
             res = plc_pyobject_as_udt;
             break;
         default:
-            raise_execution_error("Type %s [%d] cannot be passed plc_get_output_function function",
+            raise_execution_error("Type %s [%d] cannot be passed Ply_get_output_function function",
                                   plc_get_type_name(dt), (int)dt);
             break;
     }
@@ -619,8 +619,8 @@ static void plc_parse_type(plcPyType *pytype, plcType *type, char* argName, bool
     pytype->argName = (argName == NULL) ? NULL : strdup(argName);
     pytype->type = type->type;
     pytype->nSubTypes = type->nSubTypes;
-    pytype->conv.inputfunc  = plc_get_input_function(pytype->type, isArrayElement);
-    pytype->conv.outputfunc = plc_get_output_function(pytype->type);
+    pytype->conv.inputfunc  = Ply_get_input_function(pytype->type, isArrayElement);
+    pytype->conv.outputfunc = Ply_get_output_function(pytype->type);
     if (pytype->nSubTypes > 0) {
         bool isArray = (type->type == PLC_DATA_ARRAY) ? true : false;
         pytype->subTypes = (plcPyType*)malloc(pytype->nSubTypes * sizeof(plcPyType));
@@ -664,7 +664,7 @@ plcPyResult *plc_init_result_conversions(plcMsgResult *res) {
     pyres->args = (plcPyType*)malloc(res->cols * sizeof(plcPyType));
 
     for (i = 0; i < res->cols; i++) {
-        plc_parse_type(&pyres->args[i], &res->types[i], NULL, false);
+		plc_parse_type(&pyres->args[i], &res->types[i], NULL, false);
     }
 
     return pyres;

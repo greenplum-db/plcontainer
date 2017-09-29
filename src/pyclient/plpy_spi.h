@@ -10,7 +10,11 @@
 
 #include <Python.h>
 
+PyTypeObject PLy_PlanType;
+PyTypeObject PLy_SubtransactionType;
+
 PyObject *PLy_spi_execute(PyObject *self, PyObject *pyquery);
+PyObject *PLy_spi_prepare(PyObject *self, PyObject *args);
 
 PyObject *PLy_subtransaction(PyObject *, PyObject *);
 
