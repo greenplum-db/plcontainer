@@ -243,6 +243,7 @@ int plc_get_type_length(plcDatatype dt) {
     return res;
 }
 
+/* Please make sure it aligns with definitions in enum plcDatatype. */
 static const char *plcDatatypeName[] =
 {
                         "PLC_DATA_INT1",
@@ -259,5 +260,5 @@ static const char *plcDatatypeName[] =
 };
 
 const char *plc_get_type_name(plcDatatype dt) {
-    return ((unsigned int) dt <= PLC_DATA_INVALID) ? plcDatatypeName[dt] : "UNKNOWN";
+    return ((unsigned int) dt < PLC_DATA_MAX) ? plcDatatypeName[dt] : "UNKNOWN";
 }

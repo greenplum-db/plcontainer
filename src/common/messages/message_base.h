@@ -23,22 +23,24 @@ typedef struct {
 
 /*
  * Note:
- * Must start from 0 since it is used as index to get type description. See plc_get_type_name().
- * If you modify this, then you need to modify plcDatatypeName[] correspondingly.
+ * Must start from 0 since it is used as index to get type name.
+ * See plc_get_type_name(). If you modify this, then you need to
+ * modify plcDatatypeName[] correspondingly.
  */
 typedef enum {
     PLC_DATA_INT1    = 0,  // 1-byte integer
-    PLC_DATA_INT2    = 1,  // 2-byte integer
-    PLC_DATA_INT4    = 2,  // 4-byte integer
-    PLC_DATA_INT8    = 3,  // 8-byte integer
-    PLC_DATA_FLOAT4  = 4,  // 4-byte float
-    PLC_DATA_FLOAT8  = 5,  // 8-byte float
-    PLC_DATA_TEXT    = 6,  // Text - transferred as a set of bytes of predefined length,
+    PLC_DATA_INT2,         // 2-byte integer
+    PLC_DATA_INT4,         // 4-byte integer
+    PLC_DATA_INT8,         // 8-byte integer
+    PLC_DATA_FLOAT4,       // 4-byte float
+    PLC_DATA_FLOAT8,       // 8-byte float
+    PLC_DATA_TEXT,         // Text - transferred as a set of bytes of predefined length,
                            //        stored as cstring
-    PLC_DATA_ARRAY   = 7,  // Array - array type specification should follow
-    PLC_DATA_UDT     = 8,  // User-defined type, specification to follow
-    PLC_DATA_BYTEA   = 9,  // Arbitrary set of bytes, stored and transferred as length + data
-    PLC_DATA_INVALID = 10  // Invalid data type
+    PLC_DATA_ARRAY,        // Array - array type specification should follow
+    PLC_DATA_UDT,          // User-defined type, specification to follow
+    PLC_DATA_BYTEA,        // Arbitrary set of bytes, stored and transferred as length + data
+    PLC_DATA_INVALID,      // Invalid data type
+    PLC_DATA_MAX
 } plcDatatype;
 
 typedef struct plcType plcType;

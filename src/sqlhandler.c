@@ -18,6 +18,7 @@
 #include "sqlhandler.h"
 
 static plcMsgResult *create_sql_result(void);
+static plcMsgPrepare *create_sql_prepare(void *plan);
 
 static plcMsgResult *create_sql_result() {
     plcMsgResult  *result;
@@ -71,30 +72,104 @@ static plcMsgResult *create_sql_result() {
     return result;
 }
 
+static plcMsgPrepare *create_sql_prepare(void *plan) {
+    plcMsgPrepare *result;
+
+    result          = palloc(sizeof(plcMsgPrepare));
+    result->msgtype = MT_PREPARE;
+    result->plan    = plan;
+
+    return result;
+}
+
 plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
-    int retval;
+    int i, retval;
     plcMessage   *result = NULL;
+	plcPlan      *plc_plan;
 
     PG_TRY();
     {
         BeginInternalSubTransaction(NULL);
-        retval = SPI_execute(msg->statement, pinfo->fn_readonly, (long) msg->limit);
-        switch (retval) {
-            case SPI_OK_SELECT:
-            case SPI_OK_INSERT_RETURNING:
-            case SPI_OK_DELETE_RETURNING:
-            case SPI_OK_UPDATE_RETURNING:
-                /* some data was returned back */
-                result = (plcMessage*)create_sql_result();
-                break;
-            default:
-                lprintf(ERROR, "Cannot handle sql ('%s') with fn_readonly (%d) "
+
+		switch (msg->sqltype) {
+		case SQL_TYPE_STATEMENT:
+		case SQL_TYPE_PEXECUTE:
+			if (msg->sqltype == SQL_TYPE_PEXECUTE) {
+				char        *nulls;
+				Datum       *values;
+				plcTypeInfo *pexecType;
+				plcPlan     *plc_plan;
+
+				/* FIXME: Sanity-check needed! Maybe hash-store plan pointers! */
+				plc_plan = (plcPlan *) ((char *) msg->plan - offsetof(plcPlan, plan));
+				if (plc_plan->nargs != msg->nargs) {
+					/* FIXME: reply error. */
+				}
+
+				nulls = pmalloc(msg->nargs * sizeof(char));
+				values = pmalloc(msg->nargs * sizeof(Datum));
+				pexecType = palloc(sizeof(plcTypeInfo));
+
+				for (i = 0; i < msg->nargs; i++) {
+					if (msg->args[i].data.isnull != 0) {
+						/* FIXME: A bit heavy to populate plcTypeInfo. */
+						fill_type_info(NULL, plc_plan->argOids[i], pexecType);
+						values[i] = pexecType->infunc(msg->args[i].data.value, pexecType);
+						nulls[i] = 'n';
+					} else {
+						nulls[i] = ' ';
+					}
+				}
+
+				retval = SPI_execute_plan(msg->plan, values, nulls,
+										pinfo->fn_readonly, (long) msg->limit);
+				pfree(values);
+				pfree(nulls);
+				pfree(pexecType);
+			} else {
+				retval = SPI_execute(msg->statement, pinfo->fn_readonly,
+									(long) msg->limit);
+			}
+
+			switch (retval) {
+			case SPI_OK_SELECT:
+			case SPI_OK_INSERT_RETURNING:
+			case SPI_OK_DELETE_RETURNING:
+			case SPI_OK_UPDATE_RETURNING:
+				/* some data was returned back */
+				result = (plcMessage*)create_sql_result();
+				break;
+			default:
+				lprintf(ERROR, "Cannot handle sql ('%s') with fn_readonly (%d) "
 						"and limit (%lld). Returns %d", msg->statement,
 						pinfo->fn_readonly, msg->limit, retval);
-                break;
-        }
+				break;
+			}
 
-        SPI_freetuptable(SPI_tuptable);
+			SPI_freetuptable(SPI_tuptable);
+			break;
+		case SQL_TYPE_PREPARE:
+			plc_plan = pmalloc(sizeof(plcPlan));
+			plc_plan->argOids = pmalloc(msg->nargs * sizeof(Oid));
+			for (i = 0; i < msg->nargs; i++) {
+				plc_plan->argOids[i] = plc_get_type_oid(msg->argtypes[i]);
+			}
+			plc_plan->nargs = msg->nargs;
+			plc_plan->plan = SPI_prepare(msg->statement, msg->nargs, plc_plan->argOids);
+
+			/* We just send the plan pointer only. Save Oids for execute. */
+			if (plc_plan->plan) {
+				/* Log the prepare failure but let the backend handle. */
+				lprintf(LOG, "SPI_prepare() fails for '%s', with %d arguments."
+					" SPI_result is %d.", msg->statement, msg->nargs, SPI_result);
+			}
+			result = (plcMessage*) create_sql_prepare(plc_plan->plan);
+			break;
+		default:
+			lprintf(ERROR, "Cannot handle sql type %d", msg->sqltype);
+			break;
+		}
+
         ReleaseCurrentSubTransaction();
     }
     PG_CATCH();
