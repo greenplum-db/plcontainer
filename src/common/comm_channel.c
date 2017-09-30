@@ -78,6 +78,7 @@ static int send_sql(plcConn *conn, plcMsgSQL *msg);
 static int send_sql_statement(plcConn *conn, plcMsgSQL *msg);
 static int send_sql_prepare(plcConn *conn, plcMsgSQL *msg);
 static int send_sql_pexecute(plcConn *conn, plcMsgSQL *msg);
+static int send_rawmsg(plcConn *conn, plcMsgRaw *msg);
 
 static int receive_exception(plcConn *conn, plcMessage **mExc);
 static int receive_result(plcConn *conn, plcMessage **mRes);
@@ -89,6 +90,7 @@ static int receive_argument(plcConn *conn, plcArgument *arg);
 static int receive_ping(plcConn *conn, plcMessage **mPing);
 static int receive_call(plcConn *conn, plcMessage **mCall);
 static int receive_sql(plcConn *conn, plcMessage **mSql);
+static int receive_rawmsg(plcConn *conn, plcMessage **mRaw);
 
 /* Public API Functions */
 
@@ -111,7 +113,10 @@ int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
             res = send_log(conn, (plcMsgLog*)msg);
             break;
         case MT_SQL:
-            res = send_sql(conn, (plcMsgSQL*)msg);
+			res = send_sql(conn, (plcMsgSQL*)msg);
+            break;
+        case MT_RAW:
+			res = send_rawmsg(conn, (plcMsgRaw*)msg);
             break;
         default:
             lprintf(ERROR, "UNHANDLED MESSAGE: '%c'", msg->msgtype);
@@ -145,6 +150,9 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg) {
                 break;
             case MT_SQL:
                 res = receive_sql(conn, msg);
+                break;
+            case MT_RAW:
+                res = receive_rawmsg(conn, msg);
                 break;
             default:
                 lprintf(ERROR, "message type unknown %d / '%c'", (int)cType, cType);
@@ -754,7 +762,7 @@ static int send_sql_prepare(plcConn *conn, plcMsgSQL *msg) {
 
 	res |= send_int32(conn, msg->nargs);
 	for (i = 0; i < msg->nargs; i++)
-		res |= send_char(conn, msg->argtypes[i]);
+		res |= send_argument(conn, &msg->args[i]);
 
 	res |= send_cstring(conn, msg->statement);
 	res |= message_end(conn);
@@ -776,6 +784,19 @@ static int send_sql_pexecute(plcConn *conn, plcMsgSQL *msg) {
 
 	res |= send_int64(conn, (int64) msg->plan);
 	res |= message_end(conn);
+
+    return res;
+}
+
+static int send_rawmsg(plcConn *conn, plcMsgRaw *msg) {
+    int res = 0;
+	int i;
+
+    res |= message_start(conn, MT_RAW);
+	res |= send_int32(conn, msg->size);
+	for (i = 0; i < msg->size; i++)
+		res |= send_char(conn, msg->data[i]);
+    res |= message_end(conn);
 
     return res;
 }
@@ -880,7 +901,7 @@ static int receive_sql_statement(plcConn *conn, plcMessage **mStmt) {
 }
 
 static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
-    int res = 0;
+    int i, res = 0;
     plcMsgSQL *ret;
 
     *mStmt       = pmalloc(sizeof(plcMsgSQL));
@@ -892,8 +913,9 @@ static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
 	if (ret->nargs < 0) {
 		return -1;
 	} else if (ret->nargs > 0) {
-		ret->argtypes = pmalloc(ret->nargs);
-		res |= receive_raw(conn, ret->argtypes, ret->nargs);
+		ret->args = pmalloc(ret->nargs * sizeof(*ret->args));
+		for (i = 0; i < ret->nargs; i++)
+			res |= receive_argument(conn, &ret->args[i]);
 	}
 
     res |= receive_cstring(conn, &ret->statement);
@@ -1013,4 +1035,35 @@ static int receive_sql(plcConn *conn, plcMessage **mSql) {
         }
     }
     return res;
+}
+
+static int receive_rawmsg(plcConn *conn, plcMessage **mRaw) {
+    int        res = 0;
+	plcMsgRaw *ret;
+
+    *mRaw = (plcMessage*)pmalloc(sizeof(plcMsgRaw));
+	ret = (plcMsgRaw *) *mRaw;
+    ret->msgtype = MT_RAW;
+
+    res |= receive_int32(conn, &ret->size);
+	if (ret->size < 0) {
+		return -1;
+	} else {
+		res |= receive_raw(conn, ret->data, ret->size);
+	}
+
+	return res;
+}
+
+void fill_prepare_argument(plcArgument *arg, char *str) {
+
+	arg->type.type = PLC_DATA_TEXT;
+	if (str != NULL)
+		arg->name = strdup(str);
+	if (str == NULL || arg->name == NULL) {
+		lprintf(ERROR, "Failed to fill argument fore spi prepare: %p %p", str, arg->name);
+	}
+
+	/* We just save argument types. */
+	arg->data.isnull = 1;
 }

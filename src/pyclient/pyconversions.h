@@ -73,4 +73,6 @@ plcPyResult  *plc_init_result_conversions(plcMsgResult *res);
 void plc_py_free_function(plcPyFunction *func);
 void plc_free_result_conversions(plcPyResult *res);
 
+plcPyOutputFunc Ply_get_output_function(plcDatatype dt);
+
 #endif /* PLC_PYCONVERSIONS_H */

@@ -16,7 +16,14 @@
 PyObject *PLy_spi_prepare(PyObject *, PyObject *);
 PyObject *PLy_spi_execute(PyObject *, PyObject *);
 static PyObject *PLy_spi_execute_query(char *query, long limit);
-static PyObject *PLy_spi_execute_plan(void *, PyObject *, long);
+static PyObject *PLy_spi_execute_plan(PyObject *, PyObject *, long);
+
+/* FIXME: Use a python object instead. */
+typedef struct Ply_plan {
+	void        *plan;
+	plcDatatype *argtypes;
+	int          nargs;
+} Ply_plan;
 
 static plcMsgResult *receive_from_frontend();
 
@@ -74,8 +81,8 @@ PLy_spi_execute(PyObject *self __attribute__((unused)), PyObject *args)
 }
 
 static PyObject *
-PLy_spi_execute_plan(void *plan, PyObject *list, long limit) {
-    int           i, j;
+PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
+    int           i, j, nargs;
     plcMsgSQL     msg;
     plcMsgResult *resp;
     PyObject     *pyresult,
@@ -84,6 +91,8 @@ PLy_spi_execute_plan(void *plan, PyObject *list, long limit) {
     plcPyResult  *result;
     plcConn      *conn = plcconn_global;
 	plcArgument  *args;
+	Ply_plan     *py_plan;
+	void         *plan;
 
 	if (list != NULL)
 	{
@@ -92,23 +101,32 @@ PLy_spi_execute_plan(void *plan, PyObject *list, long limit) {
 			raise_execution_error("plpy.execute takes a sequence as its second argument");
 			return NULL;
 		}
-		msg.nargs = PySequence_Length(list);
+		nargs = PySequence_Length(list);
 	}
 	else
-		msg.nargs = 0;
+		nargs = 0;
 
-	args = malloc(sizeof(plcArgument) * msg.nargs);
-	for (j = 0; j < msg.nargs; j++)
+	plan = (void *) PyLong_AsLongLong(ob);
+	py_plan = (Ply_plan *) ((char *) plan - offsetof(Ply_plan, plan));
+
+	if (py_plan->nargs != nargs) {
+		raise_execution_error("plpy.execute takes bad argument number: %d vs expected %d", nargs, py_plan->nargs);
+		return NULL;
+	}
+
+	args = malloc(sizeof(plcArgument) * nargs);
+	for (j = 0; j < nargs; j++)
 	{
 		PyObject    *elem;
-		plcArgument *args;
 		args[j].name = NULL;
-		args[j].type = 1 /* FIXME */;
+		args[j].type.type = py_plan->argtypes[j]; /* FIXME */
 		elem = PySequence_GetItem(list, j);
 		if (elem != Py_None)
 		{
 			args[j].data.isnull = 0;
-			args[j].data.value = NULL; /* FIXME */
+			/* Fill plcPyType? Or Datatype? */
+			Ply_get_output_function(py_plan->argtypes[j])(elem, &args[j].data.value, NULL);
+			/* Double check type. false? */
 		} else {
 			args[j].data.isnull = 1;
 			args[j].data.value = NULL;
@@ -268,7 +286,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
     plcConn       *conn = plcconn_global;
 	char          *query;
     int            nargs, res;
-	void          *plan;
+	struct Ply_plan *py_plan;
 	PyObject      *list = NULL;
 	PyObject      *optr = NULL;
 
@@ -292,25 +310,27 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
     msg.sqltype   = SQL_TYPE_PREPARE;
 	msg.nargs     = nargs;
     msg.statement = query;
-	msg.argtypes = malloc(msg.nargs);
+	msg.args      = malloc(msg.nargs * sizeof(plcArgument));
 	for (i = 0; i < msg.nargs; i++) {
 			char	   *sptr;
 
 			optr = PySequence_GetItem(list, i);
 			if (PyString_Check(optr))
 				sptr = PyString_AsString(optr);
+				/* FIXME
 			else if (PyUnicode_Check(optr))
 				sptr = PLyUnicode_AsString(optr);
+				*/
 			else
 			{
 				raise_execution_error("plpy.prepare: type name at ordinal position %d is not a string", i);
 				return NULL;
 			}
-
-			msg.argtypes[i] = plc_py_getdatatype(sptr);
+			fill_prepare_argument(&msg.args[i], sptr);
 	}
 
     plcontainer_channel_send(conn, (plcMessage*) &msg);
+	/* FIXME: free msg */
 
     res = plcontainer_channel_receive(conn, &resp);
     if (res < 0) {
@@ -318,19 +338,33 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
         return NULL;
     }
 
-	if (resp->msgtype == MT_SQL) {
-		plcMsgSQL *msg = (plcMsgSQL *)resp;
+	if (resp->msgtype == MT_RAW) {
+		char *start;
+		int offset;
 
-		if (msg->sqltype == SQL_TYPE_PREPARE)
-			plan = msg->plan;
-		else
-			raise_execution_error("Client expects sql type %d", msg->sqltype);
+		offset = 0;
+		start = ((plcMsgRaw *)resp)->data;
+
+		py_plan = malloc(sizeof(Ply_plan));
+		py_plan->plan = (void *) (*((long long *) (start + offset))); offset += 8;
+		py_plan->nargs = *((int *) (start + offset)); offset += 4;
+		if (py_plan->nargs != nargs) {
+			raise_execution_error("plpy.prepare: returns bad argument number: %d vs %d", py_plan->nargs, nargs);
+			return NULL;
+		}
+
+		if (nargs > 0) {
+			py_plan->argtypes = malloc(sizeof(plcDatatype) * nargs);
+			memcpy(py_plan->argtypes, start + offset, sizeof(plcDatatype) * nargs);
+		}
+		/* FIXME: error handling and free */
 	} else {
 		raise_execution_error("Client expects message type %c", resp->msgtype);
 		return NULL;
 	}
 
-	pyresult = PyLong_FromLongLong(DatumGetInt64(plan));
+    free_rawmsg((plcMsgRaw *) resp);
+	pyresult = PyLong_FromLongLong((long long) py_plan->plan);
 
     return pyresult;
 }

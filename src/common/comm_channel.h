@@ -42,5 +42,6 @@ interpreted as representing official policies, either expressed or implied, of t
 
 int plcontainer_channel_send(plcConn *conn, plcMessage *msg);
 int plcontainer_channel_receive(plcConn *conn, plcMessage **msg);
+void fill_prepare_argument(plcArgument *arg, char *str);
 
 #endif /* PLC_COMM_CHANNEL_H */

@@ -128,6 +128,13 @@ void free_result(plcMsgResult *res, bool isSender) {
     pfree(res);
 }
 
+void free_rawmsg(plcMsgRaw *msg) {
+    if (msg != NULL) {
+		/*  Do not free data. */
+        pfree(msg);
+    }
+}
+
 void free_error(plcMsgError *msg) {
     if (msg != NULL) {
         if (msg->message != NULL) {

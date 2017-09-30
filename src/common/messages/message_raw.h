@@ -5,14 +5,17 @@
  *
  *------------------------------------------------------------------------------
  */
-#ifndef PLC_MESSAGE_PREPARE_H
-#define PLC_MESSAGE_PREPARE_H
+#ifndef PLC_MESSAGE_RAW_H
+#define PLC_MESSAGE_RAW_H
 
 #include "message_base.h"
 
-typedef struct plcMsgPrepare {
+typedef struct plcMsgRaw {
     base_message_content;
-    void *plan;
-} plcMsgPrepare;
+	int   size;
+    char *data;
+} plcMsgRaw;
 
-#endif /* PLC_MESSAGE_PREPARE_H */
+void free_rawmsg(plcMsgRaw *msg);
+
+#endif /* PLC_MESSAGE_RAW_H */

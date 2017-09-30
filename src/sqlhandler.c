@@ -11,6 +11,7 @@
 
 #include "postgres.h"
 #include "executor/spi.h"
+#include "parser/parse_type.h"
 
 #include "common/comm_utils.h"
 #include "common/comm_channel.h"
@@ -18,7 +19,7 @@
 #include "sqlhandler.h"
 
 static plcMsgResult *create_sql_result(void);
-static plcMsgPrepare *create_sql_prepare(void *plan);
+static plcMsgRaw *create_prepare_result(int64 plan, plcDatatype *type, int nargs);
 
 static plcMsgResult *create_sql_result() {
     plcMsgResult  *result;
@@ -72,12 +73,20 @@ static plcMsgResult *create_sql_result() {
     return result;
 }
 
-static plcMsgPrepare *create_sql_prepare(void *plan) {
-    plcMsgPrepare *result;
+static plcMsgRaw *create_prepare_result(int64 plan, plcDatatype *type, int nargs) {
+    plcMsgRaw *result;
+	int offset;
 
-    result          = palloc(sizeof(plcMsgPrepare));
-    result->msgtype = MT_PREPARE;
-    result->plan    = plan;
+    result          = palloc(sizeof(plcMsgRaw));
+    result->msgtype = MT_RAW;
+    result->size    = sizeof(plan);
+	result->data    = pmalloc(sizeof(void *) + sizeof(int) + nargs * sizeof(plcDatatype));
+
+	offset = 0;
+	*((int64 *) (result->data + offset)) = plan; offset += 8;
+	*((int32 *)(result->data + offset)) = nargs; offset += 4;
+	if (nargs > 0)
+		memcpy(result->data + offset, type, nargs * sizeof(plcDatatype));
 
     return result;
 }
@@ -86,6 +95,9 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
     int i, retval;
     plcMessage   *result = NULL;
 	plcPlan      *plc_plan;
+	Oid type_oid;
+	plcDatatype *argTypes = NULL;
+	int32 typemod;
 
     PG_TRY();
     {
@@ -112,7 +124,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 
 				for (i = 0; i < msg->nargs; i++) {
 					if (msg->args[i].data.isnull != 0) {
-						/* FIXME: A bit heavy to populate plcTypeInfo. */
+						/* A bit heavy to populate plcTypeInfo. */
 						fill_type_info(NULL, plc_plan->argOids[i], pexecType);
 						values[i] = pexecType->infunc(msg->args[i].data.value, pexecType);
 						nulls[i] = 'n';
@@ -150,9 +162,17 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 			break;
 		case SQL_TYPE_PREPARE:
 			plc_plan = pmalloc(sizeof(plcPlan));
-			plc_plan->argOids = pmalloc(msg->nargs * sizeof(Oid));
+			if (msg->nargs > 0) {
+				plc_plan->argOids = pmalloc(msg->nargs * sizeof(Oid));
+				argTypes = pmalloc(msg->nargs * sizeof(plcDatatype));
+			}
 			for (i = 0; i < msg->nargs; i++) {
-				plc_plan->argOids[i] = plc_get_type_oid(msg->argtypes[i]);
+				if (msg->args[i].type.type != PLC_DATA_TEXT) {
+					lprintf(ERROR, "prepare type is bad, expect prepare sql type %d", msg->args[i].type.type);
+				}
+				parseTypeString(msg->args[i].name, &type_oid, &typemod);
+				plc_plan->argOids[i] = type_oid;
+				argTypes[i] = plc_get_datatype_from_oid(type_oid);
 			}
 			plc_plan->nargs = msg->nargs;
 			plc_plan->plan = SPI_prepare(msg->statement, msg->nargs, plc_plan->argOids);
@@ -163,7 +183,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				lprintf(LOG, "SPI_prepare() fails for '%s', with %d arguments."
 					" SPI_result is %d.", msg->statement, msg->nargs, SPI_result);
 			}
-			result = (plcMessage*) create_sql_prepare(plc_plan->plan);
+			result = (plcMessage*) create_prepare_result((int64) plc_plan->plan, argTypes, msg->nargs);
 			break;
 		default:
 			lprintf(ERROR, "Cannot handle sql type %d", msg->sqltype);

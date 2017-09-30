@@ -25,11 +25,11 @@ typedef enum {
 typedef struct plcMsgSQL {
     base_message_content;
     plcSqlType    sqltype;
-	long long     limit;        /* For sqi execcute . */
-	char         *argtypes;     /* For prepare */
-	plcArgument  *args;         /* For execute_plan */
+	long long     limit;        /* For execute_query and execute_plan */
+	plcArgument  *args;         /* For prepare and execute_plan */
+	plcDatatype  *argtypes;     /* For prepare */
 	void         *plan;         /* For prepare and execute_plan */
-    char         *statement;
+    char         *statement;    /* For prepare and execute_query/execute_plan */
 	int           nargs;        /* For prepare and execute_plan */
 } plcMsgSQL;
 

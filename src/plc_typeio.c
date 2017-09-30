@@ -623,6 +623,11 @@ static Oid plcDatatypeOid[] =
 	/* FIXME: ADD */
 };
 
-Oid plc_get_type_oid(plcDatatype dt) {
+Oid plc_get_oid_from_datatype(plcDatatype dt) {
     return ((unsigned int) dt <= PLC_DATA_INVALID) ? plcDatatypeOid[dt] : InvalidOid;
+}
+
+plcDatatype plc_get_datatype_from_oid(pg_attribute_unused() Oid oid ) {
+	/* FIXME */
+	return 0;
 }
