@@ -41,10 +41,15 @@ static PyMethodDef moddef[] = {
     {"error",   PLy_error,   METH_VARARGS, NULL},
     {"fatal",   PLy_fatal,   METH_VARARGS, NULL},
 
-    /*
-     * query execution
-     */
-    {"execute", PLy_spi_execute, METH_VARARGS, NULL},
+	/*
+	 * create a stored plan
+	 */
+	{"prepare", PLy_spi_prepare, METH_VARARGS, NULL},
+
+	/*
+	 * execute a plan or query
+	 */
+	{"execute", PLy_spi_execute, METH_VARARGS, NULL},
 
     {NULL, NULL, 0, NULL}
 };
