@@ -17,5 +17,6 @@ typedef struct PlyPlan {
 } plyPlan;
 
 PyObject *PLy_spi_execute(PyObject *self, PyObject *pyquery);
+PyObject *PLy_spi_prepare(PyObject *self, PyObject *args);
 
 #endif /* PLC_PYSPI_H */

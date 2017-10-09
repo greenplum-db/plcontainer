@@ -56,7 +56,7 @@ static plcMsgResult *receive_from_frontend() {
  * execute(plan=plan, values=(foo, bar), limit=5)
  */
 PyObject *
-PLy_spi_execute(PyObject *self __attribute__((unused)), PyObject *args)
+PLy_spi_execute(PyObject *self UNUSED, PyObject *args)
 {
 	char	   *query;
 	void       *plan;
