@@ -346,13 +346,14 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 		start = ((plcMsgRaw *)resp)->data;
 
 		py_plan = malloc(sizeof(Ply_plan));
-		py_plan->plan = (void *) (*((long long *) (start + offset))); offset += 8;
-		py_plan->nargs = *((int *) (start + offset)); offset += 4;
+		py_plan->plan = (void *) (*((long long *) (start + offset))); offset += sizeof(int64);
+		py_plan->nargs = *((int *) (start + offset)); offset += sizeof(int32);
 		if (py_plan->nargs != nargs) {
-			raise_execution_error("plpy.prepare: returns bad argument number: %d vs %d", py_plan->nargs, nargs);
+			raise_execution_error("plpy.prepare: returns bad argument number: %d vs expected %d", py_plan->nargs, nargs);
 			return NULL;
 		}
 
+		/* FIXME: Double check size */
 		if (nargs > 0) {
 			py_plan->argtypes = malloc(sizeof(plcDatatype) * nargs);
 			memcpy(py_plan->argtypes, start + offset, sizeof(plcDatatype) * nargs);

@@ -75,16 +75,16 @@ static plcMsgResult *create_sql_result() {
 
 static plcMsgRaw *create_prepare_result(int64 plan, plcDatatype *type, int nargs) {
     plcMsgRaw *result;
-	int offset;
+	unsigned int offset;
 
     result          = palloc(sizeof(plcMsgRaw));
     result->msgtype = MT_RAW;
-    result->size    = sizeof(plan);
-	result->data    = pmalloc(sizeof(void *) + sizeof(int) + nargs * sizeof(plcDatatype));
+    result->size    = sizeof(int64) + sizeof(int32) + nargs * sizeof(plcDatatype);
+	result->data    = pmalloc(result->size);
 
 	offset = 0;
-	*((int64 *) (result->data + offset)) = plan; offset += 8;
-	*((int32 *)(result->data + offset)) = nargs; offset += 4;
+	*((int64 *) (result->data + offset)) = plan; offset += sizeof(int64);
+	*((int32 *)(result->data + offset)) = nargs; offset += sizeof(int32);
 	if (nargs > 0)
 		memcpy(result->data + offset, type, nargs * sizeof(plcDatatype));
 
@@ -178,7 +178,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 			plc_plan->plan = SPI_prepare(msg->statement, msg->nargs, plc_plan->argOids);
 
 			/* We just send the plan pointer only. Save Oids for execute. */
-			if (plc_plan->plan) {
+			if (plc_plan->plan == NULL) {
 				/* Log the prepare failure but let the backend handle. */
 				lprintf(LOG, "SPI_prepare() fails for '%s', with %d arguments."
 					" SPI_result is %d.", msg->statement, msg->nargs, SPI_result);
