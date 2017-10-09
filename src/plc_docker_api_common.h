@@ -13,9 +13,9 @@
 #include "plc_docker_common.h"
 
 typedef enum {
-    PLC_CALL_HTTPGET = 0,
-    PLC_CALL_POST,
-    PLC_CALL_DELETE
+    PLC_HTTP_GET = 0,
+    PLC_HTTP_POST,
+    PLC_HTTP_DELETE
 } plcCurlCallType;
 
 typedef struct {

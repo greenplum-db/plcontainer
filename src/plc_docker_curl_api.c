@@ -101,10 +101,10 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 
         /* Choosing the right request type */
         switch (cType) {
-            case PLC_CALL_HTTPGET:
+            case PLC_HTTP_GET:
                 curl_easy_setopt(curl, CURLOPT_HTTPGET, 1);
                 break;
-            case PLC_CALL_POST:
+            case PLC_HTTP_POST:
                 curl_easy_setopt(curl, CURLOPT_POST, 1);
                 /* If the body is set - we are sending JSON, else - plain text */
                 if (body != NULL) {
@@ -116,7 +116,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
                 }
                 curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
                 break;
-            case PLC_CALL_DELETE:
+            case PLC_HTTP_DELETE:
                 curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE"); 
                 break;
             default:
@@ -139,6 +139,10 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 					"PL/Container libcurl return code %d, error '%s'", res,
 					(len > 0) ? errbuf : curl_easy_strerror(res));
 			buffer->status = -2;
+
+			elog(LOG, "Curl Request with type: %d, url: %s", cType, fullurl);
+			elog(LOG, "Curl Request with http body: %s\n", body);
+
 			goto cleanup;
         } else {
             long http_code = 0;
@@ -199,7 +203,7 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
             ((long long)conf->memoryMb) * 1024 * 1024);
 
     /* Make a call */
-    response = plcCurlRESTAPICall(PLC_CALL_POST, "/containers/create", messageBody);
+    response = plcCurlRESTAPICall(PLC_HTTP_POST, "/containers/create", messageBody);
     /* Free up intermediate data */
     pfree(messageBody);
     pfree(volumeShare);
@@ -240,7 +244,7 @@ int plc_docker_start_container(char *name) {
     url = palloc(strlen(method) + strlen(name) + 2);
     sprintf(url, method, name);
 
-    response = plcCurlRESTAPICall(PLC_CALL_POST, url, NULL);
+    response = plcCurlRESTAPICall(PLC_HTTP_POST, url, NULL);
     res = response->status;
     plcCurlBufferFree(response);
 
@@ -266,7 +270,7 @@ int plc_docker_kill_container(char *name) {
     url = palloc(strlen(method) + strlen(name) + 2);
     sprintf(url, method, name);
 
-    response = plcCurlRESTAPICall(PLC_CALL_POST, url, NULL);
+    response = plcCurlRESTAPICall(PLC_HTTP_POST, url, NULL);
     res = response->status;
 
     plcCurlBufferFree(response);
@@ -283,7 +287,7 @@ int plc_docker_inspect_container(char *name, char **element, plcInspectionMode t
     url = palloc(strlen(method) + strlen(name) + 2);
     sprintf(url, method, name);
 
-    response = plcCurlRESTAPICall(PLC_CALL_HTTPGET, url, NULL);
+    response = plcCurlRESTAPICall(PLC_HTTP_GET, url, NULL);
     res = response->status;
 
 	/* We will need to handle the "no such container" case specially. */
@@ -325,7 +329,7 @@ int plc_docker_wait_container(char *name) {
     url = palloc(strlen(method) + strlen(name) + 2);
     sprintf(url, method, name);
 
-    response = plcCurlRESTAPICall(PLC_CALL_POST, url, NULL);
+    response = plcCurlRESTAPICall(PLC_HTTP_POST, url, NULL);
     res = response->status;
 
     plcCurlBufferFree(response);
@@ -342,7 +346,7 @@ int plc_docker_delete_container(char *name) {
     url = palloc(strlen(method) + strlen(name) + 2);
     sprintf(url, method, name);
 
-    response = plcCurlRESTAPICall(PLC_CALL_DELETE, url, NULL);
+    response = plcCurlRESTAPICall(PLC_HTTP_DELETE, url, NULL);
     res = response->status;
     plcCurlBufferFree(response);
 
