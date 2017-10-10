@@ -116,27 +116,37 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				plc_plan = (plcPlan *) ((char *) msg->pplan - offsetof(plcPlan, plan));
 				if (plc_plan->nargs != msg->nargs) {
 					/* FIXME: reply error. */
+					elog(ERROR, "argument number wrong for execute with plan: "
+						"Saved number (%d) vs transferred number (%d)",
+						plc_plan->nargs, msg->nargs);
 				}
 
-				nulls = pmalloc(msg->nargs * sizeof(char));
-				values = pmalloc(msg->nargs * sizeof(Datum));
+				if (msg->nargs > 0) {
+					nulls = pmalloc(msg->nargs * sizeof(char));
+					values = pmalloc(msg->nargs * sizeof(Datum));
+				} else {
+					nulls = NULL;
+					values = NULL;
+				}
 				pexecType = palloc(sizeof(plcTypeInfo));
 
 				for (i = 0; i < msg->nargs; i++) {
-					if (msg->args[i].data.isnull != 0) {
+					if (msg->args[i].data.isnull) {
+						nulls[i] = 'n';
+					} else {
 						/* A bit heavy to populate plcTypeInfo. */
 						fill_type_info(NULL, plc_plan->argOids[i], pexecType);
 						values[i] = pexecType->infunc(msg->args[i].data.value, pexecType);
-						nulls[i] = 'n';
-					} else {
 						nulls[i] = ' ';
 					}
 				}
 
 				retval = SPI_execute_plan(plc_plan->plan, values, nulls,
 										pinfo->fn_readonly, (long) msg->limit);
-				pfree(values);
-				pfree(nulls);
+				if (values)
+					pfree(values);
+				if (nulls)
+					pfree(nulls);
 				pfree(pexecType);
 			} else {
 				retval = SPI_execute(msg->statement, pinfo->fn_readonly,
@@ -171,6 +181,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 					lprintf(ERROR, "prepare type is bad, expect prepare sql type %d", msg->args[i].type.type);
 				}
 				parseTypeString(msg->args[i].name, &type_oid, &typemod);
+
 				plc_plan->argOids[i] = type_oid;
 				argTypes[i] = plc_get_datatype_from_oid(type_oid);
 			}

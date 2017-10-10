@@ -1056,6 +1056,7 @@ static int receive_rawmsg(plcConn *conn, plcMessage **mRaw) {
 	if (ret->size < 0) {
 		return -1;
 	} else {
+		ret->data = (char *) pmalloc(ret->size);
 		res |= receive_raw(conn, ret->data, ret->size);
 	}
 

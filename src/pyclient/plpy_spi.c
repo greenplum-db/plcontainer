@@ -118,6 +118,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 		PyObject    *elem;
 		args[j].name = NULL;
 		args[j].type.type = py_plan->argtypes[j]; /* FIXME */
+
 		elem = PySequence_GetItem(list, j);
 		if (elem != Py_None)
 		{
@@ -338,22 +339,35 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 
 	if (resp->msgtype == MT_RAW) {
 		char *start;
-		int offset;
+		int offset, tx_len;
 
 		offset = 0;
 		start = ((plcMsgRaw *)resp)->data;
+		tx_len = ((plcMsgRaw *)resp)->size;
 
 		py_plan = malloc(sizeof(Ply_plan));
 		py_plan->pplan = (void *) (*((long long *) (start + offset))); offset += sizeof(int64);
 		py_plan->nargs = *((int *) (start + offset)); offset += sizeof(int32);
 		if (py_plan->nargs != nargs) {
-			raise_execution_error("plpy.prepare: returns bad argument number: %d vs expected %d", py_plan->nargs, nargs);
+			raise_execution_error("plpy.prepare: bad argument number: %d "
+				"(returned) vs %d (expected).", py_plan->nargs, nargs);
 			return NULL;
 		}
 
-		/* FIXME: Double check size */
 		if (nargs > 0) {
+			if (offset + (signed int) sizeof(plcDatatype) * nargs != tx_len) {
+				raise_execution_error("Client format error for spi prepare. "
+					"calculated length (%d) vs transferred length (%d)",
+					offset + sizeof(plcDatatype) * nargs, tx_len);
+				return NULL;
+			}
+
 			py_plan->argtypes = malloc(sizeof(plcDatatype) * nargs);
+			if (py_plan->argtypes == NULL) {
+				raise_execution_error("Could not allocate %d bytes for argtypes"
+					" in py_plan", sizeof(plcDatatype) * nargs);
+				return NULL;
+			}
 			memcpy(py_plan->argtypes, start + offset, sizeof(plcDatatype) * nargs);
 		}
 		/* FIXME: error handling and free */

@@ -611,23 +611,38 @@ static Datum plc_datum_from_udt_ptr(char *input, plcTypeInfo *type) {
     return plc_datum_from_udt(*((char**)input), type);
 }
 
-/* FIXME: Comment. */
-static Oid plcDatatypeOid[] =
-{
-	BOOLOID,
-	INT2OID,
-	INT4OID,
-	INT8OID,
-	FLOAT4OID,
-	FLOAT8OID,
-	/* FIXME: ADD */
-};
+plcDatatype plc_get_datatype_from_oid(Oid oid ) {
+	plcDatatype dt;
 
-Oid plc_get_oid_from_datatype(plcDatatype dt) {
-    return ((unsigned int) dt <= PLC_DATA_INVALID) ? plcDatatypeOid[dt] : InvalidOid;
-}
+	switch (oid) {
+	case BOOLOID:
+		dt = PLC_DATA_INT1;
+		break;
+	case INT2OID:
+		dt = PLC_DATA_INT2;
+		break;
+	case INT4OID:
+		dt = PLC_DATA_INT4;
+		break;
+	case INT8OID:
+		dt = PLC_DATA_INT8;
+		break;
+	case FLOAT4OID:
+		dt = PLC_DATA_FLOAT4;
+		break;
+	case FLOAT8OID:
+		dt = PLC_DATA_FLOAT8;
+		break;
+	case NUMERICOID:
+		dt = PLC_DATA_FLOAT8;
+		break;
+	case BYTEAOID:
+		dt = PLC_DATA_BYTEA;
+		break;
+	default:
+		dt = PLC_DATA_TEXT;
+		break;
+	}
 
-plcDatatype plc_get_datatype_from_oid(pg_attribute_unused() Oid oid ) {
-	/* FIXME */
-	return 0;
+	return dt;
 }

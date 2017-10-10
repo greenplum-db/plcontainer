@@ -62,7 +62,6 @@ void fill_type_info(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type);
 void copy_type_info(plcType *type, plcTypeInfo *ptype);
 void free_type_info(plcTypeInfo *type);
 char *fill_type_value(Datum funcArg, plcTypeInfo *argType);
-Oid plc_get_oid_from_datatype(plcDatatype dt);
 plcDatatype plc_get_datatype_from_oid(Oid oid);
 
 #endif /* PLC_TYPEIO_H */

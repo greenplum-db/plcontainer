@@ -323,7 +323,6 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
                 break;
             case MT_RAW:
 				free_rawmsg((plcMsgRaw*)res);
-				/* FIXME */
 				break;
             default:
                 ereport(ERROR,
