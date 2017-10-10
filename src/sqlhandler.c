@@ -19,7 +19,7 @@
 #include "sqlhandler.h"
 
 static plcMsgResult *create_sql_result(void);
-static plcMsgRaw *create_prepare_result(int64 plan, plcDatatype *type, int nargs);
+static plcMsgRaw *create_prepare_result(int64 pplan, plcDatatype *type, int nargs);
 
 static plcMsgResult *create_sql_result() {
     plcMsgResult  *result;
@@ -73,7 +73,7 @@ static plcMsgResult *create_sql_result() {
     return result;
 }
 
-static plcMsgRaw *create_prepare_result(int64 plan, plcDatatype *type, int nargs) {
+static plcMsgRaw *create_prepare_result(int64 pplan, plcDatatype *type, int nargs) {
     plcMsgRaw *result;
 	unsigned int offset;
 
@@ -83,7 +83,7 @@ static plcMsgRaw *create_prepare_result(int64 plan, plcDatatype *type, int nargs
 	result->data    = pmalloc(result->size);
 
 	offset = 0;
-	*((int64 *) (result->data + offset)) = plan; offset += sizeof(int64);
+	*((int64 *) (result->data + offset)) = pplan; offset += sizeof(int64);
 	*((int32 *)(result->data + offset)) = nargs; offset += sizeof(int32);
 	if (nargs > 0)
 		memcpy(result->data + offset, type, nargs * sizeof(plcDatatype));
@@ -113,7 +113,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				plcPlan     *plc_plan;
 
 				/* FIXME: Sanity-check needed! Maybe hash-store plan pointers! */
-				plc_plan = (plcPlan *) ((char *) msg->plan - offsetof(plcPlan, plan));
+				plc_plan = (plcPlan *) ((char *) msg->pplan - offsetof(plcPlan, plan));
 				if (plc_plan->nargs != msg->nargs) {
 					/* FIXME: reply error. */
 				}
@@ -133,7 +133,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 					}
 				}
 
-				retval = SPI_execute_plan(msg->plan, values, nulls,
+				retval = SPI_execute_plan(plc_plan->plan, values, nulls,
 										pinfo->fn_readonly, (long) msg->limit);
 				pfree(values);
 				pfree(nulls);
@@ -183,7 +183,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				lprintf(LOG, "SPI_prepare() fails for '%s', with %d arguments."
 					" SPI_result is %d.", msg->statement, msg->nargs, SPI_result);
 			}
-			result = (plcMessage*) create_prepare_result((int64) plc_plan->plan, argTypes, msg->nargs);
+			result = (plcMessage*) create_prepare_result((int64) &plc_plan->plan, argTypes, msg->nargs);
 			break;
 		default:
 			lprintf(ERROR, "Cannot handle sql type %d", msg->sqltype);

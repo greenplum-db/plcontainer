@@ -131,6 +131,7 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg) {
     char cType;
 
     res = receive_message_type(conn, &cType);
+
     if (res >= 0) {
         switch (cType) {
             case MT_PING:
@@ -782,7 +783,7 @@ static int send_sql_pexecute(plcConn *conn, plcMsgSQL *msg) {
 		res |= send_argument(conn, &msg->args[i]);
 	res |= send_int64(conn, msg->limit);
 
-	res |= send_int64(conn, (int64) msg->plan);
+	res |= send_int64(conn, (int64) msg->pplan);
 	res |= message_end(conn);
 
     return res;
@@ -909,8 +910,10 @@ static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
     ret->msgtype = MT_SQL;
     ret->sqltype = SQL_TYPE_PREPARE;
 
+    debug_print(WARNING, "Receiving spi prepare request");
 	res |= receive_int32(conn, &ret->nargs);
 	if (ret->nargs < 0) {
+		lprintf(LOG, "spi prepare request with nargs (%d) < 0", ret->nargs);
 		return -1;
 	} else if (ret->nargs > 0) {
 		ret->args = pmalloc(ret->nargs * sizeof(*ret->args));
@@ -920,12 +923,13 @@ static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
 
     res |= receive_cstring(conn, &ret->statement);
 
+    debug_print(WARNING, "Received spi prepare request and returned %d", res);
     return res;
 }
 
 static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 	int res = 0;
-	long long plan;
+	long long pplan;
 	plcMsgSQL *ret;
 	int i;
 
@@ -934,8 +938,10 @@ static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
     ret->msgtype = MT_SQL;
     ret->sqltype = SQL_TYPE_PEXECUTE;
 
+    debug_print(WARNING, "Receiving spi pexecute request");
 	res |= receive_int32(conn, &ret->nargs);
 	if (ret->nargs < 0) {
+		lprintf(LOG, "spi pexecute request with nargs (%d) < 0", ret->nargs);
 		return -1;
 	} else if (ret->nargs > 0) {
 		ret->args = pmalloc(ret->nargs * sizeof(*ret->args));
@@ -943,9 +949,10 @@ static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 			res |= receive_argument(conn, &ret->args[i]);
 	}
 	res |= receive_int64(conn, &ret->limit);
-	res |= receive_int64(conn, &plan);
-	ret->plan = (void *) plan;
+	res |= receive_int64(conn, &pplan);
+	ret->pplan = (void *) pplan;
 
+    debug_print(WARNING, "Received spi pexecute request and returned %d", res);
 	return res;
 }
 

@@ -20,7 +20,7 @@ static PyObject *PLy_spi_execute_plan(PyObject *, PyObject *, long);
 
 /* FIXME: Use a python object instead. */
 typedef struct Ply_plan {
-	void        *plan;
+	void        *pplan; /* Store the pointer to plan on the QE side. */
 	plcDatatype *argtypes;
 	int          nargs;
 } Ply_plan;
@@ -92,7 +92,6 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
     plcConn      *conn = plcconn_global;
 	plcArgument  *args;
 	Ply_plan     *py_plan;
-	void         *plan;
 
 	if (list != NULL)
 	{
@@ -106,8 +105,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 	else
 		nargs = 0;
 
-	plan = (void *) PyLong_AsLongLong(ob);
-	py_plan = (Ply_plan *) ((char *) plan - offsetof(Ply_plan, plan));
+	py_plan = (Ply_plan *) ob;
 
 	if (py_plan->nargs != nargs) {
 		raise_execution_error("plpy.execute takes bad argument number: %d vs expected %d", nargs, py_plan->nargs);
@@ -135,9 +133,9 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 
     msg.msgtype   = MT_SQL;
     msg.sqltype   = SQL_TYPE_PEXECUTE;
-	msg.plan      = plan;
+	msg.pplan     = py_plan->pplan;
 	msg.limit     = limit;
-	msg.nargs     = PySequence_Length(list);
+	msg.nargs     = nargs;
 	msg.args      = args;
 
     plcontainer_channel_send(conn, (plcMessage*) &msg);
@@ -346,7 +344,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 		start = ((plcMsgRaw *)resp)->data;
 
 		py_plan = malloc(sizeof(Ply_plan));
-		py_plan->plan = (void *) (*((long long *) (start + offset))); offset += sizeof(int64);
+		py_plan->pplan = (void *) (*((long long *) (start + offset))); offset += sizeof(int64);
 		py_plan->nargs = *((int *) (start + offset)); offset += sizeof(int32);
 		if (py_plan->nargs != nargs) {
 			raise_execution_error("plpy.prepare: returns bad argument number: %d vs expected %d", py_plan->nargs, nargs);
@@ -365,7 +363,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 	}
 
     free_rawmsg((plcMsgRaw *) resp);
-	pyresult = PyLong_FromLongLong((long long) py_plan->plan);
+	pyresult = PyLong_FromLongLong((long long) py_plan);
 
     return pyresult;
 }
