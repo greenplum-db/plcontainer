@@ -116,17 +116,18 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 	for (j = 0; j < nargs; j++)
 	{
 		PyObject    *elem;
-		args[j].name = NULL;
-		args[j].type.type = py_plan->argtypes[j]; /* FIXME */
+		args[j].type.type = py_plan->argtypes[j];
+		args[j].name = NULL; /* We do not need name */
+		args[j].type.nSubTypes = 0;
+		args[j].type.typeName = NULL;
 
 		elem = PySequence_GetItem(list, j);
 		if (elem != Py_None)
 		{
 			args[j].data.isnull = 0;
-			/* Fill plcPyType? Or Datatype? */
 			Ply_get_output_function(py_plan->argtypes[j])(elem, &args[j].data.value, NULL);
-			/* Double check type. false? */
 		} else {
+			/* FIXME: Wrong ? */
 			args[j].data.isnull = 1;
 			args[j].data.value = NULL;
 		}
@@ -140,8 +141,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 	msg.args      = args;
 
     plcontainer_channel_send(conn, (plcMessage*) &msg);
-	/* FIXME: Release more */
-	free(args);
+	free_arguments(args, nargs, false, false);
 
     resp = receive_from_frontend();
     if (resp == NULL) {
@@ -329,7 +329,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 	}
 
     plcontainer_channel_send(conn, (plcMessage*) &msg);
-	/* FIXME: free msg */
+	free_arguments(msg.args, msg.nargs, false, false);
 
     res = plcontainer_channel_receive(conn, &resp);
     if (res < 0) {
@@ -372,7 +372,8 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 		}
 		/* FIXME: error handling and free */
 	} else {
-		raise_execution_error("Client expects message type %c", resp->msgtype);
+		raise_execution_error("Server returns message type %c, but we expect %c",
+							  resp->msgtype, MT_RAW);
 		return NULL;
 	}
 

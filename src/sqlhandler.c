@@ -115,7 +115,6 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				/* FIXME: Sanity-check needed! Maybe hash-store plan pointers! */
 				plc_plan = (plcPlan *) ((char *) msg->pplan - offsetof(plcPlan, plan));
 				if (plc_plan->nargs != msg->nargs) {
-					/* FIXME: reply error. */
 					elog(ERROR, "argument number wrong for execute with plan: "
 						"Saved number (%d) vs transferred number (%d)",
 						plc_plan->nargs, msg->nargs);
@@ -180,7 +179,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				if (msg->args[i].type.type != PLC_DATA_TEXT) {
 					lprintf(ERROR, "prepare type is bad, expect prepare sql type %d", msg->args[i].type.type);
 				}
-				parseTypeString(msg->args[i].name, &type_oid, &typemod);
+				parseTypeString(msg->args[i].type.typeName, &type_oid, &typemod);
 
 				plc_plan->argOids[i] = type_oid;
 				argTypes[i] = plc_get_datatype_from_oid(type_oid);
