@@ -361,9 +361,13 @@ jobs:
     - get: ccp_src
       passed: [plcontainer_build_python_image]
     - get: centos-gpdb-dev-6
-    - get: plcontainer_client_docker_image
+    - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_centos_python
       passed: [plcontainer_build_python_image]
+      trigger: true
+    - get: plcontainer_rclient_docker_image
+      resource: plcontainer_docker_image_centos_r 
+      passed: [plcontainer_build_r_image]
       trigger: true
     - get: plcontainer_gpdb_centos6_build
       passed: [plcontainer_build_centos6]
@@ -461,9 +465,13 @@ jobs:
     - get: ccp_src
       passed: [plcontainer_build_python_image]
     - get: centos-gpdb-dev-7
-    - get: plcontainer_client_docker_image
+    - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_centos_python
       passed: [plcontainer_build_python_image]
+      trigger: true
+    - get: plcontainer_rclient_docker_image
+      resource: plcontainer_docker_image_centos_r
+      passed: [plcontainer_build_r_image]
       trigger: true
     - get: plcontainer_gpdb_centos7_build
       passed: [plcontainer_build_centos7]
