@@ -26,6 +26,8 @@ typedef struct plcMsgCallreq {
     plcArgument *args;       // function arguments
 } plcMsgCallreq;
 
+void free_arguments(plcArgument *args, int nargs, bool isShared, bool isSender);
+
 /*
   Frees a callreq and all subfields of the struct, this function
   assumes ownership of all pointers in the struct and substructs

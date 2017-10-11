@@ -321,6 +321,9 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
             case MT_CALLREQ:
                 free_callreq((plcMsgCallreq*)res, true, true);
                 break;
+            case MT_RAW:
+				free_rawmsg((plcMsgRaw*)res);
+				break;
             default:
                 ereport(ERROR,
                       (errcode(ERRCODE_RAISE_EXCEPTION),

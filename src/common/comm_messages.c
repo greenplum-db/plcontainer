@@ -45,37 +45,42 @@ static void free_type(plcType *typArr) {
     }
 }
 
-void free_callreq(plcMsgCallreq *req, bool isShared, bool isSender) {
+void free_arguments(plcArgument *args, int nargs, bool isShared, bool isSender) {
     int i;
 
+    for (i = 0; i < nargs; i++) {
+        if (!isShared && args[i].name != NULL) {
+            pfree(args[i].name);
+        }
+        if (args[i].data.value != NULL) {
+            // For UDT we need to free up internal structures
+            if (args[i].type.type == PLC_DATA_UDT) {
+                plc_free_udt((plcUDT*)args[i].data.value, &args[i].type, isSender);
+            }
+
+            /* For arrays on receiver side we need to free up their data,
+             * while on the sender side cleanup is managed by comm_channel */
+            if (!isSender && args[i].type.type == PLC_DATA_ARRAY) {
+                plc_free_array((plcArray*)args[i].data.value, &args[i].type, isSender);
+            } else {
+                pfree(args[i].data.value);
+            }
+        }
+        free_type(&args[i].type);
+    }
+
+	if (args)
+		pfree(args);
+}
+
+void free_callreq(plcMsgCallreq *req, bool isShared, bool isSender) {
     if (!isShared) {
         /* free the procedure */
         pfree(req->proc.name);
         pfree(req->proc.src);
     }
 
-    /* free the arguments */
-    for (i = 0; i < req->nargs; i++) {
-        if (!isShared && req->args[i].name != NULL) {
-            pfree(req->args[i].name);
-        }
-        if (req->args[i].data.value != NULL) {
-            // For UDT we need to free up internal structures
-            if (req->args[i].type.type == PLC_DATA_UDT) {
-                plc_free_udt((plcUDT*)req->args[i].data.value, &req->args[i].type, isSender);
-            }
-
-            /* For arrays on receiver side we need to free up their data,
-             * while on the sender side cleanup is managed by comm_channel */
-            if (!isSender && req->args[i].type.type == PLC_DATA_ARRAY) {
-                plc_free_array((plcArray*)req->args[i].data.value, &req->args[i].type, isSender);
-            } else {
-                pfree(req->args[i].data.value);
-            }
-        }
-        free_type(&req->args[i].type);
-    }
-    pfree(req->args);
+	free_arguments(req->args, req->nargs, isShared, isSender);
 
     free_type(&req->retType);
 
@@ -126,6 +131,13 @@ void free_result(plcMsgResult *res, bool isSender) {
     pfree(res->names);
 
     pfree(res);
+}
+
+void free_rawmsg(plcMsgRaw *msg) {
+    if (msg != NULL) {
+		pfree(msg->data);
+        pfree(msg);
+    }
 }
 
 void free_error(plcMsgError *msg) {
@@ -243,6 +255,7 @@ int plc_get_type_length(plcDatatype dt) {
     return res;
 }
 
+/* Please make sure it aligns with definitions in enum plcDatatype. */
 static const char *plcDatatypeName[] =
 {
                         "PLC_DATA_INT1",
@@ -259,5 +272,5 @@ static const char *plcDatatypeName[] =
 };
 
 const char *plc_get_type_name(plcDatatype dt) {
-    return ((unsigned int) dt <= PLC_DATA_INVALID) ? plcDatatypeName[dt] : "UNKNOWN";
+    return ((unsigned int) dt < PLC_DATA_MAX) ? plcDatatypeName[dt] : "UNKNOWN";
 }

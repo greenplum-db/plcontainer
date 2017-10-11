@@ -17,6 +17,7 @@
 #define MT_TRIGREQ     'T'
 #define MT_TUPLRES     'U'
 #define MT_TRANSEVENT  'V'
+#define MT_RAW         'W'
 #define MT_EOF         0
 
 #endif /* PLC_MESSAGE_TYPES_H */

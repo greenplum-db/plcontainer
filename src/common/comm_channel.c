@@ -75,15 +75,22 @@ static int send_result(plcConn *conn, plcMsgResult *res);
 static int send_log(plcConn *conn, plcMsgLog *mlog);
 static int send_exception(plcConn *conn, plcMsgError *err);
 static int send_sql(plcConn *conn, plcMsgSQL *msg);
+static int send_sql_statement(plcConn *conn, plcMsgSQL *msg);
+static int send_sql_prepare(plcConn *conn, plcMsgSQL *msg);
+static int send_sql_pexecute(plcConn *conn, plcMsgSQL *msg);
+static int send_rawmsg(plcConn *conn, plcMsgRaw *msg);
 
 static int receive_exception(plcConn *conn, plcMessage **mExc);
 static int receive_result(plcConn *conn, plcMessage **mRes);
 static int receive_log(plcConn *conn, plcMessage **mLog);
 static int receive_sql_statement(plcConn *conn, plcMessage **mStmt);
+static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt);
+static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt);
 static int receive_argument(plcConn *conn, plcArgument *arg);
 static int receive_ping(plcConn *conn, plcMessage **mPing);
 static int receive_call(plcConn *conn, plcMessage **mCall);
 static int receive_sql(plcConn *conn, plcMessage **mSql);
+static int receive_rawmsg(plcConn *conn, plcMessage **mRaw);
 
 /* Public API Functions */
 
@@ -106,7 +113,10 @@ int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
             res = send_log(conn, (plcMsgLog*)msg);
             break;
         case MT_SQL:
-            res = send_sql(conn, (plcMsgSQL*)msg);
+			res = send_sql(conn, (plcMsgSQL*)msg);
+            break;
+        case MT_RAW:
+			res = send_rawmsg(conn, (plcMsgRaw*)msg);
             break;
         default:
             lprintf(ERROR, "UNHANDLED MESSAGE: '%c'", msg->msgtype);
@@ -121,6 +131,7 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg) {
     char cType;
 
     res = receive_message_type(conn, &cType);
+
     if (res >= 0) {
         switch (cType) {
             case MT_PING:
@@ -140,6 +151,9 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg) {
                 break;
             case MT_SQL:
                 res = receive_sql(conn, msg);
+                break;
+            case MT_RAW:
+                res = receive_rawmsg(conn, msg);
                 break;
             default:
                 lprintf(ERROR, "message type unknown %d / '%c'", (int)cType, cType);
@@ -706,17 +720,85 @@ static int send_exception(plcConn *conn, plcMsgError *err) {
 }
 
 static int send_sql(plcConn *conn, plcMsgSQL *msg) {
+    int res;
+
+	switch (msg->sqltype) {
+		case SQL_TYPE_STATEMENT:
+			res = send_sql_statement(conn, msg);
+			break;
+		case SQL_TYPE_PREPARE:
+			res = send_sql_prepare(conn, msg);
+			break;
+		case SQL_TYPE_PEXECUTE:
+			res = send_sql_pexecute(conn, msg);
+			break;
+		default:
+			res = -1;
+			lprintf(ERROR, "UNHANDLED SQL TYPE: %d for sql send", msg->sqltype);
+			break;
+	}
+
+    return res;
+}
+
+static int send_sql_statement(plcConn *conn, plcMsgSQL *msg) {
     int res = 0;
-    if (msg->sqltype == SQL_TYPE_STATEMENT) {
-        res |= message_start(conn, MT_SQL);
-        res |= send_int32(conn, ((plcMsgSQL*)msg)->sqltype);
-        res |= send_int64(conn, ((plcMsgSQL*)msg)->limit);
-        res |= send_cstring(conn, ((plcMsgSQL*)msg)->statement);
-        res |= message_end(conn);
-    } else {
-        lprintf(ERROR, "Unhandled SQL Message type '%c'", msg->sqltype);
-        res = -1;
-    }
+
+	res |= message_start(conn, MT_SQL);
+	res |= send_int32(conn, msg->sqltype);
+
+	res |= send_int64(conn, msg->limit);
+	res |= send_cstring(conn, msg->statement);
+	res |= message_end(conn);
+
+    return res;
+}
+
+static int send_sql_prepare(plcConn *conn, plcMsgSQL *msg) {
+    int res = 0;
+	int i;
+
+	res |= message_start(conn, MT_SQL);
+	res |= send_int32(conn, msg->sqltype);
+
+	res |= send_int32(conn, msg->nargs);
+	for (i = 0; i < msg->nargs; i++)
+		res |= send_argument(conn, &msg->args[i]);
+
+	res |= send_cstring(conn, msg->statement);
+	res |= message_end(conn);
+
+    return res;
+}
+
+static int send_sql_pexecute(plcConn *conn, plcMsgSQL *msg) {
+    int res = 0;
+	int i;
+
+	res |= message_start(conn, MT_SQL);
+	res |= send_int32(conn, msg->sqltype);
+
+	res |= send_int32(conn, msg->nargs);
+	for (i = 0; i < msg->nargs; i++)
+		res |= send_argument(conn, &msg->args[i]);
+	res |= send_int64(conn, msg->limit);
+
+	res |= send_int64(conn, (int64) msg->pplan);
+	res |= message_end(conn);
+
+    return res;
+}
+
+static int send_rawmsg(plcConn *conn, plcMsgRaw *msg) {
+    int res = 0;
+	int i;
+
+    res |= message_start(conn, MT_RAW);
+	res |= send_int32(conn, msg->size);
+	for (i = 0; i < msg->size; i++)
+		res |= send_char(conn, msg->data[i]);
+    res |= message_end(conn);
+
     return res;
 }
 
@@ -819,6 +901,61 @@ static int receive_sql_statement(plcConn *conn, plcMessage **mStmt) {
     return res;
 }
 
+static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
+    int i, res = 0;
+    plcMsgSQL *ret;
+
+    *mStmt       = pmalloc(sizeof(plcMsgSQL));
+    ret          = (plcMsgSQL*) *mStmt;
+    ret->msgtype = MT_SQL;
+    ret->sqltype = SQL_TYPE_PREPARE;
+
+    debug_print(WARNING, "Receiving spi prepare request");
+	res |= receive_int32(conn, &ret->nargs);
+	if (ret->nargs < 0) {
+		lprintf(LOG, "spi prepare request with nargs (%d) < 0", ret->nargs);
+		return -1;
+	} else if (ret->nargs > 0) {
+		ret->args = pmalloc(ret->nargs * sizeof(*ret->args));
+		for (i = 0; i < ret->nargs; i++)
+			res |= receive_argument(conn, &ret->args[i]);
+	}
+
+    res |= receive_cstring(conn, &ret->statement);
+
+    debug_print(WARNING, "Received spi prepare request and returned %d", res);
+    return res;
+}
+
+static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
+	int res = 0;
+	long long pplan;
+	plcMsgSQL *ret;
+	int i;
+
+    *mStmt       = pmalloc(sizeof(plcMsgSQL));
+    ret          = (plcMsgSQL*) *mStmt;
+    ret->msgtype = MT_SQL;
+    ret->sqltype = SQL_TYPE_PEXECUTE;
+
+    debug_print(WARNING, "Receiving spi pexecute request");
+	res |= receive_int32(conn, &ret->nargs);
+	if (ret->nargs < 0) {
+		lprintf(LOG, "spi pexecute request with nargs (%d) < 0", ret->nargs);
+		return -1;
+	} else if (ret->nargs > 0) {
+		ret->args = pmalloc(ret->nargs * sizeof(*ret->args));
+		for (i = 0; i < ret->nargs; i++)
+			res |= receive_argument(conn, &ret->args[i]);
+	}
+	res |= receive_int64(conn, &ret->limit);
+	res |= receive_int64(conn, &pplan);
+	ret->pplan = (void *) pplan;
+
+    debug_print(WARNING, "Received spi pexecute request and returned %d", res);
+	return res;
+}
+
 static int receive_argument(plcConn *conn, plcArgument *arg) {
     int res = 0;
     res |= receive_cstring(conn, &arg->name);
@@ -892,11 +1029,55 @@ static int receive_sql(plcConn *conn, plcMessage **mSql) {
             case SQL_TYPE_STATEMENT:
                 res = receive_sql_statement(conn, mSql);
                 break;
+            case SQL_TYPE_PREPARE:
+                res = receive_sql_prepare(conn, mSql);
+                break;
+			case SQL_TYPE_PEXECUTE:
+                res = receive_sql_pexecute(conn, mSql);
+                break;
             default:
                 res = -1;
-                lprintf(ERROR, "UNHANDLED SQL TYPE: %d", sqlType);
+                lprintf(ERROR, "UNHANDLED SQL TYPE: %d for sql receive", sqlType);
                 break;
         }
     }
     return res;
+}
+
+static int receive_rawmsg(plcConn *conn, plcMessage **mRaw) {
+    int        res = 0;
+	plcMsgRaw *ret;
+
+    *mRaw = (plcMessage*)pmalloc(sizeof(plcMsgRaw));
+	ret = (plcMsgRaw *) *mRaw;
+    ret->msgtype = MT_RAW;
+
+    res |= receive_int32(conn, &ret->size);
+	if (ret->size < 0) {
+		return -1;
+	} else {
+		ret->data = (char *) pmalloc(ret->size);
+		res |= receive_raw(conn, ret->data, ret->size);
+	}
+
+	return res;
+}
+
+void fill_prepare_argument(plcArgument *arg, char *str) {
+	if (arg == NULL || str == NULL)
+		lprintf(ERROR, "Impossible to reach here for spi prepare: %p, %p",
+				arg, str);
+
+	if (str != NULL)
+		arg->type.typeName = pstrdup(str);
+	if (arg->type.typeName == NULL)
+		lprintf(ERROR, "Failed to allocate memory for spi prepare (size: %zd)",
+				strlen(str));
+
+	arg->type.type = PLC_DATA_TEXT;
+
+	/* Make free_arguments() happy. */
+	arg->type.nSubTypes = 0;
+	arg->name = NULL;
+	arg->data.isnull = 1;
 }

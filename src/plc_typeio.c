@@ -427,7 +427,7 @@ rec_data.t_len = HeapTupleHeaderGetDatumLength(rec_header);
 ItemPointerSetInvalid(&(rec_data.t_self));
 rec_data.t_tableOid = InvalidOid;
 rec_data.t_data = rec_header;
-vattr = heap_getattr(&rec_data, (i + 1), type->tupleDesc, &is_null);
+vattr = heap_getattr(&rec_data, (i + 1), type->tupleDesc, &isnull);
 */
 static char *plc_datum_as_udt(Datum input, plcTypeInfo *type) {
     HeapTupleHeader rec_header;
@@ -446,18 +446,18 @@ static char *plc_datum_as_udt(Datum input, plcTypeInfo *type) {
     rec_header = DatumGetHeapTupleHeader(input);
     for (i = 0, j = 0; i < type->nSubTypes; i++) {
         Datum  vattr;
-        bool   is_null;
+        bool   isnull;
 
         if (!type->subTypes[i].attisdropped) {
-            vattr = GetAttributeByNum(rec_header, (i + 1), &is_null);
-            if (is_null) {
+            vattr = GetAttributeByNum(rec_header, (i + 1), &isnull);
+            if (isnull) {
                 res->data[j].isnull = true;
                 res->data[j].value = NULL;
             } else {
                 res->data[j].isnull = false;
                 res->data[j].value = type->subTypes[i].outfunc(vattr, &type->subTypes[i]);
             }
-            j += 1;
+            j++;
         }
     }
 
@@ -609,4 +609,40 @@ static Datum plc_datum_from_udt(char *input, plcTypeInfo *type) {
 
 static Datum plc_datum_from_udt_ptr(char *input, plcTypeInfo *type) {
     return plc_datum_from_udt(*((char**)input), type);
+}
+
+plcDatatype plc_get_datatype_from_oid(Oid oid ) {
+	plcDatatype dt;
+
+	switch (oid) {
+	case BOOLOID:
+		dt = PLC_DATA_INT1;
+		break;
+	case INT2OID:
+		dt = PLC_DATA_INT2;
+		break;
+	case INT4OID:
+		dt = PLC_DATA_INT4;
+		break;
+	case INT8OID:
+		dt = PLC_DATA_INT8;
+		break;
+	case FLOAT4OID:
+		dt = PLC_DATA_FLOAT4;
+		break;
+	case FLOAT8OID:
+		dt = PLC_DATA_FLOAT8;
+		break;
+	case NUMERICOID:
+		dt = PLC_DATA_FLOAT8;
+		break;
+	case BYTEAOID:
+		dt = PLC_DATA_BYTEA;
+		break;
+	default:
+		dt = PLC_DATA_TEXT;
+		break;
+	}
+
+	return dt;
 }
