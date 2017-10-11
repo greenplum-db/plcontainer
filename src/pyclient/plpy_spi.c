@@ -198,16 +198,53 @@ PLy_plan_new(void)
 	return (PyObject *) ob;
 }
 
+/* SPI_freeplan(ob->pplan) */
+static int PLy_freeplan(PLyPlanObject *ob)
+{
+    int            res;
+    plcMsgSQL      msg;
+    plcMessage    *resp;
+    plcConn       *conn = plcconn_global;
+
+    /* If the execution was terminated we don't need to proceed with SPI */
+    if (plc_is_execution_terminated != 0) {
+        return -1;
+    }
+
+    msg.msgtype   = MT_SQL;
+    msg.sqltype   = SQL_TYPE_UNPREPARE;
+	msg.pplan     = ob->pplan;
+
+    plcontainer_channel_send(conn, (plcMessage*) &msg);
+
+    res = plcontainer_channel_receive(conn, &resp);
+    if (res < 0) {
+        raise_execution_error("Error receiving data from the frontend, %d", res);
+        return res;
+    }
+
+	if (resp->msgtype == MT_RAW) {
+		int32 *start;
+
+		start = (int32 *)(((plcMsgRaw *)resp)->data);
+		res = *start;
+	} else {
+		raise_execution_error("Server returns message type %c, but we expect %c"
+							  "for plan free.", resp->msgtype, MT_RAW);
+		return -1;
+	}
+
+    free_rawmsg((plcMsgRaw *) resp);
+
+    return 0;
+}
 
 static void
 PLy_plan_dealloc(PyObject *arg)
 {
 	PLyPlanObject *ob = (PLyPlanObject *) arg;
 
-/* FIXME
-	if (ob->plan)
-		SPI_freeplan(ob->plan);
-		*/
+	PLy_freeplan(ob);
 	if (ob->argtypes)
 		pfree(ob->argtypes);
 
@@ -624,7 +661,6 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 			}
 			memcpy(py_plan->argtypes, start + offset, sizeof(plcDatatype) * nargs);
 		}
-		/* FIXME: error handling and free */
 	} else {
 		raise_execution_error("Server returns message type %c, but we expect %c",
 							  resp->msgtype, MT_RAW);

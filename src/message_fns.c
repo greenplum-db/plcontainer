@@ -48,7 +48,7 @@ static bool plc_type_valid(plcTypeInfo *type);
 static void fill_callreq_arguments(FunctionCallInfo fcinfo, plcProcInfo *pinfo, plcMsgCallreq *req);
 
 plcProcInfo * get_proc_info(FunctionCallInfo fcinfo) {
-    int           i, len;
+    int           len;
     Datum        *argnames = NULL;
     bool         *argnulls = NULL;
     Datum         argnamesArray;
@@ -120,23 +120,24 @@ plcProcInfo * get_proc_info(FunctionCallInfo fcinfo) {
                                   typeTup->typlen, typeTup->typbyval, typeTup->typalign,
                                   &argnames, &argnulls, &len);
                 if (len != pinfo->nargs) {
-                    elog(FATAL, "something bad happened, nargs != len");
+                    elog(FATAL, "something bad happened, nargs (%d) != len (%d)",
+						pinfo->nargs, len);
                 }
             }
 
             pinfo->argnames = plc_top_alloc(pinfo->nargs * sizeof(char*));
-            for (i = 0; i < pinfo->nargs; i++) {
-                if (!isnull && !argnulls[i]) {
-                    pinfo->argnames[i] =
+            for (j = 0; j < pinfo->nargs; j++) {
+                if (!isnull && !argnulls[j]) {
+                    pinfo->argnames[j] =
                         plc_top_strdup(DatumGetCString(
-                                DirectFunctionCall1(textout, argnames[i])
+                                DirectFunctionCall1(textout, argnames[j])
                             ));
-                    if (strlen(pinfo->argnames[i]) == 0) {
-                        pfree(pinfo->argnames[i]);
-                        pinfo->argnames[i] = NULL;
+                    if (strlen(pinfo->argnames[j]) == 0) {
+                        pfree(pinfo->argnames[j]);
+                        pinfo->argnames[j] = NULL;
                     }
                 } else {
-                    pinfo->argnames[i] = NULL;
+                    pinfo->argnames[j] = NULL;
                 }
             }
 

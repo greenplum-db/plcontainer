@@ -91,6 +91,19 @@ static plcMsgRaw *create_prepare_result(int64 pplan, plcDatatype *type, int narg
     return result;
 }
 
+static plcMsgRaw *create_unprepare_result(int32 retval) {
+    plcMsgRaw *result;
+
+    result          = palloc(sizeof(plcMsgRaw));
+    result->msgtype = MT_RAW;
+    result->size    = sizeof(int32);
+	result->data    = pmalloc(result->size);
+
+	*((int32 *) result->data) = retval;
+
+    return result;
+}
+
 plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
     int i, retval;
     plcMessage   *result = NULL;
@@ -194,6 +207,10 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 					" SPI_result is %d.", msg->statement, msg->nargs, SPI_result);
 			}
 			result = (plcMessage*) create_prepare_result((int64) &plc_plan->plan, argTypes, msg->nargs);
+			break;
+		case SQL_TYPE_UNPREPARE:
+			retval = SPI_freeplan(msg->pplan);
+			result = (plcMessage*) create_unprepare_result(retval);
 			break;
 		default:
 			lprintf(ERROR, "Cannot handle sql type %d", msg->sqltype);

@@ -77,6 +77,7 @@ static int send_exception(plcConn *conn, plcMsgError *err);
 static int send_sql(plcConn *conn, plcMsgSQL *msg);
 static int send_sql_statement(plcConn *conn, plcMsgSQL *msg);
 static int send_sql_prepare(plcConn *conn, plcMsgSQL *msg);
+static int send_sql_unprepare(plcConn *conn, plcMsgSQL *msg);
 static int send_sql_pexecute(plcConn *conn, plcMsgSQL *msg);
 static int send_rawmsg(plcConn *conn, plcMsgRaw *msg);
 
@@ -729,6 +730,9 @@ static int send_sql(plcConn *conn, plcMsgSQL *msg) {
 		case SQL_TYPE_PREPARE:
 			res = send_sql_prepare(conn, msg);
 			break;
+		case SQL_TYPE_UNPREPARE:
+			res = send_sql_unprepare(conn, msg);
+			break;
 		case SQL_TYPE_PEXECUTE:
 			res = send_sql_pexecute(conn, msg);
 			break;
@@ -766,6 +770,17 @@ static int send_sql_prepare(plcConn *conn, plcMsgSQL *msg) {
 		res |= send_argument(conn, &msg->args[i]);
 
 	res |= send_cstring(conn, msg->statement);
+	res |= message_end(conn);
+
+    return res;
+}
+
+static int send_sql_unprepare(plcConn *conn, plcMsgSQL *msg) {
+    int res = 0;
+
+	res |= message_start(conn, MT_SQL);
+	res |= send_int32(conn, msg->sqltype);
+	res |= send_int64(conn, (int64) msg->pplan);
 	res |= message_end(conn);
 
     return res;
@@ -927,6 +942,24 @@ static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
     return res;
 }
 
+static int receive_sql_unprepare(plcConn *conn, plcMessage **mStmt) {
+    int res = 0;
+	long long pplan;
+    plcMsgSQL *ret;
+
+    *mStmt       = pmalloc(sizeof(plcMsgSQL));
+    ret          = (plcMsgSQL*) *mStmt;
+    ret->msgtype = MT_SQL;
+    ret->sqltype = SQL_TYPE_UNPREPARE;
+
+    debug_print(WARNING, "Receiving spi unprepare request");
+	res |= receive_int64(conn, &pplan);
+	ret->pplan = (void *) pplan;
+
+    debug_print(WARNING, "Received spi unprepare request and returned %d", res);
+    return res;
+}
+
 static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 	int res = 0;
 	long long pplan;
@@ -1031,6 +1064,9 @@ static int receive_sql(plcConn *conn, plcMessage **mSql) {
                 break;
             case SQL_TYPE_PREPARE:
                 res = receive_sql_prepare(conn, mSql);
+                break;
+            case SQL_TYPE_UNPREPARE:
+                res = receive_sql_unprepare(conn, mSql);
                 break;
 			case SQL_TYPE_PEXECUTE:
                 res = receive_sql_pexecute(conn, mSql);
