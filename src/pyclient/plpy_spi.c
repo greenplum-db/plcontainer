@@ -251,21 +251,23 @@ PLy_plan_dealloc(PyObject *arg)
 	arg->ob_type->tp_free(arg);
 }
 
+/* Py_INCREF(Py_True) will lead to "strict-aliasing" warning, so workaround. */
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 static PyObject *
 PLy_plan_status(PyObject *self __attribute__((unused)), PyObject *args)
 {
 	if (PyArg_ParseTuple(args, ""))
 	{
-/* Py_INCREF(Py_True) will lead to "strict-aliasing" warning, so workaround. */
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 		Py_INCREF(Py_True);
-#pragma GCC diagnostic pop
 		return Py_True;
 		/* return PyInt_FromLong(self->status); */
 	}
 	raise_execution_error("plan.status takes no arguments");
 	return NULL;
 }
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#pragma GCC diagnostic pop /* It is supported since gcc 4.6. */
+#endif
 
 static plcMsgResult *receive_from_frontend() {
     plcMessage *resp = NULL;

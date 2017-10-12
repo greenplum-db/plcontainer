@@ -91,8 +91,8 @@ installcheck:
 
 .PHONY: clients
 clients:
-	CC=$(CC) $(MAKE) -C $(SRCDIR)/pyclient
-	CC=$(CC) $(MAKE) -C $(SRCDIR)/rclient
+	CC='$(CC)' CFLAGS='$(CFLAGS)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/pyclient
+	CC='$(CC)' CFLAGS='$(CFLAGS)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/rclient
 	touch $(COMMONDIR)/clients_timestamp
 
 all-lib: check-clients-make
