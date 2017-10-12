@@ -79,10 +79,12 @@ static plcMsgRaw *create_prepare_result(int64 pplan, plcDatatype *type, int narg
 
     result          = palloc(sizeof(plcMsgRaw));
     result->msgtype = MT_RAW;
-    result->size    = sizeof(int64) + sizeof(int32) + nargs * sizeof(plcDatatype);
+    result->size    = sizeof(int32) + sizeof(int64) + sizeof(int32) + nargs * sizeof(plcDatatype);
 	result->data    = pmalloc(result->size);
 
 	offset = 0;
+	/* We need to transfer the state of plan (i.e. valid or not). */
+	*((int32 *) (result->data + offset)) = !!(*(void **)pplan); offset += sizeof(int32);
 	*((int64 *) (result->data + offset)) = pplan; offset += sizeof(int64);
 	*((int32 *)(result->data + offset)) = nargs; offset += sizeof(int32);
 	if (nargs > 0)
@@ -203,8 +205,8 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 			/* We just send the plan pointer only. Save Oids for execute. */
 			if (plc_plan->plan == NULL) {
 				/* Log the prepare failure but let the backend handle. */
-				lprintf(LOG, "SPI_prepare() fails for '%s', with %d arguments."
-					" SPI_result is %d.", msg->statement, msg->nargs, SPI_result);
+				elog(LOG, "SPI_prepare() fails for '%s', with %d arguments: %s",
+					msg->statement, msg->nargs, SPI_result_code_string(SPI_result));
 			}
 			result = (plcMessage*) create_prepare_result((int64) &plc_plan->plan, argTypes, msg->nargs);
 			break;

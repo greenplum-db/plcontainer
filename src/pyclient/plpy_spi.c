@@ -224,10 +224,10 @@ static int PLy_freeplan(PLyPlanObject *ob)
     }
 
 	if (resp->msgtype == MT_RAW) {
-		int32 *start;
+		int32 *prv;
 
-		start = (int32 *)(((plcMsgRaw *)resp)->data);
-		res = *start;
+		prv = (int32 *)(((plcMsgRaw *)resp)->data);
+		res = *prv;
 	} else {
 		raise_execution_error("Server returns message type %c, but we expect %c"
 							  "for plan free.", resp->msgtype, MT_RAW);
@@ -630,6 +630,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 	if (resp->msgtype == MT_RAW) {
 		char *start;
 		int offset, tx_len;
+		int is_plan_valid;
 
 		offset = 0;
 		start = ((plcMsgRaw *)resp)->data;
@@ -639,8 +640,13 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 			raise_execution_error("Fail to create a plan object");
 			return NULL;
 		}
-		py_plan->pplan = (void *) (*((long long *) (start + offset))); offset += sizeof(int64);
-		py_plan->nargs = *((int *) (start + offset)); offset += sizeof(int32);
+		is_plan_valid = (*((int32 *) (start + offset))); offset += sizeof(int32);
+		if (!is_plan_valid) {
+			raise_execution_error("plpy.prepare failed. See backend for details.");
+			return NULL;
+		}
+		py_plan->pplan = (void *) (*((int64 *) (start + offset))); offset += sizeof(int64);
+		py_plan->nargs = *((int32 *) (start + offset)); offset += sizeof(int32);
 		if (py_plan->nargs != nargs) {
 			raise_execution_error("plpy.prepare: bad argument number: %d "
 				"(returned) vs %d (expected).", py_plan->nargs, nargs);
