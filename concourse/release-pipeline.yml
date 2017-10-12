@@ -18,6 +18,19 @@ groups:
 ################################## RESOURCES ###################################
 ################################################################################
 
+ccp_create_params_anchor: &ccp_default_params
+  action: create
+  delete_on_failure: true
+  generate_random_name: true
+  terraform_source: ccp_src/aws/
+
+ccp_gen_cluster_default_params_anchor: &ccp_gen_cluster_default_params
+  AWS_ACCESS_KEY_ID: {{tf-machine-access-key-id}}
+  AWS_SECRET_ACCESS_KEY: {{tf-machine-secret-access-key}}
+  AWS_DEFAULT_REGION: {{aws-region}}
+  BUCKET_PATH: {{tf-bucket-path-plcontainer}}
+  BUCKET_NAME: {{tf-bucket-name}}
+
 ccp_options_anchor6: &ccp_options6
   terraform_source: ccp_src/aws/
   vars:
@@ -100,13 +113,14 @@ resources:
     branch: {{ccp-git-branch}}
     private_key: {{ccp-git-key}}
     uri: {{ccp-git-remote}}
+    tag_filter: 1.0.0
 
 - name: plcontainer_src
   type: git
   source:
     branch: master
     uri: https://github.com/greenplum-db/plcontainer.git
-    tag_filter: 1.*
+    tag_filter: 0.*
 
 - name: gpdb_src
   type: git
@@ -314,7 +328,7 @@ jobs:
     - get: plr
       resource: plr_gpdb5_centos6_build
   - task: plcontainer_gpdb_build
-    file: plcontainer_src/concourse/tasks/plcontainer_gpdb_build.yml
+    file: plcontainer_src/concourse/tasks/plcontainer_build.yml
     image: centos-gpdb-dev-6
     params: 
       DEV_RELEASE: release
@@ -337,7 +351,7 @@ jobs:
     - get: plr
       resource: plr_gpdb5_centos7_build
   - task: plcontainer_gpdb_build
-    file: plcontainer_src/concourse/tasks/plcontainer_gpdb_build.yml
+    file: plcontainer_src/concourse/tasks/plcontainer_build.yml
     image: centos-gpdb-dev-7
     params:
       DEV_RELEASE: release
@@ -374,21 +388,19 @@ jobs:
       trigger: true
   - put: terraform
     params:
-      action: create
-      delete_on_failure: true
-      generate_random_name: true
-      terraform_source: ccp_src/aws/
+      <<: *ccp_default_params
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos6
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
+      <<: *ccp_gen_cluster_default_params
       platform: centos6
     on_failure:
       <<: *ccp_destroy6
   - task: plcontainer
-    file: plcontainer_src/concourse/tasks/plcontainer.yml
+    file: plcontainer_src/concourse/tasks/plcontainer_tests.yml
     params:
       platform: centos6
     image: centos-gpdb-dev-6
@@ -420,16 +432,14 @@ jobs:
       passed: [plcontainer_function_test_centos6]
   - put: terraform
     params:
-      action: create
-      delete_on_failure: true
-      generate_random_name: true
-      terraform_source: ccp_src/aws/
+      <<: *ccp_default_params
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos6
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
+      <<: *ccp_gen_cluster_default_params
       platform: centos6
     on_failure:
       <<: *ccp_destroy6
@@ -478,21 +488,19 @@ jobs:
       trigger: true
   - put: terraform
     params:
-      action: create
-      delete_on_failure: true
-      generate_random_name: true
-      terraform_source: ccp_src/aws/
+      <<: *ccp_default_params
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
+      <<: *ccp_gen_cluster_default_params
       platform: centos7
     on_failure:
       <<: *ccp_destroy7
   - task: plcontainer
-    file: plcontainer_src/concourse/tasks/plcontainer.yml
+    file: plcontainer_src/concourse/tasks/plcontainer_tests.yml
     params:
       platform: centos7
     image: centos-gpdb-dev-7
@@ -524,16 +532,14 @@ jobs:
       passed: [plcontainer_function_test_centos7]
   - put: terraform
     params:
-      action: create
-      delete_on_failure: true
-      generate_random_name: true
-      terraform_source: ccp_src/aws/
+      <<: *ccp_default_params
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
+      <<: *ccp_gen_cluster_default_params
       platform: centos7
     on_failure:
       <<: *ccp_destroy7
@@ -569,21 +575,19 @@ jobs:
     - get: centos-gpdb-dev-6
     - get: python
       resource: python-gp5
-    - get: datascience-python 
+    - get: datascience
       resource: datascience-python-gp5
     - get: openssl
   - put: terraform
     params:
-      action: create
-      delete_on_failure: true
-      generate_random_name: true
-      terraform_source: ccp_src/aws/
+      <<: *ccp_default_params
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
+      <<: *ccp_gen_cluster_default_params
       platform: centos7
     on_failure:
       <<: *ccp_destroy7
@@ -608,29 +612,26 @@ jobs:
   plan:
   - aggregate:
     - get: plcontainer_src
+      trigger: true
     - get: gpdb_src
     - get: gpdb_binary
       resource: bin_gpdb_centos6
     - get: ccp_src
     - get: centos-gpdb-dev-6
     - get: r
-      trigger: true
       resource: r-gp5
     - get: datascience
-      trigger: true
       resource: datascience-r-gp5
   - put: terraform
     params:
-      action: create
-      delete_on_failure: true
-      generate_random_name: true
-      terraform_source: ccp_src/aws/
+      <<: *ccp_default_params
       vars:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
+      <<: *ccp_gen_cluster_default_params
       platform: centos7
     on_failure:
       <<: *ccp_destroy7
