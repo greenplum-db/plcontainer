@@ -33,7 +33,11 @@
 #include "common/comm_connectivity.h"
 #include "pyconversions.h"
 
+#ifdef __GNUC__
 #define UNUSED __attribute__ (( unused ))
+#else
+#define UNUSED
+#endif
 
 // Global connection object
 extern plcConn* plcconn_global;
