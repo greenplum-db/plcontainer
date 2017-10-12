@@ -16,7 +16,6 @@
 typedef struct plcPlan {
 	Oid         *argOids;
 	void        *plan;
-	plcDatatype *argTypes;
 	int          nargs;
 } plcPlan;
 

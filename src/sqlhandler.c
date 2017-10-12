@@ -107,12 +107,13 @@ static plcMsgRaw *create_unprepare_result(int32 retval) {
 }
 
 plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
-    int i, retval;
+    int           i, retval;
     plcMessage   *result = NULL;
+	void         *tmpplan;
 	plcPlan      *plc_plan;
-	Oid type_oid;
+	Oid          type_oid;
 	plcDatatype *argTypes = NULL;
-	int32 typemod;
+	int32        typemod;
 
     PG_TRY();
     {
@@ -125,7 +126,6 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				char        *nulls;
 				Datum       *values;
 				plcTypeInfo *pexecType;
-				plcPlan     *plc_plan;
 
 				/* FIXME: Sanity-check needed! Maybe hash-store plan pointers! */
 				plc_plan = (plcPlan *) ((char *) msg->pplan - offsetof(plcPlan, plan));
@@ -185,9 +185,9 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 			SPI_freetuptable(SPI_tuptable);
 			break;
 		case SQL_TYPE_PREPARE:
-			plc_plan = pmalloc(sizeof(plcPlan));
+			plc_plan = plc_top_alloc(sizeof(plcPlan));
 			if (msg->nargs > 0) {
-				plc_plan->argOids = pmalloc(msg->nargs * sizeof(Oid));
+				plc_plan->argOids = plc_top_alloc(msg->nargs * sizeof(Oid));
 				argTypes = pmalloc(msg->nargs * sizeof(plcDatatype));
 			}
 			for (i = 0; i < msg->nargs; i++) {
@@ -200,18 +200,29 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				argTypes[i] = plc_get_datatype_from_oid(type_oid);
 			}
 			plc_plan->nargs = msg->nargs;
-			plc_plan->plan = SPI_prepare(msg->statement, msg->nargs, plc_plan->argOids);
+
+			plc_plan->plan = SPI_prepare(msg->statement, plc_plan->nargs, plc_plan->argOids);
+			/* plan needs to survive cross memory context. */
+			tmpplan = plc_plan->plan;
+			plc_plan->plan = SPI_saveplan(tmpplan);
+			SPI_freeplan(tmpplan);
 
 			/* We just send the plan pointer only. Save Oids for execute. */
 			if (plc_plan->plan == NULL) {
 				/* Log the prepare failure but let the backend handle. */
 				elog(LOG, "SPI_prepare() fails for '%s', with %d arguments: %s",
-					msg->statement, msg->nargs, SPI_result_code_string(SPI_result));
+					msg->statement, plc_plan->nargs, SPI_result_code_string(SPI_result));
 			}
-			result = (plcMessage*) create_prepare_result((int64) &plc_plan->plan, argTypes, msg->nargs);
+			result = (plcMessage*) create_prepare_result((int64) &plc_plan->plan, argTypes, plc_plan->nargs);
 			break;
 		case SQL_TYPE_UNPREPARE:
-			retval = SPI_freeplan(msg->pplan);
+			plc_plan = (plcPlan *) ((char *) msg->pplan - offsetof(plcPlan, plan));
+
+			retval = 0;
+			if (plc_plan->argOids)
+				pfree(plc_plan->argOids);
+			if (plc_plan->plan)
+				retval = SPI_freeplan(plc_plan->plan);
 			result = (plcMessage*) create_unprepare_result(retval);
 			break;
 		default:
