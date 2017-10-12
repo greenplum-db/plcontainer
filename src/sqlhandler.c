@@ -127,7 +127,11 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				Datum       *values;
 				plcTypeInfo *pexecType;
 
-				/* FIXME: Sanity-check needed! Maybe hash-store plan pointers! */
+				/* FIXME: Sanity-check is needed!
+				 * Maybe hash-store plan pointers for quick search?
+				 * Or use array since we need to free all plans when backend quits.
+				 * Or both?
+				 */
 				plc_plan = (plcPlan *) ((char *) msg->pplan - offsetof(plcPlan, plan));
 				if (plc_plan->nargs != msg->nargs) {
 					elog(ERROR, "argument number wrong for execute with plan: "

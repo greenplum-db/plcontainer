@@ -606,10 +606,8 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 			optr = PySequence_GetItem(list, i);
 			if (PyString_Check(optr))
 				sptr = PyString_AsString(optr);
-				/* FIXME
 			else if (PyUnicode_Check(optr))
 				sptr = PLyUnicode_AsString(optr);
-				*/
 			else
 			{
 				raise_execution_error("plpy.prepare: type name at ordinal position %d is not a string", i);
