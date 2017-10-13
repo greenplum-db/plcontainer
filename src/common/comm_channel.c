@@ -1116,4 +1116,5 @@ void fill_prepare_argument(plcArgument *arg, char *str) {
 	arg->type.nSubTypes = 0;
 	arg->name = NULL;
 	arg->data.isnull = 1;
+	arg->data.value = NULL;
 }

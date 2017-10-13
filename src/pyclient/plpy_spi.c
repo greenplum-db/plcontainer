@@ -355,7 +355,10 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 		return NULL;
 	}
 
-	args = malloc(sizeof(plcArgument) * nargs);
+	if (nargs > 0)
+		args = pmalloc(sizeof(plcArgument) * nargs);
+	else
+		args = NULL;
 	for (j = 0; j < nargs; j++)
 	{
 		PyObject    *elem;
@@ -599,15 +602,25 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
     msg.sqltype   = SQL_TYPE_PREPARE;
 	msg.nargs     = nargs;
     msg.statement = query;
-	msg.args      = malloc(msg.nargs * sizeof(plcArgument));
+	if (msg.nargs > 0)
+		msg.args = pmalloc(msg.nargs * sizeof(plcArgument));
+	else if (msg.nargs < 0) {
+		raise_execution_error("plpy.prepare: arg number (%d) < 0. Impossible!"
+							  " Probably there is a code bug.", msg.nargs);
+		return NULL;
+	} else
+		msg.args = NULL;
 	for (i = 0; i < msg.nargs; i++) {
 			char	   *sptr;
 
 			optr = PySequence_GetItem(list, i);
 			if (PyString_Check(optr))
 				sptr = PyString_AsString(optr);
+#if 0
+			/* FIXME: add PLyUnicode_AsString() */
 			else if (PyUnicode_Check(optr))
 				sptr = PLyUnicode_AsString(optr);
+#endif
 			else
 			{
 				raise_execution_error("plpy.prepare: type name at ordinal position %d is not a string", i);
@@ -616,7 +629,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 			fill_prepare_argument(&msg.args[i], sptr);
 	}
 
-    plcontainer_channel_send(conn, (plcMessage*) &msg);
+	plcontainer_channel_send(conn, (plcMessage*) &msg);
 	free_arguments(msg.args, msg.nargs, false, false);
 
     res = plcontainer_channel_receive(conn, &resp);
