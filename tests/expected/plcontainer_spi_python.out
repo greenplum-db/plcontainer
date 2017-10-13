@@ -1,0 +1,313 @@
+----- Test text, bool, char, int4
+drop table if exists t2;
+NOTICE:  table "t2" does not exist, skipping
+create table t2 (name text, online bool, sex char, id int4);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'name' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+insert into t2 values('bob1', true, 'm', 7000);
+insert into t2 values('bob1', true, 'm', 8000);
+insert into t2 values('bob1', true, 'm', 9000);
+insert into t2 values('bob2', true, 'f', 9001);
+insert into t2 values('bob3', false, 'm', 9002);
+insert into t2 values('alice1', false, 'm', 9003);
+insert into t2 values('alice2', false, 'f', 9004);
+insert into t2 values('alice3', true, 'm', 9005);
+CREATE OR REPLACE FUNCTION py_spi_pexecute1() RETURNS void AS $$
+# container: plc_python_shared
+
+plpy.notice("Test query execution")
+rv = plpy.execute("select * from t2 where name='bob1' and online=True and sex='m' order by id limit 2")
+for r in rv:
+    plpy.notice(str(r))
+
+plpy.notice("Test text")
+plan = plpy.prepare("select * from t2 where name=$1 order by id", ["text"])
+rv = plpy.execute(plan, ["bob1"])
+for r in rv:
+    plpy.notice(str(r))
+
+plpy.notice("Test bool")
+plan = plpy.prepare("select * from t2 where online=$1 order by id", ["boolean"])
+rv = plpy.execute(plan, [True])
+for r in rv:
+    plpy.notice(str(r))
+
+plan1 = plpy.prepare("select * from t2 where sex=$1 order by id", ["char"])
+plan2 = plpy.prepare("select * from t2 where id>$1 order by id", ["int4"])
+plpy.notice("Test int4")
+rv = plpy.execute(plan2, [9001])
+for r in rv:
+    plpy.notice(str(r))
+plpy.notice("Test char")
+rv = plpy.execute(plan1, ['m'])
+for r in rv:
+    plpy.notice(str(r))
+
+plpy.notice("Test text+bool+char+int4")
+plan = plpy.prepare("select * from t2 where name=$1 and online=$2 and sex=$3 order by id limit $4", ["text", "bool", "char", "int4"])
+rv = plpy.execute(plan, ["bob1", True, 'm', 2]);
+for r in rv:
+    plpy.notice(str(r))
+
+$$ LANGUAGE plcontainer;
+select py_spi_pexecute1();
+NOTICE:  Test query execution
+NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  Test text
+NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  Test bool
+NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 9001, 'sex': 'f', 'name': 'bob2', 'online': 1}
+NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
+NOTICE:  Test int4
+NOTICE:  {'id': 9002, 'sex': 'm', 'name': 'bob3', 'online': 0}
+NOTICE:  {'id': 9003, 'sex': 'm', 'name': 'alice1', 'online': 0}
+NOTICE:  {'id': 9004, 'sex': 'f', 'name': 'alice2', 'online': 0}
+NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
+NOTICE:  Test char
+NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 9002, 'sex': 'm', 'name': 'bob3', 'online': 0}
+NOTICE:  {'id': 9003, 'sex': 'm', 'name': 'alice1', 'online': 0}
+NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
+NOTICE:  Test text+bool+char+int4
+NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+ py_spi_pexecute1 
+------------------
+ 
+(1 row)
+
+drop table if exists t2;
+----- Test text, int2, int8
+drop table if exists t3;
+NOTICE:  table "t3" does not exist, skipping
+create table t3 (name text, age int2, id int8);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'name' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+insert into t3 values('bob0', 20, 9000);
+insert into t3 values('bob1', 20, 8000);
+insert into t3 values('bob2', 30, 7000);
+insert into t3 values('alice1', 40, 6000);
+insert into t3 values('alice2', 50, 6000);
+CREATE OR REPLACE FUNCTION py_spi_pexecute2() RETURNS void AS $$
+# container: plc_python_shared
+
+plpy.notice("Test int2")
+plan = plpy.prepare("select * from t3 where age=$1 order by id", ["int2"])
+rv = plpy.execute(plan, [20]);
+for r in rv:
+    plpy.notice(str(r))
+
+plpy.notice("Test int8")
+plan = plpy.prepare("select * from t3 where id=$1 order by id", ["int8"])
+rv = plpy.execute(plan, [6000]);
+for r in rv:
+    plpy.notice(str(r))
+
+plpy.notice("Test text + int8")
+plan = plpy.prepare("select * from t3 where name=$1 and age=$2 order by id", ["text", "int8"])
+rv = plpy.execute(plan, ["bob0", 20]);
+for r in rv:
+    plpy.notice(str(r))
+
+$$ LANGUAGE plcontainer;
+select py_spi_pexecute2();
+NOTICE:  Test int2
+NOTICE:  {'age': 20, 'name': 'bob1', 'id': 8000L}
+NOTICE:  {'age': 20, 'name': 'bob0', 'id': 9000L}
+NOTICE:  Test int8
+NOTICE:  {'age': 40, 'name': 'alice1', 'id': 6000L}
+NOTICE:  {'age': 50, 'name': 'alice2', 'id': 6000L}
+NOTICE:  Test text + int8
+NOTICE:  {'age': 20, 'name': 'bob0', 'id': 9000L}
+ py_spi_pexecute2 
+------------------
+ 
+(1 row)
+
+drop table if exists t3;
+----- Test bytea, float4, float8
+drop table if exists t4;
+NOTICE:  table "t4" does not exist, skipping
+create table t4 (name bytea, score1 float4, score2 float8);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'name' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+insert into t4 values('bob0', 8.5, 16.5);
+insert into t4 values('bob1', 8.75, 16.75);
+insert into t4 values('bob2', 8.875, 16.875);
+insert into t4 values('bob3', 9.125, 16.125);
+insert into t4 values('bob4', 9.25, 16.25);
+CREATE OR REPLACE FUNCTION py_spi_pexecute3() RETURNS void AS $$
+# container: plc_python_shared
+
+plan1 = plpy.prepare("select * from t4 where name=$1 order by score1", ["bytea"])
+plan2 = plpy.prepare("select * from t4 where score1<$1 order by name", ["float4"])
+plan3 = plpy.prepare("select * from t4 where score2<$1 order by name", ["float8"])
+plan4 = plpy.prepare("select * from t4 where score1<$1 and score2<$2 order by name", ["float4", "float8"])
+
+plpy.notice("Test bytea");
+rv = plpy.execute(plan1, ["bob0"]);
+for r in rv:
+    plpy.notice(str(r))
+
+plpy.notice("Test float4");
+rv = plpy.execute(plan2, [8.9]);
+for r in rv:
+    plpy.notice(str(r))
+
+plpy.notice("Test float8");
+rv = plpy.execute(plan3, [16.8]);
+for r in rv:
+    plpy.notice(str(r))
+
+plpy.notice("Test float4+float8");
+rv = plpy.execute(plan4, [9.18, 16.80]);
+for r in rv:
+    plpy.notice(str(r))
+
+$$ LANGUAGE plcontainer;
+select py_spi_pexecute3();
+NOTICE:  Test bytea
+NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  Test float4
+NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': 'bob1', 'score2': 16.75, 'score1': 8.75}
+NOTICE:  {'name': 'bob2', 'score2': 16.875, 'score1': 8.875}
+NOTICE:  Test float8
+NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': 'bob1', 'score2': 16.75, 'score1': 8.75}
+NOTICE:  {'name': 'bob3', 'score2': 16.125, 'score1': 9.125}
+NOTICE:  {'name': 'bob4', 'score2': 16.25, 'score1': 9.25}
+NOTICE:  Test float4+float8
+NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': 'bob1', 'score2': 16.75, 'score1': 8.75}
+NOTICE:  {'name': 'bob3', 'score2': 16.125, 'score1': 9.125}
+ py_spi_pexecute3 
+------------------
+ 
+(1 row)
+
+----- Do not drop table t4 here since it is used below.
+----- negative tests
+CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute1() RETURNS void AS $$
+# container: plc_python_shared
+
+plan1 = plpy.prepare("select * from t4 where name=$1 order by score1", ["integer"])
+rv = plpy.execute(plan1, ["bob0"]);
+for r in rv:
+    plpy.notice(str(r))
+
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute2() RETURNS void AS $$
+# container: plc_python_shared
+
+plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["bytea"])
+rv = plpy.execute(plan1, ["bob0"]);
+for r in rv:
+    plpy.notice(str(r))
+
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute3() RETURNS void AS $$
+# container: plc_python_shared
+
+plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["float4"])
+rv = plpy.execute(plan1, ["bob0"]);
+for r in rv:
+    plpy.notice(str(r))
+
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION py_spi_simple_t4() RETURNS void AS $$
+# container: plc_python_shared
+
+plan1 = plpy.prepare("select * from t4 where name='bob0' order by score1")
+rv = plpy.execute(plan1);
+for r in rv:
+    plpy.notice(str(r))
+
+$$ LANGUAGE plcontainer;
+select py_spi_illegal_pexecute1();
+ERROR:  operator does not exist: bytea = integer
+LINE 1: select * from t4 where name=$1 order by score1
+                                   ^
+HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+QUERY:  select * from t4 where name=$1 order by score1
+select py_spi_illegal_pexecute2();
+ERROR:  operator does not exist: real < bytea
+LINE 1: select * from t4 where score1<$1 order by score1
+                                     ^
+HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+QUERY:  select * from t4 where score1<$1 order by score1
+select py_spi_illegal_pexecute3();
+ERROR:  PL/Container client exception occurred:
+DETAIL:  Exception occurred transforming result object to float4
+select py_spi_simple_t4();
+ERROR:  PL/Container client exception occurred:
+DETAIL:  Server returns message type R, but we expect W
+----- Now drop t4.
+drop table if exists t4;
+CREATE OR REPLACE FUNCTION pyspi_illegal_sql() RETURNS integer AS $$
+# container: plc_python_shared
+plpy.execute("select datname from pg_database_invalid");
+return 0
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION pyspi_illegal_sql_pexecute() RETURNS integer AS $$
+# container: plc_python_shared
+plan = plpy.prepare("select datname from pg_database_invalid");
+plpy.execute(plan);
+return 0
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION pyspi_bad_limit() RETURNS integer AS $$
+# container: plc_python_shared
+rv = plpy.execute("select datname from pg_database order by datname", -2);
+for r in rv:
+    plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION pyspi_bad_limit_pexecute() RETURNS integer AS $$
+# container: plc_python_shared
+plan = plpy.prepare("select datname from pg_database order by datname", -2);
+rv = plpy.execute(plan);
+for r in rv:
+    plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION pyspi_bad_limit_stable() RETURNS integer AS $$
+# container: plc_python_shared
+rv = plpy.execute("select datname from pg_database order by datname", -2);
+for r in rv:
+    plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer STABLE;
+CREATE OR REPLACE FUNCTION pyspi_bad_limit_immutable() RETURNS integer AS $$
+# container: plc_python_shared
+rv = plpy.execute("select datname from pg_database order by datname", -2);
+for r in rv:
+    plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer IMMUTABLE;
+select pyspi_illegal_sql();
+ERROR:  relation "pg_database_invalid" does not exist
+LINE 1: select datname from pg_database_invalid
+                            ^
+QUERY:  select datname from pg_database_invalid
+select pyspi_illegal_sql_pexecute();
+ERROR:  relation "pg_database_invalid" does not exist
+LINE 1: select datname from pg_database_invalid
+                            ^
+QUERY:  select datname from pg_database_invalid
+select pyspi_bad_limit();
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:183)
+select pyspi_bad_limit_pexecute();
+ERROR:  PL/Container client exception occurred:
+DETAIL:  second argument of plpy.prepare must be a sequence
+select pyspi_bad_limit_immutable();
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:183)
+select pyspi_bad_limit_stable();
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:183)

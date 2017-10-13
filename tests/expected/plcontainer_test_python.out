@@ -680,33 +680,8 @@ DETAIL:
  Traceback (most recent call last):
   File "<string>", line 5, in pyinvalid_function
 AttributeError: 'module' object has no attribute 'foobar'
-select pyspi();
-NOTICE:  Showing all databases in pg_database...
-NOTICE:  {'datname': 'pl_regression'}
-NOTICE:  {'datname': 'postgres'}
-NOTICE:  {'datname': 'template0'}
-NOTICE:  {'datname': 'template1'}
-NOTICE:  Showing previous 2 databases in pg_database...
-NOTICE:  {'datname': 'pl_regression'}
-NOTICE:  {'datname': 'postgres'}
- pyspi 
--------
-     0
-(1 row)
-
-select pyspi_illegal_sql();
-ERROR:  relation "pg_database_invalid" does not exist
-LINE 1: select datname from pg_database_invalid
-                            ^
-QUERY:  select datname from pg_database_invalid
-select pyspi_bad_limit();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:91)
-select pyspi_bad_limit_immutable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:91)
-select pyspi_bad_limit_stable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:91)
 select pysubtransaction('t');
- pysubtransaction
+ pysubtransaction 
 ------------------
  t
 (1 row)

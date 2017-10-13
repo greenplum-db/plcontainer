@@ -23,6 +23,7 @@ REGRESS_PYTHON = plcontainer_function_python \
 	plcontainer_function_python_gpdb5
 REGRESS_PYTHON_TESTS = plcontainer_test_python \
 	plcontainer_test_python_gpdb5 \
+	plcontainer_spi_python \
 	plcontainer_exception_python \
 	plcontainer_faultinject_python \
 	plcontainer_function_python_network
