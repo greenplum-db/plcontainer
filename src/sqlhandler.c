@@ -112,7 +112,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 	void         *tmpplan;
 	plcPlan      *plc_plan;
 	Oid          type_oid;
-	plcDatatype *argTypes = NULL;
+	plcDatatype *argTypes;
 	int32        typemod;
 
     PG_TRY();
@@ -193,8 +193,10 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 			if (msg->nargs > 0) {
 				plc_plan->argOids = plc_top_alloc(msg->nargs * sizeof(Oid));
 				argTypes = pmalloc(msg->nargs * sizeof(plcDatatype));
-			} else
+			} else {
 				plc_plan->argOids = NULL;
+				argTypes = NULL;
+			}
 			for (i = 0; i < msg->nargs; i++) {
 				if (msg->args[i].type.type != PLC_DATA_TEXT) {
 					elog(ERROR, "prepare type is bad, expect prepare sql type %d", msg->args[i].type.type);
