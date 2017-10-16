@@ -16,7 +16,8 @@ REGRESS_BASIC = plcontainer_install \
 REGRESS_R = plcontainer_function_r \
 	plcontainer_function_r_gpdb5
 REGRESS_R_TESTS = plcontainer_test_r \
-	plcontainer_test_r_gpdb5
+	plcontainer_test_r_gpdb5 \
+	plcontainer_spi_r
 
 # Python Regression Tests
 REGRESS_PYTHON = plcontainer_function_python \

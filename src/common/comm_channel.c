@@ -1120,7 +1120,7 @@ static int receive_rawmsg(plcConn *conn, plcMessage **mRaw) {
 	return res;
 }
 
-void fill_prepare_argument(plcArgument *arg, char *str) {
+void fill_prepare_argument(plcArgument *arg, char *str, plcDatatype plcData) {
 	if (arg == NULL || str == NULL)
 		lprintf(ERROR, "Impossible to reach here for spi prepare: %p, %p",
 				arg, str);
@@ -1131,7 +1131,7 @@ void fill_prepare_argument(plcArgument *arg, char *str) {
 		lprintf(ERROR, "Failed to allocate memory for spi prepare (size: %zd)",
 				strlen(str));
 
-	arg->type.type = PLC_DATA_TEXT;
+	arg->type.type = plcData;
 
 	/* Make free_arguments() happy. */
 	arg->type.nSubTypes = 0;

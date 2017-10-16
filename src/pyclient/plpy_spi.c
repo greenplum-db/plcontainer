@@ -626,7 +626,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 				raise_execution_error("plpy.prepare: type name at ordinal position %d is not a string", i);
 				return NULL;
 			}
-			fill_prepare_argument(&msg.args[i], sptr);
+			fill_prepare_argument(&msg.args[i], sptr, PLC_DATA_TEXT);
 	}
 
 	plcontainer_channel_send(conn, (plcMessage*) &msg);
@@ -657,7 +657,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 		free_rawmsg((plcMsgRaw *) resp);
 		return NULL;
 	}
-	py_plan->pplan = (void *) (*((int64 *) (start + offset))); offset += sizeof(int64);
+	py_plan->pplan = (int64 *) (*((int64 *) (start + offset))); offset += sizeof(int64);
 	py_plan->nargs = *((int32 *) (start + offset)); offset += sizeof(int32);
 	if (py_plan->nargs != nargs) {
 		raise_execution_error("plpy.prepare: bad argument number: %d "

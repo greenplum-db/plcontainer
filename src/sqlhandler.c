@@ -84,7 +84,7 @@ static plcMsgRaw *create_prepare_result(int64 pplan, plcDatatype *type, int narg
 
 	offset = 0;
 	/* We need to transfer the state of plan (i.e. valid or not). */
-	*((int32 *) (result->data + offset)) = !!(*(void **)pplan); offset += sizeof(int32);
+	*((int32 *) (result->data + offset)) = !!(*(int64 **)pplan); offset += sizeof(int32);
 	*((int64 *) (result->data + offset)) = pplan; offset += sizeof(int64);
 	*((int32 *)(result->data + offset)) = nargs; offset += sizeof(int32);
 	if (nargs > 0)
@@ -109,7 +109,7 @@ static plcMsgRaw *create_unprepare_result(int32 retval) {
 plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
     int           i, retval;
     plcMessage   *result = NULL;
-	void         *tmpplan;
+	int64         *tmpplan;
 	plcPlan      *plc_plan;
 	Oid          type_oid;
 	plcDatatype *argTypes;
@@ -159,8 +159,8 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 					}
 				}
 
-				retval = SPI_execute_plan(plc_plan->plan, values, nulls,
-										pinfo->fn_readonly, (long) msg->limit);
+				retval = SPI_execute_plan((SPIPlanPtr) plc_plan->plan, values, nulls,
+				                          pinfo->fn_readonly, (long) msg->limit);
 				if (values)
 					pfree(values);
 				if (nulls)
@@ -198,29 +198,36 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				argTypes = NULL;
 			}
 			for (i = 0; i < msg->nargs; i++) {
-				if (msg->args[i].type.type != PLC_DATA_TEXT) {
-					elog(ERROR, "prepare type is bad, expect prepare sql type %d", msg->args[i].type.type);
+				if (msg->args[i].type.type == PLC_DATA_TEXT) {
+					parseTypeString(msg->args[i].type.typeName, &type_oid, &typemod);
+					plc_plan->argOids[i] = type_oid;
+				} else if (msg->args[i].type.type == PLC_DATA_INT4) {
+					/*for R only*/
+					plc_plan->argOids[i] = (Oid) strtol(msg->args[i].type.typeName, NULL, 10);
+					if (errno == ERANGE) {
+							lprintf(ERROR, "unable to parse the given OID %s", msg->args[i].type.typeName);
+					}
+				} else {
+						lprintf(ERROR, "prepare type is bad, unexpected prepare sql type %d",
+						        msg->args[i].type.type);
 				}
-				parseTypeString(msg->args[i].type.typeName, &type_oid, &typemod);
-
-				plc_plan->argOids[i] = type_oid;
-				argTypes[i] = plc_get_datatype_from_oid(type_oid);
+				argTypes[i] = plc_get_datatype_from_oid(plc_plan->argOids[i]);
 			}
 			plc_plan->nargs = msg->nargs;
 
-			plc_plan->plan = SPI_prepare(msg->statement, plc_plan->nargs, plc_plan->argOids);
+			plc_plan->plan = (int64 *) SPI_prepare(msg->statement, plc_plan->nargs, plc_plan->argOids);
 			/* plan needs to survive cross memory context. */
 			tmpplan = plc_plan->plan;
-			plc_plan->plan = SPI_saveplan(tmpplan);
-			SPI_freeplan(tmpplan);
+			plc_plan->plan = (int64 *) SPI_saveplan((SPIPlanPtr) tmpplan);
+			SPI_freeplan((SPIPlanPtr) tmpplan);
 
 			/* We just send the plan pointer only. Save Oids for execute. */
 			if (plc_plan->plan == NULL) {
 				/* Log the prepare failure but let the backend handle. */
 				elog(LOG, "SPI_prepare() fails for '%s', with %d arguments: %s",
-					msg->statement, plc_plan->nargs, SPI_result_code_string(SPI_result));
+				     msg->statement, plc_plan->nargs, SPI_result_code_string(SPI_result));
 			}
-			result = (plcMessage*) create_prepare_result((int64) &plc_plan->plan, argTypes, plc_plan->nargs);
+			result = (plcMessage *) create_prepare_result((int64) &plc_plan->plan, argTypes, plc_plan->nargs);
 			break;
 		case SQL_TYPE_UNPREPARE:
 			plc_plan = (plcPlan *) ((char *) msg->pplan - offsetof(plcPlan, plan));
@@ -230,9 +237,9 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 			if (plc_plan->argOids)
 				pfree(plc_plan->argOids);
 			if (plc_plan->plan)
-				retval = SPI_freeplan(plc_plan->plan);
+				retval = SPI_freeplan((SPIPlanPtr) plc_plan->plan);
 			pfree(plc_plan);
-			result = (plcMessage*) create_unprepare_result(retval);
+			result = (plcMessage *) create_unprepare_result(retval);
 			break;
 		default:
 			elog(ERROR, "Cannot handle sql type %d", msg->sqltype);
