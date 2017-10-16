@@ -687,7 +687,9 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 			memcpy(py_plan->argtypes, start + offset, sizeof(plcDatatype) * nargs);
 		}
 	} else {
-		/* FIXME: For illegal type, do cleanup. */
+		/* FIXME: For illegal type & error branch cod ebove, do mem cleanup.
+		 * It seems that receive_from_frontend() has this issue also.
+		 */
 		raise_execution_error("Server returns message type %c, but we expect %c",
 							  resp->msgtype, MT_RAW);
 		return NULL;
