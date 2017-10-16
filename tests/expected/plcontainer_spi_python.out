@@ -106,7 +106,7 @@ for r in rv:
     plpy.notice(str(r))
 
 plpy.notice("Test int8")
-plan = plpy.prepare("select * from t3 where id=$1 order by id", ["int8"])
+plan = plpy.prepare("select * from t3 where id=$1 order by age", ["int8"])
 rv = plpy.execute(plan, [6000]);
 for r in rv:
     plpy.notice(str(r))
