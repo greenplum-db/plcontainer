@@ -366,16 +366,21 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 		args[j].name = NULL; /* We do not need name */
 		args[j].type.nSubTypes = 0;
 		args[j].type.typeName = NULL;
+		args[j].data.value = NULL;
 
 		elem = PySequence_GetItem(list, j);
 		if (elem != Py_None)
 		{
 			args[j].data.isnull = 0;
-			Ply_get_output_function(py_plan->argtypes[j])(elem, &args[j].data.value, NULL);
+			if (Ply_get_output_function(py_plan->argtypes[j])(elem, &args[j].data.value, NULL) < 0) {
+				/* Free allocated memory. */
+				free_arguments(args, j + 1, false, false);
+				raise_execution_error("Failed to convert data in pexecute");
+				return NULL;
+			}
 		} else {
 			/* FIXME: Wrong ? */
 			args[j].data.isnull = 1;
-			args[j].data.value = NULL;
 		}
 	}
 
@@ -623,6 +628,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 #endif
 			else
 			{
+				free_arguments(msg.args, i, false, false);
 				raise_execution_error("plpy.prepare: type name at ordinal position %d is not a string", i);
 				return NULL;
 			}
@@ -667,7 +673,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 		if (nargs > 0) {
 			if (offset + (signed int) sizeof(plcDatatype) * nargs != tx_len) {
 				raise_execution_error("Client format error for spi prepare. "
-					"calculated length (%d) vs transferred length (%d)",
+					"Calculated length (%d) vs transferred length (%d)",
 					offset + sizeof(plcDatatype) * nargs, tx_len);
 				return NULL;
 			}
@@ -681,6 +687,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 			memcpy(py_plan->argtypes, start + offset, sizeof(plcDatatype) * nargs);
 		}
 	} else {
+		/* FIXME: For illegal type, do cleanup. */
 		raise_execution_error("Server returns message type %c, but we expect %c",
 							  resp->msgtype, MT_RAW);
 		return NULL;

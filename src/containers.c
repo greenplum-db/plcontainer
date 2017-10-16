@@ -396,7 +396,7 @@ char *parse_container_meta(const char *source) {
 
     /* If the string is too small or not starting with hash - no declaration */
     if (last - first < DECLARATION_MIN_LENGTH || source[first] != '#') {
-        lprintf(ERROR, "Container declaration format should be '#container:container_name'");
+        elog(ERROR, "Container declaration format should be '#container:container_name'");
         return name;
     }
 
@@ -407,7 +407,7 @@ char *parse_container_meta(const char *source) {
 
     /* Line should be "# container :", fail if not so */
     if (strncmp(&source[first], "container", strlen("container")) != 0) {
-        lprintf(ERROR, "Container declaration format should be '#container:container_name'");
+        elog(ERROR, "Container declaration format should be '#container:container_name'");
         return name;
     }
 
@@ -418,7 +418,7 @@ char *parse_container_meta(const char *source) {
 
     /* If no colon found - bad declaration */
     if (first >= last) {
-        lprintf(ERROR, "Container declaration format should be '#container:container_name'");
+        elog(ERROR, "Container declaration format should be '#container:container_name'");
         return name;
     }
 
@@ -430,7 +430,7 @@ char *parse_container_meta(const char *source) {
         last--;
     /* when first meets last, the name is blankspace or only one char*/
     if (first == last && is_whitespace(source[first])){
-        lprintf(ERROR, "Container name cannot be empty");
+        elog(ERROR, "Container name cannot be empty");
         return NULL;
     }
     /*
@@ -445,7 +445,7 @@ char *parse_container_meta(const char *source) {
 
     int regt = check_container_name(name);
     if (regt == -1) {
-        lprintf(ERROR, "Container name '%s' contains illegal character for container.", name);
+        elog(ERROR, "Container name '%s' contains illegal character for container.", name);
     }
 
     return name;

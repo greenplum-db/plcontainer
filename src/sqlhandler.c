@@ -180,9 +180,9 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 				result = (plcMessage*)create_sql_result();
 				break;
 			default:
-				lprintf(ERROR, "Cannot handle sql ('%s') with fn_readonly (%d) "
-						"and limit (%lld). Returns %d", msg->statement,
-						pinfo->fn_readonly, msg->limit, retval);
+				elog(ERROR, "Cannot handle sql ('%s') with fn_readonly (%d) "
+					 "and limit (%lld). Returns %d", msg->statement,
+					 pinfo->fn_readonly, msg->limit, retval);
 				break;
 			}
 
@@ -193,10 +193,11 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 			if (msg->nargs > 0) {
 				plc_plan->argOids = plc_top_alloc(msg->nargs * sizeof(Oid));
 				argTypes = pmalloc(msg->nargs * sizeof(plcDatatype));
-			}
+			} else
+				plc_plan->argOids = NULL;
 			for (i = 0; i < msg->nargs; i++) {
 				if (msg->args[i].type.type != PLC_DATA_TEXT) {
-					lprintf(ERROR, "prepare type is bad, expect prepare sql type %d", msg->args[i].type.type);
+					elog(ERROR, "prepare type is bad, expect prepare sql type %d", msg->args[i].type.type);
 				}
 				parseTypeString(msg->args[i].type.typeName, &type_oid, &typemod);
 
@@ -222,15 +223,17 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 		case SQL_TYPE_UNPREPARE:
 			plc_plan = (plcPlan *) ((char *) msg->pplan - offsetof(plcPlan, plan));
 
+			/* FIXME: Sanity check needed. See comment for SQL_TYPE_PEXECUTE. */
 			retval = 0;
 			if (plc_plan->argOids)
 				pfree(plc_plan->argOids);
 			if (plc_plan->plan)
 				retval = SPI_freeplan(plc_plan->plan);
+			pfree(plc_plan);
 			result = (plcMessage*) create_unprepare_result(retval);
 			break;
 		default:
-			lprintf(ERROR, "Cannot handle sql type %d", msg->sqltype);
+			elog(ERROR, "Cannot handle sql type %d", msg->sqltype);
 			break;
 		}
 

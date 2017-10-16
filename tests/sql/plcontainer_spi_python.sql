@@ -161,6 +161,17 @@ for r in rv:
 
 $$ LANGUAGE plcontainer;
 
+CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute4() RETURNS void AS $$
+# container: plc_python_shared
+
+plan1 = plpy.prepare("select * from t4 where score1<$1 and score2<$2 order by score1", ["float4", "float8"])
+rv = plpy.execute(plan1, [9.5, "bob0"]);
+for r in rv:
+    plpy.notice(str(r))
+
+$$ LANGUAGE plcontainer;
+
+
 CREATE OR REPLACE FUNCTION py_spi_simple_t4() RETURNS void AS $$
 # container: plc_python_shared
 
@@ -171,14 +182,13 @@ for r in rv:
 
 $$ LANGUAGE plcontainer;
 
-
+select py_spi_simple_t4();
 select py_spi_illegal_pexecute1();
 select py_spi_illegal_pexecute2();
-select py_spi_illegal_pexecute3();
 select py_spi_simple_t4();
-
------ Now drop t4.
-drop table if exists t4;
+select py_spi_illegal_pexecute3();
+select py_spi_illegal_pexecute4();
+select py_spi_simple_t4();
 
 CREATE OR REPLACE FUNCTION pyspi_illegal_sql() RETURNS integer AS $$
 # container: plc_python_shared
@@ -226,9 +236,15 @@ for r in rv:
 return 0
 $$ LANGUAGE plcontainer IMMUTABLE;
 
+select py_spi_simple_t4();
 select pyspi_illegal_sql();
 select pyspi_illegal_sql_pexecute();
 select pyspi_bad_limit();
+select py_spi_simple_t4();
 select pyspi_bad_limit_pexecute();
 select pyspi_bad_limit_immutable();
 select pyspi_bad_limit_stable();
+select py_spi_simple_t4();
+
+----- Now drop t4.
+drop table t4;

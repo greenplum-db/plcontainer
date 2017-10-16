@@ -223,6 +223,15 @@ for r in rv:
     plpy.notice(str(r))
 
 $$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute4() RETURNS void AS $$
+# container: plc_python_shared
+
+plan1 = plpy.prepare("select * from t4 where score1<$1 and score2<$2 order by score1", ["float4", "float8"])
+rv = plpy.execute(plan1, [9.5, "bob0"]);
+for r in rv:
+    plpy.notice(str(r))
+
+$$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION py_spi_simple_t4() RETURNS void AS $$
 # container: plc_python_shared
 
@@ -232,6 +241,13 @@ for r in rv:
     plpy.notice(str(r))
 
 $$ LANGUAGE plcontainer;
+select py_spi_simple_t4();
+NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+ py_spi_simple_t4 
+------------------
+ 
+(1 row)
+
 select py_spi_illegal_pexecute1();
 ERROR:  operator does not exist: bytea = integer
 LINE 1: select * from t4 where name=$1 order by score1
@@ -244,14 +260,26 @@ LINE 1: select * from t4 where score1<$1 order by score1
                                      ^
 HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
 QUERY:  select * from t4 where score1<$1 order by score1
+select py_spi_simple_t4();
+NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+ py_spi_simple_t4 
+------------------
+ 
+(1 row)
+
 select py_spi_illegal_pexecute3();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Exception occurred transforming result object to float4
-select py_spi_simple_t4();
+select py_spi_illegal_pexecute4();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  Server returns message type R, but we expect W
------ Now drop t4.
-drop table if exists t4;
+DETAIL:  Exception occurred transforming result object to float8
+select py_spi_simple_t4();
+NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+ py_spi_simple_t4 
+------------------
+ 
+(1 row)
+
 CREATE OR REPLACE FUNCTION pyspi_illegal_sql() RETURNS integer AS $$
 # container: plc_python_shared
 plpy.execute("select datname from pg_database_invalid");
@@ -292,6 +320,13 @@ for r in rv:
     plpy.notice(str(r))
 return 0
 $$ LANGUAGE plcontainer IMMUTABLE;
+select py_spi_simple_t4();
+NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+ py_spi_simple_t4 
+------------------
+ 
+(1 row)
+
 select pyspi_illegal_sql();
 ERROR:  relation "pg_database_invalid" does not exist
 LINE 1: select datname from pg_database_invalid
@@ -303,11 +338,27 @@ LINE 1: select datname from pg_database_invalid
                             ^
 QUERY:  select datname from pg_database_invalid
 select pyspi_bad_limit();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:183)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:185)
+select py_spi_simple_t4();
+NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+ py_spi_simple_t4 
+------------------
+ 
+(1 row)
+
 select pyspi_bad_limit_pexecute();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  second argument of plpy.prepare must be a sequence
 select pyspi_bad_limit_immutable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:183)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:185)
 select pyspi_bad_limit_stable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:183)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:185)
+select py_spi_simple_t4();
+NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+ py_spi_simple_t4 
+------------------
+ 
+(1 row)
+
+----- Now drop t4.
+drop table t4;
