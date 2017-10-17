@@ -214,7 +214,7 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
 	} else if (res >= 0) {
 		elog(LOG, "Docker fails to create container, response: %s", response->data);
 		snprintf(api_error_message, sizeof(api_error_message),
-				"Failed to create container (return code: %d) response message %s.", res, response->data);
+				"Failed to create container (return code: %d).", res);
 		res = -1;
 	}
 

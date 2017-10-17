@@ -260,17 +260,17 @@ plcConn *start_backend(plcContainerConf *conf) {
 	 */
 	insert_container(conf->name, dockerid, container_slot);
 
+    res = plc_backend_start(dockerid);
+    if (res < 0) {
+        elog(ERROR, "%s", api_error_message);
+        return conn;
+    }
 
     time_t rawtime;
     struct tm * timeinfo;
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
     elog(DEBUG1, "container %s has started at %s", dockerid, asctime (timeinfo));
-    res = plc_backend_start(dockerid);
-    if (res < 0) {
-        elog(ERROR, "%s", api_error_message);
-        return conn;
-    }
 
 	/* For network connection only. */
 	if (conf->isNetworkConnection) {
@@ -364,10 +364,6 @@ void delete_containers() {
                 /* Terminate container process */
                 if (containers[i].dockerid != NULL) {
                     int res = plc_backend_delete(containers[i].dockerid);
-                    if (res < 0) {
-                        elog(LOG, "Failed to delete container in cleanup process (%s). "
-                    	        "Will retry later.", api_error_message);
-                    }
                     pfree(containers[i].dockerid);
                 }
 
