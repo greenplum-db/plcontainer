@@ -22,7 +22,7 @@ docker_build() {
 	scp -r data-science-bundle $node:~/
 	if [[ $language = "python" ]]; then
 		scp -r python/python*.targz $node:~/artifacts_python
-		scp -r openssl/openssl*.gz $node:~/artifacts_python
+		scp -r openssl/openssl*.targz $node:~/artifacts_python
 	elif [[ $language = "r" ]]; then
 		scp -r r/bin_r_*.tar.gz $node:~/artifacts_r
 	else
