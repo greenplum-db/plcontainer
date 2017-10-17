@@ -214,7 +214,7 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
 	} else if (res >= 0) {
 		elog(LOG, "Docker fails to create container, response: %s", response->data);
 		snprintf(api_error_message, sizeof(api_error_message),
-				"Failed to create container (return code: %d).", res);
+				"Failed to create container (return code: %d) response message %s.", res, response->data);
 		res = -1;
 	}
 
@@ -224,6 +224,7 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
     res = docker_inspect_string(response->data, name, PLC_INSPECT_NAME);
 
 	if (res < 0) {
+		elog(DEBUG1, "Error parsing container ID during creating container with errno %d.", res);
 		snprintf(api_error_message, sizeof(api_error_message),
 				 "Error parsing container ID during creating container");
 		goto cleanup;
@@ -251,8 +252,9 @@ int plc_docker_start_container(char *name) {
 	if (res == 204 || res == 304) {
 		res = 0;
 	} else if (res >= 0) {
+		elog(DEBUG1, "start docker container %s failed with errno %d.", name, res);
 		snprintf(api_error_message, sizeof(api_error_message),
-				"Failed to start container (return code: %d)", res);
+				"Failed to start container %s (return code: %d)", name, res);
 		res = -1;
 	}
 
@@ -300,7 +302,7 @@ int plc_docker_inspect_container(char *name, char **element, plcInspectionMode t
 	if (res != 200) {
 		elog(LOG, "Docker cannot inspect container, response: %s", response->data);
 		snprintf(api_error_message, sizeof(api_error_message),
-				"Docker inspect api returns http code %d.", res);
+				"Docker inspect api returns http code %d on container %s", res, name);
 		res = -1;
 		goto cleanup;
 	}
@@ -355,7 +357,7 @@ int plc_docker_delete_container(char *name) {
 		res = 0;
 	} else if (res >= 0) {
 		snprintf(api_error_message, sizeof(api_error_message),
-				"Failed to delete container (return code: %d)", res);
+				"Failed to delete container %s (return code: %d)", name, res);
 		res = -1;
 	}
 

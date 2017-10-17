@@ -77,7 +77,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
         /* If the reason is Cancel or Termination or Backend error. */
         if (InterruptPending || QueryCancelPending || QueryFinishPending ||
 			DeleteBackendsWhenError) {
-            //elog(DEBUG1, "Terminating containers due to user request");
+            elog(DEBUG1, "Terminating containers due to user request");
             delete_containers();
 			DeleteBackendsWhenError = false;
         }

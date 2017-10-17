@@ -222,7 +222,7 @@ resources:
     bucket: toolsmiths-concourse-artifacts
     region_name: {{aws-region}}
     secret_access_key: {{artifact-bucket-secret-access-key}}
-    versioned_file: gpdb-build-artifacts/openssl-rhel7_x86_64-1.0.2l-for-linux.tar.gz 
+    versioned_file: gpdb-ext-release-local/OpenSSL/openssl/1.0.2l/targzs/openssl-rhel7_x86_64-1.0.2l.targz
 
 - name: python-gp5
   type: s3
@@ -231,7 +231,7 @@ resources:
     bucket: toolsmiths-concourse-artifacts
     region_name: {{aws-region}}
     secret_access_key: {{artifact-bucket-secret-access-key}}
-    versioned_file: gpdb-ext-release-local/Python/python-gpdb5/2.7.12/targzs/python-rhel6_x86_64-2.7.12.targz
+    versioned_file: gpdb-ext-release-local/Python/python-gpdb5/2.7.12/targzs/python-rhel7_x86_64-2.7.12.targz
 
 - name: datascience-python-gp5
   type: s3

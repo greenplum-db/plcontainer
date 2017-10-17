@@ -251,6 +251,7 @@ plcConn *start_backend(plcContainerConf *conf) {
         elog(ERROR, "%s", api_error_message);
         return conn;
     }
+    elog(DEBUG1, "docker created with id %s.", dockerid);
 
 	/* Insert it into containers[] so that in case below operations fails,
 	 * it could longjump to plcontainer_call_handler()->delete_containers()
@@ -259,6 +260,12 @@ plcConn *start_backend(plcContainerConf *conf) {
 	 */
 	insert_container(conf->name, dockerid, container_slot);
 
+
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    elog(DEBUG1, "container %s has started at %s", dockerid, asctime (timeinfo));
     res = plc_backend_start(dockerid);
     if (res < 0) {
         elog(ERROR, "%s", api_error_message);
@@ -356,7 +363,11 @@ void delete_containers() {
 
                 /* Terminate container process */
                 if (containers[i].dockerid != NULL) {
-                    plc_backend_delete(containers[i].dockerid);
+                    int res = plc_backend_delete(containers[i].dockerid);
+                    if (res < 0) {
+                        elog(LOG, "Failed to delete container in cleanup process (%s). "
+                    	        "Will retry later.", api_error_message);
+                    }
                     pfree(containers[i].dockerid);
                 }
 

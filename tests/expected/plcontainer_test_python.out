@@ -1,3 +1,4 @@
+set log_min_messages='DEBUG1';
 select pylog100();
  pylog100 
 ----------

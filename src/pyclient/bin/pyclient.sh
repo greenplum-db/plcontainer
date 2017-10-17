@@ -10,4 +10,7 @@ fi
 
 cd /clientdir
 
-./pyclient
+log_file="`hostname`.log"
+mkdir -p /tmp/plcontainer_log
+
+./pyclient > /tmp/plcontainer_log/${log_file} 2>&1

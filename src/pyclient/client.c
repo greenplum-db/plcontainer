@@ -6,12 +6,13 @@
  *------------------------------------------------------------------------------
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <netinet/ip.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <assert.h>
+#include <time.h>
 
 #include "common/comm_channel.h"
 #include "common/comm_utils.h"
@@ -32,7 +33,15 @@ int main(int argc UNUSED, char **argv UNUSED) {
     assert(sizeof(float) == 4);
     assert(sizeof(double) == 8);
 
-	sock = start_listener();
+    setbuf(stdout, NULL);
+    time_t rawtime;
+    struct tm * timeinfo;
+
+    sock = start_listener();
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    lprintf(LOG, "Client has started execution at %s", asctime (timeinfo));
+    sock = start_listener();
 
     // Initialize Python
     status = python_init();

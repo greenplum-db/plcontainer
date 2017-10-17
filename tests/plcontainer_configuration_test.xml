@@ -36,6 +36,7 @@
         <image>pivotaldata/plcontainer_python_shared:devel</image>
         <command>/clientdir/pyclient.sh</command>
         <shared_directory access="ro" container="/clientdir" host="/usr/local/greenplum-db-devel/bin/pyclient"/>
+		<shared_directory access="rw" container="/tmp/plcontainer_log" host="/tmp/plcontainer_log"/>
     </container>
 
     <container>

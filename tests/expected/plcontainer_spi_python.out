@@ -1,4 +1,5 @@
 ----- Test text, bool, char, int4
+set log_min_messages='DEBUG1';
 drop table if exists t2;
 NOTICE:  table "t2" does not exist, skipping
 create table t2 (name text, online bool, sex char, id int4);

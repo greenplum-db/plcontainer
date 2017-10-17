@@ -1,4 +1,5 @@
 ----- Test text, bool, char, int4
+set log_min_messages='DEBUG1';
 drop table if exists t2;
 create table t2 (name text, online bool, sex char, id int4);
 insert into t2 values('bob1', true, 'm', 7000);
