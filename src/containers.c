@@ -363,7 +363,7 @@ void delete_containers() {
 
                 /* Terminate container process */
                 if (containers[i].dockerid != NULL) {
-                    int res = plc_backend_delete(containers[i].dockerid);
+                    plc_backend_delete(containers[i].dockerid);
                     pfree(containers[i].dockerid);
                 }
 
