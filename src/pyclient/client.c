@@ -37,7 +37,6 @@ int main(int argc UNUSED, char **argv UNUSED) {
     time_t rawtime;
     struct tm * timeinfo;
 
-    sock = start_listener();
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
     lprintf(LOG, "Client has started execution at %s", asctime (timeinfo));
