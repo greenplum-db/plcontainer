@@ -23,7 +23,7 @@
 
 static plcContainerConf *plcContConf = NULL;
 static int plcNumContainers = 0;
-static int domain_socket_no = 0;
+static int64_t domain_socket_no = 0;
 
 static int parse_container(xmlNode *node, plcContainerConf *conf);
 static plcContainerConf *get_containers(xmlNode *node, int *size);
@@ -409,7 +409,7 @@ char *get_sharing_options(plcContainerConf *conf, char **uds_dir, int container_
 			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
 			int gpdb_dir_sz;
 
-			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1 + 4 + 1;
+			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 16 + 1 + 4 + 1;
 			*uds_dir = pmalloc(gpdb_dir_sz);
 			sprintf(*uds_dir, "%s.%d.%d.%d", IPC_GPDB_BASE_DIR, getpid(), domain_socket_no++, container_slot);
 			volumes[i] = pmalloc(10 + gpdb_dir_sz + strlen(IPC_CLIENT_DIR));
