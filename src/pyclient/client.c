@@ -33,6 +33,8 @@ int main(int argc UNUSED, char **argv UNUSED) {
     assert(sizeof(float) == 4);
     assert(sizeof(double) == 8);
 
+	set_signal_handlers();
+
     setbuf(stdout, NULL);
     time_t rawtime;
     struct tm * timeinfo;
