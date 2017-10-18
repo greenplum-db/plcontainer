@@ -163,7 +163,7 @@ cleanup:
     return buffer;
 }
 
-int plc_docker_create_container(plcContainerConf *conf, char **name, char **uds_dir, int container_id) {
+int plc_docker_create_container(plcContainerConf *conf, char **name, int container_id, char **uds_dir) {
     char *createRequest =
             "{\n"
             "    \"AttachStdin\": false,\n"
@@ -181,7 +181,7 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, char **uds_
             "    }\n"
             "}\n";
 	bool  has_error;
-    char *volumeShare = get_sharing_options(conf, uds_dir, container_id, &has_error);
+    char *volumeShare = get_sharing_options(conf, container_id, &has_error, uds_dir);
     char *messageBody = NULL;
     plcCurlBuffer *response = NULL;
     int res = 0;

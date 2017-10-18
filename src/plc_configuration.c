@@ -23,7 +23,9 @@
 
 static plcContainerConf *plcContConf = NULL;
 static int plcNumContainers = 0;
-static int64_t domain_socket_no = 0;
+// we just want to avoid cleanup process to remove previous domain
+// socket file, so int32 is sufficient
+static int domain_socket_no = 0;
 
 static int parse_container(xmlNode *node, plcContainerConf *conf);
 static plcContainerConf *get_containers(xmlNode *node, int *size);
@@ -369,7 +371,7 @@ plcContainerConf *plc_get_container_config(char *name) {
     return result;
 }
 
-char *get_sharing_options(plcContainerConf *conf, char **uds_dir, int container_slot, bool *has_error) {
+char *get_sharing_options(plcContainerConf *conf, int container_slot, bool *has_error, char **uds_dir) {
     char *res = NULL;
 
 	*has_error = false;
@@ -409,9 +411,9 @@ char *get_sharing_options(plcContainerConf *conf, char **uds_dir, int container_
 			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
 			int gpdb_dir_sz;
 
-			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 4 + 1 + 16 + 1 + 4 + 1;
+			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 16 + 1 + 4 + 1;
 			*uds_dir = pmalloc(gpdb_dir_sz);
-			sprintf(*uds_dir, "%s.%d.%ld.%d", IPC_GPDB_BASE_DIR, getpid(), domain_socket_no++, container_slot);
+			sprintf(*uds_dir, "%s.%d.%d.%d", IPC_GPDB_BASE_DIR, getpid(), domain_socket_no++, container_slot);
 			volumes[i] = pmalloc(10 + gpdb_dir_sz + strlen(IPC_CLIENT_DIR));
 			sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, *uds_dir, IPC_CLIENT_DIR);
             totallen += strlen(volumes[i]);

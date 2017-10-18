@@ -247,7 +247,12 @@ plcConn *start_backend(plcContainerConf *conf) {
     enum PLC_BACKEND_TYPE plc_backend_type = BACKEND_DOCKER;
     plc_backend_prepareImplementation(plc_backend_type);
 
-    res = plc_backend_create(conf, &dockerid, &uds_dir, container_slot);
+    /*
+     *  Here the uds_dir is only used by connection of domain socket type
+     *  It remains NULL for connection of non domain socket type.
+     *
+     */
+    res = plc_backend_create(conf, &dockerid, container_slot, &uds_dir);
     if (res < 0) {
         elog(ERROR, "%s", api_error_message);
         return conn;
