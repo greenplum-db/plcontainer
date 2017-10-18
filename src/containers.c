@@ -36,7 +36,6 @@ typedef struct {
 #define CONTAINER_NUMBER 10
 #define CONATINER_WAIT_TIMEOUT 2
 #define CONATINER_CONNECT_TIMEOUT 120
-#define MAX_DOCKER_ID_LENGTH 64
 
 static int containers_init = 0;
 static container_t *containers;
@@ -222,7 +221,7 @@ static char *get_uds_fn(char* uds_dir) {
 	char *uds_fn = NULL;
 	int   sz;
 
-	/* filename: IPC_GPDB_BASE_DIR + "." + DockerID + "." + container_slot / UDS_SHARED_FILE */
+	/* filename: IPC_GPDB_BASE_DIR + "." + PID + "." + DOMAIN_SOCKET_NO  + "." + container_slot / UDS_SHARED_FILE */
 	sz = strlen(uds_dir) + 1 + MAX_SHARED_FILE_SZ + 1;
 	uds_fn = pmalloc(sz);
 	snprintf(uds_fn, sz, "%s/%s", uds_dir, UDS_SHARED_FILE);

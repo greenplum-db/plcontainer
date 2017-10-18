@@ -23,7 +23,7 @@
 
 static plcContainerConf *plcContConf = NULL;
 static int plcNumContainers = 0;
-static int domain_socket_num = 0;
+static int domain_socket_no = 0;
 
 static int parse_container(xmlNode *node, plcContainerConf *conf);
 static plcContainerConf *get_containers(xmlNode *node, int *size);
@@ -411,7 +411,7 @@ char *get_sharing_options(plcContainerConf *conf, char **uds_dir, int container_
 
 			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1 + 4 + 1;
 			*uds_dir = pmalloc(gpdb_dir_sz);
-			sprintf(*uds_dir, "%s.%d.%d.%d", IPC_GPDB_BASE_DIR, getpid(), domain_socket_num++, container_slot);
+			sprintf(*uds_dir, "%s.%d.%d.%d", IPC_GPDB_BASE_DIR, getpid(), domain_socket_no++, container_slot);
 			volumes[i] = pmalloc(10 + gpdb_dir_sz + strlen(IPC_CLIENT_DIR));
 			sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, *uds_dir, IPC_CLIENT_DIR);
             totallen += strlen(volumes[i]);
