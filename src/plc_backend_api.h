@@ -15,7 +15,7 @@
 
 extern char api_error_message[256];
 
-typedef int ( * PLC_FPTR_create)     (plcContainerConf *conf, char **name, int container_slot);
+typedef int ( * PLC_FPTR_create)     (plcContainerConf *conf, char **name, char **uds_dir, int container_slot);
 typedef int ( * PLC_FPTR_start)      (char *name);
 typedef int ( * PLC_FPTR_kill)       (char *name);
 typedef int ( * PLC_FPTR_inspect)    (char *name, char **element, plcInspectionMode type);
@@ -44,7 +44,7 @@ enum PLC_BACKEND_TYPE {
 void plc_backend_prepareImplementation(enum PLC_BACKEND_TYPE imptype);
 
 /* interface for plc backend*/
-int plc_backend_create(plcContainerConf *conf, char **name, int container_slot);
+int plc_backend_create(plcContainerConf *conf, char **name, char ** uds_dir, int container_slot);
 int plc_backend_start(char *name);
 int plc_backend_kill(char *name);
 int plc_backend_inspect(char *name, char **element, plcInspectionMode type);

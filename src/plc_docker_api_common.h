@@ -25,7 +25,7 @@ typedef struct {
     int     status;
 } plcCurlBuffer;
 
-int plc_docker_create_container(plcContainerConf *conf, char **name, int container_slot);
+int plc_docker_create_container(plcContainerConf *conf, char **name, char **uds_dir, int container_slot);
 int plc_docker_start_container(char *name);
 int plc_docker_kill_container(char *name);
 int plc_docker_inspect_container(char *name, char **element, plcInspectionMode type);

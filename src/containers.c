@@ -36,6 +36,7 @@ typedef struct {
 #define CONTAINER_NUMBER 10
 #define CONATINER_WAIT_TIMEOUT 2
 #define CONATINER_CONNECT_TIMEOUT 120
+#define MAX_DOCKER_ID_LENGTH 64
 
 static int containers_init = 0;
 static container_t *containers;
@@ -217,14 +218,14 @@ plcConn *find_container(const char *image) {
     return NULL;
 }
 
-static char *get_uds_fn(int container_slot) {
+static char *get_uds_fn(char* uds_dir) {
 	char *uds_fn = NULL;
 	int   sz;
 
-	/* filename: IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot / UDS_SHARED_FILE */
-	sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 4 + 1 + MAX_SHARED_FILE_SZ + 1;
+	/* filename: IPC_GPDB_BASE_DIR + "." + DockerID + "." + container_slot / UDS_SHARED_FILE */
+	sz = strlen(uds_dir) + 1 + MAX_SHARED_FILE_SZ + 1;
 	uds_fn = pmalloc(sz);
-	snprintf(uds_fn, sz, "%s.%d.%d/%s", IPC_GPDB_BASE_DIR, getpid(), container_slot, UDS_SHARED_FILE);
+	snprintf(uds_fn, sz, "%s/%s", uds_dir, UDS_SHARED_FILE);
 
 	return uds_fn;
 }
@@ -237,6 +238,7 @@ plcConn *start_backend(plcContainerConf *conf) {
     plcConn *conn = NULL;
     char *dockerid = NULL;
 	char *uds_fn = NULL;
+	char* uds_dir = NULL;
 	int   container_slot;
     int   res = 0;
 	int   wait_status;
@@ -246,7 +248,7 @@ plcConn *start_backend(plcContainerConf *conf) {
     enum PLC_BACKEND_TYPE plc_backend_type = BACKEND_DOCKER;
     plc_backend_prepareImplementation(plc_backend_type);
 
-    res = plc_backend_create(conf, &dockerid, container_slot);
+    res = plc_backend_create(conf, &dockerid, &uds_dir, container_slot);
     if (res < 0) {
         elog(ERROR, "%s", api_error_message);
         return conn;
@@ -284,7 +286,7 @@ plcConn *start_backend(plcContainerConf *conf) {
 	}
 
 	if (!conf->isNetworkConnection)
-		uds_fn = get_uds_fn(container_slot);
+		uds_fn = get_uds_fn(uds_dir);
 
 	/* Give chance to reap some possible zoombie cleanup processes here.
 	 * zoombie occurs only when container exits abnormally and QE process
