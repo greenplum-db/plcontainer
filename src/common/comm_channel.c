@@ -127,7 +127,8 @@ int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
     return res;
 }
 
-int plcontainer_channel_receive(plcConn *conn, plcMessage **msg) {
+/* Only receive for expected types. This helps memory recycling. */
+int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask) {
     int  res;
     char cType;
 
@@ -136,34 +137,54 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg) {
     if (res >= 0) {
         switch (cType) {
             case MT_PING:
+				if (!(mask & MT_PING_BIT))
+					goto unexpected_type;
                 res = receive_ping(conn, msg);
                 break;
             case MT_CALLREQ:
+				if (!(mask & MT_CALLREQ_BIT))
+					goto unexpected_type;
                 res = receive_call(conn, msg);
                 break;
             case MT_RESULT:
+				if (!(mask & MT_RESULT_BIT))
+					goto unexpected_type;
                 res = receive_result(conn, msg);
                 break;
             case MT_EXCEPTION:
+				if (!(mask & MT_EXCEPTION_BIT))
+					goto unexpected_type;
                 res = receive_exception(conn, msg);
                 break;
             case MT_LOG:
+				if (!(mask & MT_LOG_BIT))
+					goto unexpected_type;
                 res = receive_log(conn, msg);
                 break;
             case MT_SQL:
+				if (!(mask & MT_SQL_BIT))
+					goto unexpected_type;
                 res = receive_sql(conn, msg);
                 break;
             case MT_RAW:
+				if (!(mask & MT_RAW_BIT))
+					goto unexpected_type;
                 res = receive_rawmsg(conn, msg);
                 break;
             default:
-                lprintf(ERROR, "message type unknown %d / '%c'", (int)cType, cType);
-                *msg = NULL;
-                res = -1;
-                break;
+				lprintf(ERROR, "unknown message type: %d / '%c'", (int) cType, cType);
+				*msg = NULL;
+				return -1;
         }
     }
     return res;
+
+unexpected_type:
+	/* If lprint with level < ERROR, we need to free the message for various types. */
+	lprintf(ERROR, "unexpected message type: %d / '%c'. Mask of expected "
+			"message: 0x%llx", (int) cType, cType, (long long) mask);
+	*msg = NULL;
+	return -1;
 }
 
 /* Send-Receive for Primitive Datatypes */

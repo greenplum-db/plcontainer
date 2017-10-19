@@ -216,26 +216,19 @@ static int PLy_freeplan(PLyPlanObject *ob)
 	msg.pplan     = ob->pplan;
 
     plcontainer_channel_send(conn, (plcMessage*) &msg);
+	/* No need to free for msg after tx. */
 
-    res = plcontainer_channel_receive(conn, &resp);
+    res = plcontainer_channel_receive(conn, &resp, MT_RAW_BIT);
     if (res < 0) {
         raise_execution_error("Error receiving data from the frontend, %d", res);
         return res;
     }
 
-	if (resp->msgtype == MT_RAW) {
-		int32 *prv;
-
-		prv = (int32 *)(((plcMsgRaw *)resp)->data);
-		res = *prv;
-	} else {
-		raise_execution_error("Server returns message type %c, but we expect %c"
-							  "for plan free.", resp->msgtype, MT_RAW);
-		return -1;
-	}
+	int32 *prv;
+	prv = (int32 *)(((plcMsgRaw *)resp)->data);
+	res = *prv;
 
     free_rawmsg((plcMsgRaw *) resp);
-
     return 0;
 }
 
@@ -274,7 +267,7 @@ static plcMsgResult *receive_from_frontend() {
     int         res = 0;
     plcConn    *conn = plcconn_global;
 
-    res = plcontainer_channel_receive(conn, &resp);
+    res = plcontainer_channel_receive(conn, &resp, MT_CALLREQ_BIT|MT_RESULT_BIT);
     if (res < 0) {
         raise_execution_error("Error receiving data from the frontend, %d", res);
         return NULL;
@@ -288,7 +281,8 @@ static plcMsgResult *receive_from_frontend() {
         case MT_RESULT:
             break;
         default:
-            raise_execution_error("Client cannot process message type %c", resp->msgtype);
+            raise_execution_error("Client cannot process message type %c.\n"
+								  "Should never reach here.", resp->msgtype);
             return NULL;
     }
     return (plcMsgResult*)resp;
@@ -638,64 +632,59 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 	plcontainer_channel_send(conn, (plcMessage*) &msg);
 	free_arguments(msg.args, msg.nargs, false, false);
 
-    res = plcontainer_channel_receive(conn, &resp);
+    res = plcontainer_channel_receive(conn, &resp, MT_RAW_BIT);
     if (res < 0) {
         raise_execution_error("Error receiving data from the frontend, %d", res);
         return NULL;
     }
 
-	if (resp->msgtype == MT_RAW) {
-		char *start;
-		int offset, tx_len;
-		int is_plan_valid;
+	char *start;
+	int offset, tx_len;
+	int is_plan_valid;
 
-		offset = 0;
-		start = ((plcMsgRaw *)resp)->data;
-		tx_len = ((plcMsgRaw *)resp)->size;
+	offset = 0;
+	start = ((plcMsgRaw *)resp)->data;
+	tx_len = ((plcMsgRaw *)resp)->size;
 
-		if ((py_plan = (PLyPlanObject *) PLy_plan_new()) == NULL) {
-			raise_execution_error("Fail to create a plan object");
-			return NULL;
-		}
-		is_plan_valid = (*((int32 *) (start + offset))); offset += sizeof(int32);
-		if (!is_plan_valid) {
-			raise_execution_error("plpy.prepare failed. See backend for details.");
-			return NULL;
-		}
-		py_plan->pplan = (void *) (*((int64 *) (start + offset))); offset += sizeof(int64);
-		py_plan->nargs = *((int32 *) (start + offset)); offset += sizeof(int32);
-		if (py_plan->nargs != nargs) {
-			raise_execution_error("plpy.prepare: bad argument number: %d "
-				"(returned) vs %d (expected).", py_plan->nargs, nargs);
-			return NULL;
-		}
-
-		if (nargs > 0) {
-			if (offset + (signed int) sizeof(plcDatatype) * nargs != tx_len) {
-				raise_execution_error("Client format error for spi prepare. "
-					"Calculated length (%d) vs transferred length (%d)",
-					offset + sizeof(plcDatatype) * nargs, tx_len);
-				return NULL;
-			}
-
-			py_plan->argtypes = malloc(sizeof(plcDatatype) * nargs);
-			if (py_plan->argtypes == NULL) {
-				raise_execution_error("Could not allocate %d bytes for argtypes"
-					" in py_plan", sizeof(plcDatatype) * nargs);
-				return NULL;
-			}
-			memcpy(py_plan->argtypes, start + offset, sizeof(plcDatatype) * nargs);
-		}
-	} else {
-		/* FIXME: For illegal type & error branch cod ebove, do mem cleanup.
-		 * It seems that receive_from_frontend() has this issue also.
-		 */
-		raise_execution_error("Server returns message type %c, but we expect %c",
-							  resp->msgtype, MT_RAW);
+	if ((py_plan = (PLyPlanObject *) PLy_plan_new()) == NULL) {
+		raise_execution_error("Fail to create a plan object");
+		free_rawmsg((plcMsgRaw *) resp);
+		return NULL;
+	}
+	is_plan_valid = (*((int32 *) (start + offset))); offset += sizeof(int32);
+	if (!is_plan_valid) {
+		raise_execution_error("plpy.prepare failed. See backend for details.");
+		free_rawmsg((plcMsgRaw *) resp);
+		return NULL;
+	}
+	py_plan->pplan = (void *) (*((int64 *) (start + offset))); offset += sizeof(int64);
+	py_plan->nargs = *((int32 *) (start + offset)); offset += sizeof(int32);
+	if (py_plan->nargs != nargs) {
+		raise_execution_error("plpy.prepare: bad argument number: %d "
+			"(returned) vs %d (expected).", py_plan->nargs, nargs);
+		free_rawmsg((plcMsgRaw *) resp);
 		return NULL;
 	}
 
-    free_rawmsg((plcMsgRaw *) resp);
+	if (nargs > 0) {
+		if (offset + (signed int) sizeof(plcDatatype) * nargs != tx_len) {
+			raise_execution_error("Client format error for spi prepare. "
+				"Calculated length (%d) vs transferred length (%d)",
+				offset + sizeof(plcDatatype) * nargs, tx_len);
+			free_rawmsg((plcMsgRaw *) resp);
+			return NULL;
+		}
 
+		py_plan->argtypes = malloc(sizeof(plcDatatype) * nargs);
+		if (py_plan->argtypes == NULL) {
+			raise_execution_error("Could not allocate %d bytes for argtypes"
+				" in py_plan", sizeof(plcDatatype) * nargs);
+			free_rawmsg((plcMsgRaw *) resp);
+			return NULL;
+		}
+		memcpy(py_plan->argtypes, start + offset, sizeof(plcDatatype) * nargs);
+	}
+
+	free_rawmsg((plcMsgRaw *) resp);
     return (PyObject *) py_plan;
 }

@@ -199,39 +199,28 @@ void receive_loop( void (*handle_call)(plcMsgCallreq*, plcConn*), plcConn* conn)
     plcMessage *msg;
     int res = 0;
 
-    res = plcontainer_channel_receive(conn, &msg);
+    res = plcontainer_channel_receive(conn, &msg, MT_PING_BIT);
     if (res < 0) {
         lprintf(ERROR, "Error receiving data from the backend, %d", res);
         return;
     }
-    if (msg->msgtype != MT_PING) {
-        lprintf(ERROR, "First received message should be 'ping' message, "
-				"got '%c' instead", msg->msgtype);
-        return;
-    } else {
-        res = plcontainer_channel_send(conn, msg);
-        if (res < 0) {
-            lprintf(ERROR, "Cannot send 'ping' message response");
-            return;
-        }
+
+	res = plcontainer_channel_send(conn, msg);
+	if (res < 0) {
+		lprintf(ERROR, "Cannot send 'ping' message response");
+		return;
     }
     pfree(msg);
 
     while (1) {
-        res = plcontainer_channel_receive(conn, &msg);
+        res = plcontainer_channel_receive(conn, &msg, MT_CALLREQ_BIT);
         
         if (res < 0) {
             lprintf(ERROR, "Error receiving data from the peer: %d", res);
             break;
         }
 
-        switch (msg->msgtype) {
-            case MT_CALLREQ:
-                handle_call((plcMsgCallreq*)msg, conn);
-                free_callreq((plcMsgCallreq*)msg, false, false);
-                break;
-            default:
-                lprintf(ERROR, "received unknown message: %c", msg->msgtype);
-        }
+		handle_call((plcMsgCallreq*)msg, conn);
+		free_callreq((plcMsgCallreq*)msg, false, false);
     }
 }

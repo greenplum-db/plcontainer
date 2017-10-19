@@ -208,7 +208,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
         while (1) {
             plcMessage *answer;
 
-            res = plcontainer_channel_receive(conn, &answer);
+            res = plcontainer_channel_receive(conn, &answer, MT_ALL_BITS);
             SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_recv_request");
             if (res < 0) {
                 elog(ERROR, "Error receiving data from the client: %d. "

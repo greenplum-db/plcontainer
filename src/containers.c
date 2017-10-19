@@ -330,7 +330,7 @@ plcConn *start_backend(plcContainerConf *conf) {
 			conn->container_slot = container_slot;
             res = plcontainer_channel_send(conn, (plcMessage*)mping);
             if (res == 0) {
-                res = plcontainer_channel_receive(conn, &mresp);
+                res = plcontainer_channel_receive(conn, &mresp, MT_ALL_BITS);
                 if (mresp != NULL)
                     pfree(mresp);
                 if (res == 0)
