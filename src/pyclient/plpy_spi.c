@@ -665,7 +665,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 		free_rawmsg((plcMsgRaw *) resp);
 		return NULL;
 	}
-	py_plan->pplan = (int64 *) (*((int64 *) (start + offset))); offset += sizeof(int64);
+	py_plan->pplan = (void *) (*((int64 *) (start + offset))); offset += sizeof(int64);
 	py_plan->nargs = *((int32 *) (start + offset)); offset += sizeof(int32);
 	if (py_plan->nargs != nargs) {
 		raise_execution_error("plpy.prepare: bad argument number: %d "

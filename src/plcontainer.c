@@ -308,7 +308,7 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
     oldowner = CurrentResourceOwner;
     MemoryContextSwitchTo(pl_container_caller_context);
 
-    res = handle_sql_message(msg, pinfo);
+    res = handle_sql_message(msg, conn, pinfo);
     if (res != NULL) {
         retval = plcontainer_channel_send(conn, res);
 		if (retval < 0) {

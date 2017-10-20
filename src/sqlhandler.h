@@ -15,10 +15,10 @@
 
 typedef struct plcPlan {
 	Oid         *argOids;
-	int64        *plan;
+	SPIPlanPtr   plan;
 	int          nargs;
 } plcPlan;
 
-plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo);
+plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo);
 
 #endif /* PLC_SQLHANDLER_H */

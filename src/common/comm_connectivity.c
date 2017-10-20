@@ -352,6 +352,11 @@ plcConn * plcConnInit(int sock) {
 }
 
 #ifndef COMM_STANDALONE
+
+/* A bit ugly. Maybe move pplan stuffs out of conn* later. */
+extern void init_pplan_slots(plcConn *conn);
+extern void deinit_pplan_slots(plcConn *conn);
+
 /*
  *  Connect to the specified host of the localhost and initialize the plcConn
  *  data structure
@@ -396,6 +401,7 @@ plcConn *plcConnect_inet(int port) {
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
     result = plcConnInit(sock);
+	init_pplan_slots(result);
 
     return result;
 }
@@ -435,12 +441,13 @@ plcConn *plcConnect_ipc(char *uds_fn) {
 		return NULL;
 	}
 
-	/* Set socker receive timeout to 500ms */
+	/* Set socket receive timeout to 500ms */
     tv.tv_sec  = 0;
     tv.tv_usec = 500000;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
     result = plcConnInit(sock);
+	init_pplan_slots(result);
 
     return result;
 }
@@ -455,6 +462,7 @@ void plcDisconnect(plcConn *conn) {
         pfree(conn->buffer[PLC_OUTPUT_BUFFER]->data);
         pfree(conn->buffer[PLC_INPUT_BUFFER]);
         pfree(conn->buffer[PLC_OUTPUT_BUFFER]);
+		deinit_pplan_slots(conn);
         pfree(conn);
     }
     return;
