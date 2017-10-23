@@ -85,7 +85,7 @@ insert into t3r values('bob0', 20, 9000);
 insert into t3r values('bob1', 20, 8000);
 insert into t3r values('bob2', 30, 7000);
 insert into t3r values('alice1', 40, 6000);
-insert into t3r values('alice2', 50, 6000);
+insert into t3r values('alice2', 50, 6001);
 
 CREATE OR REPLACE FUNCTION r_spi_pexecute2() RETURNS void AS $$
 # container: plc_r_shared
@@ -99,8 +99,8 @@ for(i in 1:nrow(rv)){
 }
 
 plr.notice("Test int8")
-plan <- pg.spi.prepare("select * from t3r where id=$1 order by id", c(INT8OID))
-rv <- pg.spi.execp(plan, list(6000));
+plan <- pg.spi.prepare("select * from t3r where id<$1 order by id", c(INT8OID))
+rv <- pg.spi.execp(plan, list(6002));
 
 for(i in 1:nrow(rv)){
     plr.notice(rv[i,1])
