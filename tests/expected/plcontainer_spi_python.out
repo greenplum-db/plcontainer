@@ -23,6 +23,11 @@ rv = plpy.execute("select * from t2 where name='bob1' and online=True and sex='m
 for r in rv:
     plpy.notice(str(r))
 
+plpy.notice("Test query targetlist containing NULL")
+rv = plpy.execute("select * from t2 where id = 1000")
+for r in rv:
+    plpy.notice(str(r))
+
 plpy.notice("Test text")
 plan = plpy.prepare("select * from t2 where name=$1 order by id", ["text"])
 rv = plpy.execute(plan, ["bob1"])
@@ -63,6 +68,8 @@ select py_spi_pexecute1();
 NOTICE:  Test query execution
 NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  Test query targetlist containing NULL
+NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
 NOTICE:  Test text
 NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
@@ -92,7 +99,7 @@ NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
 NOTICE:  Test text+bool+char+int4
 NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
-NOTICE:  Test NULL
+NOTICE:  Test results containing NULL
 NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
 NOTICE:  {'id': 1001, 'sex': 'm', 'name': None, 'online': 1}
  py_spi_pexecute1 

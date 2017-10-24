@@ -21,6 +21,11 @@ rv = plpy.execute("select * from t2 where name='bob1' and online=True and sex='m
 for r in rv:
     plpy.notice(str(r))
 
+plpy.notice("Test query targetlist containing NULL")
+rv = plpy.execute("select * from t2 where id = 1000")
+for r in rv:
+    plpy.notice(str(r))
+
 plpy.notice("Test text")
 plan = plpy.prepare("select * from t2 where name=$1 order by id", ["text"])
 rv = plpy.execute(plan, ["bob1"])
