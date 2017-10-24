@@ -13,6 +13,8 @@ insert into t2 values('bob3', false, 'm', 9002);
 insert into t2 values('alice1', false, 'm', 9003);
 insert into t2 values('alice2', false, 'f', 9004);
 insert into t2 values('alice3', true, 'm', 9005);
+insert into t2 values(null, true, 'm', 1000);
+insert into t2 values(null, true, 'm', 1001);
 CREATE OR REPLACE FUNCTION py_spi_pexecute1() RETURNS void AS $$
 # container: plc_python_shared
 
@@ -50,6 +52,12 @@ rv = plpy.execute(plan, ["bob1", True, 'm', 2]);
 for r in rv:
     plpy.notice(str(r))
 
+plpy.notice("Test results containing NULL")
+plan = plpy.prepare("select * from t2 where name is null limit $1", ["int4"])
+rv = plpy.execute(plan, [2]);
+for r in rv:
+    plpy.notice(str(r))
+
 $$ LANGUAGE plcontainer;
 select py_spi_pexecute1();
 NOTICE:  Test query execution
@@ -60,6 +68,8 @@ NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  Test bool
+NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'id': 1001, 'sex': 'm', 'name': None, 'online': 1}
 NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
@@ -71,6 +81,8 @@ NOTICE:  {'id': 9003, 'sex': 'm', 'name': 'alice1', 'online': 0}
 NOTICE:  {'id': 9004, 'sex': 'f', 'name': 'alice2', 'online': 0}
 NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
 NOTICE:  Test char
+NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'id': 1001, 'sex': 'm', 'name': None, 'online': 1}
 NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
@@ -80,6 +92,9 @@ NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
 NOTICE:  Test text+bool+char+int4
 NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  Test NULL
+NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'id': 1001, 'sex': 'm', 'name': None, 'online': 1}
  py_spi_pexecute1 
 ------------------
  

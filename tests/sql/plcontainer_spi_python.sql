@@ -10,6 +10,8 @@ insert into t2 values('bob3', false, 'm', 9002);
 insert into t2 values('alice1', false, 'm', 9003);
 insert into t2 values('alice2', false, 'f', 9004);
 insert into t2 values('alice3', true, 'm', 9005);
+insert into t2 values(null, true, 'm', 1000);
+insert into t2 values(null, true, 'm', 1001);
 
 CREATE OR REPLACE FUNCTION py_spi_pexecute1() RETURNS void AS $$
 # container: plc_python_shared
@@ -45,6 +47,12 @@ for r in rv:
 plpy.notice("Test text+bool+char+int4")
 plan = plpy.prepare("select * from t2 where name=$1 and online=$2 and sex=$3 order by id limit $4", ["text", "bool", "char", "int4"])
 rv = plpy.execute(plan, ["bob1", True, 'm', 2]);
+for r in rv:
+    plpy.notice(str(r))
+
+plpy.notice("Test results containing NULL")
+plan = plpy.prepare("select * from t2 where name is null limit $1", ["int4"])
+rv = plpy.execute(plan, [2]);
 for r in rv:
     plpy.notice(str(r))
 

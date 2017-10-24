@@ -419,16 +419,20 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
         pydict = PyDict_New();
 
         for (j = 0; j < result->res->cols; j++) {
-            pyval = result->args[j].conv.inputfunc(result->res->data[i][j].value,
+        	    if(result->res->data[i][j].isnull) {
+        	        PyDict_SetItemString(pydict, result->res->names[j], Py_None);
+        	    } else {
+                pyval = result->args[j].conv.inputfunc(result->res->data[i][j].value,
                                                    &result->args[j]);
 
-            if (PyDict_SetItemString(pydict, result->res->names[j], pyval) != 0) {
-                raise_execution_error("Error setting result dictionary element",
+                if (PyDict_SetItemString(pydict, result->res->names[j], pyval) != 0) {
+                    raise_execution_error("Error setting result dictionary element",
                                       (int)result->res->types[j].type);
-                free_result(resp, false);
-                plc_free_result_conversions(result);
-                return NULL;
-            }
+                    free_result(resp, false);
+                    plc_free_result_conversions(result);
+                    return NULL;
+              }
+        	    }
         }
 
         if (PyList_SetItem(pyresult, i, pydict) != 0) {
