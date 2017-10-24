@@ -18,18 +18,31 @@
 #include "plc_typeio.h"
 #include "sqlhandler.h"
 
-static plcMsgResult *create_sql_result(void);
+static plcMsgResult *create_sql_result(bool isSelect);
 static plcMsgRaw *create_prepare_result(int64 pplan, plcDatatype *type, int nargs);
 
-static plcMsgResult *create_sql_result() {
+static plcMsgResult *create_sql_result(bool isSelect) {
     plcMsgResult  *result;
     int            i, j;
-    plcTypeInfo   *resTypes;
+    plcTypeInfo   *resTypes = NULL;
 
     result          = palloc(sizeof(plcMsgResult));
     result->msgtype = MT_RESULT;
+	result->rows    = SPI_processed;
+
+	if (!isSelect) {
+		result->cols    = 0;
+		result->types   = NULL;
+		result->names   = NULL;
+		result->data = NULL;
+		result->exception_callback = NULL;
+		return result;
+
+	} else if (SPI_tuptable == NULL) {
+		elog(ERROR, "Unexpected error: SPI returns NULL result");
+	}
+
     result->cols    = SPI_tuptable->tupdesc->natts;
-    result->rows    = SPI_processed;
     result->types   = palloc(result->cols * sizeof(*result->types));
     result->names   = palloc(result->cols * sizeof(*result->names));
     result->exception_callback = NULL;
@@ -177,7 +190,13 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcProcInfo *pinfo) {
 			case SPI_OK_DELETE_RETURNING:
 			case SPI_OK_UPDATE_RETURNING:
 				/* some data was returned back */
-				result = (plcMessage*)create_sql_result();
+				result = (plcMessage*)create_sql_result(true);
+				break;
+			case SPI_OK_INSERT:
+			case SPI_OK_DELETE:
+			case SPI_OK_UPDATE:
+				/* only return number of rows that are processed */
+				result = (plcMessage*)create_sql_result(false);
 				break;
 			default:
 				elog(ERROR, "Cannot handle sql ('%s') with fn_readonly (%d) "

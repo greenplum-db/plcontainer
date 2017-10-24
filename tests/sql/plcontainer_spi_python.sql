@@ -262,3 +262,78 @@ select py_spi_simple_t4();
 
 ----- Now drop t4.
 drop table t4;
+
+-- test SPI update, insert and delete
+
+drop table if exists t5;
+create table t5 (name text, score1 float4, score2 float8);
+insert into t5 values('bob0', 8.5, 16.5);
+insert into t5 values('bob1', 8.75, 16.75);
+
+CREATE OR REPLACE FUNCTION pyspi_insert_exec() RETURNS integer AS $$
+# container: plc_python_shared
+rv = plpy.execute("insert into t5 values('bob2', 8.5, 16.5)");
+for r in rv:
+	plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pyspi_update_exec() RETURNS integer AS $$
+# container: plc_python_shared
+rv = plpy.execute("update t5 set score1=11 where name='bob2'");
+for r in rv:
+	plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pyspi_delete_exec() RETURNS integer AS $$
+# container: plc_python_shared
+rv = plpy.execute("delete from t5 where name='bob2'");
+for r in rv:
+	plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+
+SELECT pyspi_insert_exec();
+SELECT * FROM t5 order by name;
+SELECT pyspi_update_exec();
+SELECT * FROM t5 order by name;
+SELECT pyspi_delete_exec();
+SELECT * FROM t5 order by name;
+
+CREATE OR REPLACE FUNCTION pyspi_insert_execp() RETURNS integer AS $$
+# container: plc_python_shared
+plan = plpy.prepare("insert into t5 values('bob3', 8.5, 16.5)");
+rv = plpy.execute(plan);
+for r in rv:
+	plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pyspi_update_execp() RETURNS integer AS $$
+# container: plc_python_shared
+plan = plpy.prepare("update t5 set score1=12 where name='bob3'");
+rv = plpy.execute(plan);
+for r in rv:
+	plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pyspi_delete_execp() RETURNS integer AS $$
+# container: plc_python_shared
+plan = plpy.prepare("delete from t5 where name='bob3'");
+rv = plpy.execute(plan);
+for r in rv:
+	plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+
+
+SELECT pyspi_insert_execp();
+SELECT * FROM t5 order by name;
+SELECT pyspi_update_execp();
+SELECT * FROM t5 order by name;
+SELECT pyspi_delete_execp();
+SELECT * FROM t5 order by name;
+
+DROP TABLE t5;

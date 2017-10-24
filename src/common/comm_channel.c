@@ -868,7 +868,7 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
             ret->rows, ret->cols);
 
     if (res == 0) {
-        if (ret->rows > 0) {
+        if (ret->rows > 0 && ret->cols > 0) {
             ret->data = pmalloc((ret->rows) * sizeof(rawdata*));
         } else {
             ret->data  = NULL;
@@ -885,8 +885,8 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
              debug_print(WARNING, "Column '%s' with type '%d'", ret->names[i], (int)ret->types[i].type);
         }
 
-        /* Receive data */
-        for (i = 0; i < ret->rows && res == 0; i++) {
+        /* Receive data, if ret->cols == 0, it is update/delete/insert, no data need to receive */
+        for (i = 0; i < ret->rows && res == 0 && ret->cols != 0; i++) {
             if (ret->cols > 0) {
                 ret->data[i] = pmalloc((ret->cols) * sizeof(*ret->data[i]));
                 for (j = 0; j < ret->cols; j++) {

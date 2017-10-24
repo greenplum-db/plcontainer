@@ -127,9 +127,16 @@ void free_result(plcMsgResult *res, bool isSender) {
         }
         free_type(&res->types[i]);
     }
-    pfree(res->types);
-    pfree(res->names);
 
+	if (res->types != NULL){
+		pfree(res->types);
+		res->types = NULL;
+	}
+
+	if (res->names != NULL){
+		pfree(res->names);
+		res->names = NULL;
+	}
     pfree(res);
 }
 

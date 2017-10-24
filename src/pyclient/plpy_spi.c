@@ -394,6 +394,19 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
         return NULL;
     }
 
+	/*
+	 * For INSERT, UPDATE and DELETE no column will be returned,
+	 * so if resp->cols > 0, it must be SELECT statment.
+	 */
+	if (resp->rows >= 0 &&  resp->cols == 0) {
+		debug_print(WARNING, "the rows is %d", resp->rows);
+		PyObject *nrows = PyInt_FromLong((long) resp->rows);
+		/* only need one element for number of rows are processed*/
+		pyresult = PyList_New(1);
+		PyList_SetItem(pyresult, 0, nrows);
+		return pyresult;
+	}
+
     result = plc_init_result_conversions(resp);
 
     /* convert the result set into list of dictionaries */
@@ -521,6 +534,19 @@ PLy_spi_execute_query(char *query, long limit) {
         raise_execution_error("Error receiving data from frontend");
         return NULL;
     }
+
+	/*
+	 * For INSERT, UPDATE and DELETE no column will be returned,
+	 * so if resp->cols > 0, it must be SELECT statment.
+	 */
+	if (resp->rows >= 0 && resp->cols == 0) {
+		debug_print(WARNING, "the rows is %d", resp->rows);
+		PyObject *nrows = PyInt_FromLong((long) resp->rows);
+		/* only need one element for number of rows are processed*/
+		pyresult = PyList_New(1);
+		PyList_SetItem(pyresult, 0, nrows);
+		return pyresult;
+	}
 
     result = plc_init_result_conversions(resp);
 

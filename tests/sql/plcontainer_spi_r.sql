@@ -258,3 +258,72 @@ select r_spi_simple_t4();
 
 ----- Now drop t4.
 drop table t4r;
+
+-- test SPI update, insert and delete
+
+drop table if exists t5r;
+create table t5r (name text, score1 float4, score2 float8);
+insert into t5r values('bob0', 8.5, 16.5);
+insert into t5r values('bob1', 8.75, 16.75);
+
+CREATE OR REPLACE FUNCTION rspi_insert_exec() RETURNS integer AS $$
+# container: plc_r_shared
+rv <- pg.spi.exec("insert into t5r values('bob2', 8.5, 16.5)");
+plr.notice(rv)
+return (0)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rspi_update_exec() RETURNS integer AS $$
+# container: plc_r_shared
+rv <- pg.spi.exec("update t5r set score1=11 where name='bob2'");
+plr.notice(rv)
+return (0)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rspi_delete_exec() RETURNS integer AS $$
+# container: plc_r_shared
+rv <- pg.spi.exec("delete from t5r where name='bob2'");
+plr.notice(rv)
+return (0)
+$$ LANGUAGE plcontainer;
+
+SELECT rspi_insert_exec();
+SELECT * FROM t5r order by name;
+SELECT rspi_update_exec();
+SELECT * FROM t5r order by name;
+SELECT rspi_delete_exec();
+SELECT * FROM t5r order by name;
+
+CREATE OR REPLACE FUNCTION rspi_insert_execp() RETURNS integer AS $$
+# container: plc_r_shared
+plan <- pg.spi.prepare("insert into t5r values('bob3', 8.5, 16.5)");
+rv <- pg.spi.execp(plan);
+plr.notice(rv)
+return (0)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rspi_update_execp() RETURNS integer AS $$
+# container: plc_r_shared
+plan <- pg.spi.prepare("update t5r set score1=12 where name='bob3'");
+rv <- pg.spi.execp(plan);
+plr.notice(rv)
+return (0)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rspi_delete_execp() RETURNS integer AS $$
+# container: plc_r_shared
+plan <- pg.spi.prepare("delete from t5r where name='bob3'");
+rv <- pg.spi.execp(plan);
+plr.notice(rv)
+return (0)
+$$ LANGUAGE plcontainer;
+
+
+SELECT rspi_insert_execp();
+SELECT * FROM t5r order by name;
+SELECT rspi_update_execp();
+SELECT * FROM t5r order by name;
+SELECT rspi_delete_execp();
+SELECT * FROM t5r order by name;
+
+DROP TABLE t5r;
