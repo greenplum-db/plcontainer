@@ -35,9 +35,11 @@ ccp_options_anchor6: &ccp_options6
   vars:
     aws_instance-node-instance_type: t2.medium
     platform: centos6
+    aws_ebs_volume_type: standard
 
 ccp_destroy_anchor6: &ccp_destroy6
   put: terraform
+  tags: ["gpdb5_ccp_external_worker"]
   params:
     action: destroy
     env_name_file: terraform/name
@@ -67,9 +69,11 @@ ccp_options_anchor7: &ccp_options7
   vars:
     aws_instance-node-instance_type: t2.medium
     platform: centos7
+    aws_ebs_volume_type: standard
 
 ccp_destroy_anchor7: &ccp_destroy7
   put: terraform
+  tags: ["gpdb5_ccp_external_worker"]
   params:
     action: destroy
     env_name_file: terraform/name
@@ -80,6 +84,7 @@ ccp_destroy_anchor7: &ccp_destroy7
 debug_sleep_anchor7: &debug_sleep7
   do:
   - task: debug_sleep
+    tags: ["gpdb5_ccp_external_worker"]
     config:
       platform: linux
       image_resource:
@@ -118,7 +123,7 @@ resources:
     branch: {{ccp-git-branch}}
     private_key: {{ccp-git-key}}
     uri: {{ccp-git-remote}}
-    tag_filter: 1.0.0
+    tag_filter: 1.0.1
 
 - name: plcontainer_src
   type: git
@@ -399,6 +404,7 @@ jobs:
         aws_instance-node-instance_type: t2.medium
         platform: centos6
   - task: gen_cluster
+    tags: ["gpdb5_ccp_external_worker"]
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
       <<: *ccp_gen_cluster_default_params
@@ -406,6 +412,7 @@ jobs:
     on_failure:
       <<: *ccp_destroy6
   - task: plcontainer
+    tags: ["gpdb5_ccp_external_worker"]
     file: plcontainer_src/concourse/tasks/plcontainer_tests.yml
     params:
       platform: centos6
@@ -446,6 +453,7 @@ jobs:
         aws_instance-node-instance_type: t2.medium
         platform: centos6
   - task: gen_cluster
+    tags: ["gpdb5_ccp_external_worker"]
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
       <<: *ccp_gen_cluster_default_params
@@ -453,6 +461,7 @@ jobs:
     on_failure:
       <<: *ccp_destroy6
   - task: plcontainer
+    tags: ["gpdb5_ccp_external_worker"]
     file: plcontainer_src/concourse/tasks/plcontainer_perf.yml
     params:
       platform: centos6
@@ -502,6 +511,7 @@ jobs:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
+    tags: ["gpdb5_ccp_external_worker"]
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
       <<: *ccp_gen_cluster_default_params
@@ -509,6 +519,7 @@ jobs:
     on_failure:
       <<: *ccp_destroy7
   - task: plcontainer
+    tags: ["gpdb5_ccp_external_worker"]
     file: plcontainer_src/concourse/tasks/plcontainer_tests.yml
     params:
       platform: centos7
@@ -549,6 +560,7 @@ jobs:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
+    tags: ["gpdb5_ccp_external_worker"]
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
       <<: *ccp_gen_cluster_default_params
@@ -556,6 +568,7 @@ jobs:
     on_failure:
       <<: *ccp_destroy7
   - task: plcontainer
+    tags: ["gpdb5_ccp_external_worker"]
     file: plcontainer_src/concourse/tasks/plcontainer_perf.yml
     params:
       platform: centos7
@@ -598,6 +611,7 @@ jobs:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
+    tags: ["gpdb5_ccp_external_worker"]
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
       <<: *ccp_gen_cluster_default_params
@@ -605,6 +619,7 @@ jobs:
     on_failure:
       <<: *ccp_destroy7
   - task: docker_build
+    tags: ["gpdb5_ccp_external_worker"]
     file: plcontainer_src/concourse/tasks/docker_build_python.yml
     params:
       DEV_RELEASE: release
@@ -643,6 +658,7 @@ jobs:
         aws_instance-node-instance_type: t2.medium
         platform: centos7
   - task: gen_cluster
+    tags: ["gpdb5_ccp_external_worker"]
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
       <<: *ccp_gen_cluster_default_params
@@ -650,6 +666,7 @@ jobs:
     on_failure:
       <<: *ccp_destroy7
   - task: docker_build
+    tags: ["gpdb5_ccp_external_worker"]
     file: plcontainer_src/concourse/tasks/docker_build_r.yml
     params:
       DEV_RELEASE: release
