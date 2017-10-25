@@ -19,7 +19,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=2274)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=16683)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -29,7 +29,7 @@ SELECT pg_sleep(5);
 -- end_ignore
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a | wc -l
 1
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef | grep [p]lcontainer |grep cleaner | wc -l
+\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 SELECT sum(pyint(i)) from tbl;
  sum 
@@ -48,7 +48,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=2404)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=16811)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -58,7 +58,7 @@ SELECT pg_sleep(5);
 -- end_ignore
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a | wc -l
 1
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef | grep [p]lcontainer | grep cleaner | wc -l
+\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 SELECT sum(pyint(i)) from tbl;
  sum 
@@ -75,7 +75,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=2515)
+ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=16921)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -85,7 +85,7 @@ SELECT pg_sleep(5);
 -- end_ignore
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a | wc -l
 1
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef | grep [p]lcontainer |grep cleaner | wc -l
+\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 SELECT sum(pyint(i)) from tbl;
  sum 
@@ -102,7 +102,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=2641)
+ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=17030)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -112,7 +112,7 @@ SELECT pg_sleep(5);
 -- end_ignore
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a | wc -l
 1
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef | grep [p]lcontainer | grep cleaner | wc -l
+\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 SELECT sum(pyint(i)) from tbl;
  sum 
@@ -129,7 +129,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=2750)
+ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=17139)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -139,7 +139,7 @@ SELECT pg_sleep(5);
 -- end_ignore
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a | wc -l
 1
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef | grep [p]lcontainer | grep cleaner | wc -l
+\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 2);
@@ -197,8 +197,8 @@ SELECT pg_sleep(5);
 -- end_ignore
 \! docker ps -a | wc -l
 1
-\! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
-1
+\! ps -ef | grep -v grep | grep "plcontainer cleaner" | wc -l
+0
 SELECT pyint(0);
  pyint 
 -------
@@ -224,8 +224,8 @@ SELECT pg_sleep(5);
 -- end_ignore
 \! docker ps -a | wc -l
 1
-\! ps -ef | grep "plcontainer cleaner" | grep -v pg_regress | wc -l
-1
+\! ps -ef | grep -v grep | grep "plcontainer cleaner" | wc -l
+0
 SELECT pyint(0);
  pyint 
 -------
