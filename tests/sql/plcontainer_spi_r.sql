@@ -326,4 +326,21 @@ SELECT * FROM t5r order by name;
 SELECT rspi_delete_execp();
 SELECT * FROM t5r order by name;
 
+insert into t5r values(null, 18.75, 26.75);
+insert into t5r values(null, 28.75, 26.75);
+insert into t5r values(null, 38.75, 26.75);
+
+
+CREATE OR REPLACE FUNCTION rspi_select_null_execp() RETURNS integer AS $$
+# container: plc_r_shared
+plan <- pg.spi.prepare("select * from t5r order by name");
+rv <- pg.spi.execp(plan);
+for(i in 1:nrow(rv)){
+    plr.notice(rv[i,1])
+}
+return (0)
+$$ LANGUAGE plcontainer;
+
+SELECT rspi_select_null_execp();
+
 DROP TABLE t5r;

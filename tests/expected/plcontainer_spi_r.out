@@ -503,4 +503,27 @@ SELECT * FROM t5r order by name;
  bob1 |   8.75 |  16.75
 (2 rows)
 
+insert into t5r values(null, 18.75, 26.75);
+insert into t5r values(null, 28.75, 26.75);
+insert into t5r values(null, 38.75, 26.75);
+CREATE OR REPLACE FUNCTION rspi_select_null_execp() RETURNS integer AS $$
+# container: plc_r_shared
+plan <- pg.spi.prepare("select * from t5r order by name");
+rv <- pg.spi.execp(plan);
+for(i in 1:nrow(rv)){
+    plr.notice(rv[i,1])
+}
+return (0)
+$$ LANGUAGE plcontainer;
+SELECT rspi_select_null_execp();
+NOTICE:  bob0
+NOTICE:  bob1
+NOTICE:  NA
+NOTICE:  NA
+NOTICE:  NA
+ rspi_select_null_execp
+------------------------
+                      0
+(1 row)
+
 DROP TABLE t5r;

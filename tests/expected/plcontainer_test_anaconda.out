@@ -1,6 +1,0 @@
-select pyanaconda();
- pyanaconda 
-------------
-          1
-(1 row)
-

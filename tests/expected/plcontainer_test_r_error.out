@@ -59,7 +59,9 @@ ERROR:  PL/Container client exception occurred:
 DETAIL:  Error in (rerror_timestamp <- function(args, t) { : object 'i' not found
 select rerror_non_exist_function();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  Error in as.mx(array(1:10, c(2, 5))) : could not find function "as.mx"
+DETAIL:  
+ Error in (rerror_non_exist_function <- function(args) { : 
+  could not find function "as.mx"
 select rerror_spi_queryfail(); 
 ERROR:  relation "non_exist_table" does not exist
 LINE 1: select fname from non_exist_table order by 1
@@ -68,13 +70,11 @@ QUERY:  select fname from non_exist_table order by 1
 select rerror_setof();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Error in array(1:3, c(-1, 2)) : negative length vectors are not allowed
-select rerror_datatype();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Error in pg.spi.exec("select fname from non_exist_table order by 1") : 
-  REAL() can only be applied to a 'numeric', not a 'integer'
 select rerror_dataframe();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  
  Error in data.frame(a, b, c, d, e, f, g, h) : 
   arguments imply differing number of rows: 3, 2
+select rerror_datatype();
+ERROR:  PL/Container client exception occurred:
+DETAIL:  Actual R type is not matching excpected returned type PLC_DATA_FLOAT8 [5]

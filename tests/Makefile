@@ -17,7 +17,8 @@ REGRESS_R = plcontainer_function_r \
 	plcontainer_function_r_gpdb5
 REGRESS_R_TESTS = plcontainer_test_r \
 	plcontainer_test_r_gpdb5 \
-	plcontainer_spi_r
+	plcontainer_spi_r \
+	plcontainer_test_r_error
 
 # Python Regression Tests
 REGRESS_PYTHON = plcontainer_function_python \
@@ -25,6 +26,7 @@ REGRESS_PYTHON = plcontainer_function_python \
 REGRESS_PYTHON_TESTS = plcontainer_test_python \
 	plcontainer_test_python_gpdb5 \
 	plcontainer_spi_python \
+	plcontainer_test_python_error \
 	plcontainer_exception_python \
 	plcontainer_faultinject_python \
 	plcontainer_function_python_network

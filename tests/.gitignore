@@ -3,12 +3,3 @@
 regression.out
 optimizer_status.out
 endurance_test.out
-/expected/plcontainer_function_python3.out
-/expected/plcontainer_function_python3_gpdb5.out
-/expected/plcontainer_test_anaconda3.out
-/expected/plcontainer_test_python3.out
-/expected/plcontainer_test_python3_gpdb5.out
-/sql/plcontainer_function_python3.sql
-/sql/plcontainer_function_python3_gpdb5.sql
-/sql/plcontainer_test_python3.sql
-/sql/plcontainer_test_python3_gpdb5.sql

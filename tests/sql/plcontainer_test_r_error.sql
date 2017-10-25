@@ -63,6 +63,6 @@ select rerror_spi_queryfail();
 
 select rerror_setof();
 
-select rerror_datatype();
-
 select rerror_dataframe();
+
+select rerror_datatype();
