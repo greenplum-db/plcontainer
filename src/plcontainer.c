@@ -74,14 +74,14 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
     }
     PG_CATCH();
     {
-        /* If the reason is Cancel or Termination or Backend error. */
-        if (InterruptPending || QueryCancelPending || QueryFinishPending ||
-            DeleteBackendsWhenError) {
-            elog(DEBUG1, "Terminating containers due to user request reason(interrupt/cancel \
-                finish/error)%c%c%c%c", InterruptPending, QueryCancelPending, QueryFinishPending, \
-                DeleteBackendsWhenError);
-            delete_containers();
-            DeleteBackendsWhenError = false;
+		/* If the reason is Cancel or Termination or Backend error. */
+		if (InterruptPending || QueryCancelPending || QueryFinishPending ||
+			DeleteBackendsWhenError) {
+			elog(DEBUG1, "Terminating containers due to user request reason("
+				"Flags for debugging: %d %d %d %d", InterruptPending,
+				QueryCancelPending, QueryFinishPending, DeleteBackendsWhenError);
+			delete_containers();
+			DeleteBackendsWhenError = false;
         }
         PG_RE_THROW();
     }

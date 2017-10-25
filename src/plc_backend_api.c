@@ -11,6 +11,11 @@ static PLC_FunctionEntriesData CurrentPLCImp;
 
 char api_error_message[256];
 
+/*
+ * NOTE: Do not call elog(>=ERROR, ...) in backend api code. Let the callers
+ * handle according to the return value and error message string.
+ */
+
 static void plc_docker_init(PLC_FunctionEntries entries){
     entries->create         = plc_docker_create_container;
     entries->start          = plc_docker_start_container;
