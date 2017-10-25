@@ -7,6 +7,7 @@
 
 
 #include "postgres.h"
+#include "utils/guc.h"
 
 #include "plc_docker_api_common.h"
 
@@ -80,7 +81,8 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 
     memset(errbuf, 0, CURL_ERROR_SIZE);
 
-    /* pay attention to the performance introduced by global init and cleanup
+    /* FIXME:
+	 * pay attention to the performance introduced by global init and cleanup
      * also a new curl handle for each udf is much more waste. need further 
      * performance optimization.
      */
@@ -92,7 +94,8 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
         struct curl_slist *headers = NULL; // init to NULL is important
 
         curl_easy_reset(curl);
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+		if (log_min_messages <= DEBUG1)
+			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
         /* Setting Docker API endpoint */
         curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, plc_docker_socket);
