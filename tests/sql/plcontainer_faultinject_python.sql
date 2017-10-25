@@ -91,6 +91,10 @@ SELECT pg_sleep(5);
 \! docker ps -a | wc -l
 \! ps -ef | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT pyint(0);
+-- Detect for the process name change (from "plcontainer cleaner" to other).
+-- In such case, above cases will still succeed as unexpected.
+\! docker ps -a | wc -l
+\! ps -ef | grep -v grep | grep "plcontainer cleaner" | wc -l
 
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 1);

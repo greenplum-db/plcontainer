@@ -19,7 +19,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=16683)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=27459)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -48,7 +48,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=16811)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=27628)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -75,7 +75,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=16921)
+ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=27739)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -102,7 +102,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=17030)
+ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=27848)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -129,7 +129,7 @@ NOTICE:  Success:
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=17139)
+ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=27958)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -232,6 +232,12 @@ SELECT pyint(0);
      1
 (1 row)
 
+-- Detect for the process name change (from "plcontainer cleaner" to other).
+-- In such case, above cases will still succeed as unexpected.
+\! docker ps -a | wc -l
+2
+\! ps -ef | grep -v grep | grep "plcontainer cleaner" | wc -l
+1
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 1);
 NOTICE:  Success:
