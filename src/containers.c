@@ -106,39 +106,43 @@ static void cleanup(char *dockerid, char *uds_fn) {
 
         while(1) {
 
-			/* Check parent pid whether parent process is alive or not
-			 * if not, kill and remove the container
+			/* Check parent pid whether parent process is alive or not.
+			 * If not, kill and remove the container.
 			 */
+			elog(DEBUG1, "Checking whether QE is alive");
 			res = qe_is_alive(dockerid);
+			elog(DEBUG1, "QE alive status: %d", res);
 
-            /* res = 0, backend exited, container has been successfully deleted
-             * res < 0, backend exited, docker API report an error
-			 * res > 0, backend still alive, check container status
+            /* res = 0, backend exited, backend has been successfully deleted.
+             * res < 0, backend exited, backend delete API reports an error.
+			 * res > 0, backend still alive, check container status.
              */
             if (res == 0) {
                 break;
             } else if (res < 0) {
 				wait_time += CONATINER_WAIT_TIMEOUT;
-				elog(LOG, "Failed to delete container in cleanup process (%s). "
+				elog(LOG, "Failed to delete backend in cleanup process (%s). "
 					"Will retry later.", api_error_message);
 			} else {
 				wait_time = 0;
 			}
 
-			/* check whether conatiner is exited or not
-			 * if exited, remove the container
+			/* Check whether conatiner is exited or not.
+			 * If exited, remove the container.
 			 */
+			elog(DEBUG1, "Checking whether the backend is alive");
 			res = container_is_alive(dockerid);
+			elog(DEBUG1, "Backend alive status: %d", res);
 
-            /* res = 0, container exited, container has been successfully deleted
-             * res < 0, docker API report an error
-			 * res > 0, container still alive, sleep and check again
+            /* res = 0, container exited, container has been successfully deleted.
+             * res < 0, docker API reports an error.
+			 * res > 0, container still alive, sleep and check again.
              */
             if (res == 0) {
                 break;
             } else if (res < 0) {
 				wait_time += CONATINER_WAIT_TIMEOUT;
-				elog(LOG, "Failed to delete container in cleanup process (%s). "
+				elog(LOG, "Failed to inspect or delete backend in cleanup process (%s). "
 					"Will retry later.", api_error_message);
 			} else {
 				wait_time = 0;
@@ -150,7 +154,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
 				 break;
 			}
 
-            /* check every CONATINER_WAIT_TIMEOUT*/
+            /* Check every CONATINER_WAIT_TIMEOUT*/
 	        sleep(CONATINER_WAIT_TIMEOUT);
         }
 
