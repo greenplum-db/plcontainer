@@ -30,8 +30,9 @@ except ImportError, e:
 
 PLCONTAINER_CONFIG_FILE = 'plcontainer_configuration.xml'
 PLCONTAINER_GPDB_DIR = 'share/postgresql/plcontainer'
-PLCONTAINER_PYCLIENT_FILE = "pyclient"
 PLCONTAINER_PYCLIENT_DIR = "bin/pyclient"
+PLCONTAINER_RCLIENT_DIR = "bin/rclient"
+
 PL_BATCH_SIZE = 3
 TMP = '/tmp'
 TAR_GZ = '.tar.gz'
@@ -67,17 +68,21 @@ def parseargs():
                         " file or docker image url")
     install_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer type name")
     install_parser.add_argument("-c", "--imagename", dest="imagename", help="Configure container image name")
+    install_parser.add_argument("-l", "--language", dest="language", help="Configure plcontainer language type, currently support python and r")
     install_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")                    
 
     options = parser.parse_args()
     if options.subparser_name == "install":
-        if not (options.name or options.image or options.shared):
+        if not (options.name or options.image or options.shared or options.language):
             logger.error('unkown options')
             sys.exit(1)
         
-        if not (options.name and options.image):
-            logger.error('container namd and image must provied')
+        if not (options.name and options.image and options.language):
+            logger.error('container namd, language and image must provied')
+            sys.exit(1)
+        if not (options.language.lower() == "r" or options.language.lower() == "python"):
+            logger.error('language must be r or python')
             sys.exit(1)
 
     elif options.subparser_name == "configure":
@@ -179,8 +184,11 @@ def update_xml_check_shared_folder(container, elements):
     for shareDir in container.findall('shared_directory'):
         container.remove(shareDir)
     count = 0
-    # default shared dir
-    dest = os.path.join(GPHOME, PLCONTAINER_PYCLIENT_DIR)
+    # default shared dir, we has ensured that language must be python or r in option check.
+    if elements['language'] == "r":
+        dest = os.path.join(GPHOME, PLCONTAINER_RCLIENT_DIR)
+    else:
+        dest = os.path.join(GPHOME, PLCONTAINER_PYCLIENT_DIR)
     shareDir = ElementTree.Element("shared_directory",
             host=dest, container="/clientdir",
             access="ro")
@@ -222,8 +230,10 @@ def update_xml_new_container(elements):
 
     # default command
     command = ElementTree.Element("command")
-    command.text = "/clientdir/pyclient.sh"
-
+    if elements['language'] == "r":
+        command.text = "/clientdir/rclient.sh"
+    else:
+        command.text = "/clientdir/pyclient.sh"
     container.append(name)
     container.append(image)
     container.append(command)
@@ -473,6 +483,8 @@ def get_conf_elements(options, dockImage = None):
     '''
     elements = dict()
     elements['name'] = options.name
+    if options.language:
+        elements['language']=options.language.lower()
     if dockImage:
         elements['image'] = dockImage.strip()
     else: 
