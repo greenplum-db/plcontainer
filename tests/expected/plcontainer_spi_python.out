@@ -63,6 +63,14 @@ rv = plpy.execute(plan, [2]);
 for r in rv:
     plpy.notice(str(r))
 
+plpy.notice("Test insert NULL")
+plan = plpy.prepare("insert into t2 values($1, true, 'm', 1002)", ["text"])
+rv = plpy.execute(plan, [None]);
+for r in rv:
+    plpy.notice(str(r))
+rv = plpy.execute("select * from t2");
+for r in rv:
+    plpy.notice(str(r))
 $$ LANGUAGE plcontainer;
 select py_spi_pexecute1();
 NOTICE:  Test query execution
@@ -102,6 +110,19 @@ NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  Test results containing NULL
 NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
 NOTICE:  {'id': 1001, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  Test insert NULL
+NOTICE:  1
+NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'id': 1001, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'id': 1002, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'id': 9002, 'sex': 'm', 'name': 'bob3', 'online': 0}
+NOTICE:  {'id': 9003, 'sex': 'm', 'name': 'alice1', 'online': 0}
+NOTICE:  {'id': 9004, 'sex': 'f', 'name': 'alice2', 'online': 0}
+NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'id': 9001, 'sex': 'f', 'name': 'bob2', 'online': 1}
+NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
  py_spi_pexecute1 
 ------------------
  
@@ -361,7 +382,7 @@ LINE 1: select datname from pg_database_invalid
                             ^
 QUERY:  select datname from pg_database_invalid
 select pyspi_bad_limit();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:185)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:306)
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 
@@ -373,9 +394,9 @@ select pyspi_bad_limit_pexecute();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  second argument of plpy.prepare must be a sequence
 select pyspi_bad_limit_immutable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:185)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:306)
 select pyspi_bad_limit_stable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:185)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:306)
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 
@@ -416,13 +437,13 @@ return 0
 $$ LANGUAGE plcontainer;
 SELECT pyspi_insert_exec();
 NOTICE:  1
- pyspi_insert_exec
+ pyspi_insert_exec 
 -------------------
                  0
 (1 row)
 
 SELECT * FROM t5 order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -431,13 +452,13 @@ SELECT * FROM t5 order by name;
 
 SELECT pyspi_update_exec();
 NOTICE:  1
- pyspi_update_exec
+ pyspi_update_exec 
 -------------------
                  0
 (1 row)
 
 SELECT * FROM t5 order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -446,13 +467,13 @@ SELECT * FROM t5 order by name;
 
 SELECT pyspi_delete_exec();
 NOTICE:  1
- pyspi_delete_exec
+ pyspi_delete_exec 
 -------------------
                  0
 (1 row)
 
 SELECT * FROM t5 order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -484,13 +505,13 @@ return 0
 $$ LANGUAGE plcontainer;
 SELECT pyspi_insert_execp();
 NOTICE:  1
- pyspi_insert_execp
+ pyspi_insert_execp 
 --------------------
                   0
 (1 row)
 
 SELECT * FROM t5 order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -499,13 +520,13 @@ SELECT * FROM t5 order by name;
 
 SELECT pyspi_update_execp();
 NOTICE:  1
- pyspi_update_execp
+ pyspi_update_execp 
 --------------------
                   0
 (1 row)
 
 SELECT * FROM t5 order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -514,13 +535,13 @@ SELECT * FROM t5 order by name;
 
 SELECT pyspi_delete_execp();
 NOTICE:  1
- pyspi_delete_execp
+ pyspi_delete_execp 
 --------------------
                   0
 (1 row)
 
 SELECT * FROM t5 order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75

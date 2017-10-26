@@ -61,6 +61,14 @@ rv = plpy.execute(plan, [2]);
 for r in rv:
     plpy.notice(str(r))
 
+plpy.notice("Test insert NULL")
+plan = plpy.prepare("insert into t2 values($1, true, 'm', 1002)", ["text"])
+rv = plpy.execute(plan, [None]);
+for r in rv:
+    plpy.notice(str(r))
+rv = plpy.execute("select * from t2");
+for r in rv:
+    plpy.notice(str(r))
 $$ LANGUAGE plcontainer;
 
 select py_spi_pexecute1();

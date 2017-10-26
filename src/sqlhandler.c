@@ -265,6 +265,8 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 
 				for (i = 0; i < msg->nargs; i++) {
 					if (msg->args[i].data.isnull) {
+						/* all the build-in type is strict, so we set value to Datum 0. */
+						values[i] = (Datum) 0;
 						nulls[i] = 'n';
 					} else {
 						/* A bit heavy to populate plcTypeInfo. */
