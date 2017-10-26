@@ -51,10 +51,11 @@ def parseargs():
 
     # for configure
     config_parser.add_argument("-n", "--name", dest="name", help="Configure container image name")
-    config_parser.add_argument("-i", "--image", dest="image", help="Configure container image location, support Tar.gz image" +
-                        " file or docker image url")
+    config_parser.add_argument("-i", "--image", dest="image", help="Configure container image location and tags, the image must be installed." + 
+            "if not installed, please run plcontainer install first to install the container image")
     config_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")
+    config_parser.add_argument("-l", "--language", dest="language", help="Configure plcontainer language type, currently support python and r")
     config_parser.add_argument("-y","--yes", action='store_true', help="Default yes to confirm step in configure.")
     single_option = config_parser.add_mutually_exclusive_group()
     single_option.add_argument("-e", "--editor", dest="editor", help="Editor to use")
@@ -79,15 +80,19 @@ def parseargs():
             sys.exit(1)
         
         if not (options.name and options.image and options.language):
-            logger.error('container namd, language and image must provied')
+            logger.error('container name, language and image must provied')
             sys.exit(1)
         if not (options.language.lower() == "r" or options.language.lower() == "python"):
             logger.error('language must be r or python')
             sys.exit(1)
 
     elif options.subparser_name == "configure":
-            if options.name and not options.image:
-                logger.error('container namd and image must provied')
+        if options.name:
+            if not (options.image and options.language):
+                logger.error('container name, language and image must provied')
+                sys.exit(1)
+            if not (options.language.lower() == "r" or options.language.lower() == "python"):
+                logger.error('language must be r or python')
                 sys.exit(1)
 
     return options
@@ -213,6 +218,12 @@ def update_xml_container(container, elements):
             isNew = False
             image = container.find('image')
             image.text = elements['image']
+            command = container.find('language')
+            if elements['language'] == "r":
+                command.text = "/clientdir/rclient.sh"
+            else:
+                command.text = "/clientdir/pyclient.sh"
+
             update_xml_check_shared_folder(container, elements)
         else:
             raise Exception("User interrupted")
