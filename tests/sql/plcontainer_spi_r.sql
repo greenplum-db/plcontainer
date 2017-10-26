@@ -330,7 +330,7 @@ insert into t5r values(null, 18.75, 26.75);
 insert into t5r values(null, 28.75, 26.75);
 insert into t5r values(null, 38.75, 26.75);
 
-
+SELECT load_r_typenames();
 CREATE OR REPLACE FUNCTION rspi_select_null_execp() RETURNS integer AS $$
 # container: plc_r_shared
 plan <- pg.spi.prepare("select * from t5r order by name");
@@ -338,9 +338,16 @@ rv <- pg.spi.execp(plan);
 for(i in 1:nrow(rv)){
     plr.notice(rv[i,1])
 }
+plan1 <- pg.spi.prepare("insert into t5r values($1, 48.75, 26.75)", c(TEXTOID));
+rv <- pg.spi.execp(plan1, list(NULL));
+plan2 <- pg.spi.prepare("select * from t5r order by name");
+rv <- pg.spi.execp(plan2);
+for(i in 1:nrow(rv)){
+    plr.notice(rv[i,1])
+}
 return (0)
 $$ LANGUAGE plcontainer;
 
 SELECT rspi_select_null_execp();
-
+SELECT * FROM t5r;
 DROP TABLE t5r;

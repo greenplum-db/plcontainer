@@ -396,13 +396,13 @@ return (0)
 $$ LANGUAGE plcontainer;
 SELECT rspi_insert_exec();
 NOTICE:  1
- rspi_insert_exec
+ rspi_insert_exec 
 ------------------
                 0
 (1 row)
 
 SELECT * FROM t5r order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -411,13 +411,13 @@ SELECT * FROM t5r order by name;
 
 SELECT rspi_update_exec();
 NOTICE:  1
- rspi_update_exec
+ rspi_update_exec 
 ------------------
                 0
 (1 row)
 
 SELECT * FROM t5r order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -426,13 +426,13 @@ SELECT * FROM t5r order by name;
 
 SELECT rspi_delete_exec();
 NOTICE:  1
- rspi_delete_exec
+ rspi_delete_exec 
 ------------------
                 0
 (1 row)
 
 SELECT * FROM t5r order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -461,13 +461,13 @@ return (0)
 $$ LANGUAGE plcontainer;
 SELECT rspi_insert_execp();
 NOTICE:  1
- rspi_insert_execp
+ rspi_insert_execp 
 -------------------
                  0
 (1 row)
 
 SELECT * FROM t5r order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -476,13 +476,13 @@ SELECT * FROM t5r order by name;
 
 SELECT rspi_update_execp();
 NOTICE:  1
- rspi_update_execp
+ rspi_update_execp 
 -------------------
                  0
 (1 row)
 
 SELECT * FROM t5r order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -491,13 +491,13 @@ SELECT * FROM t5r order by name;
 
 SELECT rspi_delete_execp();
 NOTICE:  1
- rspi_delete_execp
+ rspi_delete_execp 
 -------------------
                  0
 (1 row)
 
 SELECT * FROM t5r order by name;
- name | score1 | score2
+ name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
  bob1 |   8.75 |  16.75
@@ -506,10 +506,23 @@ SELECT * FROM t5r order by name;
 insert into t5r values(null, 18.75, 26.75);
 insert into t5r values(null, 28.75, 26.75);
 insert into t5r values(null, 38.75, 26.75);
+SELECT load_r_typenames();
+ load_r_typenames 
+------------------
+ OK
+(1 row)
+
 CREATE OR REPLACE FUNCTION rspi_select_null_execp() RETURNS integer AS $$
 # container: plc_r_shared
 plan <- pg.spi.prepare("select * from t5r order by name");
 rv <- pg.spi.execp(plan);
+for(i in 1:nrow(rv)){
+    plr.notice(rv[i,1])
+}
+plan1 <- pg.spi.prepare("insert into t5r values($1, 48.75, 26.75)", c(TEXTOID));
+rv <- pg.spi.execp(plan1, list(NULL));
+plan2 <- pg.spi.prepare("select * from t5r order by name");
+rv <- pg.spi.execp(plan2);
 for(i in 1:nrow(rv)){
     plr.notice(rv[i,1])
 }
@@ -521,9 +534,26 @@ NOTICE:  bob1
 NOTICE:  NA
 NOTICE:  NA
 NOTICE:  NA
- rspi_select_null_execp
+NOTICE:  bob0
+NOTICE:  bob1
+NOTICE:  NA
+NOTICE:  NA
+NOTICE:  NA
+NOTICE:  NA
+ rspi_select_null_execp 
 ------------------------
                       0
 (1 row)
+
+SELECT * FROM t5r;
+ name | score1 | score2 
+------+--------+--------
+ bob0 |    8.5 |   16.5
+      |  18.75 |  26.75
+      |  28.75 |  26.75
+      |  38.75 |  26.75
+      |  48.75 |  26.75
+ bob1 |   8.75 |  16.75
+(6 rows)
 
 DROP TABLE t5r;
