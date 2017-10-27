@@ -545,7 +545,7 @@ NOTICE:  NA
                       0
 (1 row)
 
-SELECT * FROM t5r order by scoreid;
+SELECT * FROM t5r order by score1;
  name | score1 | score2 
 ------+--------+--------
  bob0 |    8.5 |   16.5
