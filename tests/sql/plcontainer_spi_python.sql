@@ -66,7 +66,7 @@ plan = plpy.prepare("insert into t2 values($1, true, 'm', 1002)", ["text"])
 rv = plpy.execute(plan, [None]);
 for r in rv:
     plpy.notice(str(r))
-rv = plpy.execute("select * from t2");
+rv = plpy.execute("select * from t2 order by id");
 for r in rv:
     plpy.notice(str(r))
 $$ LANGUAGE plcontainer;
