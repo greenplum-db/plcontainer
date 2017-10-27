@@ -349,5 +349,5 @@ return (0)
 $$ LANGUAGE plcontainer;
 
 SELECT rspi_select_null_execp();
-SELECT * FROM t5r;
+SELECT * FROM t5r order by score1;
 DROP TABLE t5r;
