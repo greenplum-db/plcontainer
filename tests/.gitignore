@@ -1,5 +1,3 @@
 /results/
 *.diffs
 regression.out
-optimizer_status.out
-endurance_test.out
