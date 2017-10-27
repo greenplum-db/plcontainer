@@ -66,6 +66,7 @@ interpreted as representing official policies, either expressed or implied, of t
     typedef signed char int8;        /* == 8 bits */
     typedef signed short int16;      /* == 16 bits */
     typedef signed int int32;        /* == 32 bits */
+    typedef unsigned int uint32;     /* == 32 bits */
     typedef long long int int64;     /* == 64 bits */
     typedef float float4;
     typedef double float8;

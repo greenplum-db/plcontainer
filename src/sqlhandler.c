@@ -26,7 +26,7 @@ void init_pplan_slots(plcConn *conn);
 
 static plcMsgResult *create_sql_result(bool isSelect) {
     plcMsgResult  *result;
-    int            i, j;
+    uint32         i, j;
     plcTypeInfo   *resTypes = NULL;
 
     result          = palloc(sizeof(plcMsgResult));
@@ -304,7 +304,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 				break;
 			default:
 				elog(ERROR, "Cannot handle sql ('%s') with fn_readonly (%d) "
-					 "and limit (%lld). Returns %d", msg->statement,
+					 "and limit ("INT64_FORMAT"). Returns %d", msg->statement,
 					 pinfo->fn_readonly, msg->limit, retval);
 				break;
 			}

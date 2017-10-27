@@ -181,6 +181,7 @@ void connection_wait(int sock) {
 plcConn* connection_init(int sock) {
     socklen_t          raddr_len;
     struct sockaddr_in raddr;
+    struct timeval     tv;
     int                connection;
 
     raddr_len  = sizeof(raddr);
@@ -188,6 +189,11 @@ plcConn* connection_init(int sock) {
     if (connection == -1) {
         lprintf(ERROR, "failed to accept connection: %s", strerror(errno));
     }
+
+	/* Set socket receive timeout to 500ms */
+    tv.tv_sec  = 0;
+    tv.tv_usec = 500000;
+    setsockopt(connection, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
     return plcConnInit(connection);
 }

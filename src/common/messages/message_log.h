@@ -12,7 +12,7 @@
 
 typedef struct plcMsgLog {
     base_message_content;
-    int   level;
+    int32 level;
     char *message;
 } plcMsgLog;
 

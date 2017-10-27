@@ -33,13 +33,14 @@ struct pplan_slots {
 #endif
 
 typedef struct plcConn {
-    int sock;
+	int sock;
+	int rx_timeout_sec;
+	plcBuffer* buffer[2];
 #ifndef COMM_STANDALONE
 	int container_slot;
-	struct pplan_slots pplans[MAX_PPLAN]; /* for spi plannning */
 	int head_free_pplan_slot;  /* free list of spi pplan slot */
+	struct pplan_slots pplans[MAX_PPLAN]; /* for spi plannning */
 #endif
-    plcBuffer* buffer[2];
 } plcConn;
 
 #define UDS_SHARED_FILE "unix.domain.socket.shared.file"

@@ -17,12 +17,12 @@ typedef struct {
 
 typedef struct plcMsgCallreq {
     base_message_content;    // message_type ID
-    unsigned int objectid;   // OID of the function in GPDB
-    int          hasChanged; // flag signaling the function has changed in GPDB
+    uint32       objectid;   // OID of the function in GPDB
+    int32        hasChanged; // flag signaling the function has changed in GPDB
     plcProcSrc   proc;       // procedure - its name and source code
     plcType      retType;    // function return type
-    int          retset;     // whether the function is set-returning
-    int          nargs;      // number of function arguments
+    int32        retset;     // whether the function is set-returning
+    int32        nargs;      // number of function arguments
     plcArgument *args;       // function arguments
 } plcMsgCallreq;
 

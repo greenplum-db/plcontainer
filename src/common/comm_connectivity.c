@@ -35,6 +35,15 @@ static int plcBufferMaybeResize (plcConn *conn, int bufType, size_t bufAppend);
  */
 static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
     ssize_t sz = 0;
+	struct timeval start_ts, end_ts;
+	int retval;
+
+	/* Better use clock_gettime() however it needs librt. */
+	retval = gettimeofday(&start_ts, NULL);
+	if (retval < 0) {
+		lprintf(ERROR, "Failed to get time for hang detection: %s", strerror(errno));
+		return retval;
+	}
 
 	while (true) {
 		sz = recv(conn->sock, ptr, len, 0);
@@ -42,6 +51,19 @@ static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
 		/* Only retry when needed. */
 		if (!(sz == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)))
 			break;
+
+		/* error out if timeout. */
+		retval = gettimeofday(&end_ts, NULL);
+		if (retval < 0) {
+			lprintf(ERROR, "Failed to get time for hang detection: %s", strerror(errno));
+			return retval;
+		}
+
+		if ((end_ts.tv_sec - start_ts.tv_sec) > conn->rx_timeout_sec) {
+			lprintf(ERROR, "rx timeout (%ds > %ds)",
+				    (int) (end_ts.tv_sec - start_ts.tv_sec), conn->rx_timeout_sec);
+			return -1;
+		}
 	}
 
 	/* If receive command is terminated by SIGINT/SIGTERM, etc. */

@@ -266,6 +266,7 @@ create table t5r (name text, score1 float4, score2 float8);
 insert into t5r values('bob0', 8.5, 16.5);
 insert into t5r values('bob1', 8.75, 16.75);
 
+-- execute
 CREATE OR REPLACE FUNCTION rspi_insert_exec() RETURNS integer AS $$
 # container: plc_r_shared
 rv <- pg.spi.exec("insert into t5r values('bob2', 8.5, 16.5)");
@@ -294,6 +295,7 @@ SELECT * FROM t5r order by name;
 SELECT rspi_delete_exec();
 SELECT * FROM t5r order by name;
 
+-- executep
 CREATE OR REPLACE FUNCTION rspi_insert_execp() RETURNS integer AS $$
 # container: plc_r_shared
 plan <- pg.spi.prepare("insert into t5r values('bob3', 8.5, 16.5)");
@@ -318,6 +320,21 @@ plr.notice(rv)
 return (0)
 $$ LANGUAGE plcontainer;
 
+CREATE OR REPLACE FUNCTION rspi_select_notexist_execp() RETURNS integer AS $$
+# container: plc_r_shared
+plan <- pg.spi.prepare("select * from t5r where name='bob_notexist'");
+rv <- pg.spi.execp(plan);
+plr.notice(rv)
+return (0)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rspi_delete_notexist_execp() RETURNS integer AS $$
+# container: plc_r_shared
+plan <- pg.spi.prepare("delete from t5r where name='bob_notexist'");
+rv <- pg.spi.execp(plan);
+plr.notice(rv)
+return (0)
+$$ LANGUAGE plcontainer;
 
 SELECT rspi_insert_execp();
 SELECT * FROM t5r order by name;
@@ -325,6 +342,12 @@ SELECT rspi_update_execp();
 SELECT * FROM t5r order by name;
 SELECT rspi_delete_execp();
 SELECT * FROM t5r order by name;
+
+-- Test returns 0 row X N cols.
+select rspi_select_notexist_execp();
+-- Test returns 0 row X 0 col.
+select rspi_delete_notexist_execp();
+-- insert returns N rows * 0 col, so there is no need of additional case.
 
 insert into t5r values(null, 18.75, 26.75);
 insert into t5r values(null, 28.75, 26.75);

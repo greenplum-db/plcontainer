@@ -382,7 +382,7 @@ LINE 1: select datname from pg_database_invalid
                             ^
 QUERY:  select datname from pg_database_invalid
 select pyspi_bad_limit();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:306)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:308)
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 
@@ -394,9 +394,9 @@ select pyspi_bad_limit_pexecute();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  second argument of plpy.prepare must be a sequence
 select pyspi_bad_limit_immutable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:306)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:308)
 select pyspi_bad_limit_stable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:306)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:308)
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 
@@ -414,6 +414,7 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'name'
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into t5 values('bob0', 8.5, 16.5);
 insert into t5 values('bob1', 8.75, 16.75);
+-- execute
 CREATE OR REPLACE FUNCTION pyspi_insert_exec() RETURNS integer AS $$
 # container: plc_python_shared
 rv = plpy.execute("insert into t5 values('bob2', 8.5, 16.5)");
@@ -479,6 +480,7 @@ SELECT * FROM t5 order by name;
  bob1 |   8.75 |  16.75
 (2 rows)
 
+-- executep
 CREATE OR REPLACE FUNCTION pyspi_insert_execp() RETURNS integer AS $$
 # container: plc_python_shared
 plan = plpy.prepare("insert into t5 values('bob3', 8.5, 16.5)");
@@ -498,6 +500,22 @@ $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pyspi_delete_execp() RETURNS integer AS $$
 # container: plc_python_shared
 plan = plpy.prepare("delete from t5 where name='bob3'");
+rv = plpy.execute(plan);
+for r in rv:
+	plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION pyspi_select_notexist_execp() RETURNS integer AS $$
+# container: plc_python_shared
+plan = plpy.prepare("select * from t5 where name='bob_notexist'");
+rv = plpy.execute(plan);
+for r in rv:
+	plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION pyspi_delete_notexist_execp() RETURNS integer AS $$
+# container: plc_python_shared
+plan = plpy.prepare("delete from t5 where name='bob3_notexist'");
 rv = plpy.execute(plan);
 for r in rv:
 	plpy.notice(str(r))
@@ -547,4 +565,20 @@ SELECT * FROM t5 order by name;
  bob1 |   8.75 |  16.75
 (2 rows)
 
+-- Test returns 0 row X N cols.
+select pyspi_select_notexist_execp();
+ pyspi_select_notexist_execp 
+-----------------------------
+                           0
+(1 row)
+
+-- Test returns 0 row X 0 col.
+select pyspi_delete_notexist_execp();
+NOTICE:  0
+ pyspi_delete_notexist_execp 
+-----------------------------
+                           0
+(1 row)
+
+-- insert returns N rows * 0 col, so there is no need of additional case.
 DROP TABLE t5;

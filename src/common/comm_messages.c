@@ -89,13 +89,13 @@ void free_callreq(plcMsgCallreq *req, bool isShared, bool isSender) {
 }
 
 void free_result(plcMsgResult *res, bool isSender) {
-    int i, j;
+    uint32 i, j;
 
     /* free the data array */
     if (res->data != NULL) {
         for (i = 0; i < res->rows; i++) {
             /* this can happen if for some reason we abort sending the result early */
-            if (res->data[i] != NULL){
+            if (res->data[i] != NULL) {
                 for (j = 0; j < res->cols; j++) {
                     /* free the data if it is not null */
                     if (res->data[i][j].value != NULL) {
@@ -122,9 +122,8 @@ void free_result(plcMsgResult *res, bool isSender) {
 
     /* free the types and names arrays */
     for (i = 0; i < res->cols; i++) {
-        if (res->names[i] != NULL) {
+        if (res->names[i] != NULL)
             pfree(res->names[i]);
-        }
         free_type(&res->types[i]);
     }
 

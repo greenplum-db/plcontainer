@@ -657,7 +657,7 @@ plcPyFunction *plc_py_init_function(plcMsgCallreq *call) {
 
 plcPyResult *plc_init_result_conversions(plcMsgResult *res) {
     plcPyResult *pyres = NULL;
-    int i;
+    uint32 i;
 
     pyres = (plcPyResult*)malloc(sizeof(plcPyResult));
     pyres->res = res;
@@ -698,7 +698,8 @@ void plc_py_free_function(plcPyFunction *func) {
 }
 
 void plc_free_result_conversions(plcPyResult *res) {
-    int i = 0;
+    uint32 i;
+
     for (i = 0; i < res->res->cols; i++) {
         plc_py_free_type(&res->args[i]);
     }

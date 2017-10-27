@@ -17,7 +17,7 @@ typedef struct plcMessage {
 } plcMessage;
 
 typedef struct {
-    int   isnull;
+    int32 isnull;
     char *value;
 } rawdata;
 
@@ -47,7 +47,7 @@ typedef struct plcType plcType;
 
 struct plcType {
     plcDatatype  type;
-    short        nSubTypes;
+    int16        nSubTypes;
     char        *typeName;
     plcType     *subTypes;
 };

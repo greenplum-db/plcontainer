@@ -32,7 +32,7 @@ interpreted as representing official policies, either expressed or implied, of t
 /* Structure representing function result data */
 typedef struct {
     plcMsgResult    *resmsg;
-    int              resrow;
+    uint32           resrow;
 } plcProcResult;
 
 typedef struct {

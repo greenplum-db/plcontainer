@@ -25,12 +25,12 @@ typedef enum {
 typedef struct plcMsgSQL {
     base_message_content;
     plcSqlType    sqltype;
-	long long     limit;        /* For execute_query and execute_plan */
+	int64         limit;        /* For execute_query and execute_plan */
 	plcArgument  *args;         /* For prepare and execute_plan */
 	plcDatatype  *argtypes;     /* For prepare */
 	void         *pplan;        /* For prepare and execute_plan. pointer to plan */
-    char         *statement;    /* For prepare and execute_query/execute_plan */
-	int           nargs;        /* For prepare and execute_plan */
+	char         *statement;    /* For prepare and execute_query/execute_plan */
+	int32         nargs;        /* For prepare and execute_plan */
 } plcMsgSQL;
 
 #endif /* PLC_MESSAGE_SQL_H */

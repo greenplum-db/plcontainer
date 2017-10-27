@@ -29,6 +29,7 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "comm_channel.h"
 #include "comm_utils.h"
 #include "comm_connectivity.h"
+#include "comm_server.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,12 +40,12 @@ static int message_start(plcConn *conn, char msgType);
 static int message_end(plcConn *conn);
 
 static int send_char(plcConn *conn, char c);
-static int send_int16(plcConn *conn, short i);
-static int send_int32(plcConn *conn, int i);
-static int send_uint32(plcConn *conn, unsigned int i);
-static int send_int64(plcConn *conn, long long i);
-static int send_float4(plcConn *conn, float f);
-static int send_float8(plcConn *conn, double f);
+static int send_int16(plcConn *conn, int16 i);
+static int send_int32(plcConn *conn, int32 i);
+static int send_uint32(plcConn *conn, uint32 i);
+static int send_int64(plcConn *conn, int64 i);
+static int send_float4(plcConn *conn, float4 f);
+static int send_float8(plcConn *conn, float8 f);
 static int send_cstring(plcConn *conn, char *s);
 static int send_bytea(plcConn *conn, char *s);
 static int send_raw_object(plcConn *conn, plcType *type, rawdata *obj);
@@ -54,12 +55,12 @@ static int send_udt(plcConn *conn, plcType *type, plcUDT *udt);
 
 static int receive_message_type(plcConn *conn, char *c);
 static int receive_char(plcConn *conn, char *c);
-static int receive_int16(plcConn *conn, short *i);
-static int receive_int32(plcConn *conn, int *i);
-static int receive_uint32(plcConn *conn, unsigned int *i);
-static int receive_int64(plcConn *conn, long long *i);
-static int receive_float4(plcConn *conn, float *f);
-static int receive_float8(plcConn *conn, double *f);
+static int receive_int16(plcConn *conn, int16 *i);
+static int receive_int32(plcConn *conn, int32 *i);
+static int receive_uint32(plcConn *conn, uint32 *i);
+static int receive_int64(plcConn *conn, int64 *i);
+static int receive_float4(plcConn *conn, float4 *f);
+static int receive_float8(plcConn *conn, float8 *f);
 static int receive_raw(plcConn *conn, char *s, size_t len);
 static int receive_cstring(plcConn *conn, char **s);
 static int receive_bytea(plcConn *conn, char **s);
@@ -132,7 +133,9 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask) {
     int  res;
     char cType;
 
+	conn->rx_timeout_sec = 0x7fffFFFF; /* Wait for ever at this moment */
     res = receive_message_type(conn, &cType);
+	conn->rx_timeout_sec = TIMEOUT_SEC;
 
     if (res >= 0) {
         switch (cType) {
@@ -202,32 +205,32 @@ static int send_char(plcConn *conn, char c) {
     return plcBufferAppend(conn, &c, 1);
 }
 
-static int send_int16(plcConn *conn, short i) {
+static int send_int16(plcConn *conn, int16 i) {
     debug_print(WARNING, "    ===> sending int16 '%d'", (int)i);
     return plcBufferAppend(conn, (char*)&i, 2);
 }
 
-static int send_int32(plcConn *conn, int i) {
+static int send_int32(plcConn *conn, int32 i) {
     debug_print(WARNING, "    ===> sending int32 '%d'", i);
     return plcBufferAppend(conn, (char*)&i, 4);
 }
 
-static int send_uint32(plcConn *conn, unsigned int i) {
+static int send_uint32(plcConn *conn, uint32 i) {
     debug_print(WARNING, "    ===> sending uint32 '%u'", i);
     return plcBufferAppend(conn, (char*)&i, 4);
 }
 
-static int send_int64(plcConn *conn, long long i) {
+static int send_int64(plcConn *conn, int64 i) {
     debug_print(WARNING, "    ===> sending int64 '%lld'", i);
     return plcBufferAppend(conn, (char*)&i, 8);
 }
 
-static int send_float4(plcConn *conn, float f) {
+static int send_float4(plcConn *conn, float4 f) {
     debug_print(WARNING, "    ===> sending float4 '%f'", f);
     return plcBufferAppend(conn, (char*)&f, 4);
 }
 
-static int send_float8(plcConn *conn, double f) {
+static int send_float8(plcConn *conn, float8 f) {
     debug_print(WARNING, "    ===> sending float8 '%f'", f);
     return plcBufferAppend(conn, (char*)&f, 8);
 }
@@ -272,19 +275,19 @@ static int send_raw_object(plcConn *conn, plcType *type, rawdata *obj) {
                 res |= send_char(conn, *((char*)obj->value));
                 break;
             case PLC_DATA_INT2:
-                res |= send_int16(conn, *((short*)obj->value));
+                res |= send_int16(conn, *((int16*)obj->value));
                 break;
             case PLC_DATA_INT4:
-                res |= send_int32(conn, *((int*)obj->value));
+                res |= send_int32(conn, *((int32*)obj->value));
                 break;
             case PLC_DATA_INT8:
-                res |= send_int64(conn, *((long long*)obj->value));
+                res |= send_int64(conn, *((int64*)obj->value));
                 break;
             case PLC_DATA_FLOAT4:
-                res |= send_float4(conn, *((float*)obj->value));
+                res |= send_float4(conn, *((float4*)obj->value));
                 break;
             case PLC_DATA_FLOAT8:
-                res |= send_float8(conn, *((double*)obj->value));
+                res |= send_float8(conn, *((float8*)obj->value));
                 break;
             case PLC_DATA_TEXT:
                 res |= send_cstring(conn, obj->value);
@@ -378,37 +381,37 @@ static int receive_char(plcConn *conn, char *c) {
     return res;
 }
 
-static int receive_int16(plcConn *conn, short *i) {
+static int receive_int16(plcConn *conn, int16 *i) {
     int res = plcBufferRead(conn, (char*)i, 2);
     debug_print(WARNING, "    <=== receiving int16 '%d'", (int)*i);
     return res;
 }
 
-static int receive_int32(plcConn *conn, int *i) {
+static int receive_int32(plcConn *conn, int32 *i) {
     int res = plcBufferRead(conn, (char*)i, 4);
     debug_print(WARNING, "    <=== receiving int32 '%d'", *i);
     return res;
 }
 
-static int receive_uint32(plcConn *conn, unsigned int *i) {
+static int receive_uint32(plcConn *conn, uint32 *i) {
     int res = plcBufferRead(conn, (char*)i, 4);
     debug_print(WARNING, "    <=== receiving uint32 '%u'", *i);
     return res;
 }
 
-static int receive_int64(plcConn *conn, long long *i) {
+static int receive_int64(plcConn *conn, int64 *i) {
     int res = plcBufferRead(conn, (char*)i, 8);
     debug_print(WARNING, "    <=== receiving int64 '%lld'", *i);
     return res;
 }
 
-static int receive_float4(plcConn *conn, float *f) {
+static int receive_float4(plcConn *conn, float4 *f) {
     int res = plcBufferRead(conn, (char*)f, 4);
     debug_print(WARNING, "    <=== receiving float4 '%f'", *f);
     return res;
 }
 
-static int receive_float8(plcConn *conn, double *f) {
+static int receive_float8(plcConn *conn, float8 *f) {
     int res = plcBufferRead(conn, (char*)f, 8);
     debug_print(WARNING, "    <=== receiving float8 '%f'", *f);
     return res;
@@ -422,7 +425,7 @@ static int receive_raw(plcConn *conn, char *s, size_t len) {
 
 static int receive_cstring(plcConn *conn, char **s) {
     int res = 0;
-    int cnt;
+    int32 cnt;
 
     if (receive_int32(conn, &cnt) < 0) {
         return -1;
@@ -430,7 +433,10 @@ static int receive_cstring(plcConn *conn, char **s) {
 
     if (cnt == -1) {
         *s = NULL;
-    } else {
+    } else if (cnt < 0) {
+		lprintf(LOG, "receive_cstring() returns a negative length: %d", cnt);
+		return -1;
+	} else {
         *s   = pmalloc(cnt + 1);
         if (cnt > 0) {
             res = plcBufferRead(conn, *s, cnt);
@@ -483,23 +489,23 @@ static int receive_raw_object(plcConn *conn, plcType *type, rawdata *obj)  {
                 break;
             case PLC_DATA_INT2:
                 obj->value = (char*)pmalloc(2);
-                res |= receive_int16(conn, (short*)obj->value);
+                res |= receive_int16(conn, (int16*)obj->value);
                 break;
             case PLC_DATA_INT4:
                 obj->value = (char*)pmalloc(4);
-                res |= receive_int32(conn, (int*)obj->value);
+                res |= receive_int32(conn, (int32*)obj->value);
                 break;
             case PLC_DATA_INT8:
                 obj->value = (char*)pmalloc(8);
-                res |= receive_int64(conn, (long long*)obj->value);
+                res |= receive_int64(conn, (int64*)obj->value);
                 break;
             case PLC_DATA_FLOAT4:
                 obj->value = (char*)pmalloc(4);
-                res |= receive_float4(conn, (float*)obj->value);
+                res |= receive_float4(conn, (float4*)obj->value);
                 break;
             case PLC_DATA_FLOAT8:
                 obj->value = (char*)pmalloc(8);
-                res |= receive_float8(conn, (double*)obj->value);
+                res |= receive_float8(conn, (float8*)obj->value);
                 break;
             case PLC_DATA_TEXT:
                 res |= receive_cstring(conn, &obj->value);
@@ -678,7 +684,7 @@ static int send_call(plcConn *conn, plcMsgCallreq *call) {
 
 static int send_result(plcConn *conn, plcMsgResult *ret) {
     int res = 0;
-    int i, j;
+    uint32 i, j;
     plcMsgError *msg = NULL;
 
     res |= message_start(conn, MT_RESULT);
@@ -854,7 +860,7 @@ static int receive_exception(plcConn *conn, plcMessage **mExc) {
 }
 
 static int receive_result(plcConn *conn, plcMessage **mRes) {
-    int  i, j;
+    uint32 i, j;
     int  res = 0;
     char exc;
     plcMsgResult *ret;
@@ -862,41 +868,49 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
     *mRes = pmalloc(sizeof(plcMsgResult));
     ret = (plcMsgResult*) *mRes;
     ret->msgtype = MT_RESULT;
-    res |= receive_int32(conn, &ret->rows);
-    res |= receive_int32(conn, &ret->cols);
+    res |= receive_uint32(conn, &ret->rows);
+    res |= receive_uint32(conn, &ret->cols);
     debug_print(WARNING, "Receiving function result of %d rows and %d columns",
             ret->rows, ret->cols);
 
     if (res == 0) {
-        if (ret->rows > 0 && ret->cols > 0) {
-            ret->data = pmalloc((ret->rows) * sizeof(rawdata*));
-        } else {
-            ret->data  = NULL;
-            ret->types = NULL;
-        }
+		ret->data  = NULL;
+		ret->types = NULL;
+		ret->names = NULL;
 
-        /* Read column names and column types of result set */
-        debug_print(WARNING, "Receiving types and names of %d columns", ret->cols);
-        ret->types = pmalloc(ret->cols * sizeof(plcType));
-        ret->names = pmalloc(ret->cols * sizeof(*ret->names));
-        for (i = 0; i < ret->cols; i++) {
-             res |= receive_type(conn, &ret->types[i]);
-             res |= receive_cstring(conn, &ret->names[i]);
-             debug_print(WARNING, "Column '%s' with type '%d'", ret->names[i], (int)ret->types[i].type);
-        }
+		/* Receive data, if ret->cols == 0, it is update/delete/insert, no data need to receive */
+		debug_print(WARNING, "Receiving types and names of %d rows * %d columns", ret->rows, ret->cols);
+		/* receive columns types and names */
+        if (ret->cols > 0) {
+			ret->types = pmalloc(ret->cols * sizeof(plcType));
+			ret->names = pmalloc(ret->cols * sizeof(*ret->names));
 
-        /* Receive data, if ret->cols == 0, it is update/delete/insert, no data need to receive */
-        for (i = 0; i < ret->rows && res == 0 && ret->cols != 0; i++) {
-            if (ret->cols > 0) {
-                ret->data[i] = pmalloc((ret->cols) * sizeof(*ret->data[i]));
-                for (j = 0; j < ret->cols; j++) {
-                    debug_print(WARNING, "Receiving row %d column %d", i, j);
-                    res |= receive_raw_object(conn, &ret->types[j], &ret->data[i][j]);
-                }
-            } else {
-                ret->data[i] = NULL;
-            }
-        }
+			for (i = 0; i < ret->cols && res == 0; i++) {
+				res |= receive_type(conn, &ret->types[i]);
+				res |= receive_cstring(conn, &ret->names[i]);
+				debug_print(WARNING, "Column '%s' with type '%d'", ret->names[i], (int)ret->types[i].type);
+			}
+			for (; i < ret->cols; i++) {
+				ret->types[i].typeName = NULL;
+				ret->types[i].nSubTypes = 0;
+				ret->names[i] = NULL;
+			}
+
+			/* receive rows */
+			if (ret->rows > 0) {
+				ret->data = pmalloc(ret->rows * sizeof(rawdata*));
+
+				for (i = 0; i < ret->rows && res == 0; i++) {
+					ret->data[i] = pmalloc(ret->cols * sizeof(*ret->data[i]));
+					for (j = 0; j < ret->cols; j++) {
+						debug_print(WARNING, "Receiving row %d column %d", i, j);
+						res |= receive_raw_object(conn, &ret->types[j], &ret->data[i][j]);
+					}
+				}
+				for (; i < ret->rows; i++)
+					ret->data[i] = NULL;
+			}
+		}
     }
 
     res |= receive_char(conn, &exc);
@@ -964,8 +978,8 @@ static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
 }
 
 static int receive_sql_unprepare(plcConn *conn, plcMessage **mStmt) {
-    int res = 0;
-	long long pplan;
+    int        res = 0;
+	int64      pplan;
     plcMsgSQL *ret;
 
     *mStmt       = pmalloc(sizeof(plcMsgSQL));
@@ -983,7 +997,7 @@ static int receive_sql_unprepare(plcConn *conn, plcMessage **mStmt) {
 
 static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 	int res = 0;
-	long long pplan;
+	int64      pplan;
 	plcMsgSQL *ret;
 	int i;
 
@@ -1030,7 +1044,7 @@ static int receive_ping(plcConn *conn, plcMessage **mPing) {
     debug_print(WARNING, "Receiving ping message");
     res |= receive_cstring(conn, &ping);
     if (res == 0) {
-        if (strncmp(ping, "ping", 4) != 0) {
+        if (strncmp(ping, "ping", strlen("ping")) != 0) {
             debug_print(WARNING, "Ping message receive failed");
             res = -1;
         }
@@ -1065,9 +1079,15 @@ static int receive_call(plcConn *conn, plcMessage **mCall) {
     res |= receive_int32(conn, &req->nargs);
     debug_print(WARNING, "Function number of arguments is '%d'", req->nargs);
     if (res == 0) {
-        req->args = pmalloc(sizeof(*req->args) * req->nargs);
-        for (i = 0; i < req->nargs && res == 0; i++)
-            res |= receive_argument(conn, &req->args[i]);
+		req->args = NULL;
+		if (req->nargs > 0) {
+			req->args = pmalloc(sizeof(*req->args) * req->nargs);
+			for (i = 0; i < req->nargs && res == 0; i++)
+				res |= receive_argument(conn, &req->args[i]);
+		} else if (req->nargs < 0) {
+			lprintf(LOG, "function call with nargs (%d) < 0", req->nargs);
+			return -1;
+		}
     }
     debug_print(WARNING, "Finished call request for function '%s'", req->proc.name);
     return res;

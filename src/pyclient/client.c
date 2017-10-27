@@ -26,12 +26,13 @@ int main(int argc UNUSED, char **argv UNUSED) {
     plcConn* conn;
     int      status;
 
-    assert(sizeof(char) == 1);
-    assert(sizeof(short) == 2);
-    assert(sizeof(int) == 4);
-    assert(sizeof(long long) == 8);
-    assert(sizeof(float) == 4);
-    assert(sizeof(double) == 8);
+    assert(sizeof(int8) == 1);
+    assert(sizeof(int16) == 2);
+    assert(sizeof(int32) == 4);
+    assert(sizeof(uint32) == 4);
+    assert(sizeof(int64) == 8);
+    assert(sizeof(float4) == 4);
+    assert(sizeof(float8) == 8);
 
 	set_signal_handlers();
 

@@ -12,8 +12,8 @@
 
 typedef struct plcMsgResult {
     base_message_content;
-    int           rows;
-    int           cols;
+    uint32        rows;
+    uint32        cols;
     plcType      *types;
     char        **names;
     rawdata     **data;

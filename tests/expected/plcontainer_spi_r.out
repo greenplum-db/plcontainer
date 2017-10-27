@@ -376,6 +376,7 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'name'
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into t5r values('bob0', 8.5, 16.5);
 insert into t5r values('bob1', 8.75, 16.75);
+-- execute
 CREATE OR REPLACE FUNCTION rspi_insert_exec() RETURNS integer AS $$
 # container: plc_r_shared
 rv <- pg.spi.exec("insert into t5r values('bob2', 8.5, 16.5)");
@@ -438,6 +439,7 @@ SELECT * FROM t5r order by name;
  bob1 |   8.75 |  16.75
 (2 rows)
 
+-- executep
 CREATE OR REPLACE FUNCTION rspi_insert_execp() RETURNS integer AS $$
 # container: plc_r_shared
 plan <- pg.spi.prepare("insert into t5r values('bob3', 8.5, 16.5)");
@@ -455,6 +457,20 @@ $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION rspi_delete_execp() RETURNS integer AS $$
 # container: plc_r_shared
 plan <- pg.spi.prepare("delete from t5r where name='bob3'");
+rv <- pg.spi.execp(plan);
+plr.notice(rv)
+return (0)
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION rspi_select_notexist_execp() RETURNS integer AS $$
+# container: plc_r_shared
+plan <- pg.spi.prepare("select * from t5r where name='bob_notexist'");
+rv <- pg.spi.execp(plan);
+plr.notice(rv)
+return (0)
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION rspi_delete_notexist_execp() RETURNS integer AS $$
+# container: plc_r_shared
+plan <- pg.spi.prepare("delete from t5r where name='bob_notexist'");
 rv <- pg.spi.execp(plan);
 plr.notice(rv)
 return (0)
@@ -503,6 +519,23 @@ SELECT * FROM t5r order by name;
  bob1 |   8.75 |  16.75
 (2 rows)
 
+-- Test returns 0 row X N cols.
+select rspi_select_notexist_execp();
+NOTICE:  NA
+ rspi_select_notexist_execp 
+----------------------------
+                          0
+(1 row)
+
+-- Test returns 0 row X 0 col.
+select rspi_delete_notexist_execp();
+NOTICE:  0
+ rspi_delete_notexist_execp 
+----------------------------
+                          0
+(1 row)
+
+-- insert returns N rows * 0 col, so there is no need of additional case.
 insert into t5r values(null, 18.75, 26.75);
 insert into t5r values(null, 28.75, 26.75);
 insert into t5r values(null, 38.75, 26.75);

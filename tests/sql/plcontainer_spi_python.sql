@@ -278,6 +278,7 @@ create table t5 (name text, score1 float4, score2 float8);
 insert into t5 values('bob0', 8.5, 16.5);
 insert into t5 values('bob1', 8.75, 16.75);
 
+-- execute
 CREATE OR REPLACE FUNCTION pyspi_insert_exec() RETURNS integer AS $$
 # container: plc_python_shared
 rv = plpy.execute("insert into t5 values('bob2', 8.5, 16.5)");
@@ -309,6 +310,7 @@ SELECT * FROM t5 order by name;
 SELECT pyspi_delete_exec();
 SELECT * FROM t5 order by name;
 
+-- executep
 CREATE OR REPLACE FUNCTION pyspi_insert_execp() RETURNS integer AS $$
 # container: plc_python_shared
 plan = plpy.prepare("insert into t5 values('bob3', 8.5, 16.5)");
@@ -336,6 +338,24 @@ for r in rv:
 return 0
 $$ LANGUAGE plcontainer;
 
+CREATE OR REPLACE FUNCTION pyspi_select_notexist_execp() RETURNS integer AS $$
+# container: plc_python_shared
+plan = plpy.prepare("select * from t5 where name='bob_notexist'");
+rv = plpy.execute(plan);
+for r in rv:
+	plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION pyspi_delete_notexist_execp() RETURNS integer AS $$
+# container: plc_python_shared
+plan = plpy.prepare("delete from t5 where name='bob3_notexist'");
+rv = plpy.execute(plan);
+for r in rv:
+	plpy.notice(str(r))
+return 0
+$$ LANGUAGE plcontainer;
+
 
 SELECT pyspi_insert_execp();
 SELECT * FROM t5 order by name;
@@ -343,5 +363,11 @@ SELECT pyspi_update_execp();
 SELECT * FROM t5 order by name;
 SELECT pyspi_delete_execp();
 SELECT * FROM t5 order by name;
+
+-- Test returns 0 row X N cols.
+select pyspi_select_notexist_execp();
+-- Test returns 0 row X 0 col.
+select pyspi_delete_notexist_execp();
+-- insert returns N rows * 0 col, so there is no need of additional case.
 
 DROP TABLE t5;

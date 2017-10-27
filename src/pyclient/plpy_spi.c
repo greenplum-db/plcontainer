@@ -109,7 +109,7 @@ typedef struct PLyPlanObject
 	PyObject_HEAD
 	void        *pplan; /* Store the pointer to plan on the QE side. */
 	plcDatatype *argtypes;
-	int          nargs;
+	int32        nargs;
 } PLyPlanObject;
 
 #define is_PLyPlanObject(x) ((x)->ob_type == &PLy_PlanType)
@@ -319,7 +319,8 @@ PLy_spi_execute(PyObject *self UNUSED, PyObject *args)
 
 static PyObject *
 PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
-    int           i, j, nargs;
+    uint32        i, j;
+	int32         nargs;
     plcMsgSQL     msg;
     plcMsgResult *resp;
     PyObject     *pyresult,
@@ -353,7 +354,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 		args = pmalloc(sizeof(plcArgument) * nargs);
 	else
 		args = NULL;
-	for (j = 0; j < nargs; j++)
+	for (j = 0; j < (uint32) nargs; j++)
 	{
 		PyObject    *elem;
 		args[j].type.type = py_plan->argtypes[j];
@@ -398,7 +399,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 	 * For INSERT, UPDATE and DELETE no column will be returned,
 	 * so if resp->cols > 0, it must be SELECT statment.
 	 */
-	if (resp->rows >= 0 &&  resp->cols == 0) {
+	if (resp->cols == 0) {
 		debug_print(WARNING, "the rows is %d", resp->rows);
 		PyObject *nrows = PyInt_FromLong((long) resp->rows);
 		/* only need one element for number of rows are processed*/
@@ -513,7 +514,7 @@ PLy_subtransaction_exit(PyObject *self UNUSED, PyObject *args UNUSED)
 
 static PyObject *
 PLy_spi_execute_query(char *query, long limit) {
-    int           i, j;
+    uint32        i, j;
     plcMsgSQL     msg;
     plcMsgResult *resp;
     PyObject     *pyresult,
@@ -539,7 +540,7 @@ PLy_spi_execute_query(char *query, long limit) {
 	 * For INSERT, UPDATE and DELETE no column will be returned,
 	 * so if resp->cols > 0, it must be SELECT statment.
 	 */
-	if (resp->rows >= 0 && resp->cols == 0) {
+	if (resp->cols == 0) {
 		debug_print(WARNING, "the rows is %d", resp->rows);
 		PyObject *nrows = PyInt_FromLong((long) resp->rows);
 		/* only need one element for number of rows are processed*/
