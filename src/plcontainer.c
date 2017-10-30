@@ -293,6 +293,8 @@ static void plcontainer_process_log(plcMsgLog *log) {
     ereport(log->level,
             (errcode(ERRCODE_NO_DATA),
                     errmsg("%s", log->message)));
+	if (log->message != NULL)
+		pfree(log->message);
 }
 
 /*
