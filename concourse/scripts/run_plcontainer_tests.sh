@@ -24,6 +24,6 @@ plcontainer configure -f plcontainer_src/tests/plcontainer_configuration_test.xm
 gpstop -arf ; \
 psql -d postgres -f /usr/local/greenplum-db-devel/share/postgresql/plcontainer/plcontainer_install.sql; \
 pushd plcontainer_src/tests; \
-make tests; \
+timeout -s 9 60m make tests; \
 popd; \
 \""
