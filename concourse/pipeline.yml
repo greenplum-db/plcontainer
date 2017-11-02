@@ -215,7 +215,7 @@ resources:
     region_name: {{aws-region}}
     access_key_id: {{bucket-access-key-id}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: release/gpdb5/plr/plr-2.3.0-gp5-rhel6-x86_64.gppkg
+    versioned_file: build/gpdb5/plr/centos6/plr-devel.gppkg
 - name: plr_gpdb5_centos7_build
   type: s3
   source:
@@ -223,7 +223,7 @@ resources:
     region_name: {{aws-region}}
     access_key_id: {{bucket-access-key-id}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: release/gpdb5/plr/plr-2.3.0-gp5-rhel7-x86_64.gppkg
+    versioned_file: build/gpdb5/plr/centos7/plr-devel.gppkg
 
 - name: openssl
   type: s3
@@ -250,7 +250,7 @@ resources:
     bucket: {{pl-bucket-name}}
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: release/gpdb5/data-science/DataSciencePython-1.0.0-gp5-rhel7-x86_64.gppkg
+    versioned_file: build/gpdb5/data-science/DataSciencePython-dev-gp5-rhel7-x86_64.gppkg
 
 - name: r-gp5
   type: s3
@@ -268,7 +268,7 @@ resources:
     bucket: {{pl-bucket-name}}
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: release/gpdb5/data-science/DataScienceR-1.0.0-gp5-rhel7-x86_64.gppkg
+    versioned_file: build/gpdb5/data-science/DataScienceR-dev-gp5-rhel7-x86_64.gppkg
 
 - name: plcontainer_docker_image_centos_python
   type: s3
