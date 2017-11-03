@@ -1,0 +1,68 @@
+-- do the parallel tests
+select py_memory_allocate(128);
+ py_memory_allocate 
+--------------------
+                  1
+(1 row)
+
+select py_memory_allocate(128);
+ py_memory_allocate 
+--------------------
+                  1
+(1 row)
+
+select py_memory_allocate(128);
+ py_memory_allocate 
+--------------------
+                  1
+(1 row)
+
+select py_memory_allocate(128);
+ py_memory_allocate 
+--------------------
+                  1
+(1 row)
+
+select py_memory_allocate(128);
+ py_memory_allocate 
+--------------------
+                  1
+(1 row)
+
+select py_memory_allocate_return(128);
+ py_memory_allocate_return 
+---------------------------
+ {"Allocate:128MB as a"}
+(1 row)
+
+select py_memory_allocate_return(128);
+ py_memory_allocate_return 
+---------------------------
+ {"Allocate:128MB as a"}
+(1 row)
+
+select py_memory_allocate_return(128);
+ py_memory_allocate_return 
+---------------------------
+ {"Allocate:128MB as a"}
+(1 row)
+
+select py_memory_allocate_return(128);
+ py_memory_allocate_return 
+---------------------------
+ {"Allocate:128MB as a"}
+(1 row)
+
+select py_memory_allocate_return(128);
+ py_memory_allocate_return 
+---------------------------
+ {"Allocate:128MB as a"}
+(1 row)
+
+-- test on QE
+select count(py_memory_allocate(num)) from NUM_OF_LOOPS_PY;
+ count 
+-------
+   256
+(1 row)
+

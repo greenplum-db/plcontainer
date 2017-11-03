@@ -1,0 +1,19 @@
+# setup
+test: install
+test: schema
+
+# set R and Python function
+test: function_r function_r_gpdb5 function_python function_python_gpdb5
+
+# test PL/Container normal function
+test: test_r test_python test_r_gpdb5 test_python_gpdb5 spi_r spi_python
+test: test_r_error test_python_error 
+test: exception_python
+test: faultinject_python
+test: faultinject2_python
+test: function_python_network
+
+# PL/Container  memory test
+test: memory_consuming_python memory_consuming_r
+test: memory_parallel_python memory_parallel_r
+test: memory_parallel_python_1 memory_parallel_python_2 memory_parallel_python_3 memory_parallel_python_4 memory_parallel_python_5 memory_parallel_r_1 memory_parallel_r_2 memory_parallel_r_3 memory_parallel_r_4 memory_parallel_r_5
