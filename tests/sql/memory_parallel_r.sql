@@ -5,5 +5,5 @@ return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE TABLE NUM_OF_LOOPS_R (num int, aux int);
-INSERT into NUM_OF_LOOPS_R (num, aux) select 20 as num, aux from generate_series(1, 128) as aux;
-INSERT into NUM_OF_LOOPS_R (num, aux) select 19 as num, aux from generate_series(1, 128) as aux;
+INSERT into NUM_OF_LOOPS_R (num, aux) select 10 as num, aux from generate_series(1, 128) as aux;
+INSERT into NUM_OF_LOOPS_R (num, aux) select 9 as num, aux from generate_series(1, 128) as aux;

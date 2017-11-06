@@ -15,5 +15,5 @@ return ['Allocate:' + str(num) + 'MB as ' + allocate[1024*1024*(num/2)]]
 $$ LANGUAGE plcontainer;
 
 CREATE TABLE NUM_OF_LOOPS_PY (num int, aux int);
-INSERT into NUM_OF_LOOPS_PY (num, aux) select 128 as num, aux from generate_series(1, 128) as aux;
-INSERT into NUM_OF_LOOPS_PY (num, aux) select 127 as num, aux from generate_series(1, 128) as aux;
+INSERT into NUM_OF_LOOPS_PY (num, aux) select 64 as num, aux from generate_series(1, 128) as aux;
+INSERT into NUM_OF_LOOPS_PY (num, aux) select 63 as num, aux from generate_series(1, 128) as aux;

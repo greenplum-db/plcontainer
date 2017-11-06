@@ -19,7 +19,8 @@ SELECT gp_inject_fault('plcontainer_after_recv_request', 'reset', 2);
 SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
 
 -- start_ignore
--- QE crash after start a container 
+-- QE crash after start a container
+show optimizer;
 SELECT gp_inject_fault('plcontainer_before_container_started', 'fatal', 2);
 SELECT pyint(i) from tbl;
 SELECT pg_sleep(5);

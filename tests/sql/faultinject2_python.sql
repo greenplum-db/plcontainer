@@ -14,6 +14,7 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 1);
 -- After QE log(error, ...), related docker containers should be deleted.
 -- Test on entrydb.
 -- start_ignore
+show optimizer;
 SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
 SELECT pyint(0);
 SELECT pg_sleep(5);

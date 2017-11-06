@@ -104,15 +104,9 @@ select py_memory_allocate_return_c(256);
  {"Allocate:256MB as a"}
 (1 row)
 
-select py_memory_allocate_return_c(512);
+select py_memory_allocate_return_c(500);
  py_memory_allocate_return_c 
 -----------------------------
- {"Allocate:512MB as a"}
-(1 row)
-
-select py_memory_allocate_return_c(1024);
- py_memory_allocate_return_c 
------------------------------
- {"Allocate:1024MB as a"}
+ {"Allocate:500MB as a"}
 (1 row)
 

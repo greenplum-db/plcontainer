@@ -28,5 +28,4 @@ select py_memory_allocate_return_c(64);
 select py_memory_allocate_return_c(128);
 select py_memory_allocate_return_c(256);
 select py_memory_allocate_return_c(256);
-select py_memory_allocate_return_c(512);
-select py_memory_allocate_return_c(1024);
+select py_memory_allocate_return_c(500);
