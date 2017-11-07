@@ -72,12 +72,12 @@ uninstall: uninstall-lib
 	rm -rf '$(PLCONTAINERDIR)'
 
 .PHONY: install-extra
-install-extra:
+install-extra: installdirs
 	# Management
 	$(INSTALL_PROGRAM) '$(MGMTDIR)/bin/plcontainer'                      '$(DESTDIR)$(bindir)/plcontainer'
-	$(INSTALL_DATA)    '$(MGMTDIR)/config/plcontainer_configuration.xml' '$(PLCONTAINERDIR)'
-	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_install.sql'          '$(PLCONTAINERDIR)'
-	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_uninstall.sql'        '$(PLCONTAINERDIR)'
+	$(INSTALL_DATA)    '$(MGMTDIR)/config/plcontainer_configuration.xml' '$(PLCONTAINERDIR)/'
+	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_install.sql'          '$(PLCONTAINERDIR)/'
+	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_uninstall.sql'        '$(PLCONTAINERDIR)/'
 
 .PHONY: install-clients
 install-clients: clients
