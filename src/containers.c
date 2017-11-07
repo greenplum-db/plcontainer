@@ -15,6 +15,8 @@
 #include <sys/wait.h>
 
 #include "postgres.h"
+#include "storage/ipc.h"
+#include "libpq/pqsignal.h"
 #include "utils/ps_status.h"
 #include "utils/faultinjector.h"
 
@@ -39,6 +41,7 @@ typedef struct {
 
 static int containers_init = 0;
 static container_t *containers;
+static char *uds_fn_for_cleanup;
 
 static void init_containers();
 static inline bool is_whitespace (const char c);
@@ -90,6 +93,12 @@ static void cleanup4uds(char *uds_fn) {
 	}
 }
 
+static void cleanup_atexit_callback() {
+	cleanup4uds(uds_fn_for_cleanup);
+	free(uds_fn_for_cleanup);
+	uds_fn_for_cleanup = NULL;
+}
+
 static void cleanup(char *dockerid, char *uds_fn) {
     pid_t pid = 0;
 
@@ -100,69 +109,103 @@ static void cleanup(char *dockerid, char *uds_fn) {
         int     res;
 		int     wait_time = 0;
 
+		/* We do not need proc_exit() callbacks of QE. Besides, we
+		 * do not use on_proc_exit() + proc_exit() since it may invovle
+		 * some QE related operations, * e.g. Quit interconnect, etc, which
+		 * might finally damage QE. Instead we register our own onexit
+		 * callback functions and invoke them via exit().
+		 * Finally we might better invoke a pg/gp independent program
+		 * to manage the lifecycles of backends.
+		 */
+		on_exit_reset();
+		uds_fn_for_cleanup = strdup(uds_fn);
+#ifdef HAVE_ATEXIT
+		atexit(cleanup_atexit_callback);
+#else
+		on_exit(cleanup_atexit_callback, NUL);
+#endif
+
+		pqsignal(SIGHUP, SIG_IGN);
+		pqsignal(SIGINT, SIG_IGN);
+		pqsignal(SIGTERM, SIG_IGN);
+		pqsignal(SIGQUIT, SIG_IGN);
+		pqsignal(SIGALRM, SIG_IGN);
+		pqsignal(SIGPIPE, SIG_IGN);
+		pqsignal(SIGUSR1, SIG_IGN);
+		pqsignal(SIGUSR2, SIG_IGN);
+		pqsignal(SIGCHLD, SIG_IGN);
+		pqsignal(SIGCONT, SIG_IGN);
+
         /* Setting application name to let the system know it is us */
         sprintf(psname, "plcontainer cleaner %s", dockerid);
         set_ps_display(psname, false);
 
-        while(1) {
+		res = 0;
+		PG_TRY();
+		{
+			while(1) {
 
-			/* Check parent pid whether parent process is alive or not.
-			 * If not, kill and remove the container.
-			 */
-			elog(DEBUG1, "Checking whether QE is alive");
-			res = qe_is_alive(dockerid);
-			elog(DEBUG1, "QE alive status: %d", res);
+				/* Check parent pid whether parent process is alive or not.
+				 * If not, kill and remove the container.
+				 */
+				elog(DEBUG1, "Checking whether QE is alive");
+				res = qe_is_alive(dockerid);
+				elog(DEBUG1, "QE alive status: %d", res);
 
-            /* res = 0, backend exited, backend has been successfully deleted.
-             * res < 0, backend exited, backend delete API reports an error.
-			 * res > 0, backend still alive, check container status.
-             */
-            if (res == 0) {
-                break;
-            } else if (res < 0) {
-				wait_time += CONATINER_WAIT_TIMEOUT;
-				elog(LOG, "Failed to delete backend in cleanup process (%s). "
-					"Will retry later.", api_error_message);
-			} else {
-				wait_time = 0;
+				/* res = 0, backend exited, backend has been successfully deleted.
+				 * res < 0, backend exited, backend delete API reports an error.
+				 * res > 0, backend still alive, check container status.
+				 */
+				if (res == 0) {
+					break;
+				} else if (res < 0) {
+					wait_time += CONATINER_WAIT_TIMEOUT;
+					elog(LOG, "Failed to delete backend in cleanup process (%s). "
+						"Will retry later.", api_error_message);
+				} else {
+					wait_time = 0;
+				}
+
+				/* Check whether conatiner is exited or not.
+				 * If exited, remove the container.
+				 */
+				elog(DEBUG1, "Checking whether the backend is alive");
+				res = container_is_alive(dockerid);
+				elog(DEBUG1, "Backend alive status: %d", res);
+
+				/* res = 0, container exited, container has been successfully deleted.
+				 * res < 0, docker API reports an error.
+				 * res > 0, container still alive, sleep and check again.
+				 */
+				if (res == 0) {
+					break;
+				} else if (res < 0) {
+					wait_time += CONATINER_WAIT_TIMEOUT;
+					elog(LOG, "Failed to inspect or delete backend in cleanup process (%s). "
+						"Will retry later.", api_error_message);
+				} else {
+					wait_time = 0;
+				}
+
+				if (wait_time >= CONATINER_CONNECT_TIMEOUT) {
+					 elog(LOG, "Docker API fails for %d seconds. cleanup "
+						"process will exit.", wait_time);
+					 break;
+				}
+
+				/* Check every CONATINER_WAIT_TIMEOUT*/
+				sleep(CONATINER_WAIT_TIMEOUT);
 			}
 
-			/* Check whether conatiner is exited or not.
-			 * If exited, remove the container.
-			 */
-			elog(DEBUG1, "Checking whether the backend is alive");
-			res = container_is_alive(dockerid);
-			elog(DEBUG1, "Backend alive status: %d", res);
-
-            /* res = 0, container exited, container has been successfully deleted.
-             * res < 0, docker API reports an error.
-			 * res > 0, container still alive, sleep and check again.
-             */
-            if (res == 0) {
-                break;
-            } else if (res < 0) {
-				wait_time += CONATINER_WAIT_TIMEOUT;
-				elog(LOG, "Failed to inspect or delete backend in cleanup process (%s). "
-					"Will retry later.", api_error_message);
-			} else {
-				wait_time = 0;
-			}
-
-			if (wait_time >= CONATINER_CONNECT_TIMEOUT) {
-				 elog(WARNING, "Docker API fails for %d seconds. cleanup "
-				 	"process will exit.", wait_time);
-				 break;
-			}
-
-            /* Check every CONATINER_WAIT_TIMEOUT*/
-	        sleep(CONATINER_WAIT_TIMEOUT);
-        }
-
-        cleanup4uds(uds_fn);
-        if (res < 0){
-            _exit(1);
-        }
-        _exit(0);
+			exit(res);
+		}
+		PG_CATCH();
+		{
+			/* Do not rethrow to previous stack context. exit immediately.*/
+			elog(LOG, "cleanup process should not reach here. Anyway it should not hurt. Exiting.");
+			exit(-1);
+		}
+		PG_END_TRY();
     } else if (pid < 0) {
         elog(ERROR, "Could not create cleanup process for container %s", dockerid);
     }
