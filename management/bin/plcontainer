@@ -80,7 +80,7 @@ def parseargs():
             sys.exit(1)
         
         if not (options.name and options.image and options.language):
-            logger.error('container name, language and image must provied')
+            logger.error('container name, language and image must provide')
             sys.exit(1)
         if not (options.language.lower() == "r" or options.language.lower() == "python"):
             logger.error('language must be r or python')
@@ -89,7 +89,7 @@ def parseargs():
     elif options.subparser_name == "configure":
         if options.name:
             if not (options.image and options.language):
-                logger.error('container name, language and image must provied')
+                logger.error('container name, language and image must provide')
                 sys.exit(1)
             if not (options.language.lower() == "r" or options.language.lower() == "python"):
                 logger.error('language must be r or python')
@@ -218,7 +218,7 @@ def update_xml_container(container, elements):
             isNew = False
             image = container.find('image')
             image.text = elements['image']
-            command = container.find('language')
+            command = container.find('command')
             if elements['language'] == "r":
                 command.text = "/clientdir/rclient.sh"
             else:
