@@ -74,6 +74,8 @@ static int send_ping(plcConn *conn);
 static int send_call(plcConn *conn, plcMsgCallreq *call);
 static int send_result(plcConn *conn, plcMsgResult *res);
 static int send_log(plcConn *conn, plcMsgLog *mlog);
+static int send_subtransaction(plcConn *conn, plcMsgSubtransaction *mSub);
+static int send_subtransaction_result(plcConn *conn, plcMsgSubtransactionResult *mSubr);
 static int send_exception(plcConn *conn, plcMsgError *err);
 static int send_sql(plcConn *conn, plcMsgSQL *msg);
 static int send_sql_statement(plcConn *conn, plcMsgSQL *msg);
@@ -88,6 +90,8 @@ static int receive_log(plcConn *conn, plcMessage **mLog);
 static int receive_sql_statement(plcConn *conn, plcMessage **mStmt);
 static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt);
 static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt);
+static int receive_subtransaction(plcConn *conn, plcMessage **mSub);
+static int receive_subtransaction_result(plcConn *conn, plcMessage **mSubr);
 static int receive_argument(plcConn *conn, plcArgument *arg);
 static int receive_ping(plcConn *conn, plcMessage **mPing);
 static int receive_call(plcConn *conn, plcMessage **mCall);
@@ -120,6 +124,12 @@ int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
         case MT_RAW:
 			res = send_rawmsg(conn, (plcMsgRaw*)msg);
             break;
+        case MT_SUBTRAN_RESULT:
+        		res = send_subtransaction_result(conn, (plcMsgSubtransactionResult*)msg);
+        		break;
+        case MT_SUBTRANSACTION:
+        		res = send_subtransaction(conn, (plcMsgSubtransaction*)msg);
+        		break;
         default:
             lprintf(ERROR, "UNHANDLED MESSAGE: '%c'", msg->msgtype);
             res = -1;
@@ -174,6 +184,16 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask) {
 					goto unexpected_type;
                 res = receive_rawmsg(conn, msg);
                 break;
+            case MT_SUBTRANSACTION:
+            		if (!(mask & MT_SUBTRANSACTION_BIT))
+            			goto unexpected_type;
+            		res = receive_subtransaction(conn, msg);
+            		break;
+            case MT_SUBTRAN_RESULT:
+				if (!(mask & MT_SUBTRAN_RESULT_BIT))
+					goto unexpected_type;
+				res = receive_subtransaction_result(conn, msg);
+				break;
             default:
 				lprintf(ERROR, "unknown message type: %d / '%c'", (int) cType, cType);
 				*msg = NULL;
@@ -738,6 +758,33 @@ static int send_log(plcConn *conn, plcMsgLog *mlog) {
     return res;
 }
 
+
+static int send_subtransaction_result(plcConn *conn, plcMsgSubtransactionResult *mSubr) {
+    int res = 0;
+
+    debug_print(WARNING, "Sending subtransaction result message to client");
+    res |= message_start(conn, MT_SUBTRAN_RESULT);
+    res |= send_int16(conn, mSubr->result);
+
+    res |= message_end(conn);
+    debug_print(WARNING, "Finished sending subtransaction result message");
+    return res;
+}
+
+static int send_subtransaction(plcConn *conn, plcMsgSubtransaction *mSub) {
+    int res = 0;
+
+    debug_print(WARNING, "Sending subtransaction result message to backend");
+    res |= message_start(conn, MT_SUBTRANSACTION);
+    res |= send_char(conn, mSub->action);
+    res |= send_char(conn, mSub->type);
+
+    res |= message_end(conn);
+    debug_print(WARNING, "Finished sending subtransaction message");
+    return res;
+}
+
+
 static int send_exception(plcConn *conn, plcMsgError *err) {
     int res = 0;
     res |= message_start(conn, MT_EXCEPTION);
@@ -994,7 +1041,33 @@ static int receive_sql_unprepare(plcConn *conn, plcMessage **mStmt) {
     debug_print(WARNING, "Received spi unprepare request and returned %d", res);
     return res;
 }
+static int receive_subtransaction(plcConn *conn, plcMessage **mSub) {
+	int res= 0;
+	plcMsgSubtransaction *ret;
+	*mSub       = pmalloc(sizeof(plcMsgSubtransaction));
+	ret          = (plcMsgSubtransaction*) *mSub;
+	ret->msgtype = MT_SUBTRANSACTION;
 
+	debug_print(WARNING, "Receiving subtransaction request");
+	res |= receive_char(conn, &ret->action);
+	res |= receive_char(conn, &ret->type);
+	debug_print(WARNING, "Received subtransaction request and returned %d", res);
+
+	return res;
+}
+static int receive_subtransaction_result(plcConn *conn, plcMessage **mSubr) {
+	int res= 0;
+	plcMsgSubtransactionResult *ret;
+	*mSubr       = pmalloc(sizeof(plcMsgSubtransactionResult));
+	ret          = (plcMsgSubtransactionResult*) *mSubr;
+	ret->msgtype = MT_SUBTRAN_RESULT;
+
+	debug_print(WARNING, "Receiving subtransaction result");
+	res |= receive_int16(conn, &ret->result);
+	debug_print(WARNING, "Received subtransaction result and returned %d", res);
+
+	return res;
+}
 static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 	int res = 0;
 	int64      pplan;

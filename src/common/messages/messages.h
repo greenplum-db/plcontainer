@@ -18,5 +18,6 @@
 #include "message_log.h"
 #include "message_data.h"
 #include "message_ping.h"
+#include "message_subtransaction.h"
 
 #endif /* PLC_MESSAGES_H */

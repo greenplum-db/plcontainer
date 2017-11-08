@@ -8,23 +8,23 @@
 
 /* Postgres Headers */
 #include "postgres.h"
-#include "fmgr.h"
+#include "commands/trigger.h"
+#include "executor/spi.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-#include "executor/spi.h"
-#include "commands/trigger.h"
 #include "utils/faultinjector.h"
 
 /* PLContainer Headers */
 #include "common/comm_channel.h"
 #include "common/messages/messages.h"
-#include "message_fns.h"
-#include "sqlhandler.h"
 #include "containers.h"
-#include "plc_typeio.h"
-#include "plc_configuration.h"
+#include "message_fns.h"
 #include "plcontainer.h"
-
+#include "plc_configuration.h"
+#include "plcontainer_common.h"
+#include "plc_typeio.h"
+#include "sqlhandler.h"
+#include "subtransaction_handler.h"
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
 #endif
@@ -40,8 +40,27 @@ static Datum plcontainer_process_result(FunctionCallInfo  fcinfo,
 static void plcontainer_process_exception(plcMsgError *msg);
 static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo);
 static void plcontainer_process_log(plcMsgLog *log);
-
 static bool DeleteBackendsWhenError;
+void _PG_init(void);
+
+/*
+ * _PG_init() - library load-time initialization
+ *
+ * DO NOT make this static nor change its name!
+ */
+void
+_PG_init(void)
+{
+	/* Be sure we do initialization only once (should be redundant now) */
+	static bool inited = false;
+
+	if (inited)
+		return;
+
+	explicit_subtransactions = NIL;
+	inited = true;
+}
+
 
 Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
     Datum datumreturn = (Datum) 0;
@@ -172,83 +191,104 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo  fcinfo,
     int            message_type;
     plcMsgCallreq *req    = NULL;
     plcProcResult *result = NULL;
+    int volatile save_subxact_level = list_length(explicit_subtransactions);
 
-    req = plcontainer_create_call(fcinfo, pinfo);
-    name = parse_container_meta(req->proc.src);
-    conn = find_container(name);
-    if (conn == NULL) {
-        plcContainerConf *conf = NULL;
-        conf = plc_get_container_config(name);
-        if (conf == NULL) {
-            elog(ERROR, "Container '%s' is not defined in configuration "
-                        "and cannot be used", name);
-        } else {
-			/* TODO: We could only remove this backend when error occurs. */
-			DeleteBackendsWhenError = true;
-			conn = start_backend(conf);
-			DeleteBackendsWhenError = false;
-        }
+    PG_TRY();
+    {
+        req = plcontainer_create_call(fcinfo, pinfo);
+      	name = parse_container_meta(req->proc.src);
+      	conn = find_container(name);
+      	if (conn == NULL) {
+      		plcContainerConf *conf = NULL;
+      		conf = plc_get_container_config(name);
+      		if (conf == NULL) {
+      			elog(ERROR, "Container '%s' is not defined in configuration "
+      						"and cannot be used", name);
+      		} else {
+      			/* TODO: We could only remove this backend when error occurs. */
+      			DeleteBackendsWhenError = true;
+      			conn = start_backend(conf);
+      			DeleteBackendsWhenError = false;
+      		}
+      	}
+      	pfree(name);
+
+      	DeleteBackendsWhenError = true;
+      	if (conn != NULL) {
+      		int res;
+
+      		res  = plcontainer_channel_send(conn, (plcMessage*)req);
+      		SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_send_request");
+
+      		if (res < 0) {
+      			elog(ERROR, "Error sending data to the client: %d. "
+      				"Maybe retry later.", res);
+      			return NULL;
+      		}
+      		free_callreq(req, true, true);
+
+      		while (1) {
+      			plcMessage *answer;
+
+      			res = plcontainer_channel_receive(conn, &answer, MT_ALL_BITS);
+      			SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_recv_request");
+      			if (res < 0) {
+      				elog(ERROR, "Error receiving data from the client: %d. "
+      					"Maybe retry later.", res);
+      				break;
+      			}
+
+      			message_type = answer->msgtype;
+      			switch (message_type) {
+      				case MT_RESULT:
+      					result = (plcProcResult*)pmalloc(sizeof(plcProcResult));
+      					result->resmsg = (plcMsgResult*)answer;
+      					result->resrow = 0;
+      					break;
+      				case MT_EXCEPTION:
+      					/* For exception, no need to delete containers. */
+      					DeleteBackendsWhenError = false;
+      					plcontainer_process_exception((plcMsgError*)answer);
+      					break;
+      				case MT_SQL:
+      					plcontainer_process_sql((plcMsgSQL*)answer, conn, pinfo);
+      					break;
+      				case MT_LOG:
+      					plcontainer_process_log((plcMsgLog*)answer);
+      					break;
+      				case MT_SUBTRANSACTION:
+      					plcontainer_process_subtransaction((plcMsgSubtransaction*)answer, conn);
+      					break;
+      				default:
+      					elog(ERROR, "Received unhandled message with type id %d "
+      					"from client", message_type);
+      					break;
+      			}
+
+      			if (message_type != MT_SQL && message_type != MT_LOG && message_type != MT_SUBTRANSACTION)
+      				break;
+      		}
+      	} else {
+      		/* If conn == NULL, it should have longjump-ed earlier. */
+      		elog(ERROR, "Could not create or connect to container.");
+      	}
+  		/*
+  		 * Since plpy will only let you close subtransactions that you
+  		 * started, you cannot *unnest* subtransactions, only *nest* them
+  		 * without closing.
+  		 */
+  		Assert(list_length(explicit_subtransactions) >= save_subxact_level);
+  	}
+    PG_CATCH();
+    {
+       plcontainer_abort_open_subtransactions(save_subxact_level);
+       PG_RE_THROW();
     }
-    pfree(name);
+    PG_END_TRY();
 
-	DeleteBackendsWhenError = true;
-    if (conn != NULL) {
-        int res;
+    plcontainer_abort_open_subtransactions(save_subxact_level);
 
-		res  = plcontainer_channel_send(conn, (plcMessage*)req);
-        SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_send_request");
-
-		if (res < 0) {
-			elog(ERROR, "Error sending data to the client: %d. "
-				"Maybe retry later.", res);
-			return NULL;
-		}
-        free_callreq(req, true, true);
-
-        while (1) {
-            plcMessage *answer;
-
-            res = plcontainer_channel_receive(conn, &answer, MT_ALL_BITS);
-            SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_recv_request");
-            if (res < 0) {
-                elog(ERROR, "Error receiving data from the client: %d. "
-					"Maybe retry later.", res);
-                break;
-            }
-
-            message_type = answer->msgtype;
-            switch (message_type) {
-                case MT_RESULT:
-                    result = (plcProcResult*)pmalloc(sizeof(plcProcResult));
-                    result->resmsg = (plcMsgResult*)answer;
-                    result->resrow = 0;
-                    break;
-                case MT_EXCEPTION:
-					/* For exception, no need to delete containers. */
-					DeleteBackendsWhenError = false;
-					plcontainer_process_exception((plcMsgError*)answer);
-					break;
-                case MT_SQL:
-                    plcontainer_process_sql((plcMsgSQL*)answer, conn, pinfo);
-                    break;
-                case MT_LOG:
-                    plcontainer_process_log((plcMsgLog*)answer);
-                    break;
-                default:
-                    elog(ERROR, "Received unhandled message with type id %d "
-                    "from client", message_type);
-                    break;
-            }
-
-            if (message_type != MT_SQL && message_type != MT_LOG)
-                break;
-        }
-    } else {
-		/* If conn == NULL, it should have longjump-ed earlier. */
-		elog(ERROR, "Could not create or connect to container.");
-	}
-
-	DeleteBackendsWhenError = false;
+    DeleteBackendsWhenError = false;
     return result;
 }
 

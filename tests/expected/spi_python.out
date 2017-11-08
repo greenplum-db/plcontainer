@@ -382,7 +382,7 @@ LINE 1: select datname from pg_database_invalid
                             ^
 QUERY:  select datname from pg_database_invalid
 select pyspi_bad_limit();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:308)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:311)
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 
@@ -394,9 +394,9 @@ select pyspi_bad_limit_pexecute();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  second argument of plpy.prepare must be a sequence
 select pyspi_bad_limit_immutable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:308)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:311)
 select pyspi_bad_limit_stable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:308)
+ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:311)
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 
@@ -582,3 +582,150 @@ NOTICE:  0
 
 -- insert returns N rows * 0 col, so there is no need of additional case.
 DROP TABLE t5;
+CREATE FUNCTION transfer_funds_exception() RETURNS void AS $$
+#container: plc_python_shared
+try:
+    with plpy.subtransaction():
+        plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
+        raise Exception('Here is the exception')
+        plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
+except:
+    result = "error transferring funds"
+else:
+    result = "funds transferred correctly"
+plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
+plpy.execute(plan, [result])
+$$ LANGUAGE plcontainer;
+CREATE FUNCTION transfer_funds_normal() RETURNS void AS $$
+#container: plc_python_shared
+try:
+    with plpy.subtransaction():
+        plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
+        plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
+except:
+    result = "error transferring funds"
+else:
+    result = "funds transferred correctly"
+plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
+plpy.execute(plan, [result])
+$$ LANGUAGE plcontainer;
+CREATE FUNCTION transfer_funds_without_subtrans() RETURNS void AS $$
+#container: plc_python_shared
+try:
+        plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
+        raise Exception('I know Python!')
+        plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
+except:
+    result = "error transferring funds"
+else:
+    result = "funds transferred correctly"
+plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
+plpy.execute(plan, [result])
+$$ LANGUAGE plcontainer;
+CREATE FUNCTION transfer_funds_oldapi() RETURNS void AS $$
+#container: plc_python_shared
+subxact = plpy.subtransaction()
+subxact.enter()
+try:
+        plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
+        plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
+except:
+    result = "error transferring funds"
+    import sys
+    subxact.exit(*sys.exc_info())
+    raise
+else:
+    result = "funds transferred correctly"
+    subxact.exit(None, None, None)
+plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
+plpy.execute(plan, [result])
+$$ LANGUAGE plcontainer;
+create table accounts(account_name text, balance int);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'account_name' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+insert into accounts values('joe',100),('mary',100);
+create table operations(result text);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'result' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+select transfer_funds_exception();
+ transfer_funds_exception 
+--------------------------
+ 
+(1 row)
+
+select account_name, balance from accounts order by account_name;
+ account_name | balance 
+--------------+---------
+ joe          |     100
+ mary         |     100
+(2 rows)
+
+select * from operations order by result;
+          result          
+--------------------------
+ error transferring funds
+(1 row)
+
+select transfer_funds_normal();
+ transfer_funds_normal 
+-----------------------
+ 
+(1 row)
+
+select account_name, balance from accounts order by account_name;
+ account_name | balance 
+--------------+---------
+ joe          |       0
+ mary         |     200
+(2 rows)
+
+select * from operations order by result;
+           result            
+-----------------------------
+ error transferring funds
+ funds transferred correctly
+(2 rows)
+
+select transfer_funds_oldapi();
+ transfer_funds_oldapi 
+-----------------------
+ 
+(1 row)
+
+select account_name, balance from accounts order by account_name;
+ account_name | balance 
+--------------+---------
+ joe          |    -100
+ mary         |     300
+(2 rows)
+
+select * from operations order by result;
+           result            
+-----------------------------
+ error transferring funds
+ funds transferred correctly
+ funds transferred correctly
+(3 rows)
+
+select transfer_funds_without_subtrans();
+ transfer_funds_without_subtrans 
+---------------------------------
+ 
+(1 row)
+
+select account_name, balance from accounts order by account_name;
+ account_name | balance 
+--------------+---------
+ joe          |    -200
+ mary         |     300
+(2 rows)
+
+select * from operations order by result;
+           result            
+-----------------------------
+ error transferring funds
+ error transferring funds
+ funds transferred correctly
+ funds transferred correctly
+(4 rows)
+

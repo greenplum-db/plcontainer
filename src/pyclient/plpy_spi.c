@@ -15,6 +15,8 @@
 
 #include <Python.h>
 
+#define dgettext(d,x) (x)
+
 typedef struct PLySubtransactionObject
 {
 	PyObject_HEAD
@@ -33,6 +35,12 @@ static PyObject *PLy_subtransaction_exit(PyObject *, PyObject *);
 static char PLy_subtransaction_doc[] = {
 	"PostgreSQL subtransaction context manager"
 };
+
+
+/* call PyErr_SetString with a vprint interface and translation support */
+static void
+PLy_exception_set(PyObject *, const char *,...)
+__attribute__((format(printf, 2, 3)));
 
 
 static PyMethodDef PLy_subtransaction_methods[] = {
@@ -262,12 +270,12 @@ PLy_plan_status(PyObject *self __attribute__((unused)), PyObject *args)
 #pragma GCC diagnostic pop /* It is supported since gcc 4.6. */
 #endif
 
-static plcMsgResult *receive_from_frontend() {
+static plcMessage *receive_from_frontend() {
     plcMessage *resp = NULL;
     int         res = 0;
     plcConn    *conn = plcconn_global;
 
-    res = plcontainer_channel_receive(conn, &resp, MT_CALLREQ_BIT|MT_RESULT_BIT);
+    res = plcontainer_channel_receive(conn, &resp, MT_CALLREQ_BIT|MT_RESULT_BIT|MT_SUBTRAN_RESULT_BIT);
     if (res < 0) {
         raise_execution_error("Error receiving data from the frontend, %d", res);
         return NULL;
@@ -280,12 +288,14 @@ static plcMsgResult *receive_from_frontend() {
             return receive_from_frontend();
         case MT_RESULT:
             break;
+        case MT_SUBTRAN_RESULT:
+        		break;
         default:
             raise_execution_error("Client cannot process message type %c.\n"
 								  "Should never reach here.", resp->msgtype);
             return NULL;
     }
-    return (plcMsgResult*)resp;
+    return (plcMessage*)resp;
 }
 
 /* execute(query="select * from foo", limit=5)
@@ -389,7 +399,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
     plcontainer_channel_send(conn, (plcMessage*) &msg);
 	free_arguments(args, nargs, false, false);
 
-    resp = receive_from_frontend();
+    resp = (plcMsgResult*)receive_from_frontend();
     if (resp == NULL) {
         raise_execution_error("Error receiving data from frontend");
         return NULL;
@@ -487,7 +497,8 @@ PLy_subtransaction_new(void)
 	return (PyObject *) ob;
 }
 
-/* Python requires a dealloc function to be defined */
+/* Python requires a dealloc function to be defined
+ */
 static void
 PLy_subtransaction_dealloc(PyObject *subxact UNUSED)
 {
@@ -496,19 +507,150 @@ PLy_subtransaction_dealloc(PyObject *subxact UNUSED)
 
 /*
  * TODO: send the message and execute PLy_subtransaction_enter on QE
+ *
+ * subxact.__enter__() or subxact.enter()
+ *
+ * Start an explicit subtransaction.  SPI calls within an explicit
+ * subtransaction will not start another one, so you can atomically
+ * execute many SPI calls and still get a controllable exception if
+ * one of them fails.
  */
 static PyObject *
-PLy_subtransaction_enter(PyObject *self UNUSED, PyObject *unused UNUSED)
+PLy_subtransaction_enter(PyObject *self, PyObject *unused UNUSED)
 {
+	lprintf(DEBUG1, "Subtransaction enter");
+	plcConn      *conn = plcconn_global;
+	PLySubtransactionObject *subxact = (PLySubtransactionObject *) self;
+
+	if (subxact->started)
+	{
+		PLy_exception_set(PyExc_ValueError, "this subtransaction has already been entered");
+		return NULL;
+	}
+
+	if (subxact->exited)
+	{
+		PLy_exception_set(PyExc_ValueError, "this subtransaction has already been exited");
+		return NULL;
+	}
+
+	subxact->started = true;
+
+	plcMsgSubtransaction     msg;
+	plcMsgSubtransactionResult *resp;
+
+
+	msg.msgtype   = MT_SUBTRANSACTION;
+	msg.action = 'n'; /*set operation to enter 'n' */
+	msg.type = 'n';    /* for enter, type is useless */
+
+	plcontainer_channel_send(conn, (plcMessage*) &msg);
+	resp = (plcMsgSubtransactionResult*)receive_from_frontend();
+	if (resp == NULL) {
+		raise_execution_error("Error receiving data from frontend");
+		return NULL;
+	}
+	switch (resp->result) {
+		case SUCCESS:
+			break;
+		case NO_SUBTRANSACTION_ERROR:
+		case RELEASE_SUBTRANSACTION_ERROR:
+			raise_execution_error("Error receiving subtransaction exit error message");
+			break;
+		case CREATE_SUBTRANSACTION_ERROR:
+			raise_execution_error("Error when beginning subtransaction on QE side");
+			break;
+		default:
+			raise_execution_error("Error receiving unknown error message");
+			break;
+	}
+
+	Py_INCREF(self);
 	return self;
+
 }
 
 /*
  * TODO: send the message and execute PLy_subtransaction_exit on QE
+ *
+ * subxact.__exit__(exc_type, exc, tb) or subxact.exit(exc_type, exc, tb)
+ *
+ * Exit an explicit subtransaction. exc_type is an exception type, exc
+ * is the exception object, tb is the traceback.  If exc_type is None,
+ * commit the subtransactiony, if not abort it.
+ *
+ * The method signature is chosen to allow subtransaction objects to
+ * be used as context managers as described in
+ * <http://www.python.org/dev/peps/pep-0343/>.
+ *
  */
 static PyObject *
-PLy_subtransaction_exit(PyObject *self UNUSED, PyObject *args UNUSED)
+PLy_subtransaction_exit(PyObject *self, PyObject *args)
 {
+	lprintf(DEBUG1, "Subtransaction exit");
+	plcConn    *conn = plcconn_global;
+	PyObject   *type;
+	PyObject   *value;
+	PyObject   *traceback;
+	PLySubtransactionObject *subxact = (PLySubtransactionObject *) self;
+
+	if (!PyArg_ParseTuple(args, "OOO", &type, &value, &traceback))
+		return NULL;
+
+	if (!subxact->started)
+	{
+		PLy_exception_set(PyExc_ValueError, "this subtransaction has not been entered");
+		return NULL;
+	}
+
+	if (subxact->exited)
+	{
+		PLy_exception_set(PyExc_ValueError, "this subtransaction has already been exited");
+		return NULL;
+	}
+
+	subxact->exited = true;
+
+
+
+	plcMsgSubtransaction     msg;
+	plcMsgSubtransactionResult *resp;
+
+
+	msg.msgtype   = MT_SUBTRANSACTION;
+	msg.action = 'x'; /*set operation to enter 'n' */
+	if (type != Py_None)
+	{
+		msg.type = 'n';
+	}
+	else
+	{
+		msg.type = 'e';
+	}
+	plcontainer_channel_send(conn, (plcMessage*) &msg);
+	resp = (plcMsgSubtransactionResult*)receive_from_frontend();
+	if (resp == NULL) {
+		raise_execution_error("Error receiving data from frontend");
+		return NULL;
+	}
+	switch (resp->result) {
+		case SUCCESS:
+			break;
+		case NO_SUBTRANSACTION_ERROR:
+			raise_execution_error("Error there is no opened transaction");
+			break;
+		case RELEASE_SUBTRANSACTION_ERROR:
+			raise_execution_error("Error when releasing subtransaction on QE side");
+			break;
+		case CREATE_SUBTRANSACTION_ERROR:
+			raise_execution_error("Error receiving subtransaction enter error message");
+			break;
+		default:
+			raise_execution_error("Error receiving unknown error message");
+			break;
+	}
+
+	Py_INCREF(Py_None);
 	return Py_None;
 }
 
@@ -530,7 +672,7 @@ PLy_spi_execute_query(char *query, long limit) {
 
     plcontainer_channel_send(conn, (plcMessage*) &msg);
 
-    resp = receive_from_frontend();
+    resp = (plcMsgResult *)receive_from_frontend();
     if (resp == NULL) {
         raise_execution_error("Error receiving data from frontend");
         return NULL;
@@ -722,4 +864,20 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 
 	free_rawmsg((plcMsgRaw *) resp);
     return (PyObject *) py_plan;
+}
+
+/*
+ * Call PyErr_SetString with a vprint interface and translation support
+ */
+static void
+PLy_exception_set(PyObject *exc, const char *fmt,...)
+{
+	char		buf[1024];
+	va_list		ap;
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), dgettext(TEXTDOMAIN, fmt), ap);
+	va_end(ap);
+
+	PyErr_SetString(exc, buf);
 }

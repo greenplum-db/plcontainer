@@ -18,6 +18,7 @@
 #include "common/comm_connectivity.h"
 #include "plc_typeio.h"
 #include "sqlhandler.h"
+#include "plcontainer_common.h"
 
 static plcMsgResult *create_sql_result(bool isSelect);
 static plcMsgRaw *create_prepare_result(int64 pplan, plcDatatype *type, int nargs);
@@ -224,6 +225,8 @@ void init_pplan_slots(plcConn *conn)
 	conn->head_free_pplan_slot = 0;
 }
 
+
+
 plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo) {
     int           i, retval;
     plcMessage   *result = NULL;
@@ -376,3 +379,5 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 
     return result;
 }
+
+
