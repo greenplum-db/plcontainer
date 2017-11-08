@@ -132,37 +132,7 @@ void plcontainer_process_subtransaction(plcMsgSubtransaction *msg, plcConn *conn
 	}
 }
 
-
 /*
- * Abort lingering subtransactions that have been explicitly started
- * by plpy.subtransaction().start() and not properly closed.
- */
-static void
-plcontainer_abort_open_subtransactions(int save_subxact_level)
-{
-	Assert(save_subxact_level >= 0);
-	elog(LOG, "explicit_subtransactions length %d:%d", list_length(explicit_subtransactions), save_subxact_level);
-	while (list_length(explicit_subtransactions) > save_subxact_level)
-	{
-		PLySubtransactionData *subtransactiondata;
-
-		Assert(explicit_subtransactions != NIL);
-
-		ereport(WARNING,
-				(errmsg("forcibly aborting a subtransaction that has not been exited")));
-
-		RollbackAndReleaseCurrentSubTransaction();
-
-		SPI_restore_connection();
-
-		subtransactiondata = (PLySubtransactionData *) linitial(explicit_subtransactions);
-		explicit_subtransactions = list_delete_first(explicit_subtransactions);
-
-		MemoryContextSwitchTo(subtransactiondata->oldcontext);
-		CurrentResourceOwner = subtransactiondata->oldowner;
-		plcontainer_free(subtransactiondata);
-	}
-}/*
  * Abort lingering subtransactions that have been explicitly started
  * by plpy.subtransaction().start() and not properly closed.
  */
