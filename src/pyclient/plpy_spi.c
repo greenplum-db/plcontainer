@@ -561,7 +561,7 @@ PLy_subtransaction_enter(PyObject *self, PyObject *unused UNUSED)
 			raise_execution_error("Error when beginning subtransaction on QE side");
 			break;
 		default:
-			raise_execution_error("Error receiving unknown error message");
+			raise_execution_error("Error receiving unknown subtransaction error message");
 			break;
 	}
 
@@ -637,7 +637,7 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args)
 		case SUCCESS:
 			break;
 		case NO_SUBTRANSACTION_ERROR:
-			raise_execution_error("Error there is no opened transaction");
+			raise_execution_error("Error there is no opened subtransaction");
 			break;
 		case RELEASE_SUBTRANSACTION_ERROR:
 			raise_execution_error("Error when releasing subtransaction on QE side");
@@ -646,7 +646,7 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args)
 			raise_execution_error("Error receiving subtransaction enter error message");
 			break;
 		default:
-			raise_execution_error("Error receiving unknown error message");
+			raise_execution_error("Error receiving unknown subtransaction error message");
 			break;
 	}
 
