@@ -14,43 +14,42 @@ ifeq ($(PYTHON),)
 endif
 
 # Python build flags
-#PYTHON_CFLAGS = $(shell pkg-config --cflags python-2.7)
-#PYTHON_LDFLAGS = $(shell pkg-config --libs python-2.7)
-PYTHON_CFLAGS = $(shell $(PYTHON) -c "from distutils import sysconfig; import sys; sys.stdout.write('-I' + sysconfig.get_python_inc())")
-PYTHON_LDFLAGS = $(shell $(PYTHON) -c "from distutils import sysconfig; import sys; sys.stdout.write(sysconfig.get_config_var('BLDLIBRARY'))")
+#CLIENT_CFLAGS = $(shell pkg-config --cflags python-2.7)
+#CLIENT_LDFLAGS = $(shell pkg-config --libs python-2.7)
+CLIENT_CFLAGS = $(shell $(PYTHON) -c "from distutils import sysconfig; import sys; sys.stdout.write('-I' + sysconfig.get_python_inc())")
+CLIENT_LDFLAGS = $(shell $(PYTHON) -c "from distutils import sysconfig; import sys; sys.stdout.write(sysconfig.get_config_var('BLDLIBRARY'))")
 
 override CFLAGS += $(CUSTOMFLAGS) -I$(PLCONTAINER_DIR)/ -DCOMM_STANDALONE -Wall -Wextra -Werror
 
+CLIENT = pyclient
 common_src = $(shell find $(PLCONTAINER_DIR)/common -name "*.c")
-common_objs = $(foreach src,$(common_src),$(subst .c,.o,$(src)))
-python_src = $(shell find . -name "*.c")
-python_objs = $(foreach src,$(python_src),$(subst .c,.o,$(src)))
-
-PYTHONCLIENT=pyclient
+common_objs = $(foreach src,$(common_src),$(subst .c,.$(CLIENT).o,$(src)))
+client_src = $(shell find . -name "*.c")
+client_objs = $(foreach src,$(client_src),$(subst .c,.o,$(src)))
 
 .PHONY: default
-default: clean all
+default: all
 
-.PHONY: clean_common
-clean_common:
-	rm -f $(common_objs)
+$(common_objs): %.$(CLIENT).o: %.c
+	$(CC) $(CLIENT_CFLAGS) $(CFLAGS) -c -o $@ $^
 
-%.o: %.c
-	$(CC) $(PYTHON_CFLAGS) $(CFLAGS) -c -o $@ $^
+$(client_objs): %.o: %.c
+	$(CC) $(CLIENT_CFLAGS) $(CFLAGS) -c -o $@ $^
 
-client: $(python_objs) $(common_objs)
-	LIBRARY_PATH=$(LD_LIBRARY_PATH) $(CC) -o $(PYTHONCLIENT) $^ $(PYTHON_LDFLAGS) $(LIBS)
-	cp $(PYTHONCLIENT) bin
+build: $(client_objs) $(common_objs)
+	LIBRARY_PATH=$(LD_LIBRARY_PATH) $(CC) -o $(CLIENT) $^ $(CLIENT_LDFLAGS) $(LIBS)
+	cp $(CLIENT) bin
 
 .PHONY: debug
 debug: CUSTOMFLAGS = -D_DEBUG_CLIENT -g -O0
-debug: client
+debug: build
 
 .PHONY: all
 all: CUSTOMFLAGS = -O3 -g
-all: client
+all: build
 
-clean: clean_common
+distclean clean:
+	rm -f $(common_objs)
 	rm -f *.o
-	rm -f $(PYTHONCLIENT)
-	rm -f bin/$(PYTHONCLIENT)
+	rm -f $(CLIENT)
+	rm -f bin/$(CLIENT)

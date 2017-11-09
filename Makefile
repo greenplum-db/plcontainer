@@ -56,9 +56,10 @@ ifeq ($(RHEL_MAJOR_OS), 6)
   override CFLAGS +=  -DDOCKER_API_LOW
 endif
 
-all: all-lib
+all: all-lib build-clients
+	@echo "Build PL/Container Done."
 
-install: installdirs install-lib install-extra install-clients
+install: all installdirs install-lib install-extra install-clients
 
 clean: clean-clients
 
@@ -66,21 +67,19 @@ installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 	$(MKDIR_P) '$(PLCONTAINERDIR)'
 
-.PHONY: uninstall
 uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(bindir)/plcontainer'
 	rm -rf '$(PLCONTAINERDIR)'
 
 .PHONY: install-extra
 install-extra: installdirs
-	# Management
 	$(INSTALL_PROGRAM) '$(MGMTDIR)/bin/plcontainer'                      '$(DESTDIR)$(bindir)/plcontainer'
 	$(INSTALL_DATA)    '$(MGMTDIR)/config/plcontainer_configuration.xml' '$(PLCONTAINERDIR)/'
 	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_install.sql'          '$(PLCONTAINERDIR)/'
 	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_uninstall.sql'        '$(PLCONTAINERDIR)/'
 
 .PHONY: install-clients
-install-clients: clients
+install-clients: build-clients
 	$(MKDIR_P) '$(DESTDIR)$(bindir)/pyclient'
 	$(MKDIR_P) '$(DESTDIR)$(bindir)/rclient'
 	cp $(PYCLIENTDIR)/* $(DESTDIR)$(bindir)/pyclient
@@ -90,20 +89,10 @@ install-clients: clients
 installcheck:
 	$(MAKE) -C tests tests
 
-.PHONY: clients
-clients:
-	CC='$(CC)' CFLAGS='$(CFLAGS)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/pyclient
-	CC='$(CC)' CFLAGS='$(CFLAGS)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/rclient
-	touch $(COMMONDIR)/clients_timestamp
-
-all-lib: check-clients-make
-	@echo "Build PL/Container Done."
-
-.PHONY: check-clients-make
-check-clients-make:
-	if [ -f $(COMMONDIR)/clients_timestamp ]; then \
-	    rm $(COMMONDIR)/clients_timestamp && $(MAKE) clean ; \
-	fi
+.PHONY: build-clients
+build-clients:
+	CC='$(CC)' CFLAGS='$(CFLAGS)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/pyclient all
+	CC='$(CC)' CFLAGS='$(CFLAGS)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/rclient all
 
 .PHONY: clean-clients
 clean-clients:
