@@ -45,18 +45,19 @@ def parseargs():
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     subparsers = parser.add_subparsers(dest='subparser_name')
 
-    config_parser = subparsers.add_parser('configure', help="Configure container image name and " +
-                        "location as well as shared folder, need to combine with -n and -i, usage: -n IMAGENAME -i IMAGEURL")
+    config_parser = subparsers.add_parser('configure', help="Configure plcontainer name and " +
+                        "image location as well as shared folder, need to combine with -n, -i and -l, usage: -n plcontainer_name -i docker_image_url" +
+                        " -l plcontainer_language_type")
     install_parser = subparsers.add_parser('install', help='Install a dokcer image and add it to configuration file')
 
     # for configure
-    config_parser.add_argument("-n", "--name", dest="name", help="Configure container image name")
-    config_parser.add_argument("-i", "--image", dest="image", help="Configure container image location and tags, the image must be installed." + 
-            "if not installed, please run plcontainer install first to install the container image")
+    config_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer name")
+    config_parser.add_argument("-i", "--image", dest="image", help="Configure plcontainer image location and tags (location:tag), the image must be installed." + 
+            " If not installed, please run plcontainer install first to install the docker image")
     config_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")
     config_parser.add_argument("-l", "--language", dest="language", help="Configure plcontainer language type, currently support python and r")
-    config_parser.add_argument("-y","--yes", action='store_true', help="Default yes to confirm step in configure.")
+    config_parser.add_argument("-y","--yes", action='store_true', help="Default yes to confirm step in configure")
     single_option = config_parser.add_mutually_exclusive_group()
     single_option.add_argument("-e", "--editor", dest="editor", help="Editor to use")
     single_option.add_argument('--reset', action='store_true', help='Reset the configuration file to default')
@@ -65,11 +66,11 @@ def parseargs():
     single_option.add_argument("-f", "--file", dest="conf_file", help="Overwrite plcontainer configurations with xml file directly")
 
     # for install
-    install_parser.add_argument("-i", "--image", dest="image", help="Configure container image location, support Tar.gz image" +
+    install_parser.add_argument("-i", "--image", dest="image", help="Load docker image from given location, support either tar.gz" +
                         " file or docker image url")
-    install_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer type name")
-    install_parser.add_argument("-c", "--imagename", dest="imagename", help="Configure container image name")
-    install_parser.add_argument("-l", "--language", dest="language", help="Configure plcontainer language type, currently support python and r")
+    install_parser.add_argument("-n", "--name", dest="name", help="Set plcontainer name")
+    install_parser.add_argument("-c", "--imagename", dest="imagename", help="Set docker image location:tag in configuration file (CentOS/Redhat 6 only)")
+    install_parser.add_argument("-l", "--language", dest="language", help="Set plcontainer language type, currently support python and r")
     install_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
                         " format: HOST:CONTAINER:[rw|ro]")                    
 
