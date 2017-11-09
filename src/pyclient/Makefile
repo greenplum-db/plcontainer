@@ -29,28 +29,32 @@ python_objs = $(foreach src,$(python_src),$(subst .c,.o,$(src)))
 PYTHONCLIENT=pyclient
 
 .PHONY: default
-default: clean all
-
-.PHONY: clean_common
-clean_common:
-	rm -f $(common_objs)
+default: all
 
 %.o: %.c
 	$(CC) $(PYTHON_CFLAGS) $(CFLAGS) -c -o $@ $^
 
-client: $(python_objs) $(common_objs)
+build: $(python_objs) $(common_objs)
 	LIBRARY_PATH=$(LD_LIBRARY_PATH) $(CC) -o $(PYTHONCLIENT) $^ $(PYTHON_LDFLAGS) $(LIBS)
 	cp $(PYTHONCLIENT) bin
 
+PHONY: clean_common
+clean_common:
+	rm -f $(common_objs)
+
 .PHONY: debug
-debug: CUSTOMFLAGS = -D_DEBUG_CLIENT -g -O0
-debug: client
+debug:
+	$(MAKE) clean_common
+	CUSTOMFLAGS='-D_DEBUG_CLIENT -g -O0' $(MAKE) build
+	$(MAKE) clean_common
 
 .PHONY: all
-all: CUSTOMFLAGS = -O3 -g
-all: client
+all:
+	$(MAKE) clean_common
+	CUSTOMFLAGS='-O3 -g' $(MAKE) build
+	$(MAKE) clean_common
 
-clean: clean_common
+distclean clean: clean_common
 	rm -f *.o
 	rm -f $(PYTHONCLIENT)
 	rm -f bin/$(PYTHONCLIENT)

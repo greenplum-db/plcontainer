@@ -62,6 +62,10 @@ static void sigsegv_handler() {
 	size = backtrace(stack, 100);
 	lprintf(LOG, "signal SIGSEGV was captured. Stack:");
 	fflush(stdout);
+
+	/* Do not call backtrace_symbols() since it calls malloc(3) which is not
+	 * async signal safe.
+	 */
 	backtrace_symbols_fd(stack, size, STDERR_FILENO);
 	fflush(stderr);
 
