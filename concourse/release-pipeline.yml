@@ -130,7 +130,7 @@ resources:
   source:
     branch: master
     uri: https://github.com/greenplum-db/plcontainer.git
-    tag_filter: 0.*
+    tag_filter: 1.*
 
 - name: gpdb_src
   type: git
