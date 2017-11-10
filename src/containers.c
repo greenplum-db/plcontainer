@@ -117,7 +117,12 @@ static void cleanup(char *dockerid, char *uds_fn) {
 		 * to manage the lifecycles of backends.
 		 */
 		on_exit_reset();
-		uds_fn_for_cleanup = strdup(uds_fn);
+		if (uds_fn != NULL) {
+			uds_fn_for_cleanup = strdup(uds_fn);
+		} else {
+			/* use network TCP/IP, no need to clean up uds file */
+			uds_fn_for_cleanup = NULL;
+		}
 #ifdef HAVE_ATEXIT
 		atexit(cleanup_atexit_callback);
 #else
