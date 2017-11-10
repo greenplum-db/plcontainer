@@ -10,6 +10,7 @@
 #include "postgres.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
+#include "storage/ipc.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/faultinjector.h"
@@ -43,6 +44,12 @@ static void plcontainer_process_log(plcMsgLog *log);
 static bool DeleteBackendsWhenError;
 void _PG_init(void);
 
+static void
+plcontainer_cleanup(pg_attribute_unused() int code, pg_attribute_unused() Datum arg)
+{
+	delete_containers();
+}
+
 /*
  * _PG_init() - library load-time initialization
  *
@@ -53,14 +60,13 @@ _PG_init(void)
 {
 	/* Be sure we do initialization only once (should be redundant now) */
 	static bool inited = false;
-
 	if (inited)
 		return;
 
+	on_proc_exit(plcontainer_cleanup, 0);
 	explicit_subtransactions = NIL;
 	inited = true;
 }
-
 
 Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
     Datum datumreturn = (Datum) 0;

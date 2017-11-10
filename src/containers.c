@@ -83,7 +83,6 @@ static int container_is_alive(char *dockerid) {
     }
 
     return return_code;
-
 }
 
 static void cleanup4uds(char *uds_fn) {
@@ -197,12 +196,16 @@ static void cleanup(char *dockerid, char *uds_fn) {
 				sleep(CONATINER_WAIT_TIMEOUT);
 			}
 
+			elog(LOG, "cleanup process deleted docker %s with return value %d",
+				 dockerid, res);
 			exit(res);
 		}
 		PG_CATCH();
 		{
 			/* Do not rethrow to previous stack context. exit immediately.*/
-			elog(LOG, "cleanup process should not reach here. Anyway it should not hurt. Exiting.");
+			elog(LOG, "cleanup process should not reach here. Anyway it should"
+				 " not hurt. Exiting. dockerid is %s. You might need to check"
+				 " and delete the container manually ('docker rm').", dockerid);
 			exit(-1);
 		}
 		PG_END_TRY();
