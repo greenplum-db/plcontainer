@@ -40,10 +40,6 @@ build: $(client_objs) $(common_objs)
 	LIBRARY_PATH=$(LD_LIBRARY_PATH) $(CC) -o $(CLIENT) $^ $(CLIENT_LDFLAGS) $(LIBS)
 	cp $(CLIENT) bin
 
-.PHONY: debug
-debug: CUSTOMFLAGS = -D_DEBUG_CLIENT -g -O0
-debug: build
-
 .PHONY: all
 all: CUSTOMFLAGS = -O3 -g
 all: build
