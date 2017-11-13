@@ -80,6 +80,8 @@ static int container_is_alive(char *dockerid) {
         } else if (strcmp("unexist", element) == 0) {
             return_code = 0;
         }
+
+		pfree(element);
     }
 
     return return_code;
@@ -240,12 +242,28 @@ static void set_container_conn(plcConn *conn) {
 	containers[slot].conn     = conn;
 }
 
-static void insert_container(char *image, char *dockerid, int slot) {
+static void insert_container_slot(char *image, char *dockerid, int slot) {
 	containers[slot].name     = plc_top_strdup(image);
 	containers[slot].dockerid = NULL;
 	if (dockerid != NULL) {
 		containers[slot].dockerid = plc_top_strdup(dockerid);
 	}
+	return;
+}
+
+static void delete_container_slot(int slot) {
+	if (containers[slot].name != NULL) {
+		pfree(containers[slot].name);
+		containers[slot].name = NULL;
+	}
+
+	if (containers[slot].dockerid != NULL) {
+		pfree(containers[slot].dockerid);
+		containers[slot].dockerid = NULL;
+	}
+
+	containers[slot].conn = NULL;
+
 	return;
 }
 
@@ -255,7 +273,7 @@ static void init_containers() {
     containers_init = 1;
 }
 
-plcConn *find_container(const char *image) {
+plcConn *get_container_conn(const char *image) {
     size_t i;
     if (containers_init == 0)
         init_containers();
@@ -310,7 +328,7 @@ plcConn *start_backend(plcContainerConf *conf) {
     res = plc_backend_create(conf, &dockerid, container_slot, &uds_dir);
     if (res < 0) {
         elog(ERROR, "%s", api_error_message);
-        return conn;
+        return NULL;
     }
     elog(DEBUG1, "docker created with id %s.", dockerid);
 
@@ -319,12 +337,14 @@ plcConn *start_backend(plcContainerConf *conf) {
 	 * to delete all the containers. We will fill in conn after the connection is
 	 * established.
 	 */
-	insert_container(conf->name, dockerid, container_slot);
+	insert_container_slot(conf->name, dockerid, container_slot);
+	pfree(dockerid);
+	dockerid = containers[container_slot].dockerid;
 
     res = plc_backend_start(dockerid);
     if (res < 0) {
         elog(ERROR, "%s", api_error_message);
-        return conn;
+        return NULL;
     }
 
     time_t rawtime;
@@ -339,9 +359,10 @@ plcConn *start_backend(plcContainerConf *conf) {
 		res = plc_backend_inspect(dockerid, &element, PLC_INSPECT_PORT);
 		if (res < 0) {
 			elog(ERROR, "%s", api_error_message);
-			return conn;
+			return NULL;
 		}
         port = (int) strtol(element, NULL, 10);
+		pfree(element);
 	}
 
 	if (!conf->isNetworkConnection)
@@ -408,7 +429,6 @@ plcConn *start_backend(plcContainerConf *conf) {
         set_container_conn(conn);
     }
 
-    pfree(dockerid);
 	if (uds_fn != NULL)
 		pfree(uds_fn);
 
@@ -423,18 +443,12 @@ void delete_containers() {
             if (containers[i].name != NULL) {
 
                 /* Terminate container process */
-                if (containers[i].dockerid != NULL) {
+                if (containers[i].dockerid != NULL)
                     plc_backend_delete(containers[i].dockerid);
-                    pfree(containers[i].dockerid);
-                }
 
                 plcDisconnect(containers[i].conn);
 
-                /* Set all fields to NULL as part of cleanup */
-                pfree(containers[i].name);
-                containers[i].name = NULL;
-                containers[i].dockerid = NULL;
-                containers[i].conn = NULL;
+				delete_container_slot(i);
             }
         }
     }

@@ -85,10 +85,12 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 
 	res = docker_parse_string_mapping(buf, pmatch, 2, regex);
 
-    len = pmatch[1].rm_eo - pmatch[1].rm_so;
-    *element = palloc(len + 1);
-    memcpy(*element, buf + pmatch[1].rm_so, len);
-    (*element)[len] = '\0';
+	if (res >= 0) {
+		len = pmatch[1].rm_eo - pmatch[1].rm_so;
+		*element = palloc(len + 1);
+		memcpy(*element, buf + pmatch[1].rm_so, len);
+		(*element)[len] = '\0';
+	}
 
     return res;
 }
