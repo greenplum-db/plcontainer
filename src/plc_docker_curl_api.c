@@ -81,17 +81,11 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 
     memset(errbuf, 0, CURL_ERROR_SIZE);
 
-    /* FIXME:
-	 * pay attention to the performance introduced by global init and cleanup
-     * also a new curl handle for each udf is much more waste. need further 
-     * performance optimization.
-     */
-    curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
 
     if (curl) {
         char *fullurl;
-        struct curl_slist *headers = NULL; // init to NULL is important
+        struct curl_slist *headers = NULL;
 
         curl_easy_reset(curl);
 		if (log_min_messages <= DEBUG1)
