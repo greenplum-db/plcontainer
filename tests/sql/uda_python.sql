@@ -14,9 +14,17 @@ $$
    return state_a + state_b
 $$ language plcontainer;
 
+CREATE FUNCTION final_func_sum_cols(state_a numeric)
+RETURNS numeric AS
+$$
+# container: plc_python_shared
+   return state_a*10
+$$ language plcontainer;
+
 CREATE AGGREGATE sum_cols(numeric, numeric) (
 	   SFUNC = sfunc_sum_cols,
 	   PREFUNC = prefunc_sum_cols,
+	   FINALFUNC = final_func_sum_cols,
 	   STYPE = numeric,
 	   INITCOND = 0 
 );
