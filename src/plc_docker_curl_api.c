@@ -153,7 +153,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 			gettimeofday(&end_time, NULL);
 			elapsed_us =
 				((uint64)end_time.tv_sec) * 1000000 + end_time.tv_usec -
-				((uint64)start_time.tv_sec) * 1000000 + start_time.tv_usec;
+				((uint64)start_time.tv_sec) * 1000000 - start_time.tv_usec;
 
 			snprintf(api_error_message, sizeof(api_error_message),
 					"PL/Container libcurl returns code %d, error '%s'", res,
@@ -162,7 +162,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 
 			elog(LOG, "Curl Request with type: %d, url: %s", cType, fullurl);
 			elog(LOG, "Curl Request with http body: %s\n", body);
-			elog(LOG, "Curl Request costs " UINT64_FORMAT "us", elapsed_us);
+			elog(LOG, "Curl Request costs " UINT64_FORMAT "ms", elapsed_us/1000);
 
 			goto cleanup;
         } else {
