@@ -102,6 +102,14 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
         /* Providing a buffer to store errors in */
         curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
 
+		/* FIXME: Need GUCs for timeout parameter settings? */
+
+		/* Setting timeout for connecting. */
+		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
+
+		/* Setting timeout for connecting. */
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
+
         /* Choosing the right request type */
         switch (cType) {
             case PLC_HTTP_GET:
@@ -164,7 +172,6 @@ cleanup:
 				"Failed to start a curl session for unknown reason");
 		buffer->status = -1;
 	}
-    curl_global_cleanup();
 
     return buffer;
 }

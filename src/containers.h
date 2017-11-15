@@ -13,8 +13,7 @@
 #include "common/comm_connectivity.h"
 #include "plc_configuration.h"
 
-//#define CONTAINER_DEBUG
-#define CONTAINER_CONNECT_TIMEOUT_MS 5000
+#define CONTAINER_CONNECT_TIMEOUT_MS 10000
 
 /* currently the declaration format for the container in function is:
  * #container:name
