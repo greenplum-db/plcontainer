@@ -421,7 +421,7 @@ char *get_sharing_options(plcContainerConf *conf, int container_slot, bool *has_
 			/* Create the directory. */
 			if (mkdir(*uds_dir, S_IRWXU) < 0 && errno != EEXIST) {
 				snprintf(api_error_message, sizeof(api_error_message),
-						"PLContainer: Cannot create directory %s: %s",
+						"Cannot create directory %s: %s",
 						*uds_dir, strerror(errno));
 				*has_error = true;
 				return NULL;

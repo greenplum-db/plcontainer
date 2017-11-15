@@ -313,7 +313,7 @@ plcConn *start_backend(plcContainerConf *conf) {
 	char* uds_dir = NULL;
 	int   container_slot;
     int   res = 0;
-	int   wait_status;
+	int   wait_status, _loop_cnt;
 
 	container_slot = find_container_slot();
 
@@ -321,13 +321,20 @@ plcConn *start_backend(plcContainerConf *conf) {
     plc_backend_prepareImplementation(plc_backend_type);
 
     /*
-     *  Here the uds_dir is only used by connection of domain socket type
+     *  Here the uds_dir is only used by connection of domain socket type.
      *  It remains NULL for connection of non domain socket type.
      *
      */
-    res = plc_backend_create(conf, &dockerid, container_slot, &uds_dir);
+	_loop_cnt = 0;
+	while((res = plc_backend_create(conf, &dockerid, container_slot, &uds_dir)) < 0) {
+		if (++_loop_cnt >= 3)
+			break;
+		pg_usleep(2000 * 1000L);
+		elog(LOG, "plc_backend_create() fails. Retrying [%d]", _loop_cnt);
+	}
+
     if (res < 0) {
-        elog(ERROR, "%s", api_error_message);
+        elog(ERROR, "Backend create error: %s", api_error_message);
         return NULL;
     }
     elog(DEBUG1, "docker created with id %s.", dockerid);
@@ -341,9 +348,15 @@ plcConn *start_backend(plcContainerConf *conf) {
 	pfree(dockerid);
 	dockerid = containers[container_slot].dockerid;
 
-    res = plc_backend_start(dockerid);
+	_loop_cnt = 0;
+	while((res = plc_backend_start(dockerid)) < 0) {
+		if (++_loop_cnt >= 3)
+			break;
+		pg_usleep(2000 * 1000L);
+		elog(LOG, "plc_backend_start() fails. Retrying [%d]", _loop_cnt);
+	}
     if (res < 0) {
-        elog(ERROR, "%s", api_error_message);
+        elog(ERROR, "Backend start error: %s", api_error_message);
         return NULL;
     }
 
@@ -358,7 +371,7 @@ plcConn *start_backend(plcContainerConf *conf) {
         char *element = NULL;
 		res = plc_backend_inspect(dockerid, &element, PLC_INSPECT_PORT);
 		if (res < 0) {
-			elog(ERROR, "%s", api_error_message);
+			elog(ERROR, "Backend inspect error: %s", api_error_message);
 			return NULL;
 		}
         port = (int) strtol(element, NULL, 10);
@@ -443,8 +456,15 @@ void delete_containers() {
             if (containers[i].name != NULL) {
 
                 /* Terminate container process */
-                if (containers[i].dockerid != NULL)
-                    plc_backend_delete(containers[i].dockerid);
+                if (containers[i].dockerid != NULL) {
+					int res;
+					int _loop_cnt = 0;
+
+					while ((res = plc_backend_delete(containers[i].dockerid)) < 0 && _loop_cnt++ < 3)
+						pg_usleep(2000 * 1000L);
+					if (res < 0)
+						elog(NOTICE, "Backend delete error: %s", api_error_message);
+				}
 
                 plcDisconnect(containers[i].conn);
 

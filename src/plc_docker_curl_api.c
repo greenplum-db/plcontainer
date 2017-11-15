@@ -108,7 +108,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
 
 		/* Setting timeout for connecting. */
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
 
         /* Choosing the right request type */
         switch (cType) {
