@@ -13,6 +13,7 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "comm_channel.h"
 #include "comm_utils.h"
@@ -20,15 +21,14 @@
 #include "comm_server.h"
 #include "messages/messages.h"
 
-/* For unix domain socket connection only. */
-static char *uds_client_fn;
-
 /*
  * Function binds the socket and starts listening on it: tcp
  */
 static int start_listener_inet() {
     struct sockaddr_in addr;
     int                sock;
+
+	/* FIXME: We might want to downgrade from root to normal user in container.*/
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
@@ -56,11 +56,15 @@ static int start_listener_inet() {
 /*
  * Function binds the socket and starts listening on it: unix domain socket.
  */
-static int start_listener_ipc(char **puds_fn) {
+static int start_listener_ipc() {
     struct sockaddr_un addr;
     int                sock;
 	char              *uds_fn;
 	int                sz;
+	char              *env_str, *endptr;
+	uid_t              srv_uid, clt_uid;
+	gid_t              srv_gid;
+	long               val;
 
 	/* filename: IPC_CLIENT_DIR + '/' + UDS_SHARED_FILE */
 	sz = strlen(IPC_CLIENT_DIR) + 1 + MAX_SHARED_FILE_SZ + 1;
@@ -89,52 +93,93 @@ static int start_listener_ipc(char **puds_fn) {
         lprintf(ERROR, "Cannot bind the addr: %s", strerror(errno));
     }
 
-	/* So that QE can access this socket file.
-	 * FIXME: Is there solution or is it necessary to set less permission?
-	 * Dynamically create uid same as that in GPDB in container?
+	/*
+	 * The path owner should be generally the uid, but we are not 100% sure
+	 * about this for current/future backends, so we still use environment
+	 * variable, instead of extracting them via reading the owner of the path.
 	 */
-	chmod(uds_fn, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH); /* 0666*/
-
-	/* Save it since we need to unlink the file when container process exits. */
-	if (puds_fn != NULL) {
-		unlink(*puds_fn);
-		pfree(*puds_fn);
+	if((env_str = getenv("EXECUTOR_UID")) == NULL)
+		lprintf(ERROR, "EXECUTOR_UID is not set, something wrong on QE side");
+	errno = 0;
+	val = strtol(env_str, &endptr, 10);
+	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
+		(errno != 0 && val == 0) ||
+		endptr == env_str ||
+		*endptr != '\0') {
+		lprintf(ERROR, "EXECUTOR_UID is wrong:'%s'", env_str);
 	}
-	*puds_fn = uds_fn;
+	srv_uid = val;
+
+	/* Get gid */
+	if((env_str = getenv("EXECUTOR_GID")) == NULL)
+		lprintf(ERROR, "EXECUTOR_GID is not set, something wrong on QE side");
+	errno = 0;
+	val = strtol(env_str, &endptr, 10);
+	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
+		(errno != 0 && val == 0) ||
+		endptr == env_str ||
+		*endptr != '\0') {
+		lprintf(ERROR, "EXECUTOR_GID is wrong:'%s'", env_str);
+	}
+	srv_gid = val;
+
+	/* Change ownership & permission for the file for unix domain socket */
+	if (chown(uds_fn, srv_uid, srv_gid) < 0)
+		lprintf(ERROR, "Could not set ownership for file %s with owner %d, "
+				"group %d: %s", uds_fn, srv_uid, srv_gid, strerror(errno));
+	if (chmod(uds_fn, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH) < 0) /* 0666*/
+		lprintf(ERROR, "Could not set permission for file %s: %s",
+				uds_fn, strerror(errno));
 
     if (listen(sock, 10) == -1) {
         lprintf(ERROR, "Cannot listen the socket: %s", strerror(errno));
     }
+
+	/*
+	 * Now we need to use another uid that can not write the path for safety
+	 * since the owner of the path is srv_uid generally.
+	 */
+	setuid(srv_uid+1);
+	setgid(srv_gid+1);
+
+	/*
+	 * Note: It is said on some platforms that if it is a setuid program,
+	 * it could setuid back to root if the real uid is root although this is not
+	 * the case on Linux. So we checks getuid() here also.
+	 */
+	clt_uid = getuid();
+	if (clt_uid == 0 || clt_uid == srv_uid || clt_uid != geteuid()) {
+		close(sock);
+		unlink(uds_fn);
+		lprintf(ERROR, "New uid (%d) is wrong: (%d %d %d): %s\n",
+				clt_uid, 0, srv_uid, geteuid(), strerror(errno));
+		return -1;
+	}
 
 	lprintf(DEBUG1, "Listening via unix domain socket with file: %s", uds_fn);
 
     return sock;
 }
 
-static void atexit_cleanup_udsfile()
-{
-	if (uds_client_fn != NULL) {
-		unlink(uds_client_fn);
-		pfree(uds_client_fn);
-	}
-}
-
 int start_listener()
 {
-	int sock;
-
+	int   sock;
 	char* network;
-	if(getenv("USE_NETWORK") == NULL){
+
+	network = getenv("USE_NETWORK");
+	if(network == NULL){
 		network = "no";
 		lprintf(WARNING, "USE_NETWORK is not set, use default value \"no\".");
-	} else {
-		network = getenv("USE_NETWORK");
 	}
+
 	if (strcasecmp("true", network) == 0 || strcasecmp("yes", network) == 0) {
 		sock = start_listener_inet();
 	} else {
-		sock = start_listener_ipc(&uds_client_fn);
-		atexit(atexit_cleanup_udsfile);
+		if (geteuid() != 0 || getuid() != 0) {
+			lprintf(ERROR, "Must run as root and then downgrade to usual user.");
+			return -1;
+		}
+		sock = start_listener_ipc();
 	}
 
 	return sock;

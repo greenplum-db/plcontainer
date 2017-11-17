@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <curl/curl.h>
 
 // Default location of the Docker API unix socket
@@ -198,7 +199,9 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
             "    \"AttachStderr\": false,\n"
             "    \"Tty\": false,\n"
             "    \"Cmd\": [\"%s\"],\n"
-            "    \"Env\": [\"USE_NETWORK=%s\"],\n"
+            "    \"Env\": [\"EXECUTOR_UID=%d\",\n"
+            "              \"EXECUTOR_GID=%d\",\n"
+            "              \"USE_NETWORK=%s\"],\n"
             "    \"NetworkDisabled\": %s,\n"
             "    \"Image\": \"%s\",\n"
             "    \"HostConfig\": {\n"
@@ -223,6 +226,8 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
     sprintf(messageBody,
             createRequest,
             conf->command,
+			getuid(),
+			getgid(),
             conf->isNetworkConnection ? "true" : "false",
             conf->isNetworkConnection ? "false" : "true",
             conf->dockerid,

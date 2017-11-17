@@ -1,36 +1,17 @@
 --  Test <defunct> processes are reaped after a new backend is created.
 select pykillself();
-ERROR:  Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:206)
 SELECT pg_sleep(5);
- pg_sleep 
-----------
- 
-(1 row)
-
 -- Wait for 5 seconds so that cleanup processes exit.
 \!ps -ef |grep [p]ostgres|grep defunct |wc -l
-1
 -- Then start the backend so that those <defunct> processes could be reaped.
 select pyzero();
- pyzero 
---------
-      0
-(1 row)
-
 \!ps -ef |grep [p]ostgres|grep defunct |wc -l
-0
+
 -- Test function ok immediately after container is kill-9-ed.
 select pyzero();
- pyzero 
---------
-      0
-(1 row)
-
 select pykillself();
-ERROR:  Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:206)
 select pyzero();
- pyzero 
---------
-      0
-(1 row)
 
+--  Test shared path write permission for unix domain socket connection.
+select py_shared_path_perm();
+select r_shared_path_perm();

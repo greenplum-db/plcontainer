@@ -18,4 +18,14 @@ $$ language plcontainer;
 select python_network_test1(i) from test_python_network;
 select python_network_test2() from test_python_network;
 
+-- Test permission.
+CREATE OR REPLACE FUNCTION py_shared_path_perm_network() RETURNS integer AS $$
+# container: plc_python_network
+import os
+os.open("/tmp/plcontainer/test_file", os.O_RDWR|os.O_CREAT)
+return 0
+$$ LANGUAGE plcontainer;
+
+select py_shared_path_perm_network();
+
 \! plcontainer configure --restore -y

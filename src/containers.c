@@ -349,6 +349,9 @@ plcConn *start_backend(plcContainerConf *conf) {
 	pfree(dockerid);
 	dockerid = containers[container_slot].dockerid;
 
+	if (!conf->isNetworkConnection)
+		uds_fn = get_uds_fn(uds_dir);
+
 	_loop_cnt = 0;
 	while((res = plc_backend_start(dockerid)) < 0) {
 		if (++_loop_cnt >= 3)
@@ -357,6 +360,7 @@ plcConn *start_backend(plcContainerConf *conf) {
 		elog(LOG, "plc_backend_start() fails. Retrying [%d]", _loop_cnt);
 	}
     if (res < 0) {
+		cleanup4uds(uds_fn);
         elog(ERROR, "Backend start error: %s", api_error_message);
         return NULL;
     }
@@ -372,15 +376,13 @@ plcConn *start_backend(plcContainerConf *conf) {
         char *element = NULL;
 		res = plc_backend_inspect(dockerid, &element, PLC_INSPECT_PORT);
 		if (res < 0) {
+			cleanup4uds(uds_fn);
 			elog(ERROR, "Backend inspect error: %s", api_error_message);
 			return NULL;
 		}
         port = (int) strtol(element, NULL, 10);
 		pfree(element);
 	}
-
-	if (!conf->isNetworkConnection)
-		uds_fn = get_uds_fn(uds_dir);
 
 	/* Give chance to reap some possible zoombie cleanup processes here.
 	 * zoombie occurs only when container exits abnormally and QE process

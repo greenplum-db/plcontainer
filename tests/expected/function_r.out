@@ -376,3 +376,10 @@ CREATE OR REPLACE FUNCTION rversion() RETURNS varchar AS $$
 # container : plc_r_shared
 return(paste("R", getRversion()))
 $$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION r_shared_path_perm() RETURNS setof bool[] AS $$
+# container : plc_r_shared
+v=list()
+v[[1]] = file.create("/tmp/plcontainer/test_file")
+v[[2]] = file.create("/tmp/test_file")
+return(v)
+$$ LANGUAGE plcontainer;

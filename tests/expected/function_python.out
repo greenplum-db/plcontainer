@@ -502,3 +502,9 @@ CREATE OR REPLACE FUNCTION pysubtransaction(b bool) RETURNS bool AS $$
 subxact = plpy.subtransaction()
 return b
 $$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION py_shared_path_perm() RETURNS integer AS $$
+# container: plc_python_shared
+import os
+os.open("/tmp/plcontainer/test_file", os.O_RDWR|os.O_CREAT)
+return 0
+$$ LANGUAGE plcontainer;
