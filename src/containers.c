@@ -146,6 +146,8 @@ static void cleanup(char *dockerid, char *uds_fn) {
         sprintf(psname, "plcontainer cleaner %s", dockerid);
         set_ps_display(psname, false);
 
+		elog(LOG, "plcontainer cleanup process launched for docker id: %s and executor process %d", dockerid, getppid());
+
 		res = 0;
 		PG_TRY();
 		{

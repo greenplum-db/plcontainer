@@ -142,17 +142,27 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)buffer);
 
         /* Calling the API */
+		struct timeval start_time, end_time;
+		uint64_t elapsed_us;
+
+		gettimeofday(&start_time, NULL);
         res = curl_easy_perform(curl);
         if (res != CURLE_OK) {
             size_t len = strlen(errbuf);
 
+			gettimeofday(&end_time, NULL);
+			elapsed_us =
+				((uint64)end_time.tv_sec) * 1000000 + end_time.tv_usec -
+				((uint64)start_time.tv_sec) * 1000000 + start_time.tv_usec;
+
 			snprintf(api_error_message, sizeof(api_error_message),
-					"PL/Container libcurl return code %d, error '%s'", res,
+					"PL/Container libcurl returns code %d, error '%s'", res,
 					(len > 0) ? errbuf : curl_easy_strerror(res));
 			buffer->status = -2;
 
 			elog(LOG, "Curl Request with type: %d, url: %s", cType, fullurl);
 			elog(LOG, "Curl Request with http body: %s\n", body);
+			elog(LOG, "Curl Request costs " UINT64_FORMAT "us", elapsed_us);
 
 			goto cleanup;
         } else {
