@@ -129,7 +129,7 @@ resources:
     branch: {{ccp-git-branch}}
     private_key: {{ccp-git-key}}
     uri: {{ccp-git-remote}}
-    tag_filter: 1.4.2
+    tag_filter: {{ccp-tag-filter}}
 
 - name: plcontainer_src
   type: git
