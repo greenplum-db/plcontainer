@@ -1,0 +1,28 @@
+-- test parallel 
+select r_cpu_intensive();
+ r_cpu_intensive 
+-----------------
+            9592
+(1 row)
+
+select r_cpu_intensive();
+ r_cpu_intensive 
+-----------------
+            9592
+(1 row)
+
+-- test on QE
+select r_cpu_intensive() from NUM_OF_LOOPS_CPU_R;
+ r_cpu_intensive 
+-----------------
+            9592
+            9592
+(2 rows)
+
+select r_cpu_intensive() from NUM_OF_LOOPS_CPU_R;
+ r_cpu_intensive 
+-----------------
+            9592
+            9592
+(2 rows)
+

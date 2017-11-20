@@ -16,6 +16,10 @@ test: function_python_network
 # PL/Container UDA test
 test: uda_python uda_r
 
+# PL/Container cpu test
+test: cpu_parallel_python cpu_parallel_r
+test: cpu_parallel_python_1 cpu_parallel_python_2 cpu_parallel_python_3 cpu_parallel_python_4 cpu_parallel_python_5 cpu_parallel_r_1 cpu_parallel_r_2 cpu_parallel_r_3 cpu_parallel_r_4 cpu_parallel_r_5
+
 # PL/Container  memory test
 test: memory_consuming_python memory_consuming_r
 test: memory_parallel_python memory_parallel_r
