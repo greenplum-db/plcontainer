@@ -108,7 +108,11 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
 
 		/* Setting timeout for connecting. */
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+#ifdef DOCKER_API_LOW
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 180L);
+#else
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
+#endif
 
         /* Choosing the right request type */
         switch (cType) {

@@ -35,9 +35,9 @@ typedef struct {
     plcConn *conn;
 } container_t;
 
-#define CONTAINER_NUMBER 10
-#define CONATINER_WAIT_TIMEOUT 2
-#define CONATINER_CONNECT_TIMEOUT 120
+#define MAX_CONTAINER_NUMBER 10
+#define CLEANUP_SLEEP_SEC 2
+#define CLEANUP_CONTAINER_CONNECT_RETRY_TIMES 60
 
 static int containers_init = 0;
 static container_t *containers;
@@ -108,7 +108,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
     if (pid == 0) {
         char    psname[200];
         int     res;
-		int     wait_time = 0;
+		int     wait_times = 0;
 
 		/* We do not need proc_exit() callbacks of QE. Besides, we
 		 * do not use on_proc_exit() + proc_exit() since it may invovle
@@ -167,11 +167,11 @@ static void cleanup(char *dockerid, char *uds_fn) {
 				if (res == 0) {
 					break;
 				} else if (res < 0) {
-					wait_time += CONATINER_WAIT_TIMEOUT;
+					wait_times++;
 					elog(LOG, "Failed to delete backend in cleanup process (%s). "
 						"Will retry later.", api_error_message);
 				} else {
-					wait_time = 0;
+					wait_times= 0;
 				}
 
 				/* Check whether conatiner is exited or not.
@@ -188,21 +188,20 @@ static void cleanup(char *dockerid, char *uds_fn) {
 				if (res == 0) {
 					break;
 				} else if (res < 0) {
-					wait_time += CONATINER_WAIT_TIMEOUT;
+					wait_times++;
 					elog(LOG, "Failed to inspect or delete backend in cleanup process (%s). "
 						"Will retry later.", api_error_message);
 				} else {
-					wait_time = 0;
+					wait_times = 0;
 				}
 
-				if (wait_time >= CONATINER_CONNECT_TIMEOUT) {
-					 elog(LOG, "Docker API fails for %d seconds. cleanup "
-						"process will exit.", wait_time);
+				if (wait_times >= CLEANUP_CONTAINER_CONNECT_RETRY_TIMES) {
+					 elog(LOG, "Docker API fails after %d retries. cleanup "
+						"process will exit.", wait_times);
 					 break;
 				}
 
-				/* Check every CONATINER_WAIT_TIMEOUT*/
-				sleep(CONATINER_WAIT_TIMEOUT);
+				sleep(CLEANUP_SLEEP_SEC);
 			}
 
 			elog(LOG, "cleanup process deleted docker %s with return value %d",
@@ -228,13 +227,13 @@ static void cleanup(char *dockerid, char *uds_fn) {
 static int find_container_slot() {
 	int i;
 
-    for (i = 0; i < CONTAINER_NUMBER; i++) {
+    for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
         if (containers[i].name == NULL) {
             return i;
         }
     }
     // Fatal would cause the session to be closed
-    elog(FATAL, "Single session cannot handle more than %d open containers simultaneously", CONTAINER_NUMBER);
+    elog(FATAL, "Single session cannot handle more than %d open containers simultaneously", MAX_CONTAINER_NUMBER);
 
 }
 
@@ -270,8 +269,8 @@ static void delete_container_slot(int slot) {
 }
 
 static void init_containers() {
-    containers = (container_t*)plc_top_alloc(CONTAINER_NUMBER * sizeof(container_t));
-    memset(containers, 0, CONTAINER_NUMBER * sizeof(container_t));
+    containers = (container_t*)plc_top_alloc(MAX_CONTAINER_NUMBER * sizeof(container_t));
+    memset(containers, 0, MAX_CONTAINER_NUMBER * sizeof(container_t));
     containers_init = 1;
 }
 
@@ -282,7 +281,7 @@ plcConn *get_container_conn(const char *image) {
 
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_connected");
     
-	for (i = 0; i < CONTAINER_NUMBER; i++) {
+	for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
         if (containers[i].name != NULL &&
             strcmp(containers[i].name, image) == 0) {
             return containers[i].conn;
@@ -454,7 +453,7 @@ void delete_containers() {
     int i;
 
     if (containers_init != 0) {
-        for (i = 0; i < CONTAINER_NUMBER; i++) {
+        for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
             if (containers[i].name != NULL) {
 
                 /* Terminate container process */
