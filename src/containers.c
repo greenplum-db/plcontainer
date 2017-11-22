@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 
 #include "postgres.h"
+#include "cdb/cdbvars.h"
 #include "storage/ipc.h"
 #include "libpq/pqsignal.h"
 #include "utils/ps_status.h"
@@ -110,6 +111,8 @@ static void cleanup(char *dockerid, char *uds_fn) {
         int     res;
 		int     wait_times = 0;
 
+		MyProcPid = getpid();
+
 		/* We do not need proc_exit() callbacks of QE. Besides, we
 		 * do not use on_proc_exit() + proc_exit() since it may invovle
 		 * some QE related operations, * e.g. Quit interconnect, etc, which
@@ -143,22 +146,24 @@ static void cleanup(char *dockerid, char *uds_fn) {
 		pqsignal(SIGCONT, SIG_IGN);
 
         /* Setting application name to let the system know it is us */
-        sprintf(psname, "plcontainer cleaner %s", dockerid);
+        snprintf(psname, "plcontainer cleaner %s", dockerid, sizeof(psname));
         set_ps_display(psname, false);
-
-		elog(LOG, "plcontainer cleanup process launched for docker id: %s and executor process %d", dockerid, getppid());
-
-		res = 0;
+        res = 0;
 		PG_TRY();
 		{
+			/* elog need to be try-catch in cleanup process to avoid longjump*/
+			write_log("plcontainer cleanup process launched for docker id: %s and executor process %d", dockerid, getppid());
+
 			while(1) {
 
 				/* Check parent pid whether parent process is alive or not.
 				 * If not, kill and remove the container.
 				 */
-				elog(DEBUG1, "Checking whether QE is alive");
+				if(log_min_messages <= DEBUG1)
+					write_log("plcontainer cleanup process: Checking whether QE is alive");
 				res = qe_is_alive(dockerid);
-				elog(DEBUG1, "QE alive status: %d", res);
+				if(log_min_messages <= DEBUG1)
+					write_log("plcontainer cleanup process: QE alive status: %d", res);
 
 				/* res = 0, backend exited, backend has been successfully deleted.
 				 * res < 0, backend exited, backend delete API reports an error.
@@ -168,7 +173,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
 					break;
 				} else if (res < 0) {
 					wait_times++;
-					elog(LOG, "Failed to delete backend in cleanup process (%s). "
+					write_log("plcontainer cleanup process: Failed to delete backend in cleanup process (%s). "
 						"Will retry later.", api_error_message);
 				} else {
 					wait_times= 0;
@@ -177,9 +182,11 @@ static void cleanup(char *dockerid, char *uds_fn) {
 				/* Check whether conatiner is exited or not.
 				 * If exited, remove the container.
 				 */
-				elog(DEBUG1, "Checking whether the backend is alive");
+				if(log_min_messages <= DEBUG1)
+					write_log("plcontainer cleanup process: Checking whether the backend is alive");
 				res = container_is_alive(dockerid);
-				elog(DEBUG1, "Backend alive status: %d", res);
+				if(log_min_messages <= DEBUG1)
+					write_log("plcontainer cleanup process: Backend alive status: %d", res);
 
 				/* res = 0, container exited, container has been successfully deleted.
 				 * res < 0, docker API reports an error.
@@ -189,14 +196,14 @@ static void cleanup(char *dockerid, char *uds_fn) {
 					break;
 				} else if (res < 0) {
 					wait_times++;
-					elog(LOG, "Failed to inspect or delete backend in cleanup process (%s). "
+					write_log("plcontainer cleanup process: Failed to inspect or delete backend in cleanup process (%s). "
 						"Will retry later.", api_error_message);
 				} else {
 					wait_times = 0;
 				}
 
 				if (wait_times >= CLEANUP_CONTAINER_CONNECT_RETRY_TIMES) {
-					 elog(LOG, "Docker API fails after %d retries. cleanup "
+					 write_log("plcontainer cleanup process: Docker API fails after %d retries. cleanup "
 						"process will exit.", wait_times);
 					 break;
 				}
@@ -204,14 +211,14 @@ static void cleanup(char *dockerid, char *uds_fn) {
 				sleep(CLEANUP_SLEEP_SEC);
 			}
 
-			elog(LOG, "cleanup process deleted docker %s with return value %d",
+			write_log("plcontainer cleanup process deleted docker %s with return value %d",
 				 dockerid, res);
 			exit(res);
 		}
 		PG_CATCH();
 		{
 			/* Do not rethrow to previous stack context. exit immediately.*/
-			elog(LOG, "cleanup process should not reach here. Anyway it should"
+			write_log("plcontainer cleanup process should not reach here. Anyway it should"
 				 " not hurt. Exiting. dockerid is %s. You might need to check"
 				 " and delete the container manually ('docker rm').", dockerid);
 			exit(-1);

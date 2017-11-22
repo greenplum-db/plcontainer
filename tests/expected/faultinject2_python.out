@@ -1,5 +1,6 @@
 -- Install a helper function to inject faults, using the fault injection
 -- mechanism built into the server.
+set log_min_messages='DEBUG1';
 CREATE EXTENSION gp_inject_fault;
 CREATE OR REPLACE FUNCTION pyint(i int) RETURNS int AS $$
 # container: plc_python_shared
