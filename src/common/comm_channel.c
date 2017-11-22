@@ -102,6 +102,7 @@ static int receive_rawmsg(plcConn *conn, plcMessage **mRaw);
 
 int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
     int res;
+	lprintf(DEBUG1, "start to send data, type is %c", msg->msgtype);
     switch (msg->msgtype) {
         case MT_PING:
             res = send_ping(conn);
@@ -146,7 +147,7 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask) {
 	conn->rx_timeout_sec = 0x7fffFFFF; /* Wait for ever at this moment */
     res = receive_message_type(conn, &cType);
 	conn->rx_timeout_sec = TIMEOUT_SEC;
-
+	lprintf(DEBUG1, "start to receive data, type is %c", cType);
     if (res >= 0) {
         switch (cType) {
             case MT_PING:

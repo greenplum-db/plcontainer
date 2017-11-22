@@ -41,6 +41,7 @@ typedef struct plcContainerConf {
     int           nSharedDirs;
     plcSharedDir *sharedDirs;
 	bool          isNetworkConnection;
+	bool          enable_log;
 } plcContainerConf;
 
 /* entrypoint for all plcontainer procedures */

@@ -8,6 +8,7 @@
 
 #include "postgres.h"
 #include "utils/guc.h"
+#include "libpq/libpq.h"
 
 #include "plc_docker_api_common.h"
 
@@ -23,8 +24,10 @@ static char *plc_docker_socket = "/var/run/docker.sock";
 // URL prefix specifies Docker API version
 #ifdef DOCKER_API_LOW
     static char *plc_docker_url_prefix = "http:/v1.19";
+	static char *default_log_dirver = "syslog";
 #else
     static char *plc_docker_url_prefix = "http:/v1.27";
+	static char *default_log_dirver = "journald";
 #endif
 /* Static functions of the Docker API module */
 static plcCurlBuffer *plcCurlBufferInit();
@@ -195,19 +198,23 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
     char *createRequest =
             "{\n"
             "    \"AttachStdin\": false,\n"
-            "    \"AttachStdout\": false,\n"
-            "    \"AttachStderr\": false,\n"
+            "    \"AttachStdout\": %s,\n"
+            "    \"AttachStderr\": %s,\n"
             "    \"Tty\": false,\n"
             "    \"Cmd\": [\"%s\"],\n"
             "    \"Env\": [\"EXECUTOR_UID=%d\",\n"
             "              \"EXECUTOR_GID=%d\",\n"
+	        "              \"DB_USER_NAME=%s\",\n"
+	        "              \"DB_NAME=%s\",\n"
+	        "              \"DB_QE_PID=%d\",\n"
             "              \"USE_NETWORK=%s\"],\n"
             "    \"NetworkDisabled\": %s,\n"
             "    \"Image\": \"%s\",\n"
             "    \"HostConfig\": {\n"
             "        \"Binds\": [%s],\n"
             "        \"Memory\": %lld,\n"
-            "        \"PublishAllPorts\": true\n"
+            "        \"PublishAllPorts\": true,\n"
+	        "        \"LogConfig\":{\"Type\": \"%s\"}"
             "    }\n"
             "}\n";
 	bool  has_error;
@@ -215,6 +222,8 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
     char *messageBody = NULL;
     plcCurlBuffer *response = NULL;
     int res = 0;
+	const char *username = MyProcPort->user_name;
+	const char *dbname = MyProcPort->database_name;
 
 	if (has_error == true) {
 		return -1;
@@ -225,14 +234,20 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
                             + strlen(conf->dockerid) + strlen(volumeShare));
     sprintf(messageBody,
             createRequest,
+            conf->enable_log ? "true" : "false",
+            conf->enable_log ? "true" : "false",
             conf->command,
 			getuid(),
 			getgid(),
+			username,
+			dbname,
+			MyProcPid,
             conf->isNetworkConnection ? "true" : "false",
             conf->isNetworkConnection ? "false" : "true",
             conf->dockerid,
             volumeShare,
-            ((long long)conf->memoryMb) * 1024 * 1024);
+            ((long long)conf->memoryMb) * 1024 * 1024,
+            conf->enable_log ? default_log_dirver : "none");
 
     /* Make a call */
     response = plcCurlRESTAPICall(PLC_HTTP_POST, "/containers/create", messageBody);

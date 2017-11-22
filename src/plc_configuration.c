@@ -49,6 +49,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
      * number of shared directories for later allocation of related structure */
 	memset((void *) conf, 0, sizeof(plcContainerConf));
     conf->memoryMb = 1024;
+    conf->enable_log = false;
     for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             int processed = 0;
@@ -92,6 +93,22 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 					conf->isNetworkConnection = true;
 				else
 					processed = 0;
+            }
+
+            if (xmlStrcmp(cur_node->name, (const xmlChar *)"logs") == 0) {
+                processed = 1;
+                value  = xmlGetProp(cur_node, (const xmlChar *)"enable");
+                if (value == NULL){
+                    elog(ERROR, "Configuration tag 'log' has a mandatory element"
+                                " 'enable' that is not found");
+                    return -1;
+                } else if (strcasecmp((char *) value, "true") == 0 ||
+						   strcasecmp((char *) value, "yes") == 0) {
+                    conf->enable_log = true;
+                } else {
+                    conf->enable_log = false;
+                }
+
             }
 
             if (xmlStrcmp(cur_node->name, (const xmlChar *)"shared_directory") == 0) {
@@ -252,6 +269,7 @@ static void print_containers(plcContainerConf *conf, int size) {
         elog(INFO, "    container_id = '%s'", conf[i].dockerid);
         elog(INFO, "    memory_mb = '%d'", conf[i].memoryMb);
         elog(INFO, "    use network = '%s'", conf[i].isNetworkConnection ? "yes" : "no");
+        elog(INFO, "    enable log  = '%s'", conf[i].enable_log ? "yes" : "no");
         for (j = 0; j < conf[i].nSharedDirs; j++) {
             elog(INFO, "    shared directory from host '%s' to container '%s'",
                  conf[i].sharedDirs[j].host,

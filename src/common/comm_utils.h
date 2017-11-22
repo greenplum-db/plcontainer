@@ -46,6 +46,8 @@ interpreted as representing official policies, either expressed or implied, of t
 #include <signal.h>
 #include <execinfo.h>
 
+#include "comm_log.h"
+
     /* Compatibility with R that defines WARNING and ERROR by itself */
     #undef WARNING
     #undef ERROR
@@ -75,19 +77,21 @@ interpreted as representing official policies, either expressed or implied, of t
     #define false   ((bool) 0)
     /* End of extraction from c.h */
 
-    #define lprintf(lvl, fmt, ...)            \
-        do {                                  \
-            FILE *out = stdout;               \
-            if (lvl >= ERROR) {               \
-                out = stderr;                 \
-            }                                 \
-            fprintf(out, #lvl ": ");          \
-            fprintf(out, fmt, ##__VA_ARGS__); \
-            fprintf(out, "\n");               \
-            if (lvl >= ERROR) {               \
-				fflush(out);                  \
-                exit(1);                      \
-            }                                 \
+    #define lprintf(lvl, fmt, ...)                                      \
+        do {                                                            \
+            FILE *out = stdout;                                         \
+            if (lvl >= ERROR) {                                         \
+                out = stderr;                                           \
+            }                                                           \
+            fprintf(out, "plcontainer log: %s, ", clientLanguage);      \
+            fprintf(out, "%s, %s, %d, ", dbUsername, dbName, dbQePid);  \
+            fprintf(out, #lvl ": ");                                    \
+            fprintf(out, fmt, ##__VA_ARGS__);                           \
+            fprintf(out, "\n");                                         \
+			fflush(out);                                                \
+            if (lvl >= ERROR) {                                         \
+                exit(1);                                                \
+            }                                                           \
         } while (0)
 	void *pmalloc(size_t size);
     #define plc_top_alloc pmalloc

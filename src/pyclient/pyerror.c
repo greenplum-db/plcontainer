@@ -110,6 +110,7 @@ void raise_execution_error (const char *format, ...) {
         if (res < 0 || res >= len) {
             msg = strdup("Error formatting error message string in raise_execution_error()");
         }
+        lprintf(WARNING, "Python client caught an error: %s", msg);
     }
     stack = get_python_error();
 

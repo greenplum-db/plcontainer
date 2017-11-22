@@ -276,8 +276,9 @@ static void init_containers() {
 
 plcConn *get_container_conn(const char *image) {
     size_t i;
-    if (containers_init == 0)
+    if (containers_init == 0) {
         init_containers();
+	}
 
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_connected");
     

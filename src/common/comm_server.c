@@ -19,6 +19,7 @@
 #include "comm_utils.h"
 #include "comm_connectivity.h"
 #include "comm_server.h"
+#include "comm_log.h"
 #include "messages/messages.h"
 
 /*
@@ -122,6 +123,38 @@ static int start_listener_ipc() {
 		lprintf(ERROR, "EXECUTOR_GID is wrong:'%s'", env_str);
 	}
 	srv_gid = val;
+
+	/* Get current db user name and database name and QE PID*/
+	if((env_str = getenv("DB_USER_NAME")) == NULL) {
+		dbUsername = "unknown";
+	} else {
+		dbUsername = strdup(env_str);
+	}
+
+	if((env_str = getenv("DB_NAME")) == NULL) {
+		dbName = "unknown";
+	} else {
+		dbName = strdup(env_str);
+	}
+
+	if((env_str = getenv("DB_QE_PID")) == NULL) {
+		dbQePid = -1;
+	} else {
+		val = strtol(env_str, &endptr, 10);
+		if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
+			(errno != 0 && val == 0) ||
+			endptr == env_str ||
+			*endptr != '\0') {
+			lprintf(ERROR, "DB_QE_PID is wrong:'%s'", env_str);
+		}
+		dbQePid = val;
+	}
+
+	if((env_str = getenv("CLIENT_LANGUAGE")) == NULL) {
+		clientLanguage = "unknown";
+	} else {
+		clientLanguage = strdup(env_str);
+	}
 
 	/* Change ownership & permission for the file for unix domain socket */
 	if (chown(uds_fn, srv_uid, srv_gid) < 0)
@@ -259,7 +292,7 @@ void receive_loop( void (*handle_call)(plcMsgCallreq*, plcConn*), plcConn* conn)
             lprintf(ERROR, "Error receiving data from the peer: %d", res);
             break;
         }
-
+		lprintf(DEBUG1, "Client receive a request: called function oid %u", ((plcMsgCallreq*)msg)->objectid);
 		handle_call((plcMsgCallreq*)msg, conn);
 		free_callreq((plcMsgCallreq*)msg, false, false);
     }

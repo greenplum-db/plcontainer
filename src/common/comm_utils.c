@@ -75,4 +75,5 @@ static void sigsegv_handler() {
 void set_signal_handlers() {
 	set_signal_handler(SIGSEGV, SA_RESETHAND, sigsegv_handler);
 }
+
 #endif /* COMM_STANDALONE */
