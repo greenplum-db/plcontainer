@@ -146,7 +146,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
 		pqsignal(SIGCONT, SIG_IGN);
 
         /* Setting application name to let the system know it is us */
-        snprintf(psname, "plcontainer cleaner %s", dockerid, sizeof(psname));
+        snprintf(psname, sizeof(psname), "plcontainer cleaner %s", dockerid);
         set_ps_display(psname, false);
         res = 0;
 		PG_TRY();
