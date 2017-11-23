@@ -8,52 +8,8 @@
 #include "plc_docker_common.h"
 #include "regex/regex.h"
 
-static int docker_parse_string_mapping(char *response, regmatch_t pmatch[],
-		int size, char *plc_docker_regex) {
-	// Regular expression for parsing container inspection JSON response
-
-	regex_t preg;
-	int res = 0;
-	int wmasklen, masklen;
-	pg_wchar *mask;
-	int wdatalen, datalen;
-	pg_wchar *data;
-
-	masklen = strlen(plc_docker_regex);
-	mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
-	wmasklen = pg_mb2wchar_with_len(plc_docker_regex, mask, masklen);
-
-	res = pg_regcomp(&preg, mask, wmasklen, REG_ADVANCED);
-	pfree(mask);
-	if (res < 0) {
-		elog(LOG, "Cannot compile Postgres regular expression: '%s'",
-				strerror(errno));
-		return -1;
-	}
-
-	datalen = strlen(response);
-	data = (pg_wchar *) palloc((datalen + 1) * sizeof(pg_wchar));
-	wdatalen = pg_mb2wchar_with_len(response, data, datalen);
-
-	res = pg_regexec(&preg, data, wdatalen, 0, NULL, size, pmatch, 0);
-	pfree(data);
-	if (res == REG_NOMATCH) {
-		elog(LOG, "No regex match '%s' for '%s'", plc_docker_regex, response);
-		return -1;
-	}
-
-	if (pmatch[1].rm_so == -1) {
-		elog(LOG, "Could not find regex match '%s' for '%s'", plc_docker_regex,
-				response);
-		return -1;
-	}
-
-	pg_regfree(&preg);
-	return 0;
-}
-
 int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
-	elog(LOG, "docker_inspect_stringlala:%s", buf);
+	elog(DEBUG1, "plcontainer: docker_inspect_string:%s", buf);
 	struct json_object *response = json_tokener_parse(buf);
 	if (response == NULL)
 		return -1;
@@ -64,44 +20,74 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 			return -1;
 		}
 		const char *namestr = json_object_get_string(nameidObj);
-		int len = strlen(namestr);
-		*element = palloc(len + 1);
-		memcpy(*element, namestr, len);
-		(*element)[len] = '\0';
+		*element = pstrdup(namestr);
 		return 0;
 	}
-	char *regex = NULL;
-	int res = 0;
-	regmatch_t pmatch[2];
-	int len = 0;
-
-	switch (type) {
-	case PLC_INSPECT_PORT:
-		regex =
-				"\"8080\\/tcp\"\\s*\\:\\s*\\[.*\"HostPort\"\\s*\\:\\s*\"([0-9]*)\".*\\]";
-		break;
-	case PLC_INSPECT_STATUS:
+	else if(type == PLC_INSPECT_PORT) {
+		struct json_object *HostConfigObj = NULL;
+		if (!json_object_object_get_ex(response, "HostConfig", &HostConfigObj)) {
+			elog(WARNING, "failed to get json \"HostConfig\" field.");
+			return -1;
+		}
+		struct json_object *PortBindingsObj = NULL;
+		if (!json_object_object_get_ex(HostConfigObj, "PortBindings", &PortBindingsObj)) {
+			elog(WARNING, "failed to get json \"PortBindings\" field.");
+			return -1;
+		}
+		struct json_object *HostPortArray = NULL;
+		if (!json_object_object_get_ex(PortBindingsObj, "8080/tcp", &HostPortArray)) {
+			elog(WARNING, "failed to get json \"HostPortArray\" field.");
+			return -1;
+		}
+		int arraylen = json_object_array_length(HostPortArray);
+		for (int i=0; i< arraylen; i++){
+			struct json_object *PortBindingObj = NULL;
+			PortBindingObj = json_object_array_get_idx(HostPortArray, i);
+			if (PortBindingObj == NULL){
+				elog(WARNING, "failed to get json \"PortBinding\" field.");
+				return -1;
+			}
+			struct json_object *HostPortObj = NULL;
+			if (!json_object_object_get_ex(PortBindingObj, "HostPort", &HostPortObj)) {
+				elog(WARNING, "failed to get json \"HostPort\" field.");
+				return -1;
+			}
+			const char *HostPortStr = json_object_get_string(HostPortObj);
+			*element = pstrdup(HostPortStr);
+			return 0;
+		}
+	}
+	else if (type == PLC_INSPECT_STATUS) {
+		struct json_object *StateObj = NULL;
+		if (!json_object_object_get_ex(response, "State", &StateObj)) {
+			elog(WARNING, "failed to get json \"State\" field.");
+			return -1;
+		}
 #ifdef DOCKER_API_LOW
-		regex = "\\s*\"Running\\s*\"\\:\\s*(\\w+)\\s*";
+		struct json_object *RunningObj = NULL;
+		if (!json_object_object_get_ex(StateObj, "Running", &RunningObj)) {
+			elog(WARNING, "failed to get json \"Running\" field.");
+			return -1;
+		}
+		const char *RunningStr = json_object_get_string(RunningObj);
+		*element = pstrdup(RunningStr);
+		return 0;
 #else
-		regex = "\\s*\"Status\\s*\"\\:\\s*\"(\\w+)\"\\s*";
-#endif
-		break;
-	default:
-		elog(LOG, "Error PLC inspection mode, unacceptable inpsection type %d",
-				type);
+		struct json_object *StatusObj = NULL;
+		if (!json_object_object_get_ex(StateObj, "Status", &StatusObj)) {
+			elog(WARNING, "failed to get json \"Status\" field.");
+			return -1;
+		}
+		const char *StatusStr = json_object_get_string(StatusObj);
+		*element = pstrdup(StatusStr);
+		return 0;
+#endif		
+	}
+	else {
+		elog(LOG, "Error PLC inspection mode, unacceptable inpsection type %d",type);
 		return -1;
 	}
 
-	res = docker_parse_string_mapping(buf, pmatch, 2, regex);
-
-	if (res >= 0) {
-		len = pmatch[1].rm_eo - pmatch[1].rm_so;
-		*element = palloc(len + 1);
-		memcpy(*element, buf + pmatch[1].rm_so, len);
-		(*element)[len] = '\0';
-	}
-
-	return res;
+	return -1;
 }
 
