@@ -46,6 +46,9 @@ else
   $(error xml2-config is missing. Have you installed libxml?)
 endif
 
+#json-c
+override SHLIB_LINK += -ljson-c
+
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 
 override CFLAGS += -Werror -Wextra -Wall

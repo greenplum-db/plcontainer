@@ -9,7 +9,7 @@
 #define PLC_DOCKER_COMMON_H
 
 #include "postgres.h"
-
+#include <json-c/json.h>
 #include "plc_backend_api.h"
 
 int docker_parse_container_id(char* response, char **name);
