@@ -8,9 +8,22 @@ select pyzero();
 \!ps -ef |grep [p]ostgres|grep defunct |wc -l
 
 -- Test function ok immediately after container is kill-9-ed.
-select pyzero();
 select pykillself();
 select pyzero();
+select rkillself();
+select rint(0);
+
+-- Test function ok immediately after container captures signal sigsegv.
+select pysegvself();
+select pyzero();
+select rsegvself();
+select rint(0);
+
+-- Test function ok immediately after container exits.
+select pyexit();
+select pyzero();
+select rexit();
+select rint(0);
 
 --  Test shared path write permission for unix domain socket connection.
 select py_shared_path_perm();

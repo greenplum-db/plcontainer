@@ -452,3 +452,20 @@ v[[1]] = file.create("/tmp/plcontainer/test_file")
 v[[2]] = file.create("/tmp/test_file")
 return(v)
 $$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rkillself() RETURNS integer AS $$
+# container : plc_r_shared
+pid<-Sys.getpid()
+tools::pskill(pid, tools::SIGKILL)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rsegvself() RETURNS integer AS $$
+# container : plc_r_shared
+pid<-Sys.getpid()
+tools::pskill(pid, 11)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rexit() RETURNS integer AS $$
+# container : plc_r_shared
+quit("no")
+$$ LANGUAGE plcontainer;

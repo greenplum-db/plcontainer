@@ -493,6 +493,18 @@ import signal
 pid=os.getpid()
 os.kill(pid, signal.SIGKILL)
 $$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION pysegvself() RETURNS integer AS $$
+# container: plc_python_shared
+import os
+import signal
+pid=os.getpid()
+os.kill(pid, signal.SIGSEGV)
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION pyexit() RETURNS integer AS $$
+# container: plc_python_shared
+import os
+pid=os._exit(1)
+$$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pyzero() RETURNS integer AS $$
 # container: plc_python_shared
 return 0

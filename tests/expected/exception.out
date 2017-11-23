@@ -20,18 +20,54 @@ select pyzero();
 \!ps -ef |grep [p]ostgres|grep defunct |wc -l
 0
 -- Test function ok immediately after container is kill-9-ed.
-select pyzero();
- pyzero 
---------
-      0
-(1 row)
-
 select pykillself();
 ERROR:  Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:244)
 select pyzero();
  pyzero 
 --------
       0
+(1 row)
+
+select rkillself();
+ERROR:  Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:244)
+select rint(0);
+ rint 
+------
+    2
+(1 row)
+
+-- Test function ok immediately after container captures signal sigsegv.
+select pysegvself();
+ERROR:  Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:244)
+select pyzero();
+ pyzero 
+--------
+      0
+(1 row)
+
+select rsegvself();
+ERROR:  Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:244)
+select rint(0);
+ rint 
+------
+    2
+(1 row)
+
+-- Test function ok immediately after container exits.
+select pyexit();
+ERROR:  Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:244)
+select pyzero();
+ pyzero 
+--------
+      0
+(1 row)
+
+select rexit();
+ERROR:  Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:244)
+select rint(0);
+ rint 
+------
+    2
 (1 row)
 
 --  Test shared path write permission for unix domain socket connection.
