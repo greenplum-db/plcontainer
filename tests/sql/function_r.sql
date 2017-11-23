@@ -244,6 +244,16 @@ CREATE OR REPLACE FUNCTION runargs1(varchar) RETURNS text AS $$
 return (args[0])
 $$ LANGUAGE plcontainer;
 
+CREATE OR REPLACE FUNCTION rlargeint8in(a int8[]) RETURNS int8 AS $$
+#container : plc_r_shared
+return (mean(a))
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rlargeint8out(n int) RETURNS int8[] AS $$
+#container : plc_r_shared
+matrix(2, 1, n)
+$$ LANGUAGE plcontainer;
+
 -- create type for next function
 create type user_type as (fname text, lname text, username text);
 
