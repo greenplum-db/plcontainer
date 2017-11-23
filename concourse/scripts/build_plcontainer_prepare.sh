@@ -7,15 +7,6 @@ TOP_DIR=${CWDIR}/../../../
 source "${TOP_DIR}/gpdb_src/concourse/scripts/common.bash"
 
 function _main() {
-  # install json-c
-  wget https://github.com/json-c/json-c/archive/json-c-0.12.1-20160607.tar.gz
-  tar -zxf json-c*.tar.gz
-  pushd json-c-json-c-0.12.1-20160607
-  sh autogen.sh
-  ./configure
-  make
-  make install
-  popd 
   
   # setup gpdb environment
   install_gpdb
