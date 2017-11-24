@@ -1,8 +1,7 @@
-/*------------------------------------------------------------------------------
- *
- * Copyright (c) 2016-Present Pivotal Software, Inc
- *
- *------------------------------------------------------------------------------
+/**
+ * file name:			plpgj_core.c
+ * description:			PL-J language handler module.
+ * author:			Laszlo Hornyak
  */
 
 
