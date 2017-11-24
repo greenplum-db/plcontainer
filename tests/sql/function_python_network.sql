@@ -1,4 +1,4 @@
-\! plcontainer configure -f $(pwd)/plcontainer_configuration_test.xml -y
+\! plcontainer configure -f $(pwd)/plcontainer_configuration_network.xml -y
 
 drop table if exists test_python_network;
 

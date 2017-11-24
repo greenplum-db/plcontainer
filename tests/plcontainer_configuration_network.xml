@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<configuration>
+
+   <!--
+		For tests with tcp network connection only.
+   -->
+   <container>
+        <name>plc_python_network</name>
+        <image>pivotaldata/plcontainer_python_shared:devel</image>
+        <command>/clientdir/pyclient.sh</command>
+        <shared_directory host="/usr/local/greenplum-db-devel/bin/pyclient" container="/clientdir" access="ro"/>
+        <use_network>yes</use_network>
+    </container>
+</configuration>
