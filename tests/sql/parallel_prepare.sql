@@ -18,7 +18,7 @@ $$ LANGUAGE plcontainer;
 -- spi with large io
 CREATE OR REPLACE FUNCTION py_large_spi() RETURNS int8 AS $$
 # container: plc_python_shared
-output = plpy.execute("select * from generate_series(1,1000000) id")
+output = plpy.execute("select * from generate_series(1, 1123123) id")
 sum = 0
 for i in range(0, len(output)):
 	sum += output[i]['id']
@@ -31,7 +31,7 @@ CREATE OR REPLACE FUNCTION py_io_intensive() RETURNS integer AS $$
 # container: plc_python_shared
 
 outfile = open("/tmp/testfile_py", "w")
-allocate = '2' * 1024 * 1024 * 10
+allocate = '2' * 1024 * 1024 * 1
 outfile.write(allocate)
 outfile.close()
 
@@ -65,14 +65,14 @@ $$ LANGUAGE plcontainer;
 -- spi with large io
 CREATE OR REPLACE FUNCTION r_large_spi() RETURNS int8 AS $$
 # container: plc_r_shared
-res<-pg.spi.exec('select * from generate_series(1, 1000000) id')
+res<-pg.spi.exec('select * from generate_series(1, 1123123) id')
 mean(res[, 1])
 $$ LANGUAGE plcontainer;
 
 -- write local disk.
 CREATE OR REPLACE FUNCTION r_io_intensive() RETURNS integer AS $$
 # container: plc_r_shared
-a <- matrix(1, ncol=1024, nrow=1024*10)
+a <- matrix(1, ncol=1024, nrow=1024*1)
 write.csv(a, file = "/tmp/testfile_r", row.names = F, quote = F)
 b <- read.csv("/tmp/testfile_r")
 ret <- sum(b)

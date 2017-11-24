@@ -1,13 +1,13 @@
 select r_large_spi();
  r_large_spi 
 -------------
-      500000
+      561562
 (1 row)
 
 select r_io_intensive();
  r_io_intensive 
 ----------------
-       10485760
+        1048576
 (1 row)
 
 select py_cpu_intensive();
@@ -36,13 +36,13 @@ select r_cpu_intensive() from generate_series(1,2);
             9592
 (2 rows)
 
-select rlargeint8in(array_agg(id)) from generate_series(1, 10123123) id;
+select rlargeint8in(array_agg(id)) from generate_series(1, 1123123) id;
  rlargeint8in 
 --------------
-      5061562
+       561562
 (1 row)
 
-select avg(x) from (select unnest(rlargeint8out(10123123)) as x) as q;
+select avg(x) from (select unnest(rlargeint8out(1123123)) as x) as q;
  avg 
 -----
    2
@@ -51,24 +51,24 @@ select avg(x) from (select unnest(rlargeint8out(10123123)) as x) as q;
 select py_large_spi();
  py_large_spi 
 --------------
-       500000
+       561562
 (1 row)
 
 select py_io_intensive();
  py_io_intensive 
 -----------------
-        20971520
+         2097152
 (1 row)
 
-select pylargeint8in(array_agg(id)) from generate_series(1, 10123123) id;
+select pylargeint8in(array_agg(id)) from generate_series(1, 1123123) id;
  pylargeint8in 
 ---------------
-       5061562
+        561562
 (1 row)
 
-select avg(x) from (select unnest(pylargeint8out(10123123)) as x) as q;
-   avg   
----------
- 5061561
+select avg(x) from (select unnest(pylargeint8out(1123123)) as x) as q;
+  avg   
+--------
+ 561561
 (1 row)
 
