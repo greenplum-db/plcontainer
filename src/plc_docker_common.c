@@ -24,18 +24,18 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 		return 0;
 	}
 	else if(type == PLC_INSPECT_PORT) {
-		struct json_object *HostConfigObj = NULL;
-		if (!json_object_object_get_ex(response, "HostConfig", &HostConfigObj)) {
+		struct json_object *NetworkSettingsObj = NULL;
+		if (!json_object_object_get_ex(response, "NetworkSettings", &NetworkSettingsObj)) {
 			elog(WARNING, "failed to get json \"HostConfig\" field.");
 			return -1;
 		}
-		struct json_object *PortBindingsObj = NULL;
-		if (!json_object_object_get_ex(HostConfigObj, "PortBindings", &PortBindingsObj)) {
-			elog(WARNING, "failed to get json \"PortBindings\" field.");
+		struct json_object *PortsObj = NULL;
+		if (!json_object_object_get_ex(NetworkSettingsObj, "Ports", &PortsObj)) {
+			elog(WARNING, "failed to get json \"Ports\" field.");
 			return -1;
 		}
 		struct json_object *HostPortArray = NULL;
-		if (!json_object_object_get_ex(PortBindingsObj, "8080/tcp", &HostPortArray)) {
+		if (!json_object_object_get_ex(PortsObj, "8080/tcp", &HostPortArray)) {
 			elog(WARNING, "failed to get json \"HostPortArray\" field.");
 			return -1;
 		}
