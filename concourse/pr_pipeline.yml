@@ -1,0 +1,159 @@
+################################################################################
+#################################### GROUPS ####################################
+################################################################################
+
+groups:
+- name: plcontainer
+  jobs:
+  - plcontainer_build_centos6
+  - plcontainer_build_centos7
+
+################################################################################
+################################## RESOURCES ###################################
+################################################################################
+resource_types:
+  - name: pull_request
+    type: docker-image
+    source:
+      repository: jtarchie/pr
+
+resources:
+# Github Source Codes
+
+- name: plcontainer_src
+  type: pull_request
+  source:
+    repo: greenplum-db/plcontainer
+    access_token: {{gpdb-git-access-token}}
+
+- name: gpdb_src
+  type: git
+  source:
+    branch: {{gpdb-git-branch}}
+    uri: {{gpdb-git-remote}}
+    ignore_paths:
+    - gpdb-doc/*
+    - README*
+
+# Docker images
+
+- name: centos-gpdb-dev-6
+  type: docker-image
+  source:
+    repository: pivotaldata/centos-gpdb-dev
+    tag: '6-gcc6.2-llvm3.7'
+
+- name: centos-gpdb-dev-7
+  type: docker-image
+  source:
+    repository: pivotaldata/centos-gpdb-dev
+    tag: 7-gcc6.2-llvm3.7
+
+# S3 Input and intermediate binaries
+
+- name: plr_gpdb5_centos6_build
+  type: s3
+  source:
+    bucket: {{pl-bucket-name}}
+    region_name: {{aws-region}}
+    access_key_id: {{bucket-access-key-id}}
+    secret_access_key: {{bucket-secret-access-key}}
+    versioned_file: build/gpdb5/plr/centos6/plr-devel.gppkg
+- name: plr_gpdb5_centos7_build
+  type: s3
+  source:
+    bucket: {{pl-bucket-name}}
+    region_name: {{aws-region}}
+    access_key_id: {{bucket-access-key-id}}
+    secret_access_key: {{bucket-secret-access-key}}
+    versioned_file: build/gpdb5/plr/centos7/plr-devel.gppkg
+
+- name: bin_gpdb_centos7
+  type: s3
+  source:
+    access_key_id: {{bucket-access-key-id}}
+    bucket: {{bucket-name}}
+    region_name: {{aws-region}}
+    secret_access_key: {{bucket-secret-access-key}}
+    versioned_file: {{bin_gpdb_centos7_versioned_file}}
+
+- name: bin_gpdb_centos6
+  type: s3
+  source:
+    access_key_id: {{bucket-access-key-id}}
+    bucket: {{bucket-name}}
+    region_name: {{aws-region}}
+    secret_access_key: {{bucket-secret-access-key}}
+    versioned_file: {{bin_gpdb_centos_versioned_file}}
+
+- name: plcontainer_gpdb_centos7_build
+  type: s3
+  source:
+    bucket: {{pl-bucket-name}}
+    region_name: {{aws-region}}
+    access_key_id: {{bucket-access-key-id}}
+    secret_access_key: {{bucket-secret-access-key}}
+    versioned_file: build/gpdb5/plcontainer/plcontainer-concourse-centos7.gppkg
+
+- name: plcontainer_gpdb_centos6_build
+  type: s3
+  source:
+    bucket: {{pl-bucket-name}}
+    region_name: {{aws-region}}
+    access_key_id: {{bucket-access-key-id}}
+    secret_access_key: {{bucket-secret-access-key}}
+    versioned_file: build/gpdb5/plcontainer/plcontainer-concourse-centos6.gppkg
+
+
+
+##################################### JOBS #####################################
+################################################################################
+
+jobs:
+
+# Build PL/Container GP Package
+- name: plcontainer_build_centos6
+  max_in_flight: 4
+  plan:
+  - aggregate:
+    - get: bin_gpdb_centos6
+    - get: gpdb_src
+    - get: plcontainer_src
+      trigger: true
+      version: every
+    - get: centos-gpdb-dev-6
+    - get: plr
+      resource: plr_gpdb5_centos6_build
+  - task: plcontainer_gpdb_build
+    file: plcontainer_src/concourse/tasks/plcontainer_build.yml
+    image: centos-gpdb-dev-6
+    input_mapping:
+      bin_gpdb: bin_gpdb_centos6
+  - aggregate:
+    - put: plcontainer_gpdb_centos6_build
+      params:
+        file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
+
+- name: plcontainer_build_centos7
+  max_in_flight: 4
+  plan:
+  - aggregate:
+    - get: bin_gpdb_centos7
+    - get: gpdb_src
+    - get: plcontainer_src
+      trigger: true
+      version: every
+    - get: centos-gpdb-dev-7
+    - get: plr
+      resource: plr_gpdb5_centos7_build
+  - task: plcontainer_gpdb_build
+    file: plcontainer_src/concourse/tasks/plcontainer_build.yml
+    image: centos-gpdb-dev-7
+    input_mapping:
+      bin_gpdb: bin_gpdb_centos7
+  - aggregate:
+    - put: plcontainer_gpdb_centos7_build
+      params:
+        file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
+
+
