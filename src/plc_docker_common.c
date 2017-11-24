@@ -26,7 +26,7 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 	else if(type == PLC_INSPECT_PORT) {
 		struct json_object *NetworkSettingsObj = NULL;
 		if (!json_object_object_get_ex(response, "NetworkSettings", &NetworkSettingsObj)) {
-			elog(WARNING, "failed to get json \"HostConfig\" field.");
+			elog(WARNING, "failed to get json \"NetworkSettings\" field.");
 			return -1;
 		}
 		struct json_object *PortsObj = NULL;
