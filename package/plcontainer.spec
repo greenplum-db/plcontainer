@@ -15,7 +15,7 @@ Provides PL/Container procedural language implementation for the Greenplum Datab
 %install
 mkdir -p %{buildroot}/temp
 make -C %{plc_dir} install DESTDIR=%{buildroot}/temp bindir=/bin libdir=/lib/postgresql pkglibdir=/lib/postgresql datadir=/share/postgresql
-cp /lib64/libjson-c.so* %{buildroot}/temp/lib/postgresql/
+cp -d /lib64/libjson-c.so.2 %{buildroot}/temp/lib/
 
 %files
 /temp
