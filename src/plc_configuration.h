@@ -10,7 +10,7 @@
 #define PLC_CONFIGURATION_H
 
 #include "fmgr.h"
-
+#include <json-c/json.h>
 #include "plcontainer.h"
 
 #define PLC_PROPERTIES_FILE "plcontainer_configuration.xml"
@@ -47,6 +47,7 @@ typedef struct plcContainerConf {
 /* entrypoint for all plcontainer procedures */
 Datum refresh_plcontainer_config(PG_FUNCTION_ARGS);
 Datum show_plcontainer_config(PG_FUNCTION_ARGS);
+Datum containers_summary(PG_FUNCTION_ARGS);
 plcContainerConf *plc_get_container_config(char *name);
 char *get_sharing_options(plcContainerConf *conf, int container_slot, bool *has_error, char **uds_dir);
 

@@ -14,6 +14,8 @@
 #include "postgres.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "libpq/libpq-be.h"
+#include "funcapi.h"
 
 #include "common/comm_utils.h"
 #include "common/comm_connectivity.h"
@@ -347,7 +349,8 @@ static int plc_show_container_config() {
 
 /* Function referenced from Postgres that can update configuration on
  * specific GPDB segment */
-Datum refresh_plcontainer_config(PG_FUNCTION_ARGS) {
+Datum
+refresh_plcontainer_config(PG_FUNCTION_ARGS) {
     int res = plc_refresh_container_config(PG_GETARG_BOOL(0));
     if (res == 0) {
         PG_RETURN_TEXT_P(cstring_to_text("ok"));
@@ -356,9 +359,12 @@ Datum refresh_plcontainer_config(PG_FUNCTION_ARGS) {
     }
 }
 
-/* Function referenced from Postgres that can update configuration on
- * specific GPDB segment */
-Datum show_plcontainer_config(pg_attribute_unused() PG_FUNCTION_ARGS) {
+/*
+ * Function referenced from Postgres that can update configuration on
+ * specific GPDB segment
+ */
+Datum
+show_plcontainer_config(pg_attribute_unused() PG_FUNCTION_ARGS) {
     int res = plc_show_container_config();
     if (res == 0) {
         PG_RETURN_TEXT_P(cstring_to_text("ok"));
@@ -460,4 +466,169 @@ char *get_sharing_options(plcContainerConf *conf, int container_slot, bool *has_
     }
 
     return res;
+}
+
+PG_FUNCTION_INFO_V1(containers_summary);
+Datum
+containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
+
+	FuncCallContext *funcctx;
+	int call_cntr;
+	int max_calls;
+	TupleDesc tupdesc;
+	AttInMetadata *attinmeta;
+	struct json_object *container_list = NULL;
+	char *json_result;
+	bool isFirstCall = true;
+
+
+	/* Init the container list in the first call and get the results back */
+	if (SRF_IS_FIRSTCALL()) {
+		MemoryContext oldcontext;
+		int arraylen;
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/* switch to memory context appropriate for multiple function calls */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		plc_docker_list_container(&json_result);
+
+		/* no container running */
+		if (strcmp(json_result, "[]") == 0) {
+			funcctx->max_calls = 0;
+		}
+
+		container_list = json_tokener_parse(json_result);
+
+		if (container_list == NULL) {
+			elog(ERROR, "Parse JSON object error, cannot get the containers summary");
+		}
+
+		arraylen = json_object_array_length(container_list);
+
+		/* total number of containers to be returned, each array contains one container */
+		funcctx->max_calls = (uint32) arraylen;
+
+		/*
+		 * prepare attribute metadata for next calls that generate the tuple
+		 */
+
+		tupdesc = CreateTemplateTupleDesc(5, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "SEGMENT_ID",
+		                   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "CONTAINER_ID",
+		                   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "UP_TIME",
+		                   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "OWNER",
+		                   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "MEMORY_USAGE(KB)",
+		                   TEXTOID, -1, 0);
+
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		funcctx->attinmeta = attinmeta;
+
+		MemoryContextSwitchTo(oldcontext);
+	} else {
+		isFirstCall = false;
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+
+	call_cntr = funcctx->call_cntr;
+	max_calls = funcctx->max_calls;
+	attinmeta = funcctx->attinmeta;
+
+	if (isFirstCall) {
+		funcctx->user_fctx = (void *) container_list;
+	} else {
+		container_list = (json_object *) funcctx->user_fctx;
+	}
+
+	/* send one tuple */
+	if (call_cntr < max_calls) {
+		char **values;
+		HeapTuple tuple;
+		Datum result;
+		char *containerState = NULL;
+		struct json_object *containerObj = NULL;
+		struct json_object *containerStateObj = NULL;
+
+		/*
+		 * Process json object by its key, and then get value
+		 */
+
+		containerObj = json_object_array_get_idx(container_list, call_cntr);
+		if (containerObj == NULL) {
+			elog(ERROR, "Not a valid container.");
+		}
+		struct json_object *idObj = NULL;
+		if (!json_object_object_get_ex(containerObj, "Id", &idObj)) {
+			elog(ERROR, "failed to get json \"Id\" field.");
+		}
+
+		const char *idStr = json_object_get_string(idObj);
+
+		plc_docker_get_container_state(idStr, &containerState);
+		containerStateObj = json_tokener_parse(containerState);
+		struct json_object *memoryObj = NULL;
+		if (!json_object_object_get_ex(containerStateObj, "memory_stats", &memoryObj)) {
+			elog(ERROR, "failed to get json \"memory_stats\" field.");
+		}
+		struct json_object *memoryUsageObj = NULL;
+		if (!json_object_object_get_ex(memoryObj, "usage", &memoryUsageObj)) {
+			elog(ERROR, "failed to get json \"usage\" field.");
+		}
+		int64 containerMemoryUsage = json_object_get_int64(memoryUsageObj) / 1024;
+
+		struct json_object *statusObj = NULL;
+		if (!json_object_object_get_ex(containerObj, "Status", &statusObj)) {
+			elog(ERROR, "failed to get json \"Status\" field.");
+		}
+		const char *statusStr = json_object_get_string(statusObj);
+		struct json_object *labelObj = NULL;
+		if (!json_object_object_get_ex(containerObj, "Labels", &labelObj)) {
+			elog(ERROR, "failed to get json \"Labels\" field.");
+		}
+		struct json_object *ownerObj = NULL;
+		if (!json_object_object_get_ex(labelObj, "owner", &ownerObj)) {
+			elog(ERROR, "failed to get json \"owner\" field.");
+		}
+		const char *ownerStr = json_object_get_string(ownerObj);
+
+		struct json_object *dbidObj = NULL;
+		if (!json_object_object_get_ex(labelObj, "dbid", &dbidObj)) {
+			elog(ERROR, "failed to get json \"dbid\" field.");
+		}
+		const char *dbidStr = json_object_get_string(dbidObj);
+
+		values = (char **) palloc(5 * sizeof(char *));
+		values[0] = (char *) palloc(8 * sizeof(char));
+		values[1] = (char *) palloc(80 * sizeof(char));
+		values[2] = (char *) palloc(64 * sizeof(char));
+		values[3] = (char *) palloc(64 * sizeof(char));
+		values[4] = (char *) palloc(32 * sizeof(char));
+
+
+		snprintf(values[0], 8, "%s", dbidStr);
+		snprintf(values[1], 80, "%s", idStr);
+		snprintf(values[2], 64, "%s", statusStr);
+		snprintf(values[3], 64, "%s", ownerStr);
+		snprintf(values[4], 32, "%ld", containerMemoryUsage);
+
+		/* build a tuple */
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+
+		/* make the tuple into a datum */
+		result = HeapTupleGetDatum(tuple);
+
+		SRF_RETURN_NEXT(funcctx, result);
+	} else {
+		if (container_list != NULL) {
+			json_object_put(container_list);
+		}
+		SRF_RETURN_DONE(funcctx);
+	}
 }

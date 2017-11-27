@@ -45,22 +45,22 @@ int plc_backend_create(plcContainerConf *conf, char **name, int container_slot, 
     return CurrentPLCImp.create != NULL ? CurrentPLCImp.create(conf, name, container_slot, uds_dir) : 0;
 }
 
-int plc_backend_start(char *name){
+int plc_backend_start(const char *name){
     return CurrentPLCImp.start != NULL ? CurrentPLCImp.start(name) : 0;
 }
 
-int plc_backend_kill(char *name){
+int plc_backend_kill(const char *name){
     return CurrentPLCImp.kill != NULL ? CurrentPLCImp.kill(name) : 0;
 }
 
-int plc_backend_inspect(char *name, char **element, plcInspectionMode type){
+int plc_backend_inspect(const char *name, char **element, plcInspectionMode type){
     return CurrentPLCImp.inspect != NULL ? CurrentPLCImp.inspect(name, element, type) : 0;
 }
 
-int plc_backend_wait(char *name){
+int plc_backend_wait(const char *name){
     return CurrentPLCImp.wait != NULL ? CurrentPLCImp.wait(name) : 0;
 }
 
-int plc_backend_delete(char *name){
+int plc_backend_delete(const char *name){
     return CurrentPLCImp.delete_backend != NULL ? CurrentPLCImp.delete_backend(name) : 0;
 }

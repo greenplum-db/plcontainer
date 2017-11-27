@@ -11,6 +11,8 @@
 #include "libpq/libpq.h"
 
 #include "plc_docker_api_common.h"
+#include "libpq/libpq-be.h"
+#include "cdb/cdbvars.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -214,7 +216,12 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
             "        \"Binds\": [%s],\n"
             "        \"Memory\": %lld,\n"
             "        \"PublishAllPorts\": true,\n"
-	        "        \"LogConfig\":{\"Type\": \"%s\"}"
+	        "        \"LogConfig\":{\"Type\": \"%s\"},\n"
+            "        \"PublishAllPorts\": true\n"
+            "    },\n"
+            "    \"Labels\": {\n"
+            "        \"owner\": \"%s\",\n"
+	        "        \"dbid\": \"%d\"\n"
             "    }\n"
             "}\n";
 	bool  has_error;
@@ -247,7 +254,9 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
             conf->dockerid,
             volumeShare,
             ((long long)conf->memoryMb) * 1024 * 1024,
-            conf->enable_log ? default_log_dirver : "none");
+            conf->enable_log ? default_log_dirver : "none",
+            username,
+            GpIdentity.dbid);
 
     /* Make a call */
     response = plcCurlRESTAPICall(PLC_HTTP_POST, "/containers/create", messageBody);
@@ -283,7 +292,7 @@ cleanup:
     return res;
 }
 
-int plc_docker_start_container(char *name) {
+int plc_docker_start_container(const char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/start";
     char *url = NULL;
@@ -308,7 +317,7 @@ int plc_docker_start_container(char *name) {
     return res;
 }
 
-int plc_docker_kill_container(char *name) {
+int plc_docker_kill_container(const char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/kill?signal=KILL";
     char *url = NULL;
@@ -327,7 +336,7 @@ int plc_docker_kill_container(char *name) {
     return res;
 }
 
-int plc_docker_inspect_container(char *name, char **element, plcInspectionMode type) {
+int plc_docker_inspect_container(const char *name, char **element, plcInspectionMode type) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/json";
     char *url = NULL;
@@ -367,7 +376,7 @@ cleanup:
     return res;
 }
 
-int plc_docker_wait_container(char *name) {
+int plc_docker_wait_container(const char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s/wait";
     char *url = NULL;
@@ -386,7 +395,7 @@ int plc_docker_wait_container(char *name) {
     return res;
 }
 
-int plc_docker_delete_container(char *name) {
+int plc_docker_delete_container(const char *name) {
     plcCurlBuffer *response = NULL;
     char *method = "/containers/%s?v=1&force=1";
     char *url = NULL;
@@ -409,4 +418,50 @@ int plc_docker_delete_container(char *name) {
 	}
 
     return res;
+}
+
+int plc_docker_list_container(char** result) {
+	plcCurlBuffer *response = NULL;
+	char *method = "/containers/json?all=1&label=\"dbid=%d\"";
+	char *url = NULL;
+	int res = 0;
+
+	url = palloc(strlen(method) + 8);
+	sprintf(url, method, GpIdentity.dbid);
+
+	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, NULL);
+	res = response->status;
+
+	if (res == 200) {
+		res = 0;
+	} else if (res >= 0) {
+		snprintf(api_error_message, sizeof(api_error_message),
+		         "Failed to list containers (return code: %d), dbid is %d", res, GpIdentity.dbid);
+		res = -1;
+	}
+	*result = pstrdup(response->data);
+	return res;
+}
+
+int plc_docker_get_container_state(const char *name, char **result) {
+	plcCurlBuffer *response = NULL;
+	char *method = "/containers/%s/stats?stream=false";
+	char *url = NULL;
+	int res = 0;
+
+	url = palloc(strlen(method) + strlen(name) + 2);
+	sprintf(url, method, name);
+	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, NULL);
+	res = response->status;
+
+	if (res == 200) {
+		res = 0;
+	} else if (res >= 0) {
+		snprintf(api_error_message, sizeof(api_error_message),
+				"Failed to get container %s state (return code: %d)", name, res);
+		res = -1;
+	}
+
+	*result = pstrdup(response->data);
+	return res;
 }
