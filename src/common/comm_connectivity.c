@@ -424,6 +424,7 @@ plcConn *plcConnect_inet(int port) {
 
     result = plcConnInit(sock);
 	init_pplan_slots(result);
+	result->uds_fn = NULL;
 
     return result;
 }
@@ -470,6 +471,7 @@ plcConn *plcConnect_ipc(char *uds_fn) {
 
     result = plcConnInit(sock);
 	init_pplan_slots(result);
+	result->uds_fn = plc_top_strdup(uds_fn);
 
     return result;
 }
@@ -478,8 +480,18 @@ plcConn *plcConnect_ipc(char *uds_fn) {
  *  Close the plcConn connection and deallocate the buffers
  */
 void plcDisconnect(plcConn *conn) {
+	char *uds_fn;
+
     if (conn != NULL) {
         close(conn->sock);
+
+		uds_fn = conn->uds_fn;
+		if (uds_fn != NULL) {
+			unlink(uds_fn);
+			rmdir(dirname(uds_fn));
+			pfree(uds_fn);
+		}
+
         pfree(conn->buffer[PLC_INPUT_BUFFER]->data);
         pfree(conn->buffer[PLC_OUTPUT_BUFFER]->data);
         pfree(conn->buffer[PLC_INPUT_BUFFER]);

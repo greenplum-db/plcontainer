@@ -88,7 +88,7 @@ static int container_is_alive(char *dockerid) {
     return return_code;
 }
 
-static void cleanup4uds(char *uds_fn) {
+static void cleanup_uds(char *uds_fn) {
 	if (uds_fn != NULL) {
 		unlink(uds_fn);
 		rmdir(dirname(uds_fn));
@@ -96,7 +96,7 @@ static void cleanup4uds(char *uds_fn) {
 }
 
 static void cleanup_atexit_callback() {
-	cleanup4uds(uds_fn_for_cleanup);
+	cleanup_uds(uds_fn_for_cleanup);
 	free(uds_fn_for_cleanup);
 	uds_fn_for_cleanup = NULL;
 }
@@ -368,7 +368,7 @@ plcConn *start_backend(plcContainerConf *conf) {
 		elog(LOG, "plc_backend_start() fails. Retrying [%d]", _loop_cnt);
 	}
     if (res < 0) {
-		cleanup4uds(uds_fn);
+		cleanup_uds(uds_fn);
         elog(ERROR, "Backend start error: %s", api_error_message);
         return NULL;
     }
@@ -384,7 +384,7 @@ plcConn *start_backend(plcContainerConf *conf) {
         char *element = NULL;
 		res = plc_backend_inspect(dockerid, &element, PLC_INSPECT_PORT);
 		if (res < 0) {
-			cleanup4uds(uds_fn);
+			cleanup_uds(uds_fn);
 			elog(ERROR, "Backend inspect error: %s", api_error_message);
 			return NULL;
 		}
@@ -446,6 +446,7 @@ plcConn *start_backend(plcContainerConf *conf) {
     }
 
     if (sleepms >= CONTAINER_CONNECT_TIMEOUT_MS) {
+		cleanup_uds(uds_fn);
         elog(ERROR, "Cannot connect to the container, %d ms timeout reached",
                     CONTAINER_CONNECT_TIMEOUT_MS);
         conn = NULL;

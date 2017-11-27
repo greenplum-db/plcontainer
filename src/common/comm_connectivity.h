@@ -37,6 +37,7 @@ typedef struct plcConn {
 	int rx_timeout_sec;
 	plcBuffer* buffer[2];
 #ifndef COMM_STANDALONE
+	char *uds_fn; /* File for unix domain socket connection only. */
 	int container_slot;
 	int head_free_pplan_slot;  /* free list of spi pplan slot */
 	struct pplan_slots pplans[MAX_PPLAN]; /* for spi plannning */
