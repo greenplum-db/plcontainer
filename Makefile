@@ -43,7 +43,7 @@ ifneq ($(LIBXML_CONFIG),no)
   override CFLAGS += $(shell xml2-config --cflags)
   override SHLIB_LINK += $(shell xml2-config --libs)
 else
-  $(error xml2-config is missing. Have you installed libxml?)
+  $(error xml2-config is missing. Have you installed libxml? On RHEL/CENTOS you could install by runnning "yum install libxml2-devel" )
 endif
 
 #json-c
@@ -52,7 +52,7 @@ ifneq ($(LIBJSON),no)
   override SHLIB_LINK += $(shell pkg-config --libs json-c)
   override CFLAGS += $(shell pkg-config --cflags json-c)
 else
-  $(error libjson-c.so is missing. Have you installed json-c?)
+  $(error libjson-c.so is missing. Have you installed json-c? On RHEL/CENTOS you could install by running "yum install json-c-devel" )
 endif
 
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
