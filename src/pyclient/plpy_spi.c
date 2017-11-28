@@ -414,7 +414,16 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 		PyObject *nrows = PyInt_FromLong((long) resp->rows);
 		/* only need one element for number of rows are processed*/
 		pyresult = PyList_New(1);
-		PyList_SetItem(pyresult, 0, nrows);
+
+		if (PyList_SetItem(pyresult, 0, nrows) == -1) {
+			raise_execution_error("Cannot set item for python spi");
+			Py_XDECREF(nrows);
+			Py_XDECREF(pyresult);
+			pyresult = NULL;
+		}
+
+		free_result(resp, false);
+
 		return pyresult;
 	}
 
@@ -424,26 +433,31 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
     pyresult = PyList_New(result->res->rows);
     if (pyresult == NULL) {
         raise_execution_error("Cannot allocate new list object in Python");
-        free_result(resp, false);
-        plc_free_result_conversions(result);
-        return NULL;
+		goto ret;
     }
 
     for (j = 0; j < result->res->cols; j++) {
         if (result->args[j].conv.inputfunc == NULL) {
             raise_execution_error("Type %d is not yet supported by Python container",
                                   (int)result->args[j].type);
-            free_result(resp, false);
-            plc_free_result_conversions(result);
-            return NULL;
+			pyresult = NULL;
+			goto ret;
         }
     }
 
     for (i = 0; i < result->res->rows; i++) {
         pydict = PyDict_New();
 
+		if (pydict == NULL) {
+			raise_execution_error("Can not allocate a dict for python spi");
+			Py_DECREF(pyresult);
+			pyresult = NULL;
+			goto ret;
+		}
+
         for (j = 0; j < result->res->cols; j++) {
             if(result->res->data[i][j].isnull) {
+				/* FIXME: handle the error case. */
                 PyDict_SetItemString(pydict, result->res->names[j], Py_None);
       	    } else {
                 pyval = result->args[j].conv.inputfunc(result->res->data[i][j].value,
@@ -452,22 +466,26 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
                 if (PyDict_SetItemString(pydict, result->res->names[j], pyval) != 0) {
                     raise_execution_error("Error setting result dictionary element",
                                   (int)result->res->types[j].type);
-                    free_result(resp, false);
-                    plc_free_result_conversions(result);
-                    return NULL;
+					Py_XDECREF(pyval);
+					Py_DECREF(pydict);
+					Py_DECREF(pyresult);
+					pyresult = NULL;
+					goto ret;
                 }
+				Py_XDECREF(pyval);
         	}
         }
 
         if (PyList_SetItem(pyresult, i, pydict) != 0) {
-            raise_execution_error("Error setting result list element",
-                                  (int)result->res->types[j].type);
-            free_result(resp, false);
-            plc_free_result_conversions(result);
-            return NULL;
+            raise_execution_error("Error setting result list element for python spi");
+			Py_DECREF(pydict);
+			Py_DECREF(pyresult);
+			pyresult = NULL;
+			goto ret;
         }
     }
 
+ret:
     free_result(resp, false);
     plc_free_result_conversions(result);
 
@@ -687,7 +705,16 @@ PLy_spi_execute_query(char *query, long limit) {
 		PyObject *nrows = PyInt_FromLong((long) resp->rows);
 		/* only need one element for number of rows are processed*/
 		pyresult = PyList_New(1);
-		PyList_SetItem(pyresult, 0, nrows);
+
+		if (PyList_SetItem(pyresult, 0, nrows) == -1) {
+			raise_execution_error("Cannot set item for python spi");
+			Py_XDECREF(nrows);
+			Py_XDECREF(pyresult);
+			pyresult = NULL;
+		}
+
+		free_result(resp, false);
+
 		return pyresult;
 	}
 
@@ -697,50 +724,61 @@ PLy_spi_execute_query(char *query, long limit) {
     pyresult = PyList_New(result->res->rows);
     if (pyresult == NULL) {
         raise_execution_error("Cannot allocate new list object in Python");
-        free_result(resp, false);
-        plc_free_result_conversions(result);
-        return NULL;
+		goto ret;
     }
 
     for (j = 0; j < result->res->cols; j++) {
         if (result->args[j].conv.inputfunc == NULL) {
             raise_execution_error("Type %d is not yet supported by Python container",
                                   (int)result->args[j].type);
-            free_result(resp, false);
-            plc_free_result_conversions(result);
-            return NULL;
+			Py_DECREF(pyresult);
+			pyresult = NULL;
+			goto ret;
         }
     }
 
     for (i = 0; i < result->res->rows; i++) {
         pydict = PyDict_New();
 
+		if (pydict == NULL) {
+			raise_execution_error("Can not allocate a dict for python spi");
+			Py_DECREF(pyresult);
+			pyresult = NULL;
+			goto ret;
+		}
+
         for (j = 0; j < result->res->cols; j++) {
             if(result->res->data[i][j].isnull) {
+				/* FIXME: handle the error case. */
                 PyDict_SetItemString(pydict, result->res->names[j], Py_None);
             } else {
                 pyval = result->args[j].conv.inputfunc(result->res->data[i][j].value,
                                                &result->args[j]);
 
                 if (PyDict_SetItemString(pydict, result->res->names[j], pyval) != 0) {
-                    raise_execution_error("Error setting result dictionary element",
+                    raise_execution_error("Error setting result dictionary element for type %d",
                                       (int)result->res->types[j].type);
-                    free_result(resp, false);
-                    plc_free_result_conversions(result);
-                    return NULL;
+					Py_XDECREF(pyval);
+					Py_DECREF(pydict);
+					Py_DECREF(pyresult);
+					pyresult = NULL;
+					goto ret;
                 }
+
+				Py_XDECREF(pyval);
             }
         }
 
         if (PyList_SetItem(pyresult, i, pydict) != 0) {
-            raise_execution_error("Error setting result list element",
-                                  (int)result->res->types[j].type);
-            free_result(resp, false);
-            plc_free_result_conversions(result);
-            return NULL;
+            raise_execution_error("Error setting result list element for python spi");
+			Py_DECREF(pydict);
+			Py_DECREF(pyresult);
+			pyresult = NULL;
+			goto ret;
         }
     }
 
+ret:
     free_result(resp, false);
     plc_free_result_conversions(result);
 

@@ -703,6 +703,7 @@ void plc_free_result_conversions(plcPyResult *res) {
     for (i = 0; i < res->res->cols; i++) {
         plc_py_free_type(&res->args[i]);
     }
+	free(res->args);
     free(res);
 }
 

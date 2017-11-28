@@ -60,7 +60,7 @@ static void sigsegv_handler() {
 	int size;
 
 	size = backtrace(stack, 100);
-	lprintf(LOG, "signal SIGSEGV was captured. Stack:");
+	lprintf(LOG, "signal SIGSEGV was captured in pl/container. Stack:");
 	fflush(stdout);
 
 	/* Do not call backtrace_symbols() since it calls malloc(3) which is not
