@@ -33,7 +33,7 @@ ccp_gen_cluster_default_params_anchor: &ccp_gen_cluster_default_params
 ccp_options_anchor6: &ccp_options6
   terraform_source: ccp_src/aws/
   vars:
-    aws_instance-node-instance_type: t2.medium
+    aws_instance-node-instance_type: t2.large
     platform: centos6
     aws_ebs_volume_type: standard
 
@@ -67,7 +67,7 @@ debug_sleep_anchor6: &debug_sleep6
 ccp_options_anchor7: &ccp_options7
   terraform_source: ccp_src/aws/
   vars:
-    aws_instance-node-instance_type: t2.medium
+    aws_instance-node-instance_type: t2.large
     platform: centos7
     aws_ebs_volume_type: standard
 
@@ -401,7 +401,7 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
-        aws_instance-node-instance_type: t2.medium
+        aws_instance-node-instance_type: t2.large
         platform: centos6
   - task: gen_cluster
     tags: ["ccp"]
@@ -508,7 +508,7 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
-        aws_instance-node-instance_type: t2.medium
+        aws_instance-node-instance_type: t2.large
         platform: centos7
   - task: gen_cluster
     tags: ["ccp"]
