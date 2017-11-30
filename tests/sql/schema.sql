@@ -1,4 +1,4 @@
-/* Creating UDTs */
+-- Creating UDTs
 
 CREATE TYPE type_record AS (
     first text,
@@ -39,7 +39,7 @@ CREATE TYPE test_type4 AS (
     c varchar[]
 );
 
-/* Creating Tables */
+-- Creating Tables
 
 CREATE TABLE users (
     fname text,
@@ -81,7 +81,7 @@ CREATE TABLE table_record (
     second int4
 );
 
-/* Inserting some test data */
+-- Inserting some test data
 
 INSERT INTO users (fname, lname, username) VALUES ('jane', 'doe', 'j_doe');
 INSERT INTO users (fname, lname, username) VALUES ('john', 'doe', 'johnd');
@@ -106,3 +106,6 @@ INSERT INTO sequences (sequence, eid, product) VALUES ('ABCDEF', 3, 'env') ;
 INSERT INTO sequences (sequence, eid, product) VALUES ('ABCDEF', 4, 'gag') ;
 INSERT INTO sequences (sequence, eid, product) VALUES ('ABCDEF', 5, 'env') ;
 INSERT INTO sequences (sequence, eid, product) VALUES ('ABCDEF', 6, 'ns1') ;
+
+-- test pre-defined UDF
+SELECT * from plcontainer_containers_summary();
