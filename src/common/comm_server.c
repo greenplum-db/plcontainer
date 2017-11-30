@@ -124,38 +124,6 @@ static int start_listener_ipc() {
 	}
 	srv_gid = val;
 
-	/* Get current db user name and database name and QE PID*/
-	if((env_str = getenv("DB_USER_NAME")) == NULL) {
-		dbUsername = "unknown";
-	} else {
-		dbUsername = strdup(env_str);
-	}
-
-	if((env_str = getenv("DB_NAME")) == NULL) {
-		dbName = "unknown";
-	} else {
-		dbName = strdup(env_str);
-	}
-
-	if((env_str = getenv("DB_QE_PID")) == NULL) {
-		dbQePid = -1;
-	} else {
-		val = strtol(env_str, &endptr, 10);
-		if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-			(errno != 0 && val == 0) ||
-			endptr == env_str ||
-			*endptr != '\0') {
-			lprintf(ERROR, "DB_QE_PID is wrong:'%s'", env_str);
-		}
-		dbQePid = val;
-	}
-
-	if((env_str = getenv("CLIENT_LANGUAGE")) == NULL) {
-		clientLanguage = "unknown";
-	} else {
-		clientLanguage = strdup(env_str);
-	}
-
 	/* Change ownership & permission for the file for unix domain socket */
 	if (chown(uds_fn, srv_uid, srv_gid) < 0)
 		lprintf(ERROR, "Could not set ownership for file %s with owner %d, "
@@ -197,7 +165,41 @@ static int start_listener_ipc() {
 int start_listener()
 {
 	int   sock;
-	char* network;
+	char *network;
+	char *env_str, *endptr;
+	long val;
+
+	/* Get current db user name and database name and QE PID*/
+	if ((env_str = getenv("DB_USER_NAME")) == NULL) {
+		dbUsername = "unknown";
+	} else {
+		dbUsername = strdup(env_str);
+	}
+
+	if ((env_str = getenv("DB_NAME")) == NULL) {
+		dbName = "unknown";
+	} else {
+		dbName = strdup(env_str);
+	}
+
+	if ((env_str = getenv("DB_QE_PID")) == NULL) {
+		dbQePid = -1;
+	} else {
+		val = strtol(env_str, &endptr, 10);
+		if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
+		    (errno != 0 && val == 0) ||
+		    endptr == env_str ||
+		    *endptr != '\0') {
+				lprintf(ERROR, "DB_QE_PID is wrong:'%s'", env_str);
+		}
+		dbQePid = (int)val;
+	}
+
+	if ((env_str = getenv("CLIENT_LANGUAGE")) == NULL) {
+		clientLanguage = "unknown";
+	} else {
+		clientLanguage = strdup(env_str);
+	}
 
 	network = getenv("USE_NETWORK");
 	if(network == NULL){
