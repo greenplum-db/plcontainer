@@ -368,7 +368,8 @@ plcConn *start_backend(plcContainerConf *conf) {
 		elog(LOG, "plc_backend_start() fails. Retrying [%d]", _loop_cnt);
 	}
     if (res < 0) {
-		cleanup_uds(uds_fn);
+		if (!conf->isNetworkConnection)
+			cleanup_uds(uds_fn);
         elog(ERROR, "Backend start error: %s", api_error_message);
         return NULL;
     }
@@ -384,7 +385,8 @@ plcConn *start_backend(plcContainerConf *conf) {
         char *element = NULL;
 		res = plc_backend_inspect(dockerid, &element, PLC_INSPECT_PORT);
 		if (res < 0) {
-			cleanup_uds(uds_fn);
+			if (!conf->isNetworkConnection)
+				cleanup_uds(uds_fn);
 			elog(ERROR, "Backend inspect error: %s", api_error_message);
 			return NULL;
 		}
@@ -428,15 +430,22 @@ plcConn *start_backend(plcContainerConf *conf) {
 			elog(DEBUG1, "Connected to container via %s",
 				conf->isNetworkConnection ? "network" : "unix domain socket");
 			conn->container_slot = container_slot;
+
             res = plcontainer_channel_send(conn, (plcMessage*)mping);
             if (res == 0) {
                 res = plcontainer_channel_receive(conn, &mresp, MT_PING_BIT);
                 if (mresp != NULL)
                     pfree(mresp);
-                if (res == 0)
-                    break;
-            }
-            plcDisconnect(conn);
+				if (res == 0) {
+					break;
+				} else {
+					plcDisconnect(conn);
+					elog(ERROR, "Failed to receive pong to client. dockerid: %s", dockerid);
+				}
+            } else {
+				plcDisconnect(conn);
+				elog(ERROR, "Failed to send ping from client. dockerid: %s", dockerid);
+			}
         }
 
         usleep(sleepus);
@@ -446,7 +455,8 @@ plcConn *start_backend(plcContainerConf *conf) {
     }
 
     if (sleepms >= CONTAINER_CONNECT_TIMEOUT_MS) {
-		cleanup_uds(uds_fn);
+		if (!conf->isNetworkConnection)
+			cleanup_uds(uds_fn);
         elog(ERROR, "Cannot connect to the container, %d ms timeout reached",
                     CONTAINER_CONNECT_TIMEOUT_MS);
         conn = NULL;
