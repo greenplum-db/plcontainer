@@ -229,6 +229,7 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
     char *messageBody = NULL;
     plcCurlBuffer *response = NULL;
     int res = 0;
+	int createStringSize = 0;
 	const char *username = MyProcPort->user_name;
 	const char *dbname = MyProcPort->database_name;
 
@@ -237,9 +238,12 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
 	}
 
     /* Get Docket API "create" call JSON message body */
-    messageBody = palloc(40 + strlen(createRequest) + strlen(conf->command)
-                            + strlen(conf->dockerid) + strlen(volumeShare));
-    sprintf(messageBody,
+	createStringSize = 100 + strlen(createRequest) + strlen(conf->command)
+		    + strlen(conf->dockerid) + strlen(volumeShare) + strlen(username) * 2
+			+ strlen(dbname);
+    messageBody = (char*) palloc(createStringSize * sizeof(char));
+    snprintf(messageBody,
+			createStringSize,
             createRequest,
             conf->enable_log ? "true" : "false",
             conf->enable_log ? "true" : "false",

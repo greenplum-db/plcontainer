@@ -16,7 +16,7 @@ CREATE OR REPLACE FUNCTION plcontainer_refresh_local_config(verbose bool) RETURN
 AS '$libdir/plcontainer', 'refresh_plcontainer_config'
 LANGUAGE C VOLATILE;
 
-CREATE TYPE container_summary_type AS ('SEGMENT_ID' text, 'CONTAINER_ID' text, 'UP_TIME' text, 'OWNER' text, 'MEMORY_USAGE(KB)' text);
+CREATE TYPE container_summary_type AS ("SEGMENT_ID" text, "CONTAINER_ID" text, "UP_TIME" text, "OWNER" text, "MEMORY_USAGE(KB)" text);
 
 CREATE OR REPLACE FUNCTION plcontainer_containers_summary() RETURNS setof container_summary_type
 AS '$libdir/plcontainer', 'containers_summary'
