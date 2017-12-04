@@ -39,6 +39,10 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 			elog(WARNING, "failed to get json \"HostPortArray\" field.");
 			return -1;
 		}
+		if (json_object_get_type(HostPortArray) != json_type_array) {
+			elog(WARNING, "no element found in json \"HostPortArray\" field.");
+			return -1;
+		}
 		int arraylen = json_object_array_length(HostPortArray);
 		for (int i=0; i< arraylen; i++){
 			struct json_object *PortBindingObj = NULL;

@@ -546,89 +546,98 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	} else {
 		container_list = (json_object *) funcctx->user_fctx;
 	}
+	/*if a record is not suitable, skip it and scan next record*/
+	while(1) {
+		/* send one tuple */
+		if (call_cntr < max_calls) {
+			char **values;
+			HeapTuple tuple;
+			Datum result;
+			char *containerState = NULL;
+			struct json_object *containerObj = NULL;
+			struct json_object *containerStateObj = NULL;
+			int64 containerMemoryUsage = 0;
 
-	/* send one tuple */
-	if (call_cntr < max_calls) {
-		char **values;
-		HeapTuple tuple;
-		Datum result;
-		char *containerState = NULL;
-		struct json_object *containerObj = NULL;
-		struct json_object *containerStateObj = NULL;
+			/*
+			 * Process json object by its key, and then get value
+			 */
 
-		/*
-		 * Process json object by its key, and then get value
-		 */
+			containerObj = json_object_array_get_idx(container_list, call_cntr);
+			if (containerObj == NULL) {
+				elog(ERROR, "Not a valid container.");
+			}
 
-		containerObj = json_object_array_get_idx(container_list, call_cntr);
-		if (containerObj == NULL) {
-			elog(ERROR, "Not a valid container.");
+			struct json_object *statusObj = NULL;
+			if (!json_object_object_get_ex(containerObj, "Status", &statusObj)) {
+				elog(ERROR, "failed to get json \"Status\" field.");
+			}
+			const char *statusStr = json_object_get_string(statusObj);
+			struct json_object *labelObj = NULL;
+			if (!json_object_object_get_ex(containerObj, "Labels", &labelObj)) {
+				elog(ERROR, "failed to get json \"Labels\" field.");
+			}
+			struct json_object *ownerObj = NULL;
+			if (!json_object_object_get_ex(labelObj, "owner", &ownerObj)) {
+				funcctx->call_cntr++;
+				call_cntr++;
+				elog(LOG, "failed to get json \"owner\" field. Maybe this container is not started by PL/Container");
+				continue;
+			}
+			const char *ownerStr = json_object_get_string(ownerObj);
+
+			struct json_object *dbidObj = NULL;
+			if (!json_object_object_get_ex(labelObj, "dbid", &dbidObj)) {
+				funcctx->call_cntr++;
+				call_cntr++;
+				elog(LOG, "failed to get json \"dbid\" field. Maybe this container is not started by PL/Container");
+				continue;
+			}
+			const char *dbidStr = json_object_get_string(dbidObj);
+			struct json_object *idObj = NULL;
+			if (!json_object_object_get_ex(containerObj, "Id", &idObj)) {
+				elog(ERROR, "failed to get json \"Id\" field.");
+			}
+			const char *idStr = json_object_get_string(idObj);
+
+			plc_docker_get_container_state(idStr, &containerState);
+			containerStateObj = json_tokener_parse(containerState);
+			struct json_object *memoryObj = NULL;
+			if (!json_object_object_get_ex(containerStateObj, "memory_stats", &memoryObj)) {
+				elog(ERROR, "failed to get json \"memory_stats\" field.");
+			}
+			struct json_object *memoryUsageObj = NULL;
+			if (!json_object_object_get_ex(memoryObj, "usage", &memoryUsageObj)) {
+				elog(LOG, "failed to get json \"usage\" field.");
+			} else {
+				containerMemoryUsage = json_object_get_int64(memoryUsageObj) / 1024;
+			}
+
+			values = (char **) palloc(5 * sizeof(char *));
+			values[0] = (char *) palloc(8 * sizeof(char));
+			values[1] = (char *) palloc(80 * sizeof(char));
+			values[2] = (char *) palloc(64 * sizeof(char));
+			values[3] = (char *) palloc(64 * sizeof(char));
+			values[4] = (char *) palloc(32 * sizeof(char));
+
+			snprintf(values[0], 8, "%s", dbidStr);
+			snprintf(values[1], 80, "%s", idStr);
+			snprintf(values[2], 64, "%s", statusStr);
+			snprintf(values[3], 64, "%s", ownerStr);
+			snprintf(values[4], 32, "%ld", containerMemoryUsage);
+
+			/* build a tuple */
+			tuple = BuildTupleFromCStrings(attinmeta, values);
+
+			/* make the tuple into a datum */
+			result = HeapTupleGetDatum(tuple);
+
+			SRF_RETURN_NEXT(funcctx, result);
+		} else {
+			if (container_list != NULL) {
+				json_object_put(container_list);
+			}
+			SRF_RETURN_DONE(funcctx);
 		}
-		struct json_object *idObj = NULL;
-		if (!json_object_object_get_ex(containerObj, "Id", &idObj)) {
-			elog(ERROR, "failed to get json \"Id\" field.");
-		}
-
-		const char *idStr = json_object_get_string(idObj);
-
-		plc_docker_get_container_state(idStr, &containerState);
-		containerStateObj = json_tokener_parse(containerState);
-		struct json_object *memoryObj = NULL;
-		if (!json_object_object_get_ex(containerStateObj, "memory_stats", &memoryObj)) {
-			elog(ERROR, "failed to get json \"memory_stats\" field.");
-		}
-		struct json_object *memoryUsageObj = NULL;
-		if (!json_object_object_get_ex(memoryObj, "usage", &memoryUsageObj)) {
-			elog(ERROR, "failed to get json \"usage\" field.");
-		}
-		int64 containerMemoryUsage = json_object_get_int64(memoryUsageObj) / 1024;
-
-		struct json_object *statusObj = NULL;
-		if (!json_object_object_get_ex(containerObj, "Status", &statusObj)) {
-			elog(ERROR, "failed to get json \"Status\" field.");
-		}
-		const char *statusStr = json_object_get_string(statusObj);
-		struct json_object *labelObj = NULL;
-		if (!json_object_object_get_ex(containerObj, "Labels", &labelObj)) {
-			elog(ERROR, "failed to get json \"Labels\" field.");
-		}
-		struct json_object *ownerObj = NULL;
-		if (!json_object_object_get_ex(labelObj, "owner", &ownerObj)) {
-			elog(ERROR, "failed to get json \"owner\" field.");
-		}
-		const char *ownerStr = json_object_get_string(ownerObj);
-
-		struct json_object *dbidObj = NULL;
-		if (!json_object_object_get_ex(labelObj, "dbid", &dbidObj)) {
-			elog(ERROR, "failed to get json \"dbid\" field.");
-		}
-		const char *dbidStr = json_object_get_string(dbidObj);
-
-		values = (char **) palloc(5 * sizeof(char *));
-		values[0] = (char *) palloc(8 * sizeof(char));
-		values[1] = (char *) palloc(80 * sizeof(char));
-		values[2] = (char *) palloc(64 * sizeof(char));
-		values[3] = (char *) palloc(64 * sizeof(char));
-		values[4] = (char *) palloc(32 * sizeof(char));
-
-
-		snprintf(values[0], 8, "%s", dbidStr);
-		snprintf(values[1], 80, "%s", idStr);
-		snprintf(values[2], 64, "%s", statusStr);
-		snprintf(values[3], 64, "%s", ownerStr);
-		snprintf(values[4], 32, "%ld", containerMemoryUsage);
-
-		/* build a tuple */
-		tuple = BuildTupleFromCStrings(attinmeta, values);
-
-		/* make the tuple into a datum */
-		result = HeapTupleGetDatum(tuple);
-
-		SRF_RETURN_NEXT(funcctx, result);
-	} else {
-		if (container_list != NULL) {
-			json_object_put(container_list);
-		}
-		SRF_RETURN_DONE(funcctx);
 	}
+
 }
