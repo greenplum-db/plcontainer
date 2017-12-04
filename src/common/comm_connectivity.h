@@ -18,10 +18,10 @@
 #define PLC_OUTPUT_BUFFER 1
 
 typedef struct plcBuffer {
-    char *data;
-    int   pStart;
-    int   pEnd;
-    int   bufSize;
+	char *data;
+	int pStart;
+	int pEnd;
+	int bufSize;
 } plcBuffer;
 
 #ifndef COMM_STANDALONE
@@ -35,7 +35,7 @@ struct pplan_slots {
 typedef struct plcConn {
 	int sock;
 	int rx_timeout_sec;
-	plcBuffer* buffer[2];
+	plcBuffer *buffer[2];
 #ifndef COMM_STANDALONE
 	char *uds_fn; /* File for unix domain socket connection only. */
 	int container_slot;
@@ -50,15 +50,23 @@ typedef struct plcConn {
 #define MAX_SHARED_FILE_SZ strlen(UDS_SHARED_FILE)
 
 #ifndef COMM_STANDALONE
-plcConn * plcConnect_inet(int port);
-plcConn * plcConnect_ipc(char *uds_fn);
-void plcDisconnect(plcConn *conn);
-#endif
-plcConn * plcConnInit(int sock);
 
-int plcBufferAppend (plcConn *conn, char *prt, size_t len);
-int plcBufferRead (plcConn *conn, char *resBuffer, size_t len);
-int plcBufferReceive (plcConn *conn, size_t nBytes);
-int plcBufferFlush (plcConn *conn);
+plcConn *plcConnect_inet(int port);
+
+plcConn *plcConnect_ipc(char *uds_fn);
+
+void plcDisconnect(plcConn *conn);
+
+#endif
+
+plcConn *plcConnInit(int sock);
+
+int plcBufferAppend(plcConn *conn, char *prt, size_t len);
+
+int plcBufferRead(plcConn *conn, char *resBuffer, size_t len);
+
+int plcBufferReceive(plcConn *conn, size_t nBytes);
+
+int plcBufferFlush(plcConn *conn);
 
 #endif /* PLC_COMM_CONNECTIVITY_H */

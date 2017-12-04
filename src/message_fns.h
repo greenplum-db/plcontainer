@@ -31,28 +31,29 @@ interpreted as representing official policies, either expressed or implied, of t
 
 /* Structure representing function result data */
 typedef struct {
-    plcMsgResult    *resmsg;
-    uint32           resrow;
+	plcMsgResult *resmsg;
+	uint32 resrow;
 } plcProcResult;
 
 typedef struct {
-    /* Greenplum Function Information */
-    Oid              funcOid;
-    TransactionId    fn_xmin; /* Transaction ID that created this function in catalog */
-    ItemPointerData  fn_tid;  /* ItemPointer for the function row in catalog */
-    /* Universal Function Information */
-    char            *name;
-    char            *src;
-    int              hasChanged; /* Whether the function has changed since last call */
-    plcTypeInfo      rettype;
-    int              retset;
-    int              nargs;
-    char           **argnames;
-    plcTypeInfo     *argtypes;
-    bool             fn_readonly;
+	/* Greenplum Function Information */
+	Oid funcOid;
+	TransactionId fn_xmin; /* Transaction ID that created this function in catalog */
+	ItemPointerData fn_tid;  /* ItemPointer for the function row in catalog */
+	/* Universal Function Information */
+	char *name;
+	char *src;
+	int hasChanged; /* Whether the function has changed since last call */
+	plcTypeInfo rettype;
+	int retset;
+	int nargs;
+	char **argnames;
+	plcTypeInfo *argtypes;
+	bool fn_readonly;
 } plcProcInfo;
 
 plcProcInfo *get_proc_info(FunctionCallInfo fcinfo);
+
 void free_proc_info(plcProcInfo *proc);
 
 plcMsgCallreq *plcontainer_create_call(FunctionCallInfo fcinfo, plcProcInfo *pinfo);

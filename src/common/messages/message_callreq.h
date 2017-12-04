@@ -11,19 +11,19 @@
 #include "message_base.h"
 
 typedef struct {
-    char *src;  // source code of the procedure
-    char *name; // name of procedure
+	char *src;  // source code of the procedure
+	char *name; // name of procedure
 } plcProcSrc;
 
 typedef struct plcMsgCallreq {
-    base_message_content;    // message_type ID
-    uint32       objectid;   // OID of the function in GPDB
-    int32        hasChanged; // flag signaling the function has changed in GPDB
-    plcProcSrc   proc;       // procedure - its name and source code
-    plcType      retType;    // function return type
-    int32        retset;     // whether the function is set-returning
-    int32        nargs;      // number of function arguments
-    plcArgument *args;       // function arguments
+	base_message_content;    // message_type ID
+	uint32 objectid;   // OID of the function in GPDB
+	int32 hasChanged; // flag signaling the function has changed in GPDB
+	plcProcSrc proc;       // procedure - its name and source code
+	plcType retType;    // function return type
+	int32 retset;     // whether the function is set-returning
+	int32 nargs;      // number of function arguments
+	plcArgument *args;       // function arguments
 } plcMsgCallreq;
 
 void free_arguments(plcArgument *args, int nargs, bool isShared, bool isSender);

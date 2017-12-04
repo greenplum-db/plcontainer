@@ -22,8 +22,7 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 		const char *namestr = json_object_get_string(nameidObj);
 		*element = pstrdup(namestr);
 		return 0;
-	}
-	else if(type == PLC_INSPECT_PORT) {
+	} else if (type == PLC_INSPECT_PORT) {
 		struct json_object *NetworkSettingsObj = NULL;
 		if (!json_object_object_get_ex(response, "NetworkSettings", &NetworkSettingsObj)) {
 			elog(WARNING, "failed to get json \"NetworkSettings\" field.");
@@ -44,10 +43,10 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 			return -1;
 		}
 		int arraylen = json_object_array_length(HostPortArray);
-		for (int i=0; i< arraylen; i++){
+		for (int i = 0; i < arraylen; i++) {
 			struct json_object *PortBindingObj = NULL;
 			PortBindingObj = json_object_array_get_idx(HostPortArray, i);
-			if (PortBindingObj == NULL){
+			if (PortBindingObj == NULL) {
 				elog(WARNING, "failed to get json \"PortBinding\" field.");
 				return -1;
 			}
@@ -60,8 +59,7 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 			*element = pstrdup(HostPortStr);
 			return 0;
 		}
-	}
-	else if (type == PLC_INSPECT_STATUS) {
+	} else if (type == PLC_INSPECT_STATUS) {
 		struct json_object *StateObj = NULL;
 		if (!json_object_object_get_ex(response, "State", &StateObj)) {
 			elog(WARNING, "failed to get json \"State\" field.");
@@ -85,10 +83,9 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 		const char *StatusStr = json_object_get_string(StatusObj);
 		*element = pstrdup(StatusStr);
 		return 0;
-#endif		
-	}
-	else {
-		elog(LOG, "Error PLC inspection mode, unacceptable inpsection type %d",type);
+#endif
+	} else {
+		elog(LOG, "Error PLC inspection mode, unacceptable inpsection type %d", type);
 		return -1;
 	}
 

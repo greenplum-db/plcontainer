@@ -17,15 +17,14 @@ MemoryContext pl_container_caller_context;
 List *explicit_subtransactions;
 
 /* explicit subtransaction data */
-typedef struct PLySubtransactionData
-{
+typedef struct PLySubtransactionData {
 	MemoryContext oldcontext;
 	ResourceOwner oldowner;
 } PLySubtransactionData;
 
-extern void * plcontainer_malloc(size_t bytes);
-extern void plcontainer_free(void *ptr);
+extern void *plcontainer_malloc(size_t bytes);
 
+extern void plcontainer_free(void *ptr);
 
 
 #endif /* PLC_PLCONTAINER_COMMON_H_ */

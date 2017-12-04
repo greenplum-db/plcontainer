@@ -11,9 +11,9 @@
 #include "message_base.h"
 
 typedef struct plcMsgError {
-    base_message_content;
-    char *message;
-    char *stacktrace;
+	base_message_content;
+	char *message;
+	char *stacktrace;
 } plcMsgError;
 
 void free_error(plcMsgError *msg);

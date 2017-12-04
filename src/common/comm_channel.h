@@ -35,13 +35,15 @@ interpreted as representing official policies, either expressed or implied, of t
 //#define PLCONTAINER_CHANNEL_DEBUG
 
 #ifdef PLCONTAINER_CHANNEL_DEBUG
-    #define debug_print(...) lprintf(__VA_ARGS__)
+	#define debug_print(...) lprintf(__VA_ARGS__)
 #else
-    #define debug_print(...)
+	#define debug_print(...)
 #endif
 
 int plcontainer_channel_send(plcConn *conn, plcMessage *msg);
+
 int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask);
+
 void fill_prepare_argument(plcArgument *arg, char *str, plcDatatype plcData);
 
 #endif /* PLC_COMM_CHANNEL_H */

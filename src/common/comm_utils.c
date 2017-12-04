@@ -9,30 +9,30 @@
 
 #ifndef COMM_STANDALONE
 
-    #include "utils/memutils.h"
-    #include "utils/palloc.h"
+#include "utils/memutils.h"
+#include "utils/palloc.h"
 
-    void *plc_top_alloc(size_t bytes) {
-    	/* We need our allocations to be long-lived, so use TopMemoryContext */
-    	return MemoryContextAlloc(TopMemoryContext, bytes);
-    }
-    
-    char *plc_top_strdup(char *str) {
-        int   len = strlen(str);
-        char *out = plc_top_alloc(len + 1);
-        memcpy(out, str, len);
-        out[len] = '\0';
-        return out;
-    }
+void *plc_top_alloc(size_t bytes) {
+	/* We need our allocations to be long-lived, so use TopMemoryContext */
+	return MemoryContextAlloc(TopMemoryContext, bytes);
+}
+
+char *plc_top_strdup(char *str) {
+	int len = strlen(str);
+	char *out = plc_top_alloc(len + 1);
+	memcpy(out, str, len);
+	out[len] = '\0';
+	return out;
+}
 
 #else
 
-	void *pmalloc(size_t size) {
-		void *addr = malloc(size);
-		if (addr == NULL)
-			lprintf(ERROR, "Fail to allocate %ld bytes", (unsigned long) size);
-		return addr;
-	}
+void *pmalloc(size_t size) {
+	void *addr = malloc(size);
+	if (addr == NULL)
+		lprintf(ERROR, "Fail to allocate %ld bytes", (unsigned long) size);
+	return addr;
+}
 
 typedef void (*signal_handler)(int);
 
@@ -47,8 +47,8 @@ static void set_signal_handler(int signo, int sigflags, signal_handler func) {
 
 	ret = sigaction(signo, &sa, NULL);
 	if (ret < 0) {
-		lprintf(ERROR, "sigaction(%d with flag 0x%x) failed: %s", signo,
-				sigflags, strerror(errno));
+			lprintf(ERROR, "sigaction(%d with flag 0x%x) failed: %s", signo,
+			        sigflags, strerror(errno));
 		return;
 	}
 
@@ -60,7 +60,7 @@ static void sigsegv_handler() {
 	int size;
 
 	size = backtrace(stack, 100);
-	lprintf(LOG, "signal SIGSEGV was captured in pl/container. Stack:");
+		lprintf(LOG, "signal SIGSEGV was captured in pl/container. Stack:");
 	fflush(stdout);
 
 	/* Do not call backtrace_symbols() since it calls malloc(3) which is not

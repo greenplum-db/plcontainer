@@ -11,9 +11,9 @@
 #include "message_base.h"
 
 typedef struct plcMsgRaw {
-    base_message_content;
+	base_message_content;
 	int32 size;
-    char *data;
+	char *data;
 } plcMsgRaw;
 
 void free_rawmsg(plcMsgRaw *msg);

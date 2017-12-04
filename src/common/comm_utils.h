@@ -48,36 +48,36 @@ interpreted as representing official policies, either expressed or implied, of t
 
 #include "comm_log.h"
 
-    /* Compatibility with R that defines WARNING and ERROR by itself */
-    #undef WARNING
-    #undef ERROR
+/* Compatibility with R that defines WARNING and ERROR by itself */
+#undef WARNING
+#undef ERROR
 
-    /* Error level codes from GPDB utils/elog.h header */
-    #define DEBUG2     13
-    #define DEBUG1     14
-    #define LOG        15
-    #define INFO       17
-    #define NOTICE     18
-    #define WARNING    19
-    #define ERROR      20
-    #define FATAL      21
-    #define PANIC      22
-    /* End of extraction from utils/elog.h */
+/* Error level codes from GPDB utils/elog.h header */
+#define DEBUG2     13
+#define DEBUG1     14
+#define LOG        15
+#define INFO       17
+#define NOTICE     18
+#define WARNING    19
+#define ERROR      20
+#define FATAL      21
+#define PANIC      22
+/* End of extraction from utils/elog.h */
 
-    /* Postgres-specific types from GPDB c.h header */
-    typedef signed char int8;        /* == 8 bits */
-    typedef signed short int16;      /* == 16 bits */
-    typedef signed int int32;        /* == 32 bits */
-    typedef unsigned int uint32;     /* == 32 bits */
-    typedef long long int int64;     /* == 64 bits */
-    typedef float float4;
-    typedef double float8;
-    typedef char bool;
-    #define true    ((bool) 1)
-    #define false   ((bool) 0)
-    /* End of extraction from c.h */
+/* Postgres-specific types from GPDB c.h header */
+typedef signed char int8;        /* == 8 bits */
+typedef signed short int16;      /* == 16 bits */
+typedef signed int int32;        /* == 32 bits */
+typedef unsigned int uint32;     /* == 32 bits */
+typedef long long int int64;     /* == 64 bits */
+typedef float float4;
+typedef double float8;
+typedef char bool;
+#define true    ((bool) 1)
+#define false   ((bool) 0)
+/* End of extraction from c.h */
 
-    #define lprintf(lvl, fmt, ...)                                      \
+#define lprintf(lvl, fmt, ...)                                          \
         do {                                                            \
             FILE *out = stdout;                                         \
             if (lvl >= ERROR) {                                         \
@@ -88,28 +88,32 @@ interpreted as representing official policies, either expressed or implied, of t
             fprintf(out, #lvl ": ");                                    \
             fprintf(out, fmt, ##__VA_ARGS__);                           \
             fprintf(out, "\n");                                         \
-			fflush(out);                                                \
+            fflush(out);                                                \
             if (lvl >= ERROR) {                                         \
                 exit(1);                                                \
             }                                                           \
         } while (0)
-	void *pmalloc(size_t size);
-    #define plc_top_alloc pmalloc
-    #define pfree free
-    #define pstrdup strdup
-    #define plc_top_strdup strdup
 
-	void set_signal_handlers(void);
+void *pmalloc(size_t size);
+
+#define plc_top_alloc pmalloc
+#define pfree free
+#define pstrdup strdup
+#define plc_top_strdup strdup
+
+void set_signal_handlers(void);
 
 #else /* COMM_STANDALONE */
 
 #include "postgres.h"
 
-    #define lprintf elog
-    #define pmalloc palloc
-    /* pfree & pstrdup are already defined by postgres */
-    void *plc_top_alloc(size_t bytes);
-    char *plc_top_strdup(char *str);
+#define lprintf elog
+#define pmalloc palloc
+
+/* pfree & pstrdup are already defined by postgres */
+void *plc_top_alloc(size_t bytes);
+
+char *plc_top_strdup(char *str);
 
 #endif /* COMM_STANDALONE */
 

@@ -18,9 +18,12 @@
 // Timeout in seconds for server to wait for client connection
 #define TIMEOUT_SEC 20
 
-int  start_listener(void);
+int start_listener(void);
+
 void connection_wait(int sock);
-plcConn* connection_init(int sock);
-void receive_loop( void (*handle_call)(plcMsgCallreq*, plcConn*), plcConn* conn);
+
+plcConn *connection_init(int sock);
+
+void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *), plcConn *conn);
 
 #endif /* PLC_COMM_SERVER_H */

@@ -11,7 +11,7 @@
 #include "message_base.h"
 
 typedef struct plcMsgPing {
-    base_message_content;
+	base_message_content;
 } plcMsgPing;
 
 #endif /* PLC_MESSAGE_PING_H */

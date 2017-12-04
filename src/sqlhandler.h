@@ -14,9 +14,9 @@
 #include "message_fns.h"
 
 typedef struct plcPlan {
-	Oid         *argOids;
-	SPIPlanPtr   plan;
-	int          nargs;
+	Oid *argOids;
+	SPIPlanPtr plan;
+	int nargs;
 } plcPlan;
 
 plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo);

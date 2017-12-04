@@ -15,6 +15,7 @@
 #define PLC_PY_FUNCTION_CACHE_SIZE 20
 
 plcPyFunction *plc_py_function_cache_get(unsigned int objectid);
+
 void plc_py_function_cache_put(plcPyFunction *func);
 
 #endif /* PLC_PYCACHE_H */
