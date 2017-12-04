@@ -439,14 +439,32 @@ plcConn *start_backend(plcContainerConf *conf) {
 				if (res == 0) {
 					break;
 				} else {
+					elog(DEBUG1, "Failed to receive pong from client. Maybe expected. dockerid: %s", dockerid);
 					plcDisconnect(conn);
-					elog(ERROR, "Failed to receive pong to client. dockerid: %s", dockerid);
 				}
-            } else {
+			} else {
+				elog(DEBUG1, "Failed to send ping to client. Maybe expected. dockerid: %s", dockerid);
 				plcDisconnect(conn);
-				elog(ERROR, "Failed to send ping from client. dockerid: %s", dockerid);
 			}
-        }
+
+			/*
+			 * Note about the plcDisconnect(conn) code above:
+			 *
+			 * We saw the case that connection() + send() are ok, but rx
+			 * fails with "reset by peer" while the client program has not started
+			 * listen()-ing. That happens with the docker bridging + NAT network
+			 * solution when the QE connects via the lo interface (i.e. 127.0.0.1).
+			 * We did not try other solutions like macvlan, etc yet. It appears
+			 * that this is caused by the docker proxy program. We could work
+			 * around this by setting docker userland-proxy as false or connecting via
+			 * non-localhost on QE, however to make our code tolerate various
+			 * configurations, we allow reconnect here since that does not seem
+			 * to harm the normal case although since client will just accept()
+			 * the tcp connection once reconnect should never happen.
+			 */
+        } else {
+			elog(DEBUG1, "Failed to connect to client. Maybe expected. dockerid: %s", dockerid);
+		}
 
         usleep(sleepus);
         elog(DEBUG1, "Waiting for %u ms for before reconnecting", sleepus/1000);
