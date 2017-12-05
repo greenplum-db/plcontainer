@@ -50,6 +50,13 @@ def parseargs():
                         " -l plcontainer_language_type")
     install_parser = subparsers.add_parser('install', help='Install a dokcer image and add it to configuration file')
 
+    image_add_parser = subparsers.add_parser("image-add", help = "Install specified docker image on all hosts")
+
+    # for image-add
+    image_add_options = image_add_parser.add_mutually_exclusive_group()
+    image_add_options.add_argument("-f", "--file", dest="file", help="image location (e.g. /tmp/centos.7.2.tar.gz)")
+    image_add_options.add_argument("-u", "--url", dest="url", help="image url (e.g. 192.168.0.1:5000/images/centos:7.2)")
+
     # for configure
     config_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer name")
     config_parser.add_argument("-i", "--image", dest="image", help="Configure plcontainer image location and tags (location:tag), the image must be installed." + 
@@ -96,9 +103,14 @@ def parseargs():
                 logger.error('language must be r or python')
                 sys.exit(1)
 
+    if options.subparser_name == "image-add":
+        if not (options.file or options.url):
+            logger.error("Need to specify either file path or url.")
+            sys.exit(1)
+
     return options
 
-def distribut_docker_file(pool, d_file, dest, hosts):
+def distribute_docker_file(pool, d_file, dest, hosts):
     if dest is None:
         dest = os.path.join(TMP, d_file)
     for host in hosts:
@@ -143,7 +155,7 @@ def get_docker_image(url):
 
     return image_path
 
-def install_images(options, pool, hosts):
+def install_images_old(options, pool, hosts):
     '''
     install docker image either form url or file
     '''
@@ -163,7 +175,7 @@ def install_images(options, pool, hosts):
         
         logger.info('Distributing image file %s to all hosts...' % docker_image)
         dest = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, docker_image)
-        distribut_docker_file(pool, docker_image, dest, hosts)
+        distribute_docker_file(pool, docker_image, dest, hosts)
 
         logger.info('Loading image on all hosts...')
         docker_load_cmd = " ".join(["docker load -i ", dest])
@@ -180,6 +192,34 @@ def install_images(options, pool, hosts):
             tag = dockerUrl.split(":", 1)[1]
         return tag
 
+    except Exception, ex:
+        raise(ex)
+
+def install_images(options, pool, hosts):
+    '''
+    install docker image either form url or file
+    '''
+    if options.file:
+        docker_image = options.file
+    if options.url:
+        docker_image = get_docker_image(options.url)
+
+    if not os.path.exists(docker_image):
+        logger.error("docker image file %s does not exist" % docker_image)
+        sys.exit(1)
+
+    try:
+        logger.info('Checking whether docker is installed on all hosts...')
+        check_docker_cmd = 'which docker'
+        remote_cmd(pool, check_docker_cmd, hosts)
+
+        logger.info('Distributing image file %s to all hosts...' % docker_image)
+        dest = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, docker_image)
+        distribute_docker_file(pool, docker_image, dest, hosts)
+
+        logger.info('Loading image on all hosts...')
+        docker_load_cmd = " ".join(["docker load -i ", dest])
+        remote_cmd(pool, docker_load_cmd, hosts)
     except Exception, ex:
         raise(ex)
 
@@ -400,7 +440,7 @@ def backup_file(pool, gpdb_locations, file):
     pool.join()
     pool.check_results()
 
-def get_all_host(array):
+def get_all_hosts(array):
     hosts = set()
     for hostname in array.get_hostlist():
        hosts.add(hostname)
@@ -446,14 +486,14 @@ def get_last_backup(pool, remote_host, remote_dir, filename):
     return result
 
 
-def remove_files(pool, gpdb_locations, remote_filename):
+def remote_remove_files(pool, gpdb_locations, remote_filename):
     """
     Removes the specified file from all the hosts of GPDB cluster
     """
     for l in gpdb_locations:
         remote_file = os.path.join(l[1], remote_filename)
         cmd = Command('Remove %s:%s' % (l[0], remote_file),
-                      'rm %s || exit 0' % remote_file,
+                      'rm -f %s || exit 0' % remote_file,
                       ctxt = REMOTE,
                       remoteHost = l[0])
         pool.addCommand(cmd)
@@ -526,11 +566,12 @@ def main():
         url = dbconn.DbURL()
         array = gparray.GpArray.initFromCatalog(url, True)
         segs = array.getDbList()
-        hosts = get_all_host(array)
+        hosts = get_all_hosts(array)
 
         gpdb_locations = get_segment_locations(segs)
         logger.debug('GPDB Configuration is:')
 
+        # FIXME: do them for configure commands only.
         remote_dir = gpdb_locations[0][1]
         remote_host = gpdb_locations[0][0]
         remote_filename = os.path.join(remote_dir, PLCONTAINER_CONFIG_FILE)
@@ -538,6 +579,11 @@ def main():
 
         for host, directory in gpdb_locations:
             logger.debug('    host "%s" directory "%s"' % (host, directory))
+
+        if options.subparser_name == "image-add":
+            logger.info('Preparing the worker pool...')
+            pool = WorkerPool(PL_BATCH_SIZE)
+            install_images(options, pool, hosts)
 
         if options.subparser_name == "configure" and options.show:
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
@@ -559,7 +605,7 @@ def main():
                 logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
                 distribute_file(pool, filename, PLCONTAINER_CONFIG_FILE, gpdb_locations)
                 logger.info('Cleaning up old backup file...')
-                remove_files(pool, gpdb_locations, os.path.basename(filename))
+                remote_remove_files(pool, gpdb_locations, os.path.basename(filename))
                 new_config = True
 
         if options.subparser_name == "configure" and options.conf_file:
@@ -571,7 +617,7 @@ def main():
             distribute_file(pool, options.conf_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
 
-        if options.name and options.subparser_name == "configure":
+        if options.subparser_name == "configure" and options.name:
             elements = get_conf_elements(options)
             update_xml_config(tmp_file, elements)
             logger.info('Preparing the worker pool...')
@@ -582,10 +628,10 @@ def main():
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
         
-        if options.name and options.subparser_name == "install":
+        if options.subparser_name == "install" and options.name:
             logger.info('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
-            dockerImageName = install_images(options, pool, hosts)
+            dockerImageName = install_images_old(options, pool, hosts)
             elements = get_conf_elements(options, dockerImageName)
             update_xml_config(tmp_file, elements)
             logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
