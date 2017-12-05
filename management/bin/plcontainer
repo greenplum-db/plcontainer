@@ -140,8 +140,15 @@ def remote_cmd(pool, cmd_str, hosts):
                         remoteHost = host.strip())
         pool.addCommand(cmd)
     pool.join()
-    results = pool.getCompletedItems()[0].get_results().stdout
-    pool.check_results()
+
+    items = pool.getCompletedItems()
+    results = None
+    for i in items:
+        if i.results.rc or i.results.halt or not i.results.completed:
+            logger.error("error running command: %s" % cmd_str)
+            raise Exception("error running command")
+        if results is None:
+            results = items[0].get_results().stdout
     return results
 
 def get_docker_image(url):
