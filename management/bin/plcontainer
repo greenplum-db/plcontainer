@@ -51,11 +51,15 @@ def parseargs():
     install_parser = subparsers.add_parser('install', help='Install a dokcer image and add it to configuration file')
 
     image_add_parser = subparsers.add_parser("image-add", help = "Install specified docker image on all hosts")
+    image_delete_parser = subparsers.add_parser("image-delete", help = "Delete specified docker image on all hosts")
 
-    # for image-add
+    # For image-add
     image_add_options = image_add_parser.add_mutually_exclusive_group()
     image_add_options.add_argument("-f", "--file", dest="file", help="image location (e.g. /tmp/centos.7.2.tar.gz)")
     image_add_options.add_argument("-u", "--url", dest="url", help="image url (e.g. 192.168.0.1:5000/images/centos:7.2)")
+
+    # For image-delete
+    image_delete_parser.add_argument("-n", "--name", dest="image_name", help="image name:tag (e.g. centos:7.2)")
 
     # for configure
     config_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer name")
@@ -106,6 +110,11 @@ def parseargs():
     if options.subparser_name == "image-add":
         if not (options.file or options.url):
             logger.error("Need to specify either file path or url.")
+            sys.exit(1)
+
+    if options.subparser_name == "image-delete":
+        if not options.image_name:
+            logger.error("Need to specify the image name for deletion.")
             sys.exit(1)
 
     return options
@@ -220,6 +229,23 @@ def install_images(options, pool, hosts):
         logger.info('Loading image on all hosts...')
         docker_load_cmd = " ".join(["docker load -i ", dest])
         remote_cmd(pool, docker_load_cmd, hosts)
+    except Exception, ex:
+        raise(ex)
+
+def delete_images(options, pool, hosts):
+    '''
+    delete docker image
+    '''
+    docker_image = options.image_name
+
+    try:
+        logger.info('Checking whether docker is installed on all hosts...')
+        check_docker_cmd = 'which docker'
+        remote_cmd(pool, check_docker_cmd, hosts)
+
+        logger.info('Deleting image %s on all hosts...' % docker_image)
+        docker_delete_cmd = " ".join(["docker rmi -f ", docker_image])
+        remote_cmd(pool, docker_delete_cmd, hosts)
     except Exception, ex:
         raise(ex)
 
@@ -584,6 +610,11 @@ def main():
             logger.info('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
             install_images(options, pool, hosts)
+
+        if options.subparser_name == "image-delete":
+            logger.info('Preparing the worker pool...')
+            pool = WorkerPool(PL_BATCH_SIZE)
+            delete_images(options, pool, hosts)
 
         if options.subparser_name == "configure" and options.show:
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
