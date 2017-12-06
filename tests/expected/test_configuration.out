@@ -1,7 +1,8 @@
-select * from plcontainer_containers_summary();
- SEGMENT_ID | CONTAINER_ID | UP_TIME | OWNER | MEMORY_USAGE(KB) 
-------------+--------------+---------+-------+------------------
-(0 rows)
+select count(*) from plcontainer_containers_summary();
+ count 
+-------
+     0
+(1 row)
 
 CREATE ROLE pluser;
 NOTICE:  resource queue required -- using default resource queue "pg_default"
@@ -17,11 +18,18 @@ SELECT pyconf();
      10
 (1 row)
 
+select count(*) from plcontainer_containers_summary();
+ count 
+-------
+     1
+(1 row)
+
 SET ROLE pluser;
-select * from plcontainer_containers_summary();
- SEGMENT_ID | CONTAINER_ID | UP_TIME | OWNER | MEMORY_USAGE(KB) 
-------------+--------------+---------+-------+------------------
-(0 rows)
+select count(*) from plcontainer_containers_summary();
+ count 
+-------
+     0
+(1 row)
 
 SET ROLE gpadmin;
 DROP FUNCTION pyconf();

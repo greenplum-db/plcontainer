@@ -593,7 +593,8 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			if (strcmp(ownerStr, username) != 0 && superuser() == false) {
 				funcctx->call_cntr++;
 				call_cntr++;
-				elog(DEBUG1, "Current username (not super user) is not match conatiner owner, skip");
+				elog(DEBUG1, "Current username %s (not super user) is not match conatiner owner %s, skip",
+					 username, ownerStr);
 				continue;
 			}
 
