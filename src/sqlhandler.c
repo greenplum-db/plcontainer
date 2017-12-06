@@ -238,10 +238,24 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 	Oid type_oid;
 	plcDatatype *argTypes;
 	int32 typemod;
+	volatile MemoryContext oldcontext;
+	volatile ResourceOwner oldowner;
+
+	oldcontext = CurrentMemoryContext;
+	oldowner = CurrentResourceOwner;
+	
+	/* 
+	 * We need to make sure BeginInternalSubTransaction()
+	 * is called before we enter into PG_TRY block, and the
+	 * memory context is the function's memory context. Otherwise,
+	 * RollbackAndReleaseCurrentSubTransaction will cause a FATAL
+	 * error due to SubTransaction is not inited.
+	 */
+	BeginInternalSubTransaction(NULL);
+	MemoryContextSwitchTo(oldcontext);
 
 	PG_TRY();
 	{
-		BeginInternalSubTransaction(NULL);
 
 		switch (msg->sqltype) {
 			case SQL_TYPE_STATEMENT:
@@ -293,7 +307,6 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 					retval = SPI_execute(msg->statement, pinfo->fn_readonly,
 					                     (long) msg->limit);
 				}
-
 				switch (retval) {
 					case SPI_OK_SELECT:
 					case SPI_OK_INSERT_RETURNING:
@@ -316,7 +329,6 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 								     pinfo->fn_readonly, msg->limit, retval);
 						break;
 				}
-
 				SPI_freetuptable(SPI_tuptable);
 				break;
 			case SQL_TYPE_PREPARE:
@@ -375,10 +387,16 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 		}
 
 		ReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
 	}
 	PG_CATCH();
 	{
+		/* Make sure the memroy context is in correct position */
+		MemoryContextSwitchTo(oldcontext);
 		RollbackAndReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+		
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
