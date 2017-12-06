@@ -53,6 +53,7 @@ def parseargs():
     image_add_parser = subparsers.add_parser("image-add", help = "Install specified docker image on all hosts")
     image_delete_parser = subparsers.add_parser("image-delete", help = "Delete specified docker image on all hosts")
     runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration")
+    runtime_list_parser = subparsers.add_parser("runtime-list", help = "List all container runtime configurations")
 
     # For image-add
     image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
@@ -763,6 +764,9 @@ def main():
             logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
+
+        if options.subparser_name == "runtime-list":
+            show_file(tmp_file)
 
         if options.subparser_name == "configure" and options.show:
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
