@@ -388,6 +388,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
 	}
 	PG_CATCH();
 	{
