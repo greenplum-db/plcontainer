@@ -18,3 +18,6 @@ SET ROLE pluser;
 select * from plcontainer_containers_summary();
 
 SET ROLE gpadmin;
+
+DROP FUNCTION pyconf();
+DROP ROLE pluser;
