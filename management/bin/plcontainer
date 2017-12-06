@@ -54,6 +54,7 @@ def parseargs():
     image_delete_parser = subparsers.add_parser("image-delete", help = "Delete specified docker image on all hosts")
     runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration")
     runtime_list_parser = subparsers.add_parser("runtime-list", help = "List all container runtime configurations")
+    runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a container runtime configuration.")
 
     # For image-add
     image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
@@ -77,6 +78,10 @@ def parseargs():
     runtime_add_parser.add_argument("-s", "--setting", dest="setting", action="append",
                                     help="Setting for the runtime. Allow call multiple times." +
                                     " (e.g. memory_mb=256)")
+
+    # For runtime-delete
+    runtime_delete_parser.add_argument("-r", "--runtime", dest="runtime_id",
+                                    help="unique string which presents configurations for a container runtime)", required=True)
 
     # for configure
     config_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer name")
@@ -444,9 +449,8 @@ def update_xml_config_old(filename, elements):
 
 def add_xml_config(filename, elements):
     '''
-    Update the xml file by given elements dict. Fail if the given tag exists.
+    Update the xml file with the new runtime configuration. Fail if the given tag exists.
     '''
-    isNew = True
     try:
         xmltree = ElementTree.parse(filename)
         logger.info("file name is %s" % (filename))
@@ -470,6 +474,31 @@ def add_xml_config(filename, elements):
         logger.error("Update XML file Error")
         logger.error(str(ex))
         raise Exception("Update XML file Error")
+
+def delete_xml_config(filename, del_runtime_id):
+    '''
+    Delete given runtime from the xml file.
+    '''
+    try:
+        xmltree = ElementTree.parse(filename)
+        logger.info("file name is %s" % (filename))
+        root = xmltree.getroot()
+
+        for runtime in root.findall('runtime'):
+            runtime_id = runtime.find('id').text
+            if runtime_id == del_runtime_id:
+                root.remove(runtime)
+                newXMLTreeString = update_reformat_xml(root)
+                newXMLTreeString = os.linesep.join([s for s in newXMLTreeString.splitlines() if not s.strip() == ''])
+                xmlfile = open(filename, "w")
+                xmlfile.write(newXMLTreeString)
+                xmlfile.close()
+                return True
+    except Exception, ex:
+        logger.error("Update XML file Error")
+        logger.error(str(ex))
+        raise Exception("Update XML file Error")
+    return False
 
 def get_file_md5(file):
     '''
@@ -767,6 +796,18 @@ def main():
 
         if options.subparser_name == "runtime-list":
             show_file(tmp_file)
+
+        if options.subparser_name == "runtime-delete":
+            if delete_xml_config(tmp_file, options.runtime_id):
+                logger.info('Preparing the worker pool...')
+                pool = WorkerPool(PL_BATCH_SIZE)
+                logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
+                backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
+                logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+                distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+                new_config = True
+            else:
+                logger.info('This runtime configuraiton does not exist. Ignoring')
 
         if options.subparser_name == "configure" and options.show:
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
