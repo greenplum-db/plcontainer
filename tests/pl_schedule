@@ -2,6 +2,9 @@
 test: install
 test: schema
 
+# configuration function tests
+test: test_configuration
+
 # set R and Python function
 test: function_r function_r_gpdb5 function_python function_python_gpdb5
 

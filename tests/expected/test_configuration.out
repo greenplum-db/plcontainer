@@ -1,0 +1,26 @@
+select * from plcontainer_containers_summary();
+ SEGMENT_ID | CONTAINER_ID | UP_TIME | OWNER | MEMORY_USAGE(KB) 
+------------+--------------+---------+-------+------------------
+(0 rows)
+
+CREATE ROLE pluser;
+NOTICE:  resource queue required -- using default resource queue "pg_default"
+SET ROLE pluser;
+CREATE OR REPLACE FUNCTION pyconf() RETURNS int4 AS $$
+# container: plc_python_shared
+return 10
+$$ LANGUAGE plcontainer;
+SET ROLE gpadmin;
+SELECT pyconf();
+ pyconf 
+--------
+     10
+(1 row)
+
+SET ROLE pluser;
+select * from plcontainer_containers_summary();
+ SEGMENT_ID | CONTAINER_ID | UP_TIME | OWNER | MEMORY_USAGE(KB) 
+------------+--------------+---------+-------+------------------
+(0 rows)
+
+SET ROLE gpadmin;

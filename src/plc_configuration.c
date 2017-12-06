@@ -589,6 +589,13 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				continue;
 			}
 			const char *ownerStr = json_object_get_string(ownerObj);
+			const char *username = GetUserNameFromId(GetUserId());
+			if (strcmp(ownerStr, username) != 0 && superuser() == false) {
+				funcctx->call_cntr++;
+				call_cntr++;
+				elog(DEBUG1, "Current username (not super user) is not match conatiner owner, skip");
+				continue;
+			}
 
 			struct json_object *dbidObj = NULL;
 			if (!json_object_object_get_ex(labelObj, "dbid", &dbidObj)) {

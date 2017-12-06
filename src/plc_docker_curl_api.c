@@ -11,7 +11,6 @@
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "libpq/libpq-be.h"
-
 #include "plc_docker_api_common.h"
 #include "cdb/cdbvars.h"
 
@@ -236,7 +235,7 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
 	plcCurlBuffer *response = NULL;
 	int res = 0;
 	int createStringSize = 0;
-	const char *username = MyProcPort->user_name;
+	const char *username = GetUserNameFromId(GetUserId());
 	const char *dbname = MyProcPort->database_name;
 
 	if (has_error == true) {
@@ -432,20 +431,12 @@ int plc_docker_delete_container(const char *name) {
 
 int plc_docker_list_container(char **result) {
 	plcCurlBuffer *response = NULL;
-	char *method = "/containers/json?all=1&label=\"dbid=%d\"%s%s%s";
+	char *method = "/containers/json?all=1&label=\"dbid=%d\"";
 	char *url = NULL;
 	int res = 0;
-	const char *username = MyProcPort->user_name;
 
-	if (!superuser()) {
-		size_t stringSize = 0;
-		stringSize = 30 + strlen(username);
-		url = (char *) palloc ((strlen(method) + stringSize) * sizeof(char));
-		sprintf(url, method, GpIdentity.dbid, "\"&label=\"owner=", username, "\"");
-	} else {
-		url = (char *) palloc((strlen(method) + 12) * sizeof(char));
-		sprintf(url, method, GpIdentity.dbid, "", "", "");
-	}
+	url = (char *) palloc((strlen(method) + 12) * sizeof(char));
+	sprintf(url, method, GpIdentity.dbid);
 
 	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, NULL);
 	res = response->status;
