@@ -52,14 +52,30 @@ def parseargs():
 
     image_add_parser = subparsers.add_parser("image-add", help = "Install specified docker image on all hosts")
     image_delete_parser = subparsers.add_parser("image-delete", help = "Delete specified docker image on all hosts")
+    runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration")
 
     # For image-add
-    image_add_options = image_add_parser.add_mutually_exclusive_group()
+    image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
     image_add_options.add_argument("-f", "--file", dest="file", help="image location (e.g. /tmp/centos.7.2.tar.gz)")
     image_add_options.add_argument("-u", "--url", dest="url", help="image url (e.g. 192.168.0.1:5000/images/centos:7.2)")
 
     # For image-delete
-    image_delete_parser.add_argument("-n", "--name", dest="image_name", help="image name:tag (e.g. centos:7.2)")
+    image_delete_parser.add_argument("-i", "--image", dest="image_name", help="image name:tag (e.g. centos:7.2)", required=True)
+
+    # For runtime-add
+    runtime_add_parser.add_argument("-r", "--runtime", dest="runtime_id",
+                                    help="unique string which presents configurations for a container runtime)", required=True)
+    runtime_add_parser.add_argument("-i", "--image", dest="image_name",
+                                    help="image name:tag (e.g. centos:7.2)", required=True)
+    runtime_add_parser.add_argument("-l", "--language", dest="language",
+                                    help="language type, currently support python and r. " +
+                                    "Used to auto-configure container command.", required=True, choices=['r','python'])
+    runtime_add_parser.add_argument("-v", "--volume", dest="shared", action="append",
+                                    help="Bind mount a volume, can work with multiple volumes" +
+                                    " format: HOST:CONTAINER:[rw|ro]")
+    runtime_add_parser.add_argument("-s", "--setting", dest="setting", action="append",
+                                    help="Setting for the runtime. Allow call multiple times." +
+                                    " (e.g. memory_mb=256)")
 
     # for configure
     config_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer name")
@@ -106,16 +122,6 @@ def parseargs():
             if not (options.language.lower() == "r" or options.language.lower() == "python"):
                 logger.error('language must be r or python')
                 sys.exit(1)
-
-    if options.subparser_name == "image-add":
-        if not (options.file or options.url):
-            logger.error("Need to specify either file path or url.")
-            sys.exit(1)
-
-    if options.subparser_name == "image-delete":
-        if not options.image_name:
-            logger.error("Need to specify the image name for deletion.")
-            sys.exit(1)
 
     return options
 
@@ -256,7 +262,7 @@ def delete_images(options, pool, hosts):
     except Exception, ex:
         raise(ex)
 
-def update_xml_check_shared_folder(container, elements):
+def update_xml_check_shared_folders_old(container, elements):
     '''
     update shared folder settings
     '''
@@ -281,7 +287,7 @@ def update_xml_check_shared_folder(container, elements):
             count = count + 1
             container.append(shareDir)
 
-def update_xml_container(container, elements):
+def update_xml_container_old(container, elements):
     '''
     update name and image by given a container node
     '''
@@ -298,12 +304,12 @@ def update_xml_container(container, elements):
             else:
                 command.text = "/clientdir/pyclient.sh"
 
-            update_xml_check_shared_folder(container, elements)
+            update_xml_check_shared_folders_old(container, elements)
         else:
             raise Exception("User interrupted")
     return isNew
 
-def update_xml_new_container(elements):
+def update_xml_new_container_old(elements):
     '''
     Create a new conatiner node
     '''
@@ -323,9 +329,78 @@ def update_xml_new_container(elements):
     container.append(image)
     container.append(command)
 
-    update_xml_check_shared_folder(container, elements)
+    update_xml_check_shared_folders_old(container, elements)
 
     return container
+
+def update_xml_check_shared_folders(runtime, elements):
+    '''
+    update shared folder settings
+    '''
+    for shareDir in runtime.findall('shared_directory'):
+        runtime.remove(shareDir)
+
+    if elements['language'] == "r":
+        dest = os.path.join(GPHOME, PLCONTAINER_RCLIENT_DIR)
+    else:
+        dest = os.path.join(GPHOME, PLCONTAINER_PYCLIENT_DIR)
+
+    shareDir = ElementTree.Element("shared_directory",
+            host=dest, container="/clientdir",
+            access="ro")
+    runtime.append(shareDir)
+
+    if 'hasShared' in elements.keys():
+        count = 0
+        for plHost in elements['host']:
+            shareDir = ElementTree.Element("shared_directory",
+                    host=plHost, container=elements['container'][count],
+                    access=elements['access'][count])
+            count = count + 1
+            runtime.append(shareDir)
+
+
+def update_xml_check_settings(runtime, elements):
+    '''
+    update other settings.
+    '''
+    if not 'hasSetting' in elements.keys():
+        return
+
+    for setting in runtime.findall('setting'):
+        runtime.remove(setting)
+
+    for setting in elements['setting']:
+        xml_setting = ElementTree.Element("setting")
+        xml_setting.set(setting, elements['setting'][setting])
+        xml_setting.text = ""
+        runtime.append(xml_setting)
+
+
+def update_xml_new_runtime(elements):
+    '''
+    Create a new runtime configuration.
+    '''
+    runtime = ElementTree.Element("runtime")
+    runtime_id = ElementTree.Element("id")
+    runtime_id.text = elements['id']
+    image = ElementTree.Element("image")
+    image.text = elements['image']
+
+    # default command
+    command = ElementTree.Element("command")
+    if elements['language'] == "r":
+        command.text = "/clientdir/rclient.sh"
+    else:
+        command.text = "/clientdir/pyclient.sh"
+    runtime.append(runtime_id)
+    runtime.append(image)
+    runtime.append(command)
+
+    update_xml_check_shared_folders(runtime, elements)
+    update_xml_check_settings(runtime, elements)
+
+    return runtime
 
 def update_reformat_xml(xmltree):
     '''
@@ -335,7 +410,7 @@ def update_reformat_xml(xmltree):
     reformatString = xml.dom.minidom.parseString(xmlString)
     return reformatString.toprettyxml(indent = '    ') 
 
-def update_xml_config(filename, elements):
+def update_xml_config_old(filename, elements):
     '''
     Update the xml file by given elements dict, if the given tag is
     not existed, then create a new tag. Otherwise, update the current
@@ -348,13 +423,42 @@ def update_xml_config(filename, elements):
         root = xmltree.getroot()
 
         for container in root.findall('container'):
-            isNew = update_xml_container(container, elements)
+            isNew = update_xml_container_old(container, elements)
             if not isNew:
                 break
 
         if isNew:
-           container = update_xml_new_container(elements)
+           container = update_xml_new_container_old(elements)
            root.append(container)
+
+        newXMLTreeString = update_reformat_xml(root)
+        newXMLTreeString = os.linesep.join([s for s in newXMLTreeString.splitlines() if not s.strip() == ''])
+        xmlfile = open(filename, "w")
+        xmlfile.write(newXMLTreeString)
+        xmlfile.close()
+    except Exception, ex:
+        logger.error("Update XML file Error")
+        logger.error(str(ex))
+        raise Exception("Update XML file Error")
+
+def add_xml_config(filename, elements):
+    '''
+    Update the xml file by given elements dict. Fail if the given tag exists.
+    '''
+    isNew = True
+    try:
+        xmltree = ElementTree.parse(filename)
+        logger.info("file name is %s" % (filename))
+        root = xmltree.getroot()
+
+        for runtime in root.findall('runtime'):
+            runtime_id = runtime.find('id').text
+            if runtime_id == elements['id']:
+                logger.error("runtime configuration exists for %s. You might want the runtime-update command?" % runtime_id)
+                raise Exception("runtime configuration exists")
+
+        runtime = update_xml_new_runtime(elements)
+        root.append(runtime)
 
         newXMLTreeString = update_reformat_xml(root)
         newXMLTreeString = os.linesep.join([s for s in newXMLTreeString.splitlines() if not s.strip() == ''])
@@ -540,7 +644,19 @@ def show_file(filename):
     sys.stdout.write('%s\n' % f.read())
     f.close()
 
-def get_conf_shared_dir(options, elements):
+def get_conf_settings(options, elements):
+    '''
+    get the settings for the runtime configuration.
+    '''
+    elements['hasSetting'] = True
+    elements['setting'] = dict()
+    for setting in options.setting:
+        strList = setting.split("=")
+        if len(strList) != 2:
+            raise Exception("Bad setting format: %s" % setting)
+        elements['setting'][strList[0]] = strList[1]
+
+def get_conf_shared_dirs(options, elements):
     '''
     get the shared dirs
     '''
@@ -561,8 +677,7 @@ def get_conf_shared_dir(options, elements):
         else:
             elements['access'].append("ro")
 
-
-def get_conf_elements(options, dockImage = None):
+def get_conf_elements_old(options, dockImage = None):
     '''
     build an element dict for configuration
     '''
@@ -575,8 +690,23 @@ def get_conf_elements(options, dockImage = None):
     else: 
         elements['image'] = options.image
     if options.shared:
-       get_conf_shared_dir(options, elements)
+       get_conf_shared_dirs(options, elements)
     return elements
+
+def get_conf_elements(options):
+    '''
+    build an element dict for configuration
+    '''
+    elements = dict()
+    elements['id'] = options.runtime_id
+    elements['image'] = options.image_name
+    elements['language']=options.language.lower()
+    if options.shared:
+       get_conf_shared_dirs(options, elements)
+    if options.setting:
+       get_conf_settings(options, elements)
+    return elements
+
 
 def main():
     pool = None
@@ -623,6 +753,17 @@ def main():
             pool = WorkerPool(PL_BATCH_SIZE)
             delete_images(options, pool, hosts)
 
+        if options.subparser_name == "runtime-add":
+            elements = get_conf_elements(options)
+            add_xml_config(tmp_file, elements)
+            logger.info('Preparing the worker pool...')
+            pool = WorkerPool(PL_BATCH_SIZE)
+            logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
+            backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
+            logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+            distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+            new_config = True
+
         if options.subparser_name == "configure" and options.show:
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
             show_file(tmp_file)
@@ -656,8 +797,8 @@ def main():
             new_config = True
 
         if options.subparser_name == "configure" and options.name:
-            elements = get_conf_elements(options)
-            update_xml_config(tmp_file, elements)
+            elements = get_conf_elements_old(options)
+            update_xml_config_old(tmp_file, elements)
             logger.info('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
             logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
@@ -670,8 +811,8 @@ def main():
             logger.info('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
             dockerImageName = install_images_old(options, pool, hosts)
-            elements = get_conf_elements(options, dockerImageName)
-            update_xml_config(tmp_file, elements)
+            elements = get_conf_elements_old(options, dockerImageName)
+            update_xml_config_old(tmp_file, elements)
             logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
