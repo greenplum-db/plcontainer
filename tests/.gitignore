@@ -1,3 +1,4 @@
 /results/
 *.diffs
 regression.out
+test_backup_cfg_file

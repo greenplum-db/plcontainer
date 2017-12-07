@@ -1,0 +1,190 @@
+\! $(pwd)/test_utility.sh
++ plcontainer -h
+usage: plcontainer [-h] [--verbose]
+                   {configure,install,image-add,image-delete,image-list,runtime-add,runtime-update,runtime-list,runtime-delete,runtime-edit,runtime-restore}
+                   ...
+
+positional arguments:
+  {configure,install,image-add,image-delete,image-list,runtime-add,runtime-update,runtime-list,runtime-delete,runtime-edit,runtime-restore}
+    configure           Configure plcontainer name and image location as well
+                        as shared folder, need to combine with -n, -i and -l,
+                        usage: -n plcontainer_name -i docker_image_url -l
+                        plcontainer_language_type
+    install             Install a dokcer image and add it to configuration
+                        file
+    image-add           Install specified docker image on all hosts
+    image-delete        Delete specified docker image on all hosts
+    image-list          Show existing container images on the current host
+    runtime-add         Add a container runtime configuration on all hosts
+    runtime-update      Update/Add a container runtime configuration on all
+                        hosts
+    runtime-list        List all container runtime configurations. You could
+                        use this command to backup
+    runtime-delete      Delete a container runtime configuration on all hosts
+    runtime-edit        editor to edit and then update configuration on all
+                        hosts
+    runtime-restore     Restore the runtime configuration from a file and
+                        distribute them to all hosts
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --verbose             Enable verbose logging
++ plcontainer image-add
+usage: plcontainer image-add [-h] (-f FILE | -u URL)
+plcontainer image-add: error: one of the arguments -f/--file -u/--url is required
++ plcontainer image-add nonexist
+usage: plcontainer image-add [-h] (-f FILE | -u URL)
+plcontainer image-add: error: one of the arguments -f/--file -u/--url is required
++ plcontainer image-add -f nonexist_file
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
+-docker image file nonexist_file does not exist
++ plcontainer image-add -u nonexist_url
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
+-Getting docker image from nonexist_url
+-Cannot pull docker image from nonexist_url
++ plcontainer image-delete
+usage: plcontainer image-delete [-h] -i IMAGE_NAME
+plcontainer image-delete: error: argument -i/--image is required
++ plcontainer image-delete nonexist
+usage: plcontainer image-delete [-h] -i IMAGE_NAME
+plcontainer image-delete: error: argument -i/--image is required
++ plcontainer image-delete -i nonexist_image
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
+-Checking whether docker is installed on all hosts...
+-Deleting image nonexist_image on all hosts...
+-error running command: docker rmi -f  nonexist_image
+-plcontainer failed. (Reason='error running command') exiting...
++ plcontainer image-list
++ plcontainer image-list not_exist
+usage: plcontainer [-h] [--verbose]
+                   {configure,install,image-add,image-delete,image-list,runtime-add,runtime-update,runtime-list,runtime-delete,runtime-edit,runtime-restore}
+                   ...
+plcontainer: error: unrecognized arguments: not_exist
++ plcontainer runtime-list
++ cat
++ plcontainer runtime-restore -f tmp_cfg_file
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ set +x
+<?xml version="1.0" ?>
+<configuration>
+</configuration>
+
++ rm -f tmp_cfg_file
++ plcontainer runtime-add -r nonexist_runtime
+usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
+                               [-v SHARED] [-s SETTING]
+plcontainer runtime-add: error: argument -i/--image is required
++ plcontainer runtime-add -i nonexist_image
+usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
+                               [-v SHARED] [-s SETTING]
+plcontainer runtime-add: error: argument -r/--runtime is required
++ plcontainer runtime-add -r nonexist_runtime -i nonexist_image
+usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
+                               [-v SHARED] [-s SETTING]
+plcontainer runtime-add: error: argument -l/--language is required
++ plcontainer runtime-add -r nonexist_runtime -i nonexist_image -l java
+usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
+                               [-v SHARED] [-s SETTING]
+plcontainer runtime-add: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python')
++ plcontainer runtime-add -r runtime1 -i image1 -l python
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ set +x
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>runtime1</id>
+        <image>image1</image>
+        <command>/clientdir/pyclient.sh</command>
+        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/pyclient"/>
+    </runtime>
+</configuration>
++ plcontainer runtime-delete -r runtime1
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ set +x
+<?xml version="1.0" ?>
+<configuration>
+    </configuration>
++ plcontainer runtime-delete -r runtime1
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-This runtime configuraiton does not exist. Ignoring.
++ plcontainer runtime-add -r runtime1 -i image1 -l python -v /host_dir/shared:/container_dir/shared:rw
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ plcontainer runtime-delete -r runtime1
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ plcontainer runtime-add -r runtime1 -i image1 -l python -v /host_dir1/shared:/container_dir1/shared:rw -v /host_dir1/shared:/container_dir1/shared:ro
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ plcontainer runtime-delete -r runtime1
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ plcontainer runtime-add -r runtime1 -i image1 -l python -v /host_dir1/shared1:/container_dir1/shared1:rw -v /host_dir1/shared2:/container_dir1/shared2:ro
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ plcontainer runtime-add -r runtime2 -i image2 -l r -v /host_dir2/shared1:/container_dir2/shared1:rw -v /host_dir2/shared2:/container_dir2/shared2:ro -s memory_mb=512 -s user_network=yes
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ set +x
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>runtime1</id>
+        <image>image1</image>
+        <command>/clientdir/pyclient.sh</command>
+        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/pyclient"/>
+        <shared_directory access="rw" container="/container_dir1/shared1" host="/host_dir1/shared1"/>
+        <shared_directory access="ro" container="/container_dir1/shared2" host="/host_dir1/shared2"/>
+    </runtime>
+    <runtime>
+        <id>runtime2</id>
+        <image>image2</image>
+        <command>/clientdir/rclient.sh</command>
+        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/rclient"/>
+        <shared_directory access="rw" container="/container_dir2/shared1" host="/host_dir2/shared1"/>
+        <shared_directory access="ro" container="/container_dir2/shared2" host="/host_dir2/shared2"/>
+        <setting memory_mb="512"/>
+        <setting user_network="yes"/>
+    </runtime>
+</configuration>
++ plcontainer runtime-delete -r runtime1
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ plcontainer runtime-delete -r runtime2
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
++ set +x
+<?xml version="1.0" ?>
+<configuration>
+    </configuration>
++ plcontainer runtime-restore -f test_backup_cfg_file
++ sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
++ grep -v 'Distributing to'
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
