@@ -52,6 +52,8 @@ def parseargs():
 
     image_add_parser = subparsers.add_parser("image-add", help = "Install specified docker image on all hosts")
     image_delete_parser = subparsers.add_parser("image-delete", help = "Delete specified docker image on all hosts")
+    image_list_parser = subparsers.add_parser("image-list", help = "Show existing container images on the current host")
+
     runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration on all hosts")
     runtime_update_parser = subparsers.add_parser("runtime-update", help = "Update/Add a container runtime configuration on all hosts")
     runtime_list_parser = subparsers.add_parser("runtime-list", help = "List all container runtime configurations. You could use this command to backup")
@@ -857,6 +859,9 @@ def main():
             logger.debug('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
             delete_images(options, pool, hosts)
+
+        if options.subparser_name == "image-list":
+			os.system("docker images")
 
         if options.subparser_name == "runtime-add":
             elements = get_conf_elements(options)
