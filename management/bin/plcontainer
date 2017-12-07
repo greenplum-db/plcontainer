@@ -456,7 +456,7 @@ def update_xml_config_old(filename, elements):
     isNew = True
     try:
         xmltree = ElementTree.parse(filename)
-        logger.info("file name is %s" % (filename))
+        logger.debug("file name is %s" % (filename))
         root = xmltree.getroot()
 
         for container in root.findall('container'):
@@ -484,7 +484,7 @@ def add_xml_config(filename, elements):
     '''
     try:
         xmltree = ElementTree.parse(filename)
-        logger.info("file name is %s" % (filename))
+        logger.debug("file name is %s" % (filename))
         root = xmltree.getroot()
 
         for runtime in root.findall('runtime'):
@@ -515,7 +515,7 @@ def update_xml_config(filename, elements):
     isOld = False
     try:
         xmltree = ElementTree.parse(filename)
-        logger.info("file name is %s" % (filename))
+        logger.debug("file name is %s" % (filename))
         root = xmltree.getroot()
 
         for runtime in root.findall('runtime'):
@@ -547,7 +547,7 @@ def delete_xml_config(filename, del_runtime_id):
     '''
     try:
         xmltree = ElementTree.parse(filename)
-        logger.info("file name is %s" % (filename))
+        logger.debug("file name is %s" % (filename))
         root = xmltree.getroot()
 
         for runtime in root.findall('runtime'):
@@ -735,7 +735,6 @@ def remote_remove_files(pool, gpdb_locations, remote_filename):
 
 
 def show_file(filename):
-    logger.info("Configuration file contents:")
     f = open(filename, 'rb')
     sys.stdout.write('%s\n' % f.read())
     f.close()
@@ -821,7 +820,7 @@ def main():
         if not GPHOME:
             raise Exception('$GPHOME environment variable is not set')
 
-        logger.info('Retrieving GPDB configuration from database...')
+        logger.debug('Retrieving GPDB configuration from database...')
         url = dbconn.DbURL()
         array = gparray.GpArray.initFromCatalog(url, True)
         segs = array.getDbList()
@@ -966,7 +965,6 @@ def main():
             logger.info('Shutting down workers...')
             pool.haltWork()
             pool.joinWorkers()
-        logger.info('Done')
 
 
 if __name__ == '__main__':
