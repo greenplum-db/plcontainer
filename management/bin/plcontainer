@@ -33,7 +33,7 @@ PLCONTAINER_GPDB_DIR = 'share/postgresql/plcontainer'
 PLCONTAINER_PYCLIENT_DIR = "bin/pyclient"
 PLCONTAINER_RCLIENT_DIR = "bin/rclient"
 
-PL_BATCH_SIZE = 3
+PL_BATCH_SIZE = 64
 TMP = '/tmp'
 TAR_GZ = '.tar.gz'
 
@@ -52,10 +52,10 @@ def parseargs():
 
     image_add_parser = subparsers.add_parser("image-add", help = "Install specified docker image on all hosts")
     image_delete_parser = subparsers.add_parser("image-delete", help = "Delete specified docker image on all hosts")
-    runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration")
+    runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration on all hosts")
     runtime_list_parser = subparsers.add_parser("runtime-list", help = "List all container runtime configurations")
-    runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a container runtime configuration.")
-    runtime_update_parser = subparsers.add_parser("runtime-update", help = "Update/Add a container runtime configuration.")
+    runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a container runtime configuration on all hosts")
+    runtime_update_parser = subparsers.add_parser("runtime-update", help = "Update/Add a container runtime configuration on all hosts")
 
     # For image-add
     image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
@@ -839,22 +839,20 @@ def main():
             logger.debug('    host "%s" directory "%s"' % (host, directory))
 
         if options.subparser_name == "image-add":
-            logger.info('Preparing the worker pool...')
+            logger.debug('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
             install_images(options, pool, hosts)
 
         if options.subparser_name == "image-delete":
-            logger.info('Preparing the worker pool...')
+            logger.debug('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
             delete_images(options, pool, hosts)
 
         if options.subparser_name == "runtime-add":
             elements = get_conf_elements(options)
             add_xml_config(tmp_file, elements)
-            logger.info('Preparing the worker pool...')
+            logger.debug('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
-            logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
-            backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
             logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
@@ -862,10 +860,8 @@ def main():
         if options.subparser_name == "runtime-update":
             elements = get_conf_elements(options)
             update_xml_config(tmp_file, elements)
-            logger.info('Preparing the worker pool...')
+            logger.debug('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
-            logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
-            backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
             logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
@@ -875,15 +871,13 @@ def main():
 
         if options.subparser_name == "runtime-delete":
             if delete_xml_config(tmp_file, options.runtime_id):
-                logger.info('Preparing the worker pool...')
+                logger.debug('Preparing the worker pool...')
                 pool = WorkerPool(PL_BATCH_SIZE)
-                logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
-                backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
                 logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
                 distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
                 new_config = True
             else:
-                logger.info('This runtime configuraiton does not exist. Ignoring')
+                logger.info('This runtime configuraiton does not exist. Ignoring.')
 
         if options.subparser_name == "configure" and options.show:
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
@@ -962,7 +956,7 @@ def main():
         if tmp_file:
             os.unlink(tmp_file)
         if pool:
-            logger.info('Shutting down workers...')
+            logger.debug('Shutting down workers...')
             pool.haltWork()
             pool.joinWorkers()
 
