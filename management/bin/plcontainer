@@ -823,6 +823,7 @@ def checkAllFileMD5(pool, gpdb_locations):
     :param gpdb_locations: gpdb data dir
     :return TRUE if match, FALSE if not match: 
     '''
+    logger.info("Verifying...")
     for l in gpdb_locations:
         remote_file = os.path.join(l[1], PLCONTAINER_CONFIG_FILE)
         cmd = Command('Check %s:%s' % (l[0], remote_file),
@@ -839,9 +840,9 @@ def checkAllFileMD5(pool, gpdb_locations):
             logger.error("error running command: %s" % cmd_str)
             raise Exception("error running command")
         if results is None:
-            results = i.get_results().stdout
+            results = i.get_results().stdout.split(" ")[0]
         else:
-            if results != i.get_results().stdout:
+            if results != i.get_results().stdout.split(" ")[0]:
                 return False
     return True
 
@@ -945,10 +946,14 @@ def main():
             pool = WorkerPool(PL_BATCH_SIZE)
             verified = checkAllFileMD5(pool, gpdb_locations)
             if not verified:
-                logger.info('Detected configuration files are not the same in all hosts, fixing... ')
-                logger.info('Distributing master configuration file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-                distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-                new_config = True
+                logger.error('Detected configuration files are not the same in all hosts!')
+                edit = userinput.ask_yesno(None, "Fix it by copying master configuration file?", 'N')
+                if edit:
+                    logger.info('Distributing master configuration file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+                    distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+                    new_config = True
+                else:
+                    logger.error('Verify Failed!')
             else:
                 logger.info('Verify success!')
 
