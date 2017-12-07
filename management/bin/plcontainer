@@ -61,7 +61,7 @@ def parseargs():
     runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "editor to edit and then update configuration on all hosts")
     runtime_restore_parser = subparsers.add_parser("runtime-restore", help = "Restore the runtime configuration from a file and distribute them to all hosts")
     runtime_verify_parser = subparsers.add_parser("runtime-verify",
-                                                help="Verify all configuration files are the same")
+                                                help="Verify all configuration files are the same, and do the auto fix if needed")
 
     # For image-add
     image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
@@ -839,6 +839,7 @@ def checkAllFileMD5(pool, gpdb_locations):
         if i.results.rc or i.results.halt or not i.results.completed:
             logger.error("error running command: %s" % cmd_str)
             raise Exception("error running command")
+        # Put the QD conf file MD5 int0 resluts and do compare
         if results is None:
             results = i.get_results().stdout.split(" ")[0]
         else:
