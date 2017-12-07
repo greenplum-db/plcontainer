@@ -839,7 +839,7 @@ def checkAllFileMD5(pool, gpdb_locations):
         if i.results.rc or i.results.halt or not i.results.completed:
             logger.error("error running command: %s" % cmd_str)
             raise Exception("error running command")
-        # Put the QD conf file MD5 int0 resluts and do compare
+        # Put the QD conf file MD5 into resluts and do comparison
         if results is None:
             results = i.get_results().stdout.split(" ")[0]
         else:
