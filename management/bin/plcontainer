@@ -54,9 +54,10 @@ def parseargs():
     image_delete_parser = subparsers.add_parser("image-delete", help = "Delete specified docker image on all hosts")
     runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration on all hosts")
     runtime_update_parser = subparsers.add_parser("runtime-update", help = "Update/Add a container runtime configuration on all hosts")
-    runtime_list_parser = subparsers.add_parser("runtime-list", help = "List all container runtime configurations")
+    runtime_list_parser = subparsers.add_parser("runtime-list", help = "List all container runtime configurations. You could use this command to backup")
     runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a container runtime configuration on all hosts")
     runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "editor to edit and then update configuration on all hosts")
+    runtime_restore_parser = subparsers.add_parser("runtime-restore", help = "Restore the runtime configuration from a file and distribute them to all hosts")
 
     # For image-add
     image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
@@ -103,6 +104,10 @@ def parseargs():
     # For runtime-edit
     runtime_edit_parser.add_argument("-e", "--editor", dest="editor",
                                     help="editor command (e.g. vim, etc)", required=True)
+
+    # For runtime-restore
+    runtime_restore_parser.add_argument("-f", "--file", dest="file",
+                                    help="The file that includes the runtime configurations", required=True)
 
     # for configure
     config_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer name")
@@ -892,6 +897,12 @@ def main():
                 logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
                 distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
                 new_config = True
+
+        if options.subparser_name == "runtime-restore":
+            pool = WorkerPool(PL_BATCH_SIZE)
+            logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+            distribute_file(pool, options.file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+            new_config = True
 
         if options.subparser_name == "configure" and options.show:
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
