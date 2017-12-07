@@ -53,9 +53,10 @@ def parseargs():
     image_add_parser = subparsers.add_parser("image-add", help = "Install specified docker image on all hosts")
     image_delete_parser = subparsers.add_parser("image-delete", help = "Delete specified docker image on all hosts")
     runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration on all hosts")
+    runtime_update_parser = subparsers.add_parser("runtime-update", help = "Update/Add a container runtime configuration on all hosts")
     runtime_list_parser = subparsers.add_parser("runtime-list", help = "List all container runtime configurations")
     runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a container runtime configuration on all hosts")
-    runtime_update_parser = subparsers.add_parser("runtime-update", help = "Update/Add a container runtime configuration on all hosts")
+    runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "editor to edit and then update configuration on all hosts")
 
     # For image-add
     image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
@@ -98,6 +99,10 @@ def parseargs():
     # For runtime-delete
     runtime_delete_parser.add_argument("-r", "--runtime", dest="runtime_id",
                                     help="unique string which presents configurations for a container runtime)", required=True)
+
+    # For runtime-edit
+    runtime_edit_parser.add_argument("-e", "--editor", dest="editor",
+                                    help="editor command (e.g. vim, etc)", required=True)
 
     # for configure
     config_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer name")
@@ -878,6 +883,15 @@ def main():
                 new_config = True
             else:
                 logger.info('This runtime configuraiton does not exist. Ignoring.')
+
+        if options.subparser_name == "runtime-edit":
+            changed = edit_file(tmp_file, options.editor)
+            if changed:
+                logger.debug('Preparing the worker pool...')
+                pool = WorkerPool(PL_BATCH_SIZE)
+                logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+                distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+                new_config = True
 
         if options.subparser_name == "configure" and options.show:
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
