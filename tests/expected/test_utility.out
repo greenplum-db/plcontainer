@@ -43,10 +43,6 @@ usage: plcontainer image-delete [-h] -i IMAGE_NAME
 plcontainer image-delete: error: argument -i/--image is required
 usage: plcontainer image-delete [-h] -i IMAGE_NAME
 plcontainer image-delete: error: argument -i/--image is required
--Checking whether docker is installed on all hosts...
--Deleting image nonexist_image on all hosts...
--error running command: docker rmi -f  nonexist_image
--plcontainer failed. (Reason='error running command') exiting...
 Test image-list: negative cases
 usage: plcontainer [-h] [--verbose]
                    {configure,install,image-add,image-delete,image-list,runtime-add,runtime-update,runtime-list,runtime-delete,runtime-edit,runtime-restore,runtime-verify}

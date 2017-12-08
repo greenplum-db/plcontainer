@@ -15,7 +15,6 @@ plcontainer image-add -u nonexist_url | sed -e 's/.*ERROR]://' -e 's/.*INFO]://'
 echo "Test image-delete: negative cases"
 plcontainer image-delete
 plcontainer image-delete nonexist
-plcontainer image-delete -i nonexist_image | sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
 
 ######################## test image-list ###############################
 echo "Test image-list: negative cases"
