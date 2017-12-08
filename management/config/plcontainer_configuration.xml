@@ -35,9 +35,9 @@
         <id>plc_python3</id>
         <image>pivotaldata/plcontainer_python3:IMAGE_TAG</image>
         <command>./client</command>
-		<setting memory_mb="256"/>
-		<setting use_network="yes"/>
-		<setting logs="enable"/>
+        <setting memory_mb="256"/>
+        <setting use_network="yes"/>
+        <setting logs="enable"/>
     </runtime>
 
     <runtime>
