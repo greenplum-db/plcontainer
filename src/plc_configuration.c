@@ -94,8 +94,8 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 					} else if (strcasecmp((char *) value, "disable") == 0) {
 						conf->enable_log = false;
 					} else {
-						elog(WARNING, "SETTING element <log> only accepted \"enable\" or"
-							"\"disable\" only, logging is disabled");
+						elog(ERROR, "SETTING element <log> only accepted \"enable\" or"
+							"\"disable\" only, current string is %s", value);
 					}
 				}
 				value = xmlGetProp(cur_node, (const xmlChar *) "memory_mb");
@@ -103,7 +103,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 					validSetting = true;
 					long memorySize = pg_atoi((char *) value, sizeof(int), 0);
 					if (memorySize <= 0) {
-						elog(WARNING, "container memory size could not less 0, using default value 1024");
+						elog(ERROR, "container memory size could not less 0, current string is %s", value);
 					} else {
 						conf->memoryMb = conf->memoryMb;
 					}
@@ -119,7 +119,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 						conf->isNetworkConnection = true;
 					} else {
 						elog(WARNING, "SETTING element <use_network> only accepted \"yes\"|\"true\" or"
-							"\"no\"|\"false\" only, use_network is set to false");
+							"\"no\"|\"false\" only, current string is %s", value);
 
 					}
 				}

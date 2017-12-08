@@ -4,43 +4,46 @@
 
     <!--
         Structure of the configuration is following:
-        1. Each container is defined within a single <container> tag
-        2. "name" - container name that can be referenced in database creating the
+        1. Each container runtime is defined within a single <runtime> tag
+        2. "id" - container runtime id that can be referenced in database creating the
             function in PL/Container language. Might not match the container name
             in Docker. Mandatory field
         3. "image" - container image in Docker, used for starting and stopping
             the containers. Mandatory field
         4. "command" - command used to start the client process inside of the
-            container. Mandatory field
-        5. "memory_mb" - container memory limit in MB. Optional. When not set,
-            container can usilize all the available OS memory
-        6. "shared_directory" - a series of tags, each one defines a single
-            directory shared between host and container. Optional
-        7. "use_network" - set to "yes" or "no" to specify whether use tcp or ipc
-            for communication between gpdb process and container process. Optional.
-            By default, we set "no".
-        All the container names not manually defined in this file will not be
+			container. Mandatory field
+        5. "shared_directory" - a series of tags, each one defines a single
+		6. "setting" - A detail setting of this runtime, if not set, plcontainer will
+			use its default value.
+            6.1. "memory_mb" - container memory limit in MB. Optional. When not set,
+                 container can usilize all the available OS memory
+                 directory shared between host and container. Optional
+            6.2. "use_network" - set to "yes" or "no" to specify whether use tcp or ipc
+               for communication between gpdb process and container process. Optional.
+			   By default, we set "no".
+			6.3. "logs" - set to "enable" or "disable" for container logging (not for backend)
+        All the container images not manually defined in this file will not be
         available for use by endusers in PL/Container
     -->
-    <container>
-        <name>plc_python</name>
+    <runtime>
+        <id>plc_python</id>
         <image>pivotaldata/plcontainer_python:IMAGE_TAG</image>
         <command>./client</command>
-        <memory_mb>128</memory_mb>
-    </container>
+    </runtime>
 
-    <container>
-        <name>plc_python3</name>
+    <runtime>
+        <id>plc_python3</id>
         <image>pivotaldata/plcontainer_python3:IMAGE_TAG</image>
         <command>./client</command>
-        <memory_mb>128</memory_mb>
-    </container>
+		<setting memory_mb="256"/>
+		<setting use_network="yes"/>
+		<setting logs="enable"/>
+    </runtime>
 
-    <container>
-        <name>plc_r</name>
+    <runtime>
+        <id>plc_r</id>
         <image>pivotaldata/plcontainer_r:IMAGE_TAG</image>
         <command>./client</command>
-        <memory_mb>256</memory_mb>
-    </container>
+    </runtime>
 
 </configuration>
