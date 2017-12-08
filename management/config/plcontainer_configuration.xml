@@ -13,15 +13,15 @@
         4. "command" - command used to start the client process inside of the
 			container. Mandatory field
         5. "shared_directory" - a series of tags, each one defines a single
-		6. "setting" - A detail setting of this runtime, if not set, plcontainer will
-			use its default value.
+        6. "setting" - A detail setting of this runtime, if not set, plcontainer will
+           use its default value.
             6.1. "memory_mb" - container memory limit in MB. Optional. When not set,
                  container can usilize all the available OS memory
                  directory shared between host and container. Optional
             6.2. "use_network" - set to "yes" or "no" to specify whether use tcp or ipc
-               for communication between gpdb process and container process. Optional.
-			   By default, we set "no".
-			6.3. "logs" - set to "enable" or "disable" for container logging (not for backend)
+                 for communication between gpdb process and container process. Optional.
+                 By default, we set "no".
+            6.3. "logs" - set to "enable" or "disable" for container logging (not for backend)
         All the container images not manually defined in this file will not be
         available for use by endusers in PL/Container
     -->
