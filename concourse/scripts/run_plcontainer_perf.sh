@@ -19,8 +19,10 @@ ssh mdw "bash -c \" \
 set -eox pipefail; \
 export MASTER_DATA_DIRECTORY=/data/gpdata/master/gpseg-1; \
 source /usr/local/greenplum-db-devel/greenplum_path.sh; \
-plcontainer install -n plc_python_shared -i /usr/local/greenplum-db-devel/share/postgresql/plcontainer/plcontainer-python-images.tar.gz -c pivotaldata/plcontainer_python_shared:devel -l python; \
-plcontainer install -n plc_r_shared -i /usr/local/greenplum-db-devel/share/postgresql/plcontainer/plcontainer-r-images.tar.gz -c pivotaldata/plcontainer_r_shared:devel -l r; \
+plcontainer image-add -f /usr/local/greenplum-db-devel/share/postgresql/plcontainer/plcontainer-python-images.tar.gz; \
+plcontainer image-add -f /usr/local/greenplum-db-devel/share/postgresql/plcontainer/plcontainer-r-images.tar.gz; \
+plcontainer runtime-add -r plc_python_shared -i pivotaldata/plcontainer_python_shared:devel -l python -s logs=enable; \
+plcontainer runtime-add -r plc_r_shared -i pivotaldata/plcontainer_r_shared:devel -l r -s logs=enable; \
 gpstop -arf ; \
 psql -d postgres -f /usr/local/greenplum-db-devel/share/postgresql/plcontainer/plcontainer_install.sql; \
 psql -d postgres -f plcontainer_src/tests/perfsql/function_setup.sql; \

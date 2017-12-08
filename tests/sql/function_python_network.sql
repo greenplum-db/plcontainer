@@ -1,5 +1,3 @@
-\! plcontainer configure -f $(pwd)/plcontainer_configuration_network.xml -y
-
 drop table if exists test_python_network;
 
 create table test_python_network(i int);
@@ -27,5 +25,3 @@ return 0
 $$ LANGUAGE plcontainer;
 
 select py_shared_path_perm_network();
-
-\! plcontainer configure --restore -y

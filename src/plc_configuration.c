@@ -56,12 +56,13 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 	memset((void *) conf, 0, sizeof(plcContainerConf));
 	conf->memoryMb = 1024;
 	conf->enable_log = false;
+	conf->isNetworkConnection = false;
 	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 		if (cur_node->type == XML_ELEMENT_NODE) {
 			int processed = 0;
 			value = NULL;
 
-			if (xmlStrcmp(cur_node->name, (const xmlChar *) "name") == 0) {
+			if (xmlStrcmp(cur_node->name, (const xmlChar *) "id") == 0) {
 				processed = 1;
 				has_name = 1;
 				value = xmlNodeGetContent(cur_node);
@@ -82,37 +83,48 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				conf->command = plc_top_strdup((char *) value);
 			}
 
-			if (xmlStrcmp(cur_node->name, (const xmlChar *) "memory_mb") == 0) {
+			if (xmlStrcmp(cur_node->name, (const xmlChar *) "setting") == 0) {
+				bool validSetting = false;
 				processed = 1;
-				value = xmlNodeGetContent(cur_node);
-				conf->memoryMb = pg_atoi((char *) value, sizeof(int), 0);
-			}
+				value = xmlGetProp(cur_node, (const xmlChar *) "logs");
+				if (value != NULL) {
+					validSetting = true;
+					if (strcasecmp((char *) value, "enable") == 0) {
+						conf->enable_log = true;
+					} else if (strcasecmp((char *) value, "disable") == 0) {
+						conf->enable_log = false;
+					} else {
+						elog(WARNING, "SETTING element <log> only accepted \"enable\" or"
+							"\"disable\" only, logging is disabled");
+					}
+				}
+				value = xmlGetProp(cur_node, (const xmlChar *) "memory_mb");
+				if (value != NULL) {
+					validSetting = true;
+					long memorySize = pg_atoi((char *) value, sizeof(int), 0);
+					if (memorySize <= 0) {
+						elog(WARNING, "container memory size could not less 0, using default value 1024");
+					} else {
+						conf->memoryMb = conf->memoryMb;
+					}
+				}
+				value = xmlGetProp(cur_node, (const xmlChar *) "use_network");
+				if (value != NULL) {
+					validSetting = true;
+					if (strcasecmp((char *) value, "false") == 0 ||
+					    strcasecmp((char *) value, "no") == 0) {
+						conf->isNetworkConnection = false;
+					} else if (strcasecmp((char *) value, "true") == 0 ||
+					         strcasecmp((char *) value, "yes") == 0) {
+						conf->isNetworkConnection = true;
+					} else {
+						elog(WARNING, "SETTING element <use_network> only accepted \"yes\"|\"true\" or"
+							"\"no\"|\"false\" only, use_network is set to false");
 
-			if (xmlStrcmp(cur_node->name, (const xmlChar *) "use_network") == 0) {
-				processed = 1;
-				value = xmlNodeGetContent(cur_node);
-				if (strcasecmp((char *) value, "false") == 0 ||
-				    strcasecmp((char *) value, "no") == 0)
-					conf->isNetworkConnection = false;
-				else if (strcasecmp((char *) value, "true") == 0 ||
-				         strcasecmp((char *) value, "yes") == 0)
-					conf->isNetworkConnection = true;
-				else
-					processed = 0;
-			}
-
-			if (xmlStrcmp(cur_node->name, (const xmlChar *) "logs") == 0) {
-				processed = 1;
-				value = xmlGetProp(cur_node, (const xmlChar *) "enable");
-				if (value == NULL) {
-					elog(ERROR, "Configuration tag 'log' has a mandatory element"
-						" 'enable' that is not found");
-					return -1;
-				} else if (strcasecmp((char *) value, "true") == 0 ||
-				           strcasecmp((char *) value, "yes") == 0) {
-					conf->enable_log = true;
-				} else {
-					conf->enable_log = false;
+					}
+				}
+				if (!validSetting) {
+					elog(ERROR, "Unrecognized setting options, please check the configuration file");
 				}
 
 			}
