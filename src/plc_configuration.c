@@ -184,10 +184,10 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				conf->sharedDirs[i].host = plc_top_strdup((char *) value);
 				xmlFree(value);
 
-				value = xmlGetProp(cur_node, (const xmlChar *) "container");
+				value = xmlGetProp(cur_node, (const xmlChar *) "runtime");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'container' that is not found");
+						" 'runtime' that is not found");
 					return -1;
 				}
 				conf->sharedDirs[i].container = plc_top_strdup((char *) value);
@@ -235,14 +235,14 @@ static plcContainerConf *get_containers(xmlNode *node, int *size) {
 	/* Iterating through the list of containers to get the count */
 	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 		if (cur_node->type == XML_ELEMENT_NODE &&
-		    xmlStrcmp(cur_node->name, (const xmlChar *) "container") == 0) {
+		    xmlStrcmp(cur_node->name, (const xmlChar *) "runtime") == 0) {
 			nContainers += 1;
 		}
 	}
 
 	/* If no container definitions found - error */
 	if (nContainers == 0) {
-		elog(ERROR, "Did not find a single 'container' declaration in configuration");
+		elog(ERROR, "Did not find a single 'runtime' declaration in configuration");
 		return result;
 	}
 
@@ -253,7 +253,7 @@ static plcContainerConf *get_containers(xmlNode *node, int *size) {
 	res = 0;
 	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 		if (cur_node->type == XML_ELEMENT_NODE &&
-		    xmlStrcmp(cur_node->name, (const xmlChar *) "container") == 0) {
+		    xmlStrcmp(cur_node->name, (const xmlChar *) "runtime") == 0) {
 			res |= parse_container(cur_node, &result[i]);
 			i += 1;
 		}
