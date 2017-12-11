@@ -184,10 +184,10 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				conf->sharedDirs[i].host = plc_top_strdup((char *) value);
 				xmlFree(value);
 
-				value = xmlGetProp(cur_node, (const xmlChar *) "runtime");
+				value = xmlGetProp(cur_node, (const xmlChar *) "container");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'runtime' that is not found");
+						" 'container' that is not found");
 					return -1;
 				}
 				conf->sharedDirs[i].container = plc_top_strdup((char *) value);
