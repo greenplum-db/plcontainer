@@ -12,6 +12,7 @@
 #include "postgres.h"
 #include "executor/spi.h"
 #include "parser/parse_type.h"
+#include "access/xact.h
 
 #include "common/comm_utils.h"
 #include "common/comm_channel.h"

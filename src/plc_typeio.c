@@ -18,6 +18,8 @@
 #include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
+#include "utils/syscache.h"
+#include "utils/builtins.h"
 
 #include "plc_typeio.h"
 #include "common/comm_utils.h"

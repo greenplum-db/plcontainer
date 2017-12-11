@@ -35,6 +35,9 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "executor/spi.h"
 #include "access/transam.h"
 #include "catalog/pg_proc.h"
+#include "utils/syscache.h"
+#include "utils/array.h"
+#include "utils/builtins.h"
 
 /* message and function definitions */
 #include "common/comm_utils.h"
