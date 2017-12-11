@@ -11,7 +11,7 @@
 
 #include "postgres.h"
 #include "executor/spi.h"
-#include "access/xact.h
+#include "access/xact.h"
 
 #include "common/comm_channel.h"
 #include "plcontainer_common.h"
