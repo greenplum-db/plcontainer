@@ -747,9 +747,32 @@ def remote_remove_files(pool, gpdb_locations, remote_filename):
 
 
 def show_file(filename):
-    f = open(filename, 'rb')
-    sys.stdout.write('%s\n' % f.read())
-    f.close()
+    '''
+    Print configurations
+    :param filename:  
+    :return: 
+    '''
+    try:
+        xmltree = ElementTree.parse(filename);
+        root = xmltree.getroot()
+        sys.stdout.write("PL/Container Runtime Configuration: \n")
+        for runtime in root.findall('runtime'):
+            runtime_id = runtime.find('id').text
+            sys.stdout.write("  Runtime ID: %s\n" % runtime_id)
+            image_name = runtime.find('image').text
+            sys.stdout.write("  Linked Docker Image: %s\n" % image_name)
+            sys.stdout.write("\n")
+            sys.stdout.write("  Runtime Setting: \n")
+            for settings in runtime.findall('setting'):
+                if 'memory_mb' in settings:
+                    sys.stdout.write("    Container Memory Limited: %s\n" % settings['memory_mb'])
+                elif 'use_network' in settings:
+                    sys.stdout.write("    Container Use Network For Communication: %s\n" % settings['use_network'])
+                elif 'logs' in settings:
+                    sys.stdout.write("    Container Client Log: %s\n" % settings['logs'])
+            sys.stdout.write("  Shared Directory: \n")
+            for share_folder in runtime.findall('shared_directory'):
+                sys.stdout.write("    shared directory from host '%s' to container '%s'\n" % (share_folder['host'], share_folder['container']))
 
 def get_conf_settings(options, elements):
     '''
@@ -892,7 +915,7 @@ def main():
             delete_images(options, pool, hosts)
 
         if options.subparser_name == "image-list":
-			os.system("docker images")
+            os.system("docker images")
 
         if options.subparser_name == "runtime-add":
             elements = get_conf_elements(options)
