@@ -778,7 +778,7 @@ def runtime_list_xml(filename):
             sys.stdout.write("  Shared Directory: \n")
             for share_folder in runtime.findall('shared_directory'):
                 sys.stdout.write("  ---- Shared Directory From HOST '%s' to Container '%s'\n" % (share_folder.attrib['host'], share_folder.attrib['container']))
-            sys.stdout.write("--------------------------------------------------------\n")
+            sys.stdout.write("---------------------------------------------------------\n")
             sys.stdout.write("\n")
 
     except Exception, ex:
