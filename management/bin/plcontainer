@@ -754,7 +754,7 @@ def show_file(filename):
     sys.stdout.write('%s\n' % f.read())
     f.close()
 
-def runtime_list_xml(filename, r_id):
+def runtime_show_xml(filename, r_id):
     '''
     Print configurations
     :param filename:  
@@ -771,17 +771,17 @@ def runtime_list_xml(filename, r_id):
                 sys.stdout.write("  Runtime ID: %s\n" % runtime_id)
                 image_name = runtime.find('image').text
                 sys.stdout.write("  Linked Docker Image: %s\n" % image_name)
-                sys.stdout.write("  Runtime Setting: \n")
+                sys.stdout.write("  Runtime Setting(s): \n")
                 for settings in runtime.findall('setting'):
                     if 'memory_mb' in settings.attrib:
                         sys.stdout.write("  ---- Container Memory Limited: %s MB\n" % settings.attrib['memory_mb'])
                     elif 'use_network' in settings.attrib:
                         sys.stdout.write("  ---- Container Use Network For Communication: %s\n" % settings.attrib['use_network'])
                     elif 'logs' in settings.attrib:
-                        sys.stdout.write("  ---- Container Client Log: %s\n" % settings.attrib['logs'])
+                        sys.stdout.write("  ---- Container Client Logging: %s\n" % settings.attrib['logs'])
                 sys.stdout.write("  Shared Directory: \n")
                 for share_folder in runtime.findall('shared_directory'):
-                    sys.stdout.write("  ---- Shared Directory From HOST '%s' to Container '%s'\n" % (share_folder.attrib['host'], share_folder.attrib['container']))
+                    sys.stdout.write("  ---- Shared Directory From HOST '%s' to Container '%s', access mode is '%s'\n" % (share_folder.attrib['host'], share_folder.attrib['container'], share_folder.attrib['access']))
                 sys.stdout.write("---------------------------------------------------------\n")
                 sys.stdout.write("\n")
 
@@ -952,9 +952,9 @@ def main():
 
         if options.subparser_name == "runtime-show":
             if options.runtime_id is None:
-                runtime_list_xml(tmp_file, None)
+                runtime_show_xml(tmp_file, None)
             else:
-                runtime_list_xml(tmp_file, options.runtime_id)
+                runtime_show_xml(tmp_file, options.runtime_id)
 
         if options.subparser_name == "runtime-delete":
             if delete_xml_config(tmp_file, options.runtime_id):

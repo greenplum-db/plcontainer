@@ -75,7 +75,7 @@ plcontainer runtime-add -r runtime1 -i image1 -l python -v /host_dir1/shared1:/c
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
 plcontainer runtime-add -r runtime2 -i image2 -l r -v /host_dir2/shared1:/container_dir2/shared1:rw \
-		-v /host_dir2/shared2:/container_dir2/shared2:ro -s memory_mb=512 -s user_network=yes \
+		-v /host_dir2/shared2:/container_dir2/shared2:ro -s memory_mb=512 -s use_network=yes \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
 plcontainer runtime-show |  sed -e "s|${GPHOME}|GPHOME|"
@@ -94,13 +94,13 @@ plcontainer runtime-replace -r runtime3 -i image3
 plcontainer runtime-replace -r runtime3 -i image3 -l java
 echo "Test runtime-replace: add a new one"
 plcontainer runtime-replace -r runtime3 -i image2 -l r -v /host_dir3/shared1:/container_dir3/shared1:rw \
-	-v /host_dir3/shared2:/container_dir3/shared2:ro -s memory_mb=512 -s user_network=yes \
+	-v /host_dir3/shared2:/container_dir3/shared2:ro -s memory_mb=512 -s use_network=yes \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
 plcontainer runtime-backup |  sed -e "s|${GPHOME}|GPHOME|"
 echo "Test runtime-replace: replace"
 plcontainer runtime-replace -r runtime3 -i image2 -l r -v /host_dir3/shared3:/container_dir3/shared3:rw \
-	-s user_network=no \
+	-s use_network=no \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
 plcontainer runtime-backup |  sed -e "s|${GPHOME}|GPHOME|"

@@ -119,6 +119,7 @@ PL/Container Runtime Configuration:
   Linked Docker Image: image2
   Runtime Setting: 
   ---- Container Memory Limited: 512 MB
+  ---- Container Use Network For Communication: yes
   Shared Directory: 
   ---- Shared Directory From HOST 'GPHOME/bin/plcontainer_clients' to Container '/clientdir'
   ---- Shared Directory From HOST '/host_dir2/shared1' to Container '/container_dir2/shared1'
@@ -165,7 +166,7 @@ Test runtime-replace: add a new one
         <shared_directory access="rw" container="/container_dir3/shared1" host="/host_dir3/shared1"/>
         <shared_directory access="ro" container="/container_dir3/shared2" host="/host_dir3/shared2"/>
         <setting memory_mb="512"/>
-        <setting user_network="yes"/>
+        <setting use_network="yes"/>
     </runtime>
 </configuration>
 Test runtime-replace: replace
@@ -179,7 +180,7 @@ Test runtime-replace: replace
         <command>/clientdir/rclient.sh</command>
         <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/plcontainer_clients"/>
         <shared_directory access="rw" container="/container_dir3/shared3" host="/host_dir3/shared3"/>
-        <setting user_network="no"/>
+        <setting use_network="no"/>
     </runtime>
 </configuration>
 test runtime-backup
