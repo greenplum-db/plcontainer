@@ -276,11 +276,15 @@ def install_images(options, pool, hosts):
         remote_cmd(pool, check_docker_cmd, hosts)
 
         logger.info('Distributing image file %s to all hosts...' % docker_image)
-        dest = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, docker_image)
+        dest = os.path.join(GPHOME, TMP, os.path.basename(docker_image))
         distribute_docker_file(pool, docker_image, dest, hosts)
 
         logger.info('Loading image on all hosts...')
         docker_load_cmd = " ".join(["docker load -i ", dest])
+        remote_cmd(pool, docker_load_cmd, hosts)
+
+        logger.info('Removing temporary image files on all hosts...')
+        docker_load_cmd = " ".join(["rm -f ", dest])
         remote_cmd(pool, docker_load_cmd, hosts)
     except Exception, ex:
         raise(ex)
