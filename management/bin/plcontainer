@@ -55,7 +55,7 @@ def parseargs():
 
     runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration on all hosts")
     runtime_replace_parser = subparsers.add_parser("runtime-replace", help = "Replace/Add with a container runtime configuration on all hosts")
-    runtime_list_parser = subparsers.add_parser("runtime-list", help = "List all container runtime configurations. You could use this command to backup")
+    runtime_list_parser = subparsers.add_parser("runtime-show", help = "List all container runtime configurations. Use -r/--runtime to list specific runtime")
     runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a container runtime configuration on all hosts")
     runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "editor to edit and then update configuration on all hosts")
     runtime_backup_parser = subparsers.add_parser("runtime-backup", help = "Backup the local runtime configuration file")
@@ -100,6 +100,9 @@ def parseargs():
     runtime_replace_parser.add_argument("-s", "--setting", dest="setting", action="append",
                                     help="Setting for the runtime. Allow call multiple times." +
                                     " (e.g. memory_mb=256). See more in document.")
+    # For runtime-list
+    runtime_list_parser.add_argument("-r", "--runtime", dest="runtime_id",
+                                    help="List specific runtime with given runtime id in configuration file")
 
     # For runtime-delete
     runtime_delete_parser.add_argument("-r", "--runtime", dest="runtime_id",
@@ -751,7 +754,7 @@ def show_file(filename):
     sys.stdout.write('%s\n' % f.read())
     f.close()
 
-def runtime_list_xml(filename):
+def runtime_list_xml(filename, r_id):
     '''
     Print configurations
     :param filename:  
@@ -762,24 +765,25 @@ def runtime_list_xml(filename):
         root = xmltree.getroot()
         sys.stdout.write("PL/Container Runtime Configuration: \n")
         for runtime in root.findall('runtime'):
-            sys.stdout.write("---------------------------------------------------------\n")
             runtime_id = runtime.find('id').text
-            sys.stdout.write("  Runtime ID: %s\n" % runtime_id)
-            image_name = runtime.find('image').text
-            sys.stdout.write("  Linked Docker Image: %s\n" % image_name)
-            sys.stdout.write("  Runtime Setting: \n")
-            for settings in runtime.findall('setting'):
-                if 'memory_mb' in settings.attrib:
-                    sys.stdout.write("  ---- Container Memory Limited: %s\n" % settings.attrib['memory_mb'])
-                elif 'use_network' in settings.attrib:
-                    sys.stdout.write("  ---- Container Use Network For Communication: %s\n" % settings.attrib['use_network'])
-                elif 'logs' in settings.attrib:
-                    sys.stdout.write("  ---- Container Client Log: %s\n" % settings.attrib['logs'])
-            sys.stdout.write("  Shared Directory: \n")
-            for share_folder in runtime.findall('shared_directory'):
-                sys.stdout.write("  ---- Shared Directory From HOST '%s' to Container '%s'\n" % (share_folder.attrib['host'], share_folder.attrib['container']))
-            sys.stdout.write("---------------------------------------------------------\n")
-            sys.stdout.write("\n")
+            if (r_id is None or r_id == runtime_id):
+                sys.stdout.write("---------------------------------------------------------\n")
+                sys.stdout.write("  Runtime ID: %s\n" % runtime_id)
+                image_name = runtime.find('image').text
+                sys.stdout.write("  Linked Docker Image: %s\n" % image_name)
+                sys.stdout.write("  Runtime Setting: \n")
+                for settings in runtime.findall('setting'):
+                    if 'memory_mb' in settings.attrib:
+                        sys.stdout.write("  ---- Container Memory Limited: %s MB\n" % settings.attrib['memory_mb'])
+                    elif 'use_network' in settings.attrib:
+                        sys.stdout.write("  ---- Container Use Network For Communication: %s\n" % settings.attrib['use_network'])
+                    elif 'logs' in settings.attrib:
+                        sys.stdout.write("  ---- Container Client Log: %s\n" % settings.attrib['logs'])
+                sys.stdout.write("  Shared Directory: \n")
+                for share_folder in runtime.findall('shared_directory'):
+                    sys.stdout.write("  ---- Shared Directory From HOST '%s' to Container '%s'\n" % (share_folder.attrib['host'], share_folder.attrib['container']))
+                sys.stdout.write("---------------------------------------------------------\n")
+                sys.stdout.write("\n")
 
     except Exception, ex:
         logger.error("XML file does not conform XML specification")
@@ -946,8 +950,11 @@ def main():
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
 
-        if options.subparser_name == "runtime-list":
-            runtime_list_xml(tmp_file)
+        if options.subparser_name == "runtime-show":
+            if options.runtime_id is None:
+                runtime_list_xml(tmp_file, None)
+            else:
+                runtime_list_xml(tmp_file, options.runtime_id)
 
         if options.subparser_name == "runtime-delete":
             if delete_xml_config(tmp_file, options.runtime_id):
