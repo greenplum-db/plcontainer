@@ -747,6 +747,11 @@ def remote_remove_files(pool, gpdb_locations, remote_filename):
 
 
 def show_file(filename):
+    f = open(filename, 'rb')
+    sys.stdout.write('%s\n' % f.read())
+    f.close()
+
+def runtime_list_xml(filename):
     '''
     Print configurations
     :param filename:  
@@ -757,22 +762,28 @@ def show_file(filename):
         root = xmltree.getroot()
         sys.stdout.write("PL/Container Runtime Configuration: \n")
         for runtime in root.findall('runtime'):
+            sys.stdout.write("---------------------------------------------------------\n")
             runtime_id = runtime.find('id').text
             sys.stdout.write("  Runtime ID: %s\n" % runtime_id)
             image_name = runtime.find('image').text
             sys.stdout.write("  Linked Docker Image: %s\n" % image_name)
-            sys.stdout.write("\n")
             sys.stdout.write("  Runtime Setting: \n")
             for settings in runtime.findall('setting'):
-                if 'memory_mb' in settings:
-                    sys.stdout.write("    Container Memory Limited: %s\n" % settings['memory_mb'])
-                elif 'use_network' in settings:
-                    sys.stdout.write("    Container Use Network For Communication: %s\n" % settings['use_network'])
-                elif 'logs' in settings:
-                    sys.stdout.write("    Container Client Log: %s\n" % settings['logs'])
+                if 'memory_mb' in settings.attrib:
+                    sys.stdout.write("  ---- Container Memory Limited: %s\n" % settings.attrib['memory_mb'])
+                elif 'use_network' in settings.attrib:
+                    sys.stdout.write("  ---- Container Use Network For Communication: %s\n" % settings.attrib['use_network'])
+                elif 'logs' in settings.attrib:
+                    sys.stdout.write("  ---- Container Client Log: %s\n" % settings.attrib['logs'])
             sys.stdout.write("  Shared Directory: \n")
             for share_folder in runtime.findall('shared_directory'):
-                sys.stdout.write("    shared directory from host '%s' to container '%s'\n" % (share_folder['host'], share_folder['container']))
+                sys.stdout.write("  ---- Shared Directory From HOST '%s' to Container '%s'\n" % (share_folder.attrib['host'], share_folder.attrib['container']))
+            sys.stdout.write("--------------------------------------------------------\n")
+            sys.stdout.write("\n")
+
+    except Exception, ex:
+        logger.error("XML file does not conform XML specification")
+        logger.error(str(ex))
 
 def get_conf_settings(options, elements):
     '''
@@ -936,7 +947,7 @@ def main():
             new_config = True
 
         if options.subparser_name == "runtime-list":
-            show_file(tmp_file)
+            runtime_list_xml(tmp_file)
 
         if options.subparser_name == "runtime-delete":
             if delete_xml_config(tmp_file, options.runtime_id):
