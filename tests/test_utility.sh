@@ -104,6 +104,11 @@ plcontainer runtime-replace -r runtime3 -i image2 -l r -v /host_dir3/shared3:/co
 	| grep -v 'Distributing to'
 plcontainer runtime-list |  sed -e "s|${GPHOME}|GPHOME|"
 
+echo "test runtime-backup"
+plcontainer runtime-backup >/tmp/runtime-backup.stdout
+plcontainer runtime-backup -f /tmp/runtime-backup.file
+diff -du /tmp/runtime-backup.stdout /tmp/runtime-backup.file
+
 #recover the origincal runtime configurations.
 echo "Recover the previous runtime configuration file"
 plcontainer runtime-restore -f test_backup_cfg_file \

@@ -58,6 +58,7 @@ def parseargs():
     runtime_list_parser = subparsers.add_parser("runtime-list", help = "List all container runtime configurations. You could use this command to backup")
     runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a container runtime configuration on all hosts")
     runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "editor to edit and then update configuration on all hosts")
+    runtime_backup_parser = subparsers.add_parser("runtime-backup", help = "Backup the local runtime configuration file")
     runtime_restore_parser = subparsers.add_parser("runtime-restore", help = "Restore the runtime configuration from a file and distribute them to all hosts")
     runtime_verify_parser = subparsers.add_parser("runtime-verify",
                                                 help="Verify all configuration files are the same, and do the auto fix if needed")
@@ -107,6 +108,10 @@ def parseargs():
     # For runtime-edit
     runtime_edit_parser.add_argument("-e", "--editor", dest="editor",
                                     help="editor command (e.g. vim, etc)", required=True)
+
+    # For runtime-backup
+    runtime_backup_parser.add_argument("-f", "--file", dest="file",
+                                    help="The file that the runtime configurations will be saved (xml format)")
 
     # For runtime-restore
     runtime_restore_parser.add_argument("-f", "--file", dest="file",
@@ -928,6 +933,16 @@ def main():
                 logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
                 distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
                 new_config = True
+
+        if options.subparser_name == "runtime-backup":
+            if options.file is None:
+                show_file(tmp_file)
+            else:
+                fb = open(tmp_file, 'rb')
+                fw = open(options.file, 'wb')
+                fw.write('%s\n' % fb.read())
+                fw.close()
+                fb.close()
 
         if options.subparser_name == "runtime-restore":
             pool = WorkerPool(PL_BATCH_SIZE)

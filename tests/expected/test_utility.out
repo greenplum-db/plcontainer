@@ -1,10 +1,10 @@
 \! $(pwd)/test_utility.sh
 usage: plcontainer [-h] [--verbose]
-                   {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-list,runtime-delete,runtime-edit,runtime-restore,runtime-verify}
+                   {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-list,runtime-delete,runtime-edit,runtime-backup,runtime-restore,runtime-verify}
                    ...
 
 positional arguments:
-  {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-list,runtime-delete,runtime-edit,runtime-restore,runtime-verify}
+  {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-list,runtime-delete,runtime-edit,runtime-backup,runtime-restore,runtime-verify}
     configure           Configure plcontainer name and image location as well
                         as shared folder, need to combine with -n, -i and -l,
                         usage: -n plcontainer_name -i docker_image_url -l
@@ -20,8 +20,9 @@ positional arguments:
     runtime-list        List all container runtime configurations. You could
                         use this command to backup
     runtime-delete      Delete a container runtime configuration on all hosts
-    runtime-edit        editor to edit and then replace configuration on all
+    runtime-edit        editor to edit and then update configuration on all
                         hosts
+    runtime-backup      Backup the local runtime configuration file
     runtime-restore     Restore the runtime configuration from a file and
                         distribute them to all hosts
     runtime-verify      Verify all configuration files are the same, and do
@@ -45,7 +46,7 @@ usage: plcontainer image-delete [-h] -i IMAGE_NAME
 plcontainer image-delete: error: argument -i/--image is required
 Test image-list: negative cases
 usage: plcontainer [-h] [--verbose]
-                   {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-list,runtime-delete,runtime-edit,runtime-restore,runtime-verify}
+                   {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-list,runtime-delete,runtime-edit,runtime-backup,runtime-restore,runtime-verify}
                    ...
 plcontainer: error: unrecognized arguments: not_exist
 Prepare a blank runtime configuration file and test runtime-list
@@ -169,6 +170,7 @@ Test runtime-replace: replace
         <setting user_network="no"/>
     </runtime>
 </configuration>
+test runtime-backup
 Recover the previous runtime configuration file
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
