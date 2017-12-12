@@ -89,10 +89,9 @@ install-extra: installdirs
 
 .PHONY: install-clients
 install-clients: build-clients
-	$(MKDIR_P) '$(DESTDIR)$(bindir)/pyclient'
-	$(MKDIR_P) '$(DESTDIR)$(bindir)/rclient'
-	cp $(PYCLIENTDIR)/* $(DESTDIR)$(bindir)/pyclient
-	cp $(RCLIENTDIR)/*  $(DESTDIR)$(bindir)/rclient
+	$(MKDIR_P) '$(DESTDIR)$(bindir)/plcontainer_clients'
+	cp $(PYCLIENTDIR)/* $(DESTDIR)$(bindir)/plcontainer_clients/
+	cp $(RCLIENTDIR)/*  $(DESTDIR)$(bindir)/plcontainer_clients/
 
 .PHONY: installcheck
 installcheck:

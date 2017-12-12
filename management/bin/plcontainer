@@ -30,8 +30,7 @@ except ImportError, e:
 
 PLCONTAINER_CONFIG_FILE = 'plcontainer_configuration.xml'
 PLCONTAINER_GPDB_DIR = 'share/postgresql/plcontainer'
-PLCONTAINER_PYCLIENT_DIR = "bin/pyclient"
-PLCONTAINER_RCLIENT_DIR = "bin/rclient"
+PLCONTAINER_CLIENT_DIR = "bin/plcontainer_clients"
 
 PL_BATCH_SIZE = 64
 TMP = '/tmp'
@@ -306,10 +305,7 @@ def update_xml_check_shared_folders_old(container, elements):
         container.remove(shareDir)
     count = 0
     # default shared dir, we has ensured that language must be python or r in option check.
-    if elements['language'] == "r":
-        dest = os.path.join(GPHOME, PLCONTAINER_RCLIENT_DIR)
-    else:
-        dest = os.path.join(GPHOME, PLCONTAINER_PYCLIENT_DIR)
+    dest = os.path.join(GPHOME, PLCONTAINER_CLIENT_DIR)
     shareDir = ElementTree.Element("shared_directory",
             host=dest, container="/clientdir",
             access="ro")
@@ -376,10 +372,7 @@ def update_xml_check_shared_folders(runtime, elements):
     for shareDir in runtime.findall('shared_directory'):
         runtime.remove(shareDir)
 
-    if elements['language'] == "r":
-        dest = os.path.join(GPHOME, PLCONTAINER_RCLIENT_DIR)
-    else:
-        dest = os.path.join(GPHOME, PLCONTAINER_PYCLIENT_DIR)
+    dest = os.path.join(GPHOME, PLCONTAINER_CLIENT_DIR)
 
     shareDir = ElementTree.Element("shared_directory",
             host=dest, container="/clientdir",

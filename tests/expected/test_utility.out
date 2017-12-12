@@ -77,7 +77,7 @@ Test runtime-add, runtime-list, and runtime-delete
         <id>runtime1</id>
         <image>image1</image>
         <command>/clientdir/pyclient.sh</command>
-        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/pyclient"/>
+        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/plcontainer_clients"/>
     </runtime>
 </configuration>
 -Distributing file plcontainer_configuration.xml to all locations...
@@ -106,7 +106,7 @@ Test runtime-add with both shared directories and settings
         <id>runtime1</id>
         <image>image1</image>
         <command>/clientdir/pyclient.sh</command>
-        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/pyclient"/>
+        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/plcontainer_clients"/>
         <shared_directory access="rw" container="/container_dir1/shared1" host="/host_dir1/shared1"/>
         <shared_directory access="ro" container="/container_dir1/shared2" host="/host_dir1/shared2"/>
     </runtime>
@@ -114,7 +114,7 @@ Test runtime-add with both shared directories and settings
         <id>runtime2</id>
         <image>image2</image>
         <command>/clientdir/rclient.sh</command>
-        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/rclient"/>
+        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/plcontainer_clients"/>
         <shared_directory access="rw" container="/container_dir2/shared1" host="/host_dir2/shared1"/>
         <shared_directory access="ro" container="/container_dir2/shared2" host="/host_dir2/shared2"/>
         <setting memory_mb="512"/>
