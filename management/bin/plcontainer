@@ -54,7 +54,7 @@ def parseargs():
     image_list_parser = subparsers.add_parser("image-list", help = "Show existing container images on the current host")
 
     runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration on all hosts")
-    runtime_update_parser = subparsers.add_parser("runtime-update", help = "Update/Add a container runtime configuration on all hosts")
+    runtime_replace_parser = subparsers.add_parser("runtime-replace", help = "Replace/Add with a container runtime configuration on all hosts")
     runtime_list_parser = subparsers.add_parser("runtime-list", help = "List all container runtime configurations. You could use this command to backup")
     runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a container runtime configuration on all hosts")
     runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "editor to edit and then update configuration on all hosts")
@@ -85,18 +85,18 @@ def parseargs():
                                     help="Setting for the runtime. Allow call multiple times." +
                                     " (e.g. memory_mb=256). See more in document.")
 
-    # For runtime-update
-    runtime_update_parser.add_argument("-r", "--runtime", dest="runtime_id",
+    # For runtime-replace
+    runtime_replace_parser.add_argument("-r", "--runtime", dest="runtime_id",
                                     help="unique string which presents configurations for a container runtime)", required=True)
-    runtime_update_parser.add_argument("-i", "--image", dest="image_name",
+    runtime_replace_parser.add_argument("-i", "--image", dest="image_name",
                                     help="image name:tag (e.g. centos:7.2)", required=True)
-    runtime_update_parser.add_argument("-l", "--language", dest="language",
+    runtime_replace_parser.add_argument("-l", "--language", dest="language",
                                     help="language type, currently support python and r. " +
                                     "Used to auto-configure container command.", required=True, choices=['r','python'])
-    runtime_update_parser.add_argument("-v", "--volume", dest="shared", action="append",
+    runtime_replace_parser.add_argument("-v", "--volume", dest="shared", action="append",
                                     help="Bind mount a volume, can work with multiple volumes" +
                                     " format: HOST:CONTAINER:[rw|ro]")
-    runtime_update_parser.add_argument("-s", "--setting", dest="setting", action="append",
+    runtime_replace_parser.add_argument("-s", "--setting", dest="setting", action="append",
                                     help="Setting for the runtime. Allow call multiple times." +
                                     " (e.g. memory_mb=256). See more in document.")
 
@@ -497,7 +497,7 @@ def add_xml_config(filename, elements):
         for runtime in root.findall('runtime'):
             runtime_id = runtime.find('id').text
             if runtime_id == elements['id']:
-                logger.error("runtime configuration exists for %s. You might want the runtime-update command?" % runtime_id)
+                logger.error("runtime configuration exists for %s. You might want the runtime-replace command?" % runtime_id)
                 raise Exception("runtime configuration exists")
 
         runtime = update_xml_new_runtime(elements)
@@ -898,7 +898,7 @@ def main():
             distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
             new_config = True
 
-        if options.subparser_name == "runtime-update":
+        if options.subparser_name == "runtime-replace":
             elements = get_conf_elements(options)
             update_xml_config(tmp_file, elements)
             logger.debug('Preparing the worker pool...')

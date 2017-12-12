@@ -44,6 +44,7 @@
         <id>plc_r</id>
         <image>pivotaldata/plcontainer_r:IMAGE_TAG</image>
         <command>./client</command>
+        <shared_directory access="ro" container="/clientdir" host="/usr/local/greenplum-db/bin/plcontainer_clients"/>
     </runtime>
 
 </configuration>

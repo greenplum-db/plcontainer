@@ -1,10 +1,10 @@
 \! $(pwd)/test_utility.sh
 usage: plcontainer [-h] [--verbose]
-                   {configure,install,image-add,image-delete,image-list,runtime-add,runtime-update,runtime-list,runtime-delete,runtime-edit,runtime-restore,runtime-verify}
+                   {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-list,runtime-delete,runtime-edit,runtime-restore,runtime-verify}
                    ...
 
 positional arguments:
-  {configure,install,image-add,image-delete,image-list,runtime-add,runtime-update,runtime-list,runtime-delete,runtime-edit,runtime-restore,runtime-verify}
+  {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-list,runtime-delete,runtime-edit,runtime-restore,runtime-verify}
     configure           Configure plcontainer name and image location as well
                         as shared folder, need to combine with -n, -i and -l,
                         usage: -n plcontainer_name -i docker_image_url -l
@@ -15,12 +15,12 @@ positional arguments:
     image-delete        Delete specified docker image on all hosts
     image-list          Show existing container images on the current host
     runtime-add         Add a container runtime configuration on all hosts
-    runtime-update      Update/Add a container runtime configuration on all
-                        hosts
+    runtime-replace     Replace/Add with a container runtime configuration on
+                        all hosts
     runtime-list        List all container runtime configurations. You could
                         use this command to backup
     runtime-delete      Delete a container runtime configuration on all hosts
-    runtime-edit        editor to edit and then update configuration on all
+    runtime-edit        editor to edit and then replace configuration on all
                         hosts
     runtime-restore     Restore the runtime configuration from a file and
                         distribute them to all hosts
@@ -45,7 +45,7 @@ usage: plcontainer image-delete [-h] -i IMAGE_NAME
 plcontainer image-delete: error: argument -i/--image is required
 Test image-list: negative cases
 usage: plcontainer [-h] [--verbose]
-                   {configure,install,image-add,image-delete,image-list,runtime-add,runtime-update,runtime-list,runtime-delete,runtime-edit,runtime-restore,runtime-verify}
+                   {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-list,runtime-delete,runtime-edit,runtime-restore,runtime-verify}
                    ...
 plcontainer: error: unrecognized arguments: not_exist
 Prepare a blank runtime configuration file and test runtime-list
@@ -128,6 +128,47 @@ Test runtime-add with both shared directories and settings
 <?xml version="1.0" ?>
 <configuration>
     </configuration>
+Test runtime-replace: negative cases
+usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
+                                   {r,python} [-v SHARED] [-s SETTING]
+plcontainer runtime-replace: error: argument -i/--image is required
+usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
+                                   {r,python} [-v SHARED] [-s SETTING]
+plcontainer runtime-replace: error: argument -l/--language is required
+usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
+                                   {r,python} [-v SHARED] [-s SETTING]
+plcontainer runtime-replace: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python')
+Test runtime-replace: add a new one
+-runtime configuration does not exist. Adding a new one.
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>runtime3</id>
+        <image>image2</image>
+        <command>/clientdir/rclient.sh</command>
+        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/plcontainer_clients"/>
+        <shared_directory access="rw" container="/container_dir3/shared1" host="/host_dir3/shared1"/>
+        <shared_directory access="ro" container="/container_dir3/shared2" host="/host_dir3/shared2"/>
+        <setting memory_mb="512"/>
+        <setting user_network="yes"/>
+    </runtime>
+</configuration>
+Test runtime-replace: replace
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>runtime3</id>
+        <image>image2</image>
+        <command>/clientdir/rclient.sh</command>
+        <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/plcontainer_clients"/>
+        <shared_directory access="rw" container="/container_dir3/shared3" host="/host_dir3/shared3"/>
+        <setting user_network="no"/>
+    </runtime>
+</configuration>
 Recover the previous runtime configuration file
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically

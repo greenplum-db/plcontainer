@@ -124,7 +124,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 					}
 				}
 				if (!validSetting) {
-					elog(ERROR, "Unrecognized setting options, please check the configuration file");
+					elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf->name);
 				}
 
 			}
@@ -154,12 +154,12 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 	}
 
 	if (has_id == 0) {
-		elog(ERROR, "Container ID in tag <image> must be specified in configuration");
+		elog(ERROR, "Container ID in tag <image> must be specified in configuration: %s", conf->name);
 		return -1;
 	}
 
 	if (has_command == 0) {
-		elog(ERROR, "Container startup command in tag <command> must be specified in configuration");
+		elog(ERROR, "Container startup command in tag <command> must be specified in configuration: %s", conf->name);
 		return -1;
 	}
 
@@ -178,7 +178,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				value = xmlGetProp(cur_node, (const xmlChar *) "host");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'host' that is not found");
+						" 'host' that is not found: %s", conf->name);
 					return -1;
 				}
 				conf->sharedDirs[i].host = plc_top_strdup((char *) value);
@@ -187,7 +187,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				value = xmlGetProp(cur_node, (const xmlChar *) "container");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'container' that is not found");
+						" 'container' that is not found: %s", conf->name);
 					return -1;
 				}
 				conf->sharedDirs[i].container = plc_top_strdup((char *) value);
@@ -196,14 +196,14 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				value = xmlGetProp(cur_node, (const xmlChar *) "access");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'access' that is not found");
+						" 'access' that is not found: %s", conf->name);
 					return -1;
 				} else if (strcmp((char *) value, "ro") == 0) {
 					conf->sharedDirs[i].mode = PLC_ACCESS_READONLY;
 				} else if (strcmp((char *) value, "rw") == 0) {
 					conf->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
 				} else {
-					elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s'", value);
+					elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf->name);
 					return -1;
 				}
 				xmlFree(value);
