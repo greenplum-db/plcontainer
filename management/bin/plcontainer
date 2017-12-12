@@ -55,7 +55,7 @@ def parseargs():
 
     runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration on all hosts")
     runtime_replace_parser = subparsers.add_parser("runtime-replace", help = "Replace/Add with a container runtime configuration on all hosts")
-    runtime_list_parser = subparsers.add_parser("runtime-show", help = "List all container runtime configurations. Use -r/--runtime to list specific runtime")
+    runtime_show_parser = subparsers.add_parser("runtime-show", help = "Show all container runtime configurations. Use -r/--runtime to show specific runtime")
     runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a container runtime configuration on all hosts")
     runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "editor to edit and then update configuration on all hosts")
     runtime_backup_parser = subparsers.add_parser("runtime-backup", help = "Backup the local runtime configuration file")
@@ -100,9 +100,9 @@ def parseargs():
     runtime_replace_parser.add_argument("-s", "--setting", dest="setting", action="append",
                                     help="Setting for the runtime. Allow call multiple times." +
                                     " (e.g. memory_mb=256). See more in document.")
-    # For runtime-list
-    runtime_list_parser.add_argument("-r", "--runtime", dest="runtime_id",
-                                    help="List specific runtime with given runtime id in configuration file")
+    # For runtime-show
+    runtime_show_parser.add_argument("-r", "--runtime", dest="runtime_id",
+                                    help="show specific runtime with given runtime id in configuration file")
 
     # For runtime-delete
     runtime_delete_parser.add_argument("-r", "--runtime", dest="runtime_id",
