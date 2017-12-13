@@ -49,14 +49,14 @@ def parseargs():
     image_list_parser = subparsers.add_parser("image-list", help = "Show existing container images on the current host")
 
     runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration on all hosts")
-    runtime_replace_parser = subparsers.add_parser("runtime-replace", help = "Replace/Add with a container runtime configuration on all hosts")
-    runtime_show_parser = subparsers.add_parser("runtime-show", help = "Show all container runtime configurations. Use -r/--runtime to show specific runtime")
-    runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a container runtime configuration on all hosts")
-    runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "editor to edit and then update configuration on all hosts")
-    runtime_backup_parser = subparsers.add_parser("runtime-backup", help = "Backup the local runtime configuration file")
-    runtime_restore_parser = subparsers.add_parser("runtime-restore", help = "Restore the runtime configuration from a file and distribute them to all hosts")
+    runtime_replace_parser = subparsers.add_parser("runtime-replace", help = "Replace with a container runtime configuration on all hosts")
+    runtime_show_parser = subparsers.add_parser("runtime-show", help = "Show container runtime configurations on the current host")
+    runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete container runtime configurations on all hosts")
+    runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "Using editor to edit and then update configurations on all hosts")
+    runtime_backup_parser = subparsers.add_parser("runtime-backup", help = "Backup the local runtime configurations to a file")
+    runtime_restore_parser = subparsers.add_parser("runtime-restore", help = "Restore the runtime configurations from a file and distribute them to all hosts")
     runtime_verify_parser = subparsers.add_parser("runtime-verify",
-                                                help="Verify all configuration files are the same, and do the auto fix if needed")
+                                                help="Sanity check configurations on all the hosts")
 
     # For image-add
     image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
@@ -109,7 +109,7 @@ def parseargs():
 
     # For runtime-backup
     runtime_backup_parser.add_argument("-f", "--file", dest="file",
-                                    help="The file that the runtime configurations will be saved (xml format)")
+                                    help="The file that the runtime configurations will be saved (xml format)", required=True)
 
     # For runtime-restore
     runtime_restore_parser.add_argument("-f", "--file", dest="file",
@@ -172,45 +172,6 @@ def get_docker_image(url):
 
     return image_path
 
-def install_images_old(options, pool, hosts):
-    '''
-    install docker image either form url or file
-    '''
-    logger.info('Starting to install images %s' % (options.image))
-    docker_image = options.image
-
-    if docker_image is None:
-        logger.error('Docker image cannot be none.')
-        sys.exit(1)
-    if not docker_image.endswith(TAR_GZ):
-        docker_image = get_docker_image(options.image)
-
-    try:
-        logger.info('Checking docker installed on all hosts...')
-        check_docker_cmd = 'which docker'
-        remote_cmd(pool, check_docker_cmd, hosts)
-        
-        logger.info('Distributing image file %s to all hosts...' % docker_image)
-        dest = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, docker_image)
-        distribute_docker_file(pool, docker_image, dest, hosts)
-
-        logger.info('Loading image on all hosts...')
-        docker_load_cmd = " ".join(["docker load -i ", dest])
-        dockerUrl = remote_cmd(pool, docker_load_cmd, hosts)
-        tag=""
-        if not dockerUrl:
-            if not options.imagename:
-                logger.error("Old Dokcer verion need to specify image name by -c option")
-                raise Exception("Failed to get image name")
-            else:
-                tag = options.imagename
-        else:
-            # the returned format is "Loaded image: image:tag"
-            tag = dockerUrl.split(":", 1)[1]
-        return tag
-
-    except Exception, ex:
-        raise(ex)
 
 def install_images(options, pool, hosts):
     '''
@@ -260,74 +221,6 @@ def delete_images(options, pool, hosts):
         remote_cmd(pool, docker_delete_cmd, hosts)
     except Exception, ex:
         raise(ex)
-
-def update_xml_check_shared_folders_old(container, elements):
-    '''
-    update shared folder settings
-    '''
-    for shareDir in container.findall('shared_directory'):
-        container.remove(shareDir)
-    count = 0
-    # default shared dir, we has ensured that language must be python or r in option check.
-    dest = os.path.join(GPHOME, PLCONTAINER_CLIENT_DIR)
-    shareDir = ElementTree.Element("shared_directory",
-            host=dest, container="/clientdir",
-            access="ro")
-    container.append(shareDir)
-
-    if 'hasShared' in elements.keys():
-        for plHost in elements['host']:
-            shareDir = ElementTree.Element("shared_directory",
-                    host=plHost, container=elements['container'][count],
-                    access=elements['access'][count])
-            count = count + 1
-            container.append(shareDir)
-
-def update_xml_container_old(container, elements):
-    '''
-    update name and image by given a container node
-    '''
-    isNew = True
-    name = container.find('name').text
-    if name == elements['name']:
-        if userinput.ask_yesno(None, "This tag is already existed, do you want to overwrite?", 'N'):
-            isNew = False
-            image = container.find('image')
-            image.text = elements['image']
-            command = container.find('command')
-            if elements['language'] == "r":
-                command.text = "/clientdir/rclient.sh"
-            else:
-                command.text = "/clientdir/pyclient.sh"
-
-            update_xml_check_shared_folders_old(container, elements)
-        else:
-            raise Exception("User interrupted")
-    return isNew
-
-def update_xml_new_container_old(elements):
-    '''
-    Create a new conatiner node
-    '''
-    container = ElementTree.Element("container")
-    name = ElementTree.Element("name")
-    name.text = elements['name']
-    image = ElementTree.Element("image")
-    image.text = elements['image']
-
-    # default command
-    command = ElementTree.Element("command")
-    if elements['language'] == "r":
-        command.text = "/clientdir/rclient.sh"
-    else:
-        command.text = "/clientdir/pyclient.sh"
-    container.append(name)
-    container.append(image)
-    container.append(command)
-
-    update_xml_check_shared_folders_old(container, elements)
-
-    return container
 
 def update_xml_check_shared_folders(runtime, elements):
     '''
@@ -417,37 +310,6 @@ def update_reformat_xml(xmltree):
     xmlString = ElementTree.tostring(xmltree)
     reformatString = xml.dom.minidom.parseString(xmlString)
     return reformatString.toprettyxml(indent = '    ') 
-
-def update_xml_config_old(filename, elements):
-    '''
-    Update the xml file by given elements dict, if the given tag is
-    not existed, then create a new tag. Otherwise, update the current
-    tag.
-    '''
-    isNew = True
-    try:
-        xmltree = ElementTree.parse(filename)
-        logger.debug("file name is %s" % (filename))
-        root = xmltree.getroot()
-
-        for container in root.findall('container'):
-            isNew = update_xml_container_old(container, elements)
-            if not isNew:
-                break
-
-        if isNew:
-           container = update_xml_new_container_old(elements)
-           root.append(container)
-
-        newXMLTreeString = update_reformat_xml(root)
-        newXMLTreeString = os.linesep.join([s for s in newXMLTreeString.splitlines() if not s.strip() == ''])
-        xmlfile = open(filename, "w")
-        xmlfile.write(newXMLTreeString)
-        xmlfile.close()
-    except Exception, ex:
-        logger.error("Update XML file Error")
-        logger.error(str(ex))
-        raise Exception("Update XML file Error")
 
 def add_xml_config(filename, elements):
     '''
@@ -786,22 +648,6 @@ def get_conf_shared_dirs(options, elements):
         else:
             elements['access'].append("ro")
 
-def get_conf_elements_old(options, dockImage = None):
-    '''
-    build an element dict for configuration
-    '''
-    elements = dict()
-    elements['name'] = options.name
-    if options.language:
-        elements['language']=options.language.lower()
-    if dockImage:
-        elements['image'] = dockImage.strip()
-    else: 
-        elements['image'] = options.image
-    if options.shared:
-       get_conf_shared_dirs(options, elements)
-    return elements
-
 def get_conf_elements(options):
     '''
     build an element dict for configuration
@@ -941,14 +787,11 @@ def main():
                 new_config = True
 
         if options.subparser_name == "runtime-backup":
-            if options.file is None:
-                show_file(tmp_file)
-            else:
-                fb = open(tmp_file, 'rb')
-                fw = open(options.file, 'wb')
-                fw.write('%s\n' % fb.read())
-                fw.close()
-                fb.close()
+            fb = open(tmp_file, 'rb')
+            fw = open(options.file, 'wb')
+            fw.write('%s\n' % fb.read())
+            fw.close()
+            fb.close()
 
         if options.subparser_name == "runtime-restore":
             pool = WorkerPool(PL_BATCH_SIZE)

@@ -33,7 +33,7 @@ plcontainer runtime-restore -f tmp_cfg_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
 # We do not want $GPHOME to be in exp output.
-plcontainer runtime-backup |  sed -e "s|${GPHOME}|GPHOME|"
+plcontainer runtime-backup -f /tmp/backup_file; cat /tmp/backup_file |  sed -e "s|${GPHOME}|GPHOME|"
 rm -f tmp_cfg_file
 
 ######################## test runtime-add/delte/show/backup ###############################
@@ -47,10 +47,11 @@ echo "Test runtime-add, runtime-backup, and runtime-delete"
 plcontainer runtime-add -r runtime1 -i image1 -l python \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
-plcontainer runtime-backup |  sed -e "s|${GPHOME}|GPHOME|"
+
+plcontainer runtime-backup -f /tmp/backup_file; cat /tmp/backup_file |  sed -e "s|${GPHOME}|GPHOME|"
 plcontainer runtime-delete -r runtime1 | sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
-plcontainer runtime-backup |  sed -e "s|${GPHOME}|GPHOME|"
+plcontainer runtime-backup -f /tmp/backup_file; cat /tmp/backup_file |  sed -e "s|${GPHOME}|GPHOME|"
 plcontainer runtime-delete -r runtime1 | sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
 
@@ -104,18 +105,13 @@ plcontainer runtime-replace -r runtime3 -i image2 -l r -v /host_dir3/shared1:/co
 	-v /host_dir3/shared2:/container_dir3/shared2:ro -s memory_mb=512 -s use_network=yes \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
-plcontainer runtime-backup |  sed -e "s|${GPHOME}|GPHOME|"
+plcontainer runtime-backup -f /tmp/backup_file; cat /tmp/backup_file |  sed -e "s|${GPHOME}|GPHOME|"
 echo "Test runtime-replace: replace"
 plcontainer runtime-replace -r runtime3 -i image2 -l r -v /host_dir3/shared3:/container_dir3/shared3:rw \
 	-s use_network=no \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
-plcontainer runtime-backup |  sed -e "s|${GPHOME}|GPHOME|"
-
-echo "test runtime-backup"
-plcontainer runtime-backup >/tmp/runtime-backup.stdout
-plcontainer runtime-backup -f /tmp/runtime-backup.file
-diff -du /tmp/runtime-backup.stdout /tmp/runtime-backup.file
+plcontainer runtime-backup -f /tmp/backup_file; cat /tmp/backup_file |  sed -e "s|${GPHOME}|GPHOME|"
 
 #recover the origincal runtime configurations.
 echo "Recover the previous runtime configuration file"
