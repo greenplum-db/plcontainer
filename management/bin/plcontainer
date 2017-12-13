@@ -621,6 +621,7 @@ def copy_file_to_tmp(host, file):
 
 
 def validate_xml(filename):
+    # FIXME: Check mandatory fields.
     correct = True
     with open(filename, 'rb') as file:
         xmlcontents = file.read()
@@ -803,6 +804,8 @@ def get_conf_settings(options, elements):
         strList = setting.split("=")
         if len(strList) != 2:
             raise Exception("Bad setting format: %s" % setting)
+        if strList[0] != "use_network" and strList[0] != "memory_mb" and strList[0] != "logs":
+            raise Exception("Bad setting key: %s" % strList[0])
         elements['setting'][strList[0]] = strList[1]
 
 def get_conf_shared_dirs(options, elements):

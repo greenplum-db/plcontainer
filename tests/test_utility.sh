@@ -92,6 +92,9 @@ echo "Test runtime-replace: negative cases"
 plcontainer runtime-replace -r runtime3
 plcontainer runtime-replace -r runtime3 -i image3
 plcontainer runtime-replace -r runtime3 -i image3 -l java
+plcontainer runtime-replace -r runtime3 -i image3 -l r -s user_network=yes \
+	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
+
 echo "Test runtime-replace: add a new one"
 plcontainer runtime-replace -r runtime3 -i image2 -l r -v /host_dir3/shared1:/container_dir3/shared1:rw \
 	-v /host_dir3/shared2:/container_dir3/shared2:ro -s memory_mb=512 -s use_network=yes \

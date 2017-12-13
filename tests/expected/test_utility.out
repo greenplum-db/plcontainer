@@ -1,6 +1,5 @@
 \! $(pwd)/test_utility.sh
 usage: plcontainer [-h] [--verbose]
-                   
                    {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-show,runtime-delete,runtime-edit,runtime-backup,runtime-restore,runtime-verify}
                    ...
 
@@ -47,7 +46,6 @@ usage: plcontainer image-delete [-h] -i IMAGE_NAME
 plcontainer image-delete: error: argument -i/--image is required
 Test image-list: negative cases
 usage: plcontainer [-h] [--verbose]
-                   
                    {configure,install,image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-show,runtime-delete,runtime-edit,runtime-backup,runtime-restore,runtime-verify}
                    ...
 plcontainer: error: unrecognized arguments: not_exist
@@ -152,6 +150,7 @@ plcontainer runtime-replace: error: argument -l/--language is required
 usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
                                    {r,python} [-v SHARED] [-s SETTING]
 plcontainer runtime-replace: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python')
+-plcontainer failed. (Reason='Bad setting key: user_network') exiting...
 Test runtime-replace: add a new one
 -runtime configuration does not exist. Adding a new one.
 -Distributing file plcontainer_configuration.xml to all locations...

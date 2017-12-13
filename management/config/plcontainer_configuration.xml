@@ -11,40 +11,52 @@
         3. "image" - container image in Docker, used for starting and stopping
             the containers. Mandatory field
         4. "command" - command used to start the client process inside of the
-			container. Mandatory field
+            container. Mandatory field
         5. "shared_directory" - a series of tags, each one defines a single
+            directory shared between host and container. Optional
         6. "setting" - A detail setting of this runtime, if not set, plcontainer will
            use its default value.
             6.1. "memory_mb" - container memory limit in MB. Optional. When not set,
-                 container can usilize all the available OS memory
-                 directory shared between host and container. Optional
+                 container can utilize all the available OS memory
+                 directory shared between host and container.
             6.2. "use_network" - set to "yes" or "no" to specify whether use tcp or ipc
                  for communication between gpdb process and container process. Optional.
                  By default, we set "no".
             6.3. "logs" - set to "enable" or "disable" for container logging (not for backend)
+                 By default, we set "disable".
         All the container images not manually defined in this file will not be
         available for use by endusers in PL/Container
     -->
+
+    <!--
+        Please note you should better modify your runtime configurations
+        using the "plcontainer runtime-add/replace/delete" commands, otherwise
+        if you are quite familiar with the xml format you could edit using the
+        "plcontainer runtime-edit" command.
+    -->
+
     <runtime>
-        <id>plc_python</id>
-        <image>pivotaldata/plcontainer_python:IMAGE_TAG</image>
-        <command>./client</command>
+        <id>plc_python_example1</id>
+        <image>pivotaldata/plcontainer_python_with_clients:0.1</image>
+        <command>./pyclient</command>
     </runtime>
 
     <runtime>
-        <id>plc_python3</id>
-        <image>pivotaldata/plcontainer_python3:IMAGE_TAG</image>
-        <command>./client</command>
-        <setting memory_mb="256"/>
+        <id>plc_python_example2</id>
+        <image>pivotaldata/plcontainer_python_without_clients:0.1</image>
+        <command>/clientdir/pyclient.sh</command>
+        <shared_directory access="ro" container="/clientdir" host="/usr/local/greenplum-db/bin/plcontainer_clients"/>
+        <setting memory_mb="512"/>
         <setting use_network="yes"/>
         <setting logs="enable"/>
     </runtime>
 
     <runtime>
-        <id>plc_r</id>
-        <image>pivotaldata/plcontainer_r:IMAGE_TAG</image>
-        <command>./client</command>
+        <id>plc_r_example</id>
+        <image>pivotaldata/plcontainer_r_without_clients:0.2</image>
+        <command>/clientdir/rclient.sh</command>
         <shared_directory access="ro" container="/clientdir" host="/usr/local/greenplum-db/bin/plcontainer_clients"/>
+        <setting logs="enable"/>
     </runtime>
 
 </configuration>
