@@ -102,6 +102,11 @@ Test runtime-add with both shared directories and settings
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
 PL/Container Runtime Configuration: 
+-XML file does not conform XML specification or no entry was found.
+-No entry was found.
+-plcontainer failed. (Reason='runtime-show error') exiting...
+1
+PL/Container Runtime Configuration: 
 ---------------------------------------------------------
   Runtime ID: runtime1
   Linked Docker Image: image1
@@ -140,6 +145,9 @@ PL/Container Runtime Configuration:
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
 PL/Container Runtime Configuration: 
+-XML file does not conform XML specification or no entry was found.
+-No entry was found.
+-plcontainer failed. (Reason='runtime-show error') exiting...
 Test runtime-replace: negative cases
 usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
                                    {r,python} [-v SHARED] [-s SETTING]

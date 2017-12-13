@@ -766,12 +766,14 @@ def runtime_show_xml(filename, r_id):
     :return: 
     '''
     try:
+        no_entry = True;
         xmltree = ElementTree.parse(filename);
         root = xmltree.getroot()
         sys.stdout.write("PL/Container Runtime Configuration: \n")
         for runtime in root.findall('runtime'):
             runtime_id = runtime.find('id').text
             if (r_id is None or r_id == runtime_id):
+                no_entry = False
                 sys.stdout.write("---------------------------------------------------------\n")
                 sys.stdout.write("  Runtime ID: %s\n" % runtime_id)
                 image_name = runtime.find('image').text
@@ -790,9 +792,12 @@ def runtime_show_xml(filename, r_id):
                 sys.stdout.write("---------------------------------------------------------\n")
                 sys.stdout.write("\n")
 
+        if no_entry:
+            raise Exception("No entry was found.")
     except Exception, ex:
-        logger.error("XML file does not conform XML specification")
+        logger.error("XML file does not conform XML specification or no entry was found.")
         logger.error(str(ex))
+        raise Exception("runtime-show error")
 
 def get_conf_settings(options, elements):
     '''
@@ -892,6 +897,7 @@ def checkAllFileMD5(pool, gpdb_locations):
 
 
 def main():
+    retval = 0
     pool = None
     tmp_file = None
     options = None
@@ -1087,6 +1093,7 @@ def main():
                         ' New sessions will get new configuration automatically')
 
     except Exception, ex:
+        retval = 1
         logger.fatal("%s failed. (Reason='%s') exiting..." % (execname, ex))
         if options.verbose:
             logger.exception(ex)
@@ -1098,10 +1105,10 @@ def main():
             logger.debug('Shutting down workers...')
             pool.haltWork()
             pool.joinWorkers()
-
+        return retval
 
 if __name__ == '__main__':
     execname = os.path.split(__file__)[-1]
     gplog.setup_tool_logging(execname, getLocalHostname(), getUserName())
     logger = gplog.get_default_logger()
-    main()
+    sys.exit(main())

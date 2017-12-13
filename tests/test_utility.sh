@@ -78,6 +78,9 @@ plcontainer runtime-add -r runtime2 -i image2 -l r -v /host_dir2/shared1:/contai
 		-v /host_dir2/shared2:/container_dir2/shared2:ro -s memory_mb=512 -s use_network=yes \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
+plcontainer runtime-show -r runtime_not_exist \
+	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
+plcontainer runtime-show -r runtime_not_exist >/dev/null; echo $?
 plcontainer runtime-show |  sed -e "s|${GPHOME}|GPHOME|"
 plcontainer runtime-show -r runtime1 |  sed -e "s|${GPHOME}|GPHOME|"
 plcontainer runtime-delete -r runtime1 \
@@ -86,7 +89,8 @@ plcontainer runtime-delete -r runtime1 \
 plcontainer runtime-delete -r runtime2 \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
-plcontainer runtime-show |  sed -e "s|${GPHOME}|GPHOME|"
+plcontainer runtime-show |  sed -e "s|${GPHOME}|GPHOME|" \
+	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 
 echo "Test runtime-replace: negative cases"
 plcontainer runtime-replace -r runtime3
