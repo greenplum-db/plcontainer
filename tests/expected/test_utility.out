@@ -18,8 +18,8 @@ positional arguments:
     runtime-add         Add a container runtime configuration on all hosts
     runtime-replace     Replace/Add with a container runtime configuration on
                         all hosts
-    runtime-show        List all container runtime configurations. Use
-                        -r/--runtime to list specific runtime
+    runtime-show        Show all container runtime configurations. Use
+                        -r/--runtime to show specific runtime
     runtime-delete      Delete a container runtime configuration on all hosts
     runtime-edit        editor to edit and then update configuration on all
                         hosts
@@ -107,34 +107,34 @@ PL/Container Runtime Configuration:
 ---------------------------------------------------------
   Runtime ID: runtime1
   Linked Docker Image: image1
-  Runtime Setting: 
+  Runtime Setting(s): 
   Shared Directory: 
-  ---- Shared Directory From HOST 'GPHOME/bin/plcontainer_clients' to Container '/clientdir'
-  ---- Shared Directory From HOST '/host_dir1/shared1' to Container '/container_dir1/shared1'
-  ---- Shared Directory From HOST '/host_dir1/shared2' to Container '/container_dir1/shared2'
+  ---- Shared Directory From HOST 'GPHOME/bin/plcontainer_clients' to Container '/clientdir', access mode is 'ro'
+  ---- Shared Directory From HOST '/host_dir1/shared1' to Container '/container_dir1/shared1', access mode is 'rw'
+  ---- Shared Directory From HOST '/host_dir1/shared2' to Container '/container_dir1/shared2', access mode is 'ro'
 ---------------------------------------------------------
 
 ---------------------------------------------------------
   Runtime ID: runtime2
   Linked Docker Image: image2
-  Runtime Setting: 
+  Runtime Setting(s): 
   ---- Container Memory Limited: 512 MB
   ---- Container Use Network For Communication: yes
   Shared Directory: 
-  ---- Shared Directory From HOST 'GPHOME/bin/plcontainer_clients' to Container '/clientdir'
-  ---- Shared Directory From HOST '/host_dir2/shared1' to Container '/container_dir2/shared1'
-  ---- Shared Directory From HOST '/host_dir2/shared2' to Container '/container_dir2/shared2'
+  ---- Shared Directory From HOST 'GPHOME/bin/plcontainer_clients' to Container '/clientdir', access mode is 'ro'
+  ---- Shared Directory From HOST '/host_dir2/shared1' to Container '/container_dir2/shared1', access mode is 'rw'
+  ---- Shared Directory From HOST '/host_dir2/shared2' to Container '/container_dir2/shared2', access mode is 'ro'
 ---------------------------------------------------------
 
 PL/Container Runtime Configuration: 
 ---------------------------------------------------------
   Runtime ID: runtime1
   Linked Docker Image: image1
-  Runtime Setting: 
+  Runtime Setting(s): 
   Shared Directory: 
-  ---- Shared Directory From HOST 'GPHOME/bin/plcontainer_clients' to Container '/clientdir'
-  ---- Shared Directory From HOST '/host_dir1/shared1' to Container '/container_dir1/shared1'
-  ---- Shared Directory From HOST '/host_dir1/shared2' to Container '/container_dir1/shared2'
+  ---- Shared Directory From HOST 'GPHOME/bin/plcontainer_clients' to Container '/clientdir', access mode is 'ro'
+  ---- Shared Directory From HOST '/host_dir1/shared1' to Container '/container_dir1/shared1', access mode is 'rw'
+  ---- Shared Directory From HOST '/host_dir1/shared2' to Container '/container_dir1/shared2', access mode is 'ro'
 ---------------------------------------------------------
 
 -Distributing file plcontainer_configuration.xml to all locations...
