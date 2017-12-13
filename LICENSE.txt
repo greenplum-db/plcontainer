@@ -1,4 +1,5 @@
-Copyright 1994-2004 The PL-J Project. All rights reserved.
+Portions Copyright 1994-2004 The PL-J Project. All rights reserved.
+Portions Copyright © 2016-Present Pivotal Software, Inc.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
