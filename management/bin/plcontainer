@@ -997,19 +997,23 @@ def main():
 
         if options.subparser_name == "runtime-verify":
             logger.debug('Preparing the worker pool...')
-            pool = WorkerPool(PL_BATCH_SIZE)
-            verified = checkAllFileMD5(pool, gpdb_locations)
-            if not verified:
-                logger.error('Detected configuration files are not the same in all hosts!')
-                edit = userinput.ask_yesno(None, "Fix it by copying master configuration file?", 'N')
-                if edit:
-                    logger.info('Distributing master configuration file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-                    distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-                    new_config = True
-                else:
-                    logger.error('Verify Failed!')
+            valid_xml = validate_xml(tmp_file)
+            if not valid_xml:
+                logger.error('Bad xml format. Please fix them using the runtime-edit sub-command.')
             else:
-                logger.info('Verify success!')
+                pool = WorkerPool(PL_BATCH_SIZE)
+                verified = checkAllFileMD5(pool, gpdb_locations)
+                if not verified:
+                    logger.error('Detected configuration files are not the same in all hosts!')
+                    edit = userinput.ask_yesno(None, "Fix it by copying master configuration file?", 'N')
+                    if edit:
+                        logger.info('Distributing master configuration file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+                        distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+                        new_config = True
+                    else:
+                        logger.error('Verify Failed!')
+                else:
+                    logger.info('Verify success!')
 
         if options.subparser_name == "configure" and options.show:
             logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
