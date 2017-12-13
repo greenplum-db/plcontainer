@@ -44,11 +44,6 @@ def parseargs():
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     subparsers = parser.add_subparsers(dest='subparser_name')
 
-    config_parser = subparsers.add_parser('configure', help="Configure plcontainer name and " +
-                        "image location as well as shared folder, need to combine with -n, -i and -l, usage: -n plcontainer_name -i docker_image_url" +
-                        " -l plcontainer_language_type")
-    install_parser = subparsers.add_parser('install', help='Install a dokcer image and add it to configuration file')
-
     image_add_parser = subparsers.add_parser("image-add", help = "Install specified docker image on all hosts")
     image_delete_parser = subparsers.add_parser("image-delete", help = "Delete specified docker image on all hosts")
     image_list_parser = subparsers.add_parser("image-list", help = "Show existing container images on the current host")
@@ -120,51 +115,8 @@ def parseargs():
     runtime_restore_parser.add_argument("-f", "--file", dest="file",
                                     help="The file that includes the runtime configurations", required=True)
 
-    # for configure
-    config_parser.add_argument("-n", "--name", dest="name", help="Configure plcontainer name")
-    config_parser.add_argument("-i", "--image", dest="image", help="Configure plcontainer image location and tags (location:tag), the image must be installed." + 
-            " If not installed, please run plcontainer install first to install the docker image")
-    config_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
-                        " format: HOST:CONTAINER:[rw|ro]")
-    config_parser.add_argument("-l", "--language", dest="language", help="Configure plcontainer language type, currently support python and r")
-    config_parser.add_argument("-y","--yes", action='store_true', help="Default yes to confirm step in configure")
-    single_option = config_parser.add_mutually_exclusive_group()
-    single_option.add_argument("-e", "--editor", dest="editor", help="Editor to use")
-    single_option.add_argument('--reset', action='store_true', help='Reset the configuration file to default')
-    single_option.add_argument("--restore", action="store_true", help="Restore the previous version of PL/Container configuration")
-    single_option.add_argument('-s', '--show', action='store_true', help='Show the contents of configuration file without changing it')
-    single_option.add_argument("-f", "--file", dest="conf_file", help="Overwrite plcontainer configurations with xml file directly")
-
-    # for install
-    install_parser.add_argument("-i", "--image", dest="image", help="Load docker image from given location, support either tar.gz" +
-                        " file or docker image url")
-    install_parser.add_argument("-n", "--name", dest="name", help="Set plcontainer name")
-    install_parser.add_argument("-c", "--imagename", dest="imagename", help="Set docker image location:tag in configuration file (CentOS/Redhat 6 only)")
-    install_parser.add_argument("-l", "--language", dest="language", help="Set plcontainer language type, currently support python and r")
-    install_parser.add_argument("-v", "--volume", dest="shared", action="append",help="Bind mount a volume, can work with multiple volumes" +
-                        " format: HOST:CONTAINER:[rw|ro]")                    
 
     options = parser.parse_args()
-    if options.subparser_name == "install":
-        if not (options.name or options.image or options.shared or options.language):
-            logger.error('unkown options')
-            sys.exit(1)
-        
-        if not (options.name and options.image and options.language):
-            logger.error('container name, language and image must provide')
-            sys.exit(1)
-        if not (options.language.lower() == "r" or options.language.lower() == "python"):
-            logger.error('language must be r or python')
-            sys.exit(1)
-
-    elif options.subparser_name == "configure":
-        if options.name:
-            if not (options.image and options.language):
-                logger.error('container name, language and image must provide')
-                sys.exit(1)
-            if not (options.language.lower() == "r" or options.language.lower() == "python"):
-                logger.error('language must be r or python')
-                sys.exit(1)
 
     return options
 
@@ -1023,70 +975,6 @@ def main():
                         logger.error('Verify Failed!')
                 else:
                     logger.info('Verify success!')
-
-        if options.subparser_name == "configure" and options.show:
-            logger.info('Creating temporary copy of %s from %s...' % (remote_filename, remote_host))
-            show_file(tmp_file)
-
-        if options.subparser_name == "configure" and options.reset:
-            logger.info('Preparing the worker pool...')
-            pool = WorkerPool(PL_BATCH_SIZE)
-            default_config = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, PLCONTAINER_CONFIG_FILE)
-            logger.info('Distributing file %s to all locations...' % default_config)
-            distribute_file(pool, default_config, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-            new_config = True
-
-        if options.subparser_name == "configure" and options.restore:
-            logger.info('Getting list of configuration backups in %s:%s...' % (remote_host, remote_dir))
-            filename = get_last_backup(pool, remote_host, remote_dir, PLCONTAINER_CONFIG_FILE)
-            if filename and ( options.yes or userinput.ask_yesno(None, "Continue restoring the backup configuration '%s'?" % filename, 'N') ):
-                pool = WorkerPool(PL_BATCH_SIZE)
-                logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-                distribute_file(pool, filename, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-                logger.info('Cleaning up old backup file...')
-                remote_remove_files(pool, gpdb_locations, os.path.basename(filename))
-                new_config = True
-
-        if options.subparser_name == "configure" and options.conf_file:
-            logger.info('Preparing the worker pool...')
-            pool = WorkerPool(PL_BATCH_SIZE)
-            logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
-            backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
-            logger.info('Distributing file %s to all locations...' % options.conf_file)
-            distribute_file(pool, options.conf_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-            new_config = True
-
-        if options.subparser_name == "configure" and options.name:
-            elements = get_conf_elements_old(options)
-            update_xml_config_old(tmp_file, elements)
-            logger.info('Preparing the worker pool...')
-            pool = WorkerPool(PL_BATCH_SIZE)
-            logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
-            backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
-            logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-            distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-            new_config = True
-        
-        if options.subparser_name == "install" and options.name:
-            logger.info('Preparing the worker pool...')
-            pool = WorkerPool(PL_BATCH_SIZE)
-            dockerImageName = install_images_old(options, pool, hosts)
-            elements = get_conf_elements_old(options, dockerImageName)
-            update_xml_config_old(tmp_file, elements)
-            logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-            distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-            new_config = True
-
-        if options.subparser_name == "configure" and options.editor and not options.name:
-            changed = edit_file(tmp_file, options.editor)
-            if changed:
-                logger.info('Preparing the worker pool...')
-                pool = WorkerPool(PL_BATCH_SIZE)
-                logger.info('Backing up file %s on all hosts...' % PLCONTAINER_CONFIG_FILE)
-                backup_file(pool, gpdb_locations, PLCONTAINER_CONFIG_FILE)
-                logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-                distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-                new_config = True
 
         if new_config:
             logger.info('Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions.' +
