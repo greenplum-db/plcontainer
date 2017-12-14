@@ -24,9 +24,9 @@
 char *parse_container_meta(const char *source);
 
 /* return the port of a started container, -1 if the container isn't started */
-plcConn *get_container_conn(const char *image);
+plcConn *get_container_conn(const char *id);
 
-/* start a new docker container using the given image  */
+/* start a new docker container using the given configuration */
 plcConn *start_backend(plcContainerConf *conf);
 
 /* Function deletes all the containers */

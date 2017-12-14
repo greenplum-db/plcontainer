@@ -199,7 +199,7 @@ static Datum plcontainer_call_hook(PG_FUNCTION_ARGS) {
 
 static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
                                              plcProcInfo *pinfo) {
-	char *name;
+	char *id;
 	plcConn *conn;
 	int message_type;
 	plcMsgCallreq *req = NULL;
@@ -210,14 +210,14 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 	{
 		result = NULL;
 		req = plcontainer_create_call(fcinfo, pinfo);
-		name = parse_container_meta(req->proc.src);
-		conn = get_container_conn(name);
+		id = parse_container_meta(req->proc.src);
+		conn = get_container_conn(id);
 		if (conn == NULL) {
 			plcContainerConf *conf = NULL;
-			conf = plc_get_container_config(name);
+			conf = plc_get_container_config(id);
 			if (conf == NULL) {
 				elog(ERROR, "Container '%s' is not defined in configuration "
-							"and cannot be used", name);
+							"and cannot be used", id);
 			} else {
 				/* TODO: We could only remove this backend when error occurs. */
 				DeleteBackendsWhenError = true;
@@ -225,7 +225,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 				DeleteBackendsWhenError = false;
 			}
 		}
-		pfree(name);
+		pfree(id);
 
 		DeleteBackendsWhenError = true;
 		if (conn != NULL) {

@@ -46,7 +46,7 @@ PG_FUNCTION_INFO_V1(show_plcontainer_config);
 static int parse_container(xmlNode *node, plcContainerConf *conf) {
 	xmlNode *cur_node = NULL;
 	xmlChar *value = NULL;
-	int has_name = 0;
+	int has_image = 0;
 	int has_id = 0;
 	int has_command = 0;
 	int num_shared_dirs = 0;
@@ -64,16 +64,16 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 
 			if (xmlStrcmp(cur_node->name, (const xmlChar *) "id") == 0) {
 				processed = 1;
-				has_name = 1;
+				has_id = 1;
 				value = xmlNodeGetContent(cur_node);
-				conf->name = plc_top_strdup((char *) value);
+				conf->id = plc_top_strdup((char *) value);
 			}
 
 			if (xmlStrcmp(cur_node->name, (const xmlChar *) "image") == 0) {
 				processed = 1;
-				has_id = 1;
+				has_image = 1;
 				value = xmlNodeGetContent(cur_node);
-				conf->dockerid = plc_top_strdup((char *) value);
+				conf->image = plc_top_strdup((char *) value);
 			}
 
 			if (xmlStrcmp(cur_node->name, (const xmlChar *) "command") == 0) {
@@ -124,7 +124,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 					}
 				}
 				if (!validSetting) {
-					elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf->name);
+					elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf->id);
 				}
 
 			}
@@ -148,18 +148,18 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 		}
 	}
 
-	if (has_name == 0) {
-		elog(ERROR, "Container name in tag <name> must be specified in configuartion");
+	if (has_id == 0) {
+		elog(ERROR, "tag <id> must be specified in configuartion");
 		return -1;
 	}
 
-	if (has_id == 0) {
-		elog(ERROR, "Container ID in tag <image> must be specified in configuration: %s", conf->name);
+	if (has_image == 0) {
+		elog(ERROR, "tag <image> must be specified in configuration: %s", conf->id);
 		return -1;
 	}
 
 	if (has_command == 0) {
-		elog(ERROR, "Container startup command in tag <command> must be specified in configuration: %s", conf->name);
+		elog(ERROR, "tag <command> must be specified in configuration: %s", conf->id);
 		return -1;
 	}
 
@@ -178,7 +178,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				value = xmlGetProp(cur_node, (const xmlChar *) "host");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'host' that is not found: %s", conf->name);
+						" 'host' that is not found: %s", conf->id);
 					return -1;
 				}
 				conf->sharedDirs[i].host = plc_top_strdup((char *) value);
@@ -187,7 +187,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				value = xmlGetProp(cur_node, (const xmlChar *) "container");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'container' that is not found: %s", conf->name);
+						" 'container' that is not found: %s", conf->id);
 					return -1;
 				}
 				conf->sharedDirs[i].container = plc_top_strdup((char *) value);
@@ -196,14 +196,14 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				value = xmlGetProp(cur_node, (const xmlChar *) "access");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'access' that is not found: %s", conf->name);
+						" 'access' that is not found: %s", conf->id);
 					return -1;
 				} else if (strcmp((char *) value, "ro") == 0) {
 					conf->sharedDirs[i].mode = PLC_ACCESS_READONLY;
 				} else if (strcmp((char *) value, "rw") == 0) {
 					conf->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
 				} else {
-					elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf->name);
+					elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf->id);
 					return -1;
 				}
 				xmlFree(value);
@@ -283,8 +283,8 @@ static void free_containers(plcContainerConf *conf, int size) {
 static void print_containers(plcContainerConf *conf, int size) {
 	int i, j;
 	for (i = 0; i < size; i++) {
-		elog(INFO, "Container '%s' configuration", conf[i].name);
-		elog(INFO, "    container_id = '%s'", conf[i].dockerid);
+		elog(INFO, "Container '%s' configuration", conf[i].id);
+		elog(INFO, "    image = '%s'", conf[i].image);
 		elog(INFO, "    memory_mb = '%d'", conf[i].memoryMb);
 		elog(INFO, "    use network = '%s'", conf[i].isNetworkConnection ? "yes" : "no");
 		elog(INFO, "    enable log  = '%s'", conf[i].enable_log ? "yes" : "no");
@@ -389,7 +389,7 @@ show_plcontainer_config(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	}
 }
 
-plcContainerConf *plc_get_container_config(char *name) {
+plcContainerConf *plc_get_container_config(char *id) {
 	int res = 0;
 	int i = 0;
 	plcContainerConf *result = NULL;
@@ -402,7 +402,7 @@ plcContainerConf *plc_get_container_config(char *name) {
 	}
 
 	for (i = 0; i < plcNumContainers; i++) {
-		if (strcmp(name, plcContConf[i].name) == 0) {
+		if (strcmp(id, plcContConf[i].id) == 0) {
 			result = &plcContConf[i];
 			break;
 		}

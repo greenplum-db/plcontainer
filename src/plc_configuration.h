@@ -34,8 +34,8 @@ typedef struct plcSharedDir {
 } plcSharedDir;
 
 typedef struct plcContainerConf {
-	char *name;
-	char *dockerid;
+	char *id;
+	char *image;
 	char *command;
 	int memoryMb;
 	int nSharedDirs;
@@ -51,7 +51,7 @@ Datum show_plcontainer_config(PG_FUNCTION_ARGS);
 
 Datum containers_summary(PG_FUNCTION_ARGS);
 
-plcContainerConf *plc_get_container_config(char *name);
+plcContainerConf *plc_get_container_config(char *id);
 
 char *get_sharing_options(plcContainerConf *conf, int container_slot, bool *has_error, char **uds_dir);
 

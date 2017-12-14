@@ -48,7 +48,7 @@ static void init_containers();
 
 static inline bool is_whitespace(const char c);
 
-static int check_container_name(const char *name);
+static int check_runtime_id(const char *id);
 
 #ifndef CONTAINER_DEBUG
 
@@ -254,8 +254,8 @@ static void set_container_conn(plcConn *conn) {
 	containers[slot].conn = conn;
 }
 
-static void insert_container_slot(char *image, char *dockerid, int slot) {
-	containers[slot].name = plc_top_strdup(image);
+static void insert_container_slot(char *id, char *dockerid, int slot) {
+	containers[slot].name = plc_top_strdup(id);
 	containers[slot].dockerid = NULL;
 	if (dockerid != NULL) {
 		containers[slot].dockerid = plc_top_strdup(dockerid);
@@ -285,7 +285,7 @@ static void init_containers() {
 	containers_init = 1;
 }
 
-plcConn *get_container_conn(const char *image) {
+plcConn *get_container_conn(const char *id) {
 	size_t i;
 	if (containers_init == 0) {
 		init_containers();
@@ -295,7 +295,7 @@ plcConn *get_container_conn(const char *image) {
 
 	for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
 		if (containers[i].name != NULL &&
-		    strcmp(containers[i].name, image) == 0) {
+		    strcmp(containers[i].name, id) == 0) {
 			return containers[i].conn;
 		}
 	}
@@ -357,7 +357,7 @@ plcConn *start_backend(plcContainerConf *conf) {
 	 * to delete all the containers. We will fill in conn after the connection is
 	 * established.
 	 */
-	insert_container_slot(conf->name, dockerid, container_slot);
+	insert_container_slot(conf->id, dockerid, container_slot);
 	pfree(dockerid);
 	dockerid = containers[container_slot].dockerid;
 
@@ -526,7 +526,7 @@ static inline bool is_whitespace(const char c) {
 
 char *parse_container_meta(const char *source) {
 	int first, last, len;
-	char *name = NULL;
+	char *id = NULL;
 
 	first = 0;
 	len = strlen(source);
@@ -543,7 +543,7 @@ char *parse_container_meta(const char *source) {
 	/* If the string is too small or not starting with hash - no declaration */
 	if (last - first < DECLARATION_MIN_LENGTH || source[first] != '#') {
 		elog(ERROR, "Container declaration format should be '#container:container_name'");
-		return name;
+		return id;
 	}
 
 	first++;
@@ -554,7 +554,7 @@ char *parse_container_meta(const char *source) {
 	/* Line should be "# container :", fail if not so */
 	if (strncmp(&source[first], "container", strlen("container")) != 0) {
 		elog(ERROR, "Container declaration format should be '#container:container_name'");
-		return name;
+		return id;
 	}
 
 	/* Follow the line up to colon sign */
@@ -565,7 +565,7 @@ char *parse_container_meta(const char *source) {
 	/* If no colon found - bad declaration */
 	if (first >= last) {
 		elog(ERROR, "Container declaration format should be '#container:container_name'");
-		return name;
+		return id;
 	}
 
 	/* Ignore whitespace after colon sign */
@@ -576,38 +576,38 @@ char *parse_container_meta(const char *source) {
 		last--;
 	/* when first meets last, the name is blankspace or only one char*/
 	if (first == last && is_whitespace(source[first])) {
-		elog(ERROR, "Container name cannot be empty");
+		elog(ERROR, "Container id cannot be empty");
 		return NULL;
 	}
 	/*
-	 * Allocate container name variable and copy container name
-	 * the character length of name is last-first+1
+	 * Allocate container id variable and copy container id 
+	 * the character length of id is last-first+1
 	 * +1 for terminator
 	 */
-	name = (char *) pmalloc(last - first + 1 + 1);
-	memcpy(name, &source[first], last - first + 1);
+	id = (char *) pmalloc(last - first + 1 + 1);
+	memcpy(id, &source[first], last - first + 1);
 
-	name[last - first + 1] = '\0';
+	id[last - first + 1] = '\0';
 
-	int regt = check_container_name(name);
+	int regt = check_runtime_id(id);
 	if (regt == -1) {
-		elog(ERROR, "Container name '%s' contains illegal character for container.", name);
+		elog(ERROR, "Container id '%s' contains illegal character for container.", id);
 	}
 
-	return name;
+	return id;
 }
 
 /*
- * check whether container name specified in function declaration
+ * check whether configuration id specified in function declaration
  * satisfy the regex which follow docker container/image naming conventions.
  */
-static int check_container_name(const char *name) {
+static int check_runtime_id(const char *id) {
 	int status;
 	regex_t re;
 	if (regcomp(&re, "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$", REG_EXTENDED | REG_NOSUB | REG_NEWLINE) != 0) {
 		return -1;
 	}
-	status = regexec(&re, name, (size_t) 0, NULL, 0);
+	status = regexec(&re, id, (size_t) 0, NULL, 0);
 	regfree(&re);
 	if (status != 0) {
 		return -1;
