@@ -588,7 +588,9 @@ jobs:
   - *ccp_destroy7
 
 
-
+# We use CCP to build image, since 'docker build' needs docker 
+# daemon is running. But we cannot start docker daemon inside 
+# concourse container in a neat way.(running docker inside container is ugly)
 - name: plcontainer_build_python_image
   plan:
   - aggregate:
