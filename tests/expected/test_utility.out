@@ -13,8 +13,9 @@ positional arguments:
                         hosts
     runtime-show        Show container runtime configurations on the current
                         host
-    runtime-delete      Delete container runtime configurations on all hosts
-    runtime-edit        Using editor to edit and then update configurations on
+    runtime-delete      Delete a given container runtime configuration on all
+                        hosts
+    runtime-edit        Use editor to edit and then update configurations on
                         all hosts
     runtime-backup      Backup the local runtime configurations to a file
     runtime-restore     Restore the runtime configurations from a file and

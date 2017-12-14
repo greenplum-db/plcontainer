@@ -51,8 +51,8 @@ def parseargs():
     runtime_add_parser = subparsers.add_parser("runtime-add", help = "Add a container runtime configuration on all hosts")
     runtime_replace_parser = subparsers.add_parser("runtime-replace", help = "Replace with a container runtime configuration on all hosts")
     runtime_show_parser = subparsers.add_parser("runtime-show", help = "Show container runtime configurations on the current host")
-    runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete container runtime configurations on all hosts")
-    runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "Using editor to edit and then update configurations on all hosts")
+    runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a given container runtime configuration on all hosts")
+    runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "Use editor to edit and then update configurations on all hosts")
     runtime_backup_parser = subparsers.add_parser("runtime-backup", help = "Backup the local runtime configurations to a file")
     runtime_restore_parser = subparsers.add_parser("runtime-restore", help = "Restore the runtime configurations from a file and distribute them to all hosts")
     runtime_verify_parser = subparsers.add_parser("runtime-verify",
@@ -522,36 +522,6 @@ def get_segment_locations(seg_list):
     for s in seg_list:
         gpdb_locations.append((s.getSegmentHostName(), s.getSegmentDataDirectory()))
     return gpdb_locations
-
-
-def get_last_backup(pool, remote_host, remote_dir, filename):
-    """
-    Get the last backup file name of PL/Container configuration
-    """
-    result = None
-    filemask = os.path.join(remote_dir, '.' + filename + '.bak*')
-    cmdstr = 'ls -1 %s || exit 0' % filemask
-    cmd = Command('List PL/Contaner configuartion backups in %s:%s' % (remote_host, remote_dir),
-                  cmdstr,
-                  ctxt = REMOTE,
-                  remoteHost = remote_host)
-    cmd.run(validateAfter=True)
-    logger.debug("Command executed: '%s'" % cmdstr)
-    res = cmd.get_results()
-    if res.rc != 0:
-        logger.error("Cannot find configuration backup files")
-    else:
-        if res.stdout.strip() != '':
-            files = [x.strip() for x in res.stdout.strip().split('\n')]
-            logger.info("Found %d configuration backups" % len(files))
-            files = sorted(files)
-            for f in files:
-                logger.debug("    %s" % f)
-            result = files[-1]
-        else:
-            logger.error("No configuration backups found")
-    return result
-
 
 def remote_remove_files(pool, gpdb_locations, remote_filename):
     """
