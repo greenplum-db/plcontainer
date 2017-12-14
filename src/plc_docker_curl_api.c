@@ -244,7 +244,7 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
 
 	/* Get Docket API "create" call JSON message body */
 	createStringSize = 100 + strlen(createRequest) + strlen(conf->command)
-	                   + strlen(conf->dockerid) + strlen(volumeShare) + strlen(username) * 2
+	                   + strlen(conf->image) + strlen(volumeShare) + strlen(username) * 2
 	                   + strlen(dbname);
 	messageBody = (char *) palloc(createStringSize * sizeof(char));
 	snprintf(messageBody,
@@ -260,7 +260,7 @@ int plc_docker_create_container(plcContainerConf *conf, char **name, int contain
 	         MyProcPid,
 	         conf->isNetworkConnection ? "true" : "false",
 	         conf->isNetworkConnection ? "false" : "true",
-	         conf->dockerid,
+	         conf->image,
 	         volumeShare,
 	         ((long long) conf->memoryMb) * 1024 * 1024,
 	         conf->enable_log ? default_log_dirver : "none",
