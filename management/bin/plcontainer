@@ -8,6 +8,7 @@
 #------------------------------------------------------------------------------
 
 import os
+import re
 import sys
 import hashlib
 import tempfile
@@ -435,18 +436,94 @@ def copy_file_to_tmp(host, file):
 
 
 def validate_xml(filename):
-    # FIXME: Check mandatory fields.
     correct = True
-    with open(filename, 'rb') as file:
-        xmlcontents = file.read()
     try:
-        ElementTree.fromstring(xmlcontents)
-    except Exception, ex:
-        correct = False
-        logger.error("XML file does not conform XML specification")
-        logger.error(str(ex))
-    return correct
+        xmltree = ElementTree.parse(filename);
+        root = xmltree.getroot()
+        for runtime in root.findall('runtime'):
 
+            # Only one 'id' subelement is allowed.
+            pattern = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9_.-]*$')
+            num = len(runtime.findall('id'))
+            if num < 1:
+                logger.error("Lack of 'id' subelement in a runtime element.")
+                raise Exception("Validation failed")
+            if num > 1:
+                logger.error("Found %d (1 is legal) 'id' subelements in a runtime element. The first one 'id': %s", num, runtime.find('id').text)
+                raise Exception("Validation failed")
+
+            runtime_id = runtime.find('id').text
+            if  not pattern.match(runtime_id):
+                logger.error("'id' name with wrong format: %s", runtime_id)
+                raise Exception("Validation failed")
+
+            # Only one 'image' subelement is allowed.
+            num = len(runtime.findall('image'))
+            if num < 1:
+                logger.error("Lack of 'image' subelement in a runtime element in runtime %s.", runtime_id)
+                raise Exception("Validation failed")
+            if num > 1:
+                logger.error("Found %d (1 is legal) 'image' subelements in a runtime %s. The first one 'image': %s", num, runtime_id, runtime.find('image').text)
+                raise Exception("Validation failed")
+            # FIXME: Need to check the naming convention?
+
+            # Only one 'command' subelement is allowed.
+            num = len(runtime.findall('command'))
+            if num < 1:
+                logger.error("Lack of 'command' subelement in a runtime element in runtime %s.", runtime_id)
+                raise Exception("Validation failed")
+            if num > 1:
+                logger.error("Found %d (1 is legal) 'command' subelements in runtime %s. The first one 'command': %s", num, runtime_id, runtime.find('command').text)
+                raise Exception("Validation failed")
+
+            # Shared
+            container_pathlist = []
+            for share_folder in runtime.findall('shared_directory'):
+                if share_folder.attrib['access'] != 'ro' and share_folder.attrib['access'] != 'rw':
+                    logger.error("access should be 'ro' or 'rw' in runtime %s, but now: %s", runtime_id, share_folder.attrib['access'])
+                    raise Exception("Validation failed")
+                if share_folder.attrib['host'] is None:
+                    logger.error("host should exist in runtime %s", runtime_id)
+                    raise Exception("Validation failed")
+                if share_folder.attrib['container'] is None:
+                    logger.error("container should exist in runtime %s", runtime_id)
+                    raise Exception("Validation failed")
+                container_pathlist.append(share_folder.attrib['container'])
+            tmp_list = list(set(container_pathlist))
+            if len(tmp_list) != len(container_pathlist):
+                logger.error("container should not have same mount points (check shared_directory) in runtime %s", runtime_id)
+                raise Exception("Validation failed")
+
+            # Settings
+            for settings in runtime.findall('setting'):
+                if 'memory_mb' in settings.attrib:
+                    memory_mb_str = settings.attrib['memory_mb']
+                    try:
+                        memory_mb = int(memory_mb_str)
+                        if memory_mb < 0:
+                            logger.error("memory_mb should > 0 in runtime %s, but now: '%s'", runtime_id, memory_mb_str)
+                            raise Exception("Validation failed")
+                    except ValueError:
+                        logger.error("memory_mb should be a positive integer in runtime %s, but now: '%s'", runtime_id, memory_mb_str)
+                        raise Exception("Validation failed")
+                elif 'use_network' in settings.attrib:
+                    use_network_str = settings.attrib['use_network'].lower()
+                    if use_network_str != 'yes' and use_network_str != 'no':
+                        logger.error("use_network should be 'yes' or 'no' in runtime %s, but now: '%s'", runtime_id, use_network_str)
+                        raise Exception("Validation failed")
+                elif 'logs' in settings.attrib:
+                    logs_str = settings.attrib['logs'].lower()
+                    if logs_str != 'enable' and logs_str != 'disable':
+                        logger.error("logs should be 'enable' or 'disable' in runtime %s, but now: '%s'", runtime_id, logs_str)
+                        raise Exception("Validation failed")
+                else:
+                    logger.error("Found illegal setting in runtime %s: %s", runtime_id, settings.attrib)
+    except Exception, ex:
+        correct = False 
+        logger.error("XML file does not conform XML specification.")
+        logger.error(str(ex))
+        raise Exception("Validation failed")
+    return correct
 
 def edit_file(filename, editor):
     """
