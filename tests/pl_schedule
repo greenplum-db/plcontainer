@@ -16,7 +16,6 @@ test: test_r test_python test_r_gpdb5 test_python_gpdb5 spi_r spi_python subtran
 test: test_r_error test_python_error 
 test: exception
 test: faultinject_python
-test: faultinject2_python
 test: function_python_network
 
 # PL/Container UDA test
