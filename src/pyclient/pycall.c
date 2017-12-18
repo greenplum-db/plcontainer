@@ -95,8 +95,10 @@ int python_init() {
 	/* create the plpy module */
 #if PY_MAJOR_VERSION >= 3
 	plpymod = PyModule_Create(&plc_plpy_module);
+	PyImport_AppendInittab("plpy", PyInit_plpy);
 #else
 	plpymod = Py_InitModule("plpy", moddef);
+	Ply_spi_exception_init(plpymod);
 #endif
 
 	/* Initialize the main module */
