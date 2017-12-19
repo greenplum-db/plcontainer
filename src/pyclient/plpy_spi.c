@@ -43,8 +43,6 @@ __attribute__((format(printf, 2, 3)));
 
 static void PLy_add_exceptions(PyObject *plpy);
 
-static PyObject *PLy_exc_error = NULL;
-static PyObject *PLy_exc_fatal = NULL;
 static PyObject *PLy_exc_spi_error = NULL;
 
 static PyMethodDef PLy_exc_methods[] = {
@@ -72,7 +70,7 @@ static PyModuleDef PLy_exc_module = {
 	NULL						/* m_free */
 };
 
-PyInit_plpy(void);
+PLyInit_plpy(void);
 #endif
 
 static PyMethodDef PLy_subtransaction_methods[] = {
@@ -948,7 +946,7 @@ void Ply_spi_exception_init(PyObject *plpy)
 }
 
 /*
- * Backport from upstream PL/Python, Modified to suit with PL/Container
+ * Add exception object to Python, currently only SPIError is needed.
  */
 static void
 PLy_add_exceptions(PyObject *plpy)
@@ -963,25 +961,10 @@ PLy_add_exceptions(PyObject *plpy)
 	if (PyModule_AddObject(plpy, "spiexceptions", excmod) < 0)
 		raise_execution_error("failed to add the spiexceptions module");
 
-	/*
-     * XXX it appears that in some circumstances the reference count of the
-     * spiexceptions module drops to zero causing a Python assert failure when
-     * the garbage collector visits the module. This has been observed on the
-	 * buildfarm. To fix this, add an additional ref for the module here.
-	 *
-	 * This shouldn't cause a memory leak - we don't want this garbage collected,
-	 * and this function shouldn't be called more than once per backend.
-	 */
 	Py_INCREF(excmod);
 
-	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
-	PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
 	PLy_exc_spi_error = PyErr_NewException("plpy.SPIError", NULL, NULL);
 
-	Py_INCREF(PLy_exc_error);
-	PyModule_AddObject(plpy, "Error", PLy_exc_error);
-	Py_INCREF(PLy_exc_fatal);
-	PyModule_AddObject(plpy, "Fatal", PLy_exc_fatal);
 	Py_INCREF(PLy_exc_spi_error);
 	PyModule_AddObject(plpy, "SPIError", PLy_exc_spi_error);
 
@@ -989,7 +972,7 @@ PLy_add_exceptions(PyObject *plpy)
 
 #if PY_MAJOR_VERSION >= 3
 static PyMODINIT_FUNC
-PyInit_plpy(void)
+PLyInit_plpy(void)
 {
 	PyObject   *m;
 
