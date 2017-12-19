@@ -41,8 +41,6 @@ static void
 PLy_exception_set(PyObject *, const char *, ...)
 __attribute__((format(printf, 2, 3)));
 
-static void PLy_spi_exception_set(PyObject *excclass, const char* errmsg);
-static void PLy_get_spi_error_data(PyObject *exc, char **detail);
 static void PLy_add_exceptions(PyObject *plpy);
 
 static PyObject *PLy_exc_error = NULL;
@@ -942,67 +940,6 @@ PLy_exception_set(PyObject *exc, const char *fmt, ...) {
 	lprintf(DEBUG1, "Python caught an exception: %s", buf);
 
 	PyErr_SetString(exc, buf);
-}
-
-/*
- * Raise a SPIError, passing in it more error details, like the
- * internal query and error position.
- */
-static void
-PLy_spi_exception_set(PyObject *excclass, const char* errmsg)
-{
-	PyObject   *args = NULL;
-	PyObject   *spierror = NULL;
-	PyObject   *spidata = NULL;
-
-	args = Py_BuildValue("(s)", errmsg);
-	if (!args)
-		goto failure;
-
-	/* create a new SPI exception with the error message as the parameter */
-	spierror = PyObject_CallObject(excclass, args);
-	if (!spierror)
-		goto failure;
-
-	spidata = Py_BuildValue("(s)", errmsg);
-	if (!spidata)
-		goto failure;
-
-	if (PyObject_SetAttrString(spierror, "spidata", spidata) == -1)
-		goto failure;
-
-	PyErr_SetObject(excclass, spierror);
-	Py_DECREF(args);
-	Py_DECREF(spierror);
-	Py_DECREF(spidata);
-	return;
-
-failure:
-	Py_XDECREF(args);
-	Py_XDECREF(spierror);
-	Py_XDECREF(spidata);
-	elog(ERROR, "could not convert SPI error to Python exception");
-}
-
-/*
- * Extract the error data from a SPIError
- */
-static void
-PLy_get_spi_error_data(PyObject *exc, char **detail)
-{
-	PyObject   *spidata = NULL;
-
-	spidata = PyObject_GetAttrString(exc, "spidata");
-	if (!spidata)
-		goto cleanup;
-
-	if (!PyArg_ParseTuple(spidata, "s", detail))
-		goto cleanup;
-
-cleanup:
-	PyErr_Clear();
-	/* no elog here, we simply won't report the errhint, errposition etc */
-	Py_XDECREF(spidata);
 }
 
 void Ply_spi_exception_init(PyObject *plpy)

@@ -371,3 +371,16 @@ select pyspi_delete_notexist_execp();
 -- insert returns N rows * 0 col, so there is no need of additional case.
 
 DROP TABLE t5;
+
+-- Test for Exception
+CREATE OR REPLACE FUNCTION pyspi_exec_exception() RETURNS integer AS $$
+# container: plc_python_shared
+plan = list();
+try:
+	rv = plpy.execute(plan);
+except Exception as e:
+	plpy.notice(type(e))
+return 0
+$$ LANGUAGE plcontainer;
+
+SELECT pyspi_exec_exception();
