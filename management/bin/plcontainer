@@ -577,9 +577,9 @@ def runtime_show_xml(filename, r_id):
                 sys.stdout.write("\n")
 
         if no_entry:
-            raise Exception("No entry was found.")
+            raise Exception("No related element was found.")
     except Exception, ex:
-        logger.error("XML file does not conform XML specification or no entry was found.")
+        logger.error("XML file does not conform XML specification or no related element was found.")
         logger.error(str(ex))
         raise Exception("runtime-show error")
 
@@ -764,16 +764,22 @@ def main():
             fb.close()
 
         if options.subparser_name == "runtime-restore":
-            pool = WorkerPool(PL_BATCH_SIZE)
-            logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-            distribute_file(pool, options.file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-            new_config = True
+            valid_xml = validate_xml(options.file)
+            if not valid_xml:
+                logger.error('Bad xml format. Please fix the file at first.')
+                retval = 1
+            else:
+                pool = WorkerPool(PL_BATCH_SIZE)
+                logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+                distribute_file(pool, options.file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+                new_config = True
 
         if options.subparser_name == "runtime-verify":
             logger.debug('Preparing the worker pool...')
             valid_xml = validate_xml(tmp_file)
             if not valid_xml:
                 logger.error('Bad xml format. Please fix them using the runtime-edit sub-command.')
+                retval = 1
             else:
                 pool = WorkerPool(PL_BATCH_SIZE)
                 verified = checkAllFileMD5(pool, gpdb_locations)
@@ -786,6 +792,7 @@ def main():
                         new_config = True
                     else:
                         logger.error('Verify Failed!')
+                        retval = 1
                 else:
                     logger.info('Verify success!')
 
