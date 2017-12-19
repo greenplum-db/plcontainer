@@ -16,7 +16,9 @@ function _main() {
   ln -s /usr/local/greenplum-db-devel /usr/local/greenplum-db
   chown -h gpadmin:gpadmin /usr/local/greenplum-db
   
-  chown -R gpadmin:gpadmin ${TOP_DIR}
+  # gpadmin need have write permission on TOP_DIR. 
+  # we use chmod instead of chown -R, due to concourse known issue.
+  chmod a+w ${TOP_DIR}
   chown gpadmin:gpadmin ${CWDIR}/build_plcontainer.sh
   su gpadmin -c "OUTPUT=${OUTPUT} \
                  DEV_RELEASE=${DEV_RELEASE} \
