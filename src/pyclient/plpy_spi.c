@@ -438,7 +438,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 	 * so if resp->cols > 0, it must be SELECT statment.
 	 */
 	if (resp->cols == 0) {
-		debug_print(NOTICE, "the rows is %d", resp->rows);
+		lprintf(DEBUG1, "the rows is %d", resp->rows);
 		PyObject *nrows = PyInt_FromLong((long) resp->rows);
 		/* only need one element for number of rows are processed*/
 		pyresult = PyList_New(1);
@@ -718,7 +718,7 @@ PLy_spi_execute_query(char *query, long limit) {
 	 * so if resp->cols > 0, it must be SELECT statment.
 	 */
 	if (resp->cols == 0) {
-		debug_print(NOTICE, "the rows is %d", resp->rows);
+		lprintf(DEBUG1, "the rows is %d", resp->rows);
 		PyObject *nrows = PyInt_FromLong((long) resp->rows);
 		/* only need one element for number of rows are processed*/
 		pyresult = PyList_New(1);
