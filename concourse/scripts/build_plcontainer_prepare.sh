@@ -19,6 +19,7 @@ function _main() {
   # gpadmin need have write permission on TOP_DIR. 
   # we use chmod instead of chown -R, due to concourse known issue.
   chmod a+w ${TOP_DIR}
+  find ${TOP_DIR} -type d -exec chmod a+w {}
   chown gpadmin:gpadmin ${CWDIR}/build_plcontainer.sh
   su gpadmin -c "OUTPUT=${OUTPUT} \
                  DEV_RELEASE=${DEV_RELEASE} \
