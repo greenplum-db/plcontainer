@@ -1,8 +1,7 @@
-/**
- * file name:			plpgj_core.c
- * description:			PL-J language handler module.
- * author:			Laszlo Hornyak
- */
+/*
+* Portions Copyright 1994-2004 The PL-J Project. All rights reserved.
+* Portions Copyright © 2016-Present Pivotal Software, Inc.
+*/
 
 
 /* Postgres Headers */
