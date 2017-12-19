@@ -523,7 +523,6 @@ def validate_xml(filename):
         correct = False 
         logger.error("XML file does not conform XML specification.")
         logger.error(str(ex))
-        raise Exception("Validation failed")
     return correct
 
 def edit_file(filename, editor):
