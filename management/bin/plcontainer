@@ -479,16 +479,17 @@ def validate_xml(filename):
             # Shared
             container_pathlist = []
             for share_folder in runtime.findall('shared_directory'):
-                if share_folder.attrib['access'] != 'ro' and share_folder.attrib['access'] != 'rw':
-                    logger.error("access should be 'ro' or 'rw' in runtime %s, but now: %s", runtime_id, share_folder.attrib['access'])
+
+                if 'access' in share_folder.attrib and share_folder.attrib['access'] != 'ro' and share_folder.attrib['access'] != 'rw':
+                    logger.error("access should be 'ro' or 'rw' in shared_directory in runtime %s, but now: %s", runtime_id, share_folder.attrib['access'])
                     raise Exception("Validation failed")
-                if share_folder.attrib['host'] is None:
-                    logger.error("host should exist in runtime %s", runtime_id)
-                    raise Exception("Validation failed")
-                if share_folder.attrib['container'] is None:
-                    logger.error("container should exist in runtime %s", runtime_id)
+
+                if  share_folder.attrib.keys() != ['access', 'host', 'container']:
+                    logger.error("Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime %s", runtime_id)
+                    logger.error("Current: %s", share_folder.attrib.keys())
                     raise Exception("Validation failed")
                 container_pathlist.append(share_folder.attrib['container'])
+
             tmp_list = list(set(container_pathlist))
             if len(tmp_list) != len(container_pathlist):
                 logger.error("container should not have same mount points (check shared_directory) in runtime %s", runtime_id)

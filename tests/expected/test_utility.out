@@ -25,6 +25,7 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --verbose             Enable verbose logging
+
 Test image-add: negative cases
 usage: plcontainer image-add [-h] (-f FILE | -u URL)
 plcontainer image-add: error: one of the arguments -f/--file -u/--url is required
@@ -33,22 +34,26 @@ plcontainer image-add: error: one of the arguments -f/--file -u/--url is require
 -docker image file nonexist_file does not exist
 -Getting docker image from nonexist_url
 -Cannot pull docker image from nonexist_url
+
 Test image-delete: negative cases
 usage: plcontainer image-delete [-h] -i IMAGE_NAME
 plcontainer image-delete: error: argument -i/--image is required
 usage: plcontainer image-delete [-h] -i IMAGE_NAME
 plcontainer image-delete: error: argument -i/--image is required
+
 Test image-list: negative cases
 usage: plcontainer [-h] [--verbose]
                    {image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-show,runtime-delete,runtime-edit,runtime-backup,runtime-restore,runtime-verify}
                    ...
 plcontainer: error: unrecognized arguments: not_exist
+
 Prepare a blank runtime configuration file and test runtime-backup
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
 <?xml version="1.0" ?>
 <configuration>
 </configuration>
+
 
 Test runtime-add: nagative cases
 usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
@@ -63,6 +68,7 @@ plcontainer runtime-add: error: argument -l/--language is required
 usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
                                [-v SHARED] [-s SETTING]
 plcontainer runtime-add: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python')
+
 Test runtime-add, runtime-backup, and runtime-delete
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
@@ -81,6 +87,7 @@ Test runtime-add, runtime-backup, and runtime-delete
 <configuration>
     </configuration>
 -This runtime configuraiton does not exist. Ignoring.
+
 Test runtime-add with shared directories
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
@@ -90,6 +97,7 @@ Test runtime-add with shared directories
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+
 Test runtime-add with both shared directories and settings
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
@@ -142,6 +150,7 @@ PL/Container Runtime Configuration:
 -XML file does not conform XML specification or no related element was found.
 -No related element was found.
 -plcontainer failed. (Reason='runtime-show error') exiting...
+
 Test runtime-replace: negative cases
 usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
                                    {r,python} [-v SHARED] [-s SETTING]
@@ -153,6 +162,7 @@ usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
                                    {r,python} [-v SHARED] [-s SETTING]
 plcontainer runtime-replace: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python')
 -plcontainer failed. (Reason='Bad setting key: user_network') exiting...
+
 Test runtime-replace: add a new one
 -runtime configuration does not exist. Adding a new one.
 -Distributing file plcontainer_configuration.xml to all locations...
@@ -170,6 +180,7 @@ Test runtime-replace: add a new one
         <setting use_network="yes"/>
     </runtime>
 </configuration>
+
 Test runtime-replace: replace
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
@@ -184,6 +195,117 @@ Test runtime-replace: replace
         <setting use_network="no"/>
     </runtime>
 </configuration>
+
+Test xml validation: negative cases
+
+**Test <id> is needed
+-Lack of 'id' subelement in a runtime element.
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: No more than 1 <id> is allowed
+-Found 2 (1 is legal) 'id' subelements in a runtime element. The first one 'id': plc_python
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <id> naming requirement
+-'id' name with wrong format: *plc_python
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test <image> is needed
+-Lack of 'image' subelement in a runtime element in runtime plc_python.
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: No more than 1 <image> is allowed
+-Found 2 (1 is legal) 'image' subelements in a runtime plc_python. The first one 'image': pivotaldata/plcontainer_python:0.1
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <command> is needed
+-Lack of 'command' subelement in a runtime element in runtime plc_python.
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: No more than 1 <command> is allowed
+-Found 2 (1 is legal) 'command' subelements in runtime plc_python. The first one 'command': ./client
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <shared_directory>: 'container' attr is needed
+-Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime plc_python
+-Current: ['access', 'host']
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <shared_directory>: 'host' attr is needed
+-Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime plc_python
+-Current: ['access', 'container']
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <shared_directory>: 'access' attr is is needed
+-Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime plc_python
+-Current: ['host', 'container']
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <shared_directory>: access must be ro or rw
+-access should be 'ro' or 'rw' in shared_directory in runtime plc_python, but now: rx
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <shared_directory>: container paths should not be duplicated
+-container should not have same mount points (check shared_directory) in runtime plc_python
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <setting>: must be legal one
+-Found illegal setting in runtime plc_python: {'logging': 'Enable'}
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+
+**Test: <setting>: memory_mb should be string with integer value
+-memory_mb should be a positive integer in runtime plc_python, but now: '123.4'
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <setting>: memory_mb should be string with positive integer value
+-memory_mb should > 0 in runtime plc_python, but now: '-123'
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <setting>: use_network should be yes or no
+-use_network should be 'yes' or 'no' in runtime plc_python, but now: 'y'
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+**Test: <setting>: logs should be enable or disable
+-logs should be 'enable' or 'disable' in runtime plc_python, but now: 'yes'
+-XML file does not conform XML specification.
+-Validation failed
+-plcontainer failed. (Reason='Validation failed') exiting...
+
+Test xml validation: postive case
+-Distributing file plcontainer_configuration.xml to all locations...
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+
 Recover the previous runtime configuration file
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
