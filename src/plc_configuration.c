@@ -23,19 +23,19 @@
 #include "plc_backend_api.h"
 #include "plc_configuration.h"
 
-static plcContainerConf *plcContConf = NULL;
+static runtimeConf *plcContConf = NULL;
 static int plcNumContainers = 0;
 // we just want to avoid cleanup process to remove previous domain
 // socket file, so int32 is sufficient
 static int domain_socket_no = 0;
 
-static int parse_container(xmlNode *node, plcContainerConf *conf);
+static int parse_container(xmlNode *node, runtimeConf *conf);
 
-static plcContainerConf *get_containers(xmlNode *node, int *size);
+static runtimeConf *get_containers(xmlNode *node, int *size);
 
-static void free_containers(plcContainerConf *conf, int size);
+static void free_containers(runtimeConf *conf, int size);
 
-static void print_containers(plcContainerConf *conf, int size);
+static void print_containers(runtimeConf *conf, int size);
 
 PG_FUNCTION_INFO_V1(refresh_plcontainer_config);
 
@@ -43,7 +43,7 @@ PG_FUNCTION_INFO_V1(show_plcontainer_config);
 
 /* Function parses the container XML definition and fills the passed
  * plcContainerConf structure that should be already allocated */
-static int parse_container(xmlNode *node, plcContainerConf *conf) {
+static int parse_container(xmlNode *node, runtimeConf *conf) {
 	xmlNode *cur_node = NULL;
 	xmlChar *value = NULL;
 	int has_image = 0;
@@ -53,7 +53,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 
 	/* First iteration - parse name, container_id and memory_mb and count the
 	 * number of shared directories for later allocation of related structure */
-	memset((void *) conf, 0, sizeof(plcContainerConf));
+	memset((void *) conf, 0, sizeof(runtimeConf));
 	conf->memoryMb = 1024;
 	conf->enable_log = false;
 	conf->isNetworkConnection = false;
@@ -66,7 +66,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				processed = 1;
 				has_id = 1;
 				value = xmlNodeGetContent(cur_node);
-				conf->id = plc_top_strdup((char *) value);
+				conf->runtimeid = plc_top_strdup((char *) value);
 			}
 
 			if (xmlStrcmp(cur_node->name, (const xmlChar *) "image") == 0) {
@@ -124,7 +124,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 					}
 				}
 				if (!validSetting) {
-					elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf->id);
+					elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf->runtimeid);
 				}
 
 			}
@@ -154,12 +154,12 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 	}
 
 	if (has_image == 0) {
-		elog(ERROR, "tag <image> must be specified in configuration: %s", conf->id);
+		elog(ERROR, "tag <image> must be specified in configuration: %s", conf->runtimeid);
 		return -1;
 	}
 
 	if (has_command == 0) {
-		elog(ERROR, "tag <command> must be specified in configuration: %s", conf->id);
+		elog(ERROR, "tag <command> must be specified in configuration: %s", conf->runtimeid);
 		return -1;
 	}
 
@@ -178,7 +178,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				value = xmlGetProp(cur_node, (const xmlChar *) "host");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'host' that is not found: %s", conf->id);
+						" 'host' that is not found: %s", conf->runtimeid);
 					return -1;
 				}
 				conf->sharedDirs[i].host = plc_top_strdup((char *) value);
@@ -187,7 +187,7 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				value = xmlGetProp(cur_node, (const xmlChar *) "container");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'container' that is not found: %s", conf->id);
+						" 'container' that is not found: %s", conf->runtimeid);
 					return -1;
 				}
 				conf->sharedDirs[i].container = plc_top_strdup((char *) value);
@@ -196,14 +196,14 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 				value = xmlGetProp(cur_node, (const xmlChar *) "access");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'access' that is not found: %s", conf->id);
+						" 'access' that is not found: %s", conf->runtimeid);
 					return -1;
 				} else if (strcmp((char *) value, "ro") == 0) {
 					conf->sharedDirs[i].mode = PLC_ACCESS_READONLY;
 				} else if (strcmp((char *) value, "rw") == 0) {
 					conf->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
 				} else {
-					elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf->id);
+					elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf->runtimeid);
 					return -1;
 				}
 				xmlFree(value);
@@ -218,12 +218,12 @@ static int parse_container(xmlNode *node, plcContainerConf *conf) {
 
 /* Function returns an array of plcContainerConf structures based on the contents
  * of passed XML document tree. Returns NULL on failure */
-static plcContainerConf *get_containers(xmlNode *node, int *size) {
+static runtimeConf *get_containers(xmlNode *node, int *size) {
 	xmlNode *cur_node = NULL;
 	int nContainers = 0;
 	int i = 0;
 	int res = 0;
-	plcContainerConf *result = NULL;
+	runtimeConf *result = NULL;
 
 	/* Validation that the root node matches the expected specification */
 	if (xmlStrcmp(node->name, (const xmlChar *) "configuration") != 0) {
@@ -246,7 +246,7 @@ static plcContainerConf *get_containers(xmlNode *node, int *size) {
 		return result;
 	}
 
-	result = plc_top_alloc(nContainers * sizeof(plcContainerConf));
+	result = plc_top_alloc(nContainers * sizeof(runtimeConf));
 
 	/* Iterating through the list of containers to parse them into plcContainerConf */
 	i = 0;
@@ -270,7 +270,7 @@ static plcContainerConf *get_containers(xmlNode *node, int *size) {
 }
 
 /* Safe way to deallocate container configuration list structure */
-static void free_containers(plcContainerConf *conf, int size) {
+static void free_containers(runtimeConf *conf, int size) {
 	int i;
 	for (i = 0; i < size; i++) {
 		if (conf[i].nSharedDirs > 0 && conf[i].sharedDirs != NULL) {
@@ -280,10 +280,10 @@ static void free_containers(plcContainerConf *conf, int size) {
 	pfree(conf);
 }
 
-static void print_containers(plcContainerConf *conf, int size) {
+static void print_containers(runtimeConf *conf, int size) {
 	int i, j;
 	for (i = 0; i < size; i++) {
-		elog(INFO, "Container '%s' configuration", conf[i].id);
+		elog(INFO, "Container '%s' configuration", conf[i].runtimeid);
 		elog(INFO, "    image = '%s'", conf[i].image);
 		elog(INFO, "    memory_mb = '%d'", conf[i].memoryMb);
 		elog(INFO, "    use network = '%s'", conf[i].isNetworkConnection ? "yes" : "no");
@@ -389,10 +389,10 @@ show_plcontainer_config(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	}
 }
 
-plcContainerConf *plc_get_container_config(char *id) {
+runtimeConf *plc_get_runtime_configuration(char *runtime_id) {
 	int res = 0;
 	int i = 0;
-	plcContainerConf *result = NULL;
+	runtimeConf *result = NULL;
 
 	if (plcContConf == NULL || plcNumContainers == 0) {
 		res = plc_refresh_container_config(0);
@@ -402,7 +402,7 @@ plcContainerConf *plc_get_container_config(char *id) {
 	}
 
 	for (i = 0; i < plcNumContainers; i++) {
-		if (strcmp(id, plcContConf[i].id) == 0) {
+		if (strcmp(runtime_id, plcContConf[i].runtimeid) == 0) {
 			result = &plcContConf[i];
 			break;
 		}
@@ -411,7 +411,7 @@ plcContainerConf *plc_get_container_config(char *id) {
 	return result;
 }
 
-char *get_sharing_options(plcContainerConf *conf, int container_slot, bool *has_error, char **uds_dir) {
+char *get_sharing_options(runtimeConf *conf, int container_slot, bool *has_error, char **uds_dir) {
 	char *res = NULL;
 
 	*has_error = false;

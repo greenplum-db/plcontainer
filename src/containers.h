@@ -27,7 +27,7 @@ char *parse_container_meta(const char *source);
 plcConn *get_container_conn(const char *id);
 
 /* start a new docker container using the given configuration */
-plcConn *start_backend(plcContainerConf *conf);
+plcConn *start_backend(runtimeConf *conf);
 
 /* Function deletes all the containers */
 void delete_containers(void);

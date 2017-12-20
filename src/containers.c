@@ -31,7 +31,7 @@
 #include "plc_backend_api.h"
 
 typedef struct {
-	char *name;
+	char *runtimeid;
 	char *dockerid;
 	plcConn *conn;
 } container_t;
@@ -239,7 +239,7 @@ static int find_container_slot() {
 	int i;
 
 	for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
-		if (containers[i].name == NULL) {
+		if (containers[i].runtimeid == NULL) {
 			return i;
 		}
 	}
@@ -254,8 +254,8 @@ static void set_container_conn(plcConn *conn) {
 	containers[slot].conn = conn;
 }
 
-static void insert_container_slot(char *id, char *dockerid, int slot) {
-	containers[slot].name = plc_top_strdup(id);
+static void insert_container_slot(char *runtime_id, char *dockerid, int slot) {
+	containers[slot].runtimeid = plc_top_strdup(runtime_id);
 	containers[slot].dockerid = NULL;
 	if (dockerid != NULL) {
 		containers[slot].dockerid = plc_top_strdup(dockerid);
@@ -264,9 +264,9 @@ static void insert_container_slot(char *id, char *dockerid, int slot) {
 }
 
 static void delete_container_slot(int slot) {
-	if (containers[slot].name != NULL) {
-		pfree(containers[slot].name);
-		containers[slot].name = NULL;
+	if (containers[slot].runtimeid != NULL) {
+		pfree(containers[slot].runtimeid);
+		containers[slot].runtimeid = NULL;
 	}
 
 	if (containers[slot].dockerid != NULL) {
@@ -285,7 +285,7 @@ static void init_containers() {
 	containers_init = 1;
 }
 
-plcConn *get_container_conn(const char *id) {
+plcConn *get_container_conn(const char *runtime_id) {
 	size_t i;
 	if (containers_init == 0) {
 		init_containers();
@@ -294,8 +294,8 @@ plcConn *get_container_conn(const char *id) {
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_connected");
 
 	for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
-		if (containers[i].name != NULL &&
-		    strcmp(containers[i].name, id) == 0) {
+		if (containers[i].runtimeid != NULL &&
+		    strcmp(containers[i].runtimeid, runtime_id) == 0) {
 			return containers[i].conn;
 		}
 	}
@@ -315,7 +315,7 @@ static char *get_uds_fn(char *uds_dir) {
 	return uds_fn;
 }
 
-plcConn *start_backend(plcContainerConf *conf) {
+plcConn *start_backend(runtimeConf *conf) {
 	int port = 0;
 	unsigned int sleepus = 25000;
 	unsigned int sleepms = 0;
@@ -357,7 +357,7 @@ plcConn *start_backend(plcContainerConf *conf) {
 	 * to delete all the containers. We will fill in conn after the connection is
 	 * established.
 	 */
-	insert_container_slot(conf->id, dockerid, container_slot);
+	insert_container_slot(conf->runtimeid, dockerid, container_slot);
 	pfree(dockerid);
 	dockerid = containers[container_slot].dockerid;
 
@@ -497,7 +497,7 @@ void delete_containers() {
 
 	if (containers_init != 0) {
 		for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
-			if (containers[i].name != NULL) {
+			if (containers[i].runtimeid != NULL) {
 
 				/* Terminate container process */
 				if (containers[i].dockerid != NULL) {
@@ -526,7 +526,7 @@ static inline bool is_whitespace(const char c) {
 
 char *parse_container_meta(const char *source) {
 	int first, last, len;
-	char *id = NULL;
+	char *runtime_id = NULL;
 
 	first = 0;
 	len = strlen(source);
@@ -543,7 +543,7 @@ char *parse_container_meta(const char *source) {
 	/* If the string is too small or not starting with hash - no declaration */
 	if (last - first < DECLARATION_MIN_LENGTH || source[first] != '#') {
 		elog(ERROR, "Container declaration format should be '#container:container_name'");
-		return id;
+		return runtime_id;
 	}
 
 	first++;
@@ -554,7 +554,7 @@ char *parse_container_meta(const char *source) {
 	/* Line should be "# container :", fail if not so */
 	if (strncmp(&source[first], "container", strlen("container")) != 0) {
 		elog(ERROR, "Container declaration format should be '#container:container_name'");
-		return id;
+		return runtime_id;
 	}
 
 	/* Follow the line up to colon sign */
@@ -565,7 +565,7 @@ char *parse_container_meta(const char *source) {
 	/* If no colon found - bad declaration */
 	if (first >= last) {
 		elog(ERROR, "Container declaration format should be '#container:container_name'");
-		return id;
+		return runtime_id;
 	}
 
 	/* Ignore whitespace after colon sign */
@@ -584,17 +584,17 @@ char *parse_container_meta(const char *source) {
 	 * the character length of id is last-first+1
 	 * +1 for terminator
 	 */
-	id = (char *) pmalloc(last - first + 1 + 1);
-	memcpy(id, &source[first], last - first + 1);
+	runtime_id = (char *) pmalloc(last - first + 1 + 1);
+	memcpy(runtime_id, &source[first], last - first + 1);
 
-	id[last - first + 1] = '\0';
+	runtime_id[last - first + 1] = '\0';
 
-	int regt = check_runtime_id(id);
+	int regt = check_runtime_id(runtime_id);
 	if (regt == -1) {
-		elog(ERROR, "Container id '%s' contains illegal character for container.", id);
+		elog(ERROR, "Container id '%s' contains illegal character for container.", runtime_id);
 	}
 
-	return id;
+	return runtime_id;
 }
 
 /*

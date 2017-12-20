@@ -197,7 +197,7 @@ static Datum plcontainer_call_hook(PG_FUNCTION_ARGS) {
 
 static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
                                              plcProcInfo *pinfo) {
-	char *id;
+	char *runtime_id;
 	plcConn *conn;
 	int message_type;
 	plcMsgCallreq *req = NULL;
@@ -208,22 +208,22 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 	{
 		result = NULL;
 		req = plcontainer_create_call(fcinfo, pinfo);
-		id = parse_container_meta(req->proc.src);
-		conn = get_container_conn(id);
+		runtime_id = parse_container_meta(req->proc.src);
+		conn = get_container_conn(runtime_id);
 		if (conn == NULL) {
-			plcContainerConf *conf = NULL;
-			conf = plc_get_container_config(id);
-			if (conf == NULL) {
-				elog(ERROR, "Container '%s' is not defined in configuration "
-							"and cannot be used", id);
+			runtimeConf *runtime_conf = NULL;
+			runtime_conf = plc_get_runtime_configuration(runtime_id);
+			if (runtime_conf == NULL) {
+				elog(ERROR, "Runtime '%s' is not defined in configuration "
+							"and cannot be used", runtime_id);
 			} else {
 				/* TODO: We could only remove this backend when error occurs. */
 				DeleteBackendsWhenError = true;
-				conn = start_backend(conf);
+				conn = start_backend(runtime_conf);
 				DeleteBackendsWhenError = false;
 			}
 		}
-		pfree(id);
+		pfree(runtime_id);
 
 		DeleteBackendsWhenError = true;
 		if (conn != NULL) {

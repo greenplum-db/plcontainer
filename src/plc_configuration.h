@@ -33,8 +33,8 @@ typedef struct plcSharedDir {
 	plcFsAccessMode mode;
 } plcSharedDir;
 
-typedef struct plcContainerConf {
-	char *id;
+typedef struct runtimeConf {
+	char *runtimeid;
 	char *image;
 	char *command;
 	int memoryMb;
@@ -42,7 +42,7 @@ typedef struct plcContainerConf {
 	plcSharedDir *sharedDirs;
 	bool isNetworkConnection;
 	bool enable_log;
-} plcContainerConf;
+} runtimeConf;
 
 /* entrypoint for all plcontainer procedures */
 Datum refresh_plcontainer_config(PG_FUNCTION_ARGS);
@@ -51,8 +51,8 @@ Datum show_plcontainer_config(PG_FUNCTION_ARGS);
 
 Datum containers_summary(PG_FUNCTION_ARGS);
 
-plcContainerConf *plc_get_container_config(char *id);
+runtimeConf *plc_get_runtime_configuration(char *id);
 
-char *get_sharing_options(plcContainerConf *conf, int container_slot, bool *has_error, char **uds_dir);
+char *get_sharing_options(runtimeConf *conf, int container_slot, bool *has_error, char **uds_dir);
 
 #endif /* PLC_CONFIGURATION_H */
