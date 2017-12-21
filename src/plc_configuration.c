@@ -229,7 +229,7 @@ static runtimeConf *get_runtime_configurations(xmlNode *node, int *size) {
 	if (xmlStrcmp(node->name, (const xmlChar *) "configuration") != 0) {
 		elog(ERROR, "Wrong XML configuration provided. Expected 'configuration'"
 			" as root element, got '%s' instead", node->name);
-		return result;
+		return runtime_config_array;
 	}
 
 	/* Iterating through the list of containers to get the count */
@@ -243,7 +243,7 @@ static runtimeConf *get_runtime_configurations(xmlNode *node, int *size) {
 	/* If no container definitions found - error */
 	if (nContainers == 0) {
 		elog(ERROR, "Did not find a single 'runtime' declaration in configuration");
-		return result;
+		return runtime_config_array;
 	}
 
 	runtime_config_array = plc_top_alloc(nContainers * sizeof(runtimeConf));
@@ -254,7 +254,7 @@ static runtimeConf *get_runtime_configurations(xmlNode *node, int *size) {
 	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 		if (cur_node->type == XML_ELEMENT_NODE &&
 		    xmlStrcmp(cur_node->name, (const xmlChar *) "runtime") == 0) {
-			res |= parse_runtime_configurations(cur_node, &result[i]);
+			res |= parse_runtime_configurations(cur_node, &runtime_config_array[i]);
 			i += 1;
 		}
 	}
@@ -392,7 +392,7 @@ show_plcontainer_config(pg_attribute_unused() PG_FUNCTION_ARGS) {
 runtimeConf *plc_get_runtime_configuration(char *runtime_id) {
 	int res = 0;
 	int i = 0;
-	runtimeConf *result = NULL;
+	runtimeConf *conf = NULL;
 
 	if (rumtime_conf_array == NULL || plcNumContainers == 0) {
 		res = plc_refresh_container_config(0);
@@ -403,12 +403,12 @@ runtimeConf *plc_get_runtime_configuration(char *runtime_id) {
 
 	for (i = 0; i < plcNumContainers; i++) {
 		if (strcmp(runtime_id, rumtime_conf_array[i].runtimeid) == 0) {
-			result = &rumtime_conf_array[i];
+			conf = &rumtime_conf_array[i];
 			break;
 		}
 	}
 
-	return result;
+	return conf;
 }
 
 char *get_sharing_options(runtimeConf *conf, int container_slot, bool *has_error, char **uds_dir) {
