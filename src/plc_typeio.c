@@ -553,7 +553,6 @@ static Datum plc_datum_from_array(char *input, plcTypeInfo *type) {
 	ArrayType *array = NULL;
 	int *lbs = NULL;
 	int i;
-	MemoryContext oldContext;
 	plcArray *arr;
 	char *ptr;
 	int len;
@@ -577,7 +576,6 @@ static Datum plc_datum_from_array(char *input, plcTypeInfo *type) {
 		ptr += len;
 	}
 
-	oldContext = MemoryContextSwitchTo(pl_container_caller_context);
 	array = construct_md_array(elems,
 	                           arr->nulls,
 	                           arr->meta->ndims,
@@ -589,7 +587,6 @@ static Datum plc_datum_from_array(char *input, plcTypeInfo *type) {
 	                           subType->typalign);
 
 	dvalue = PointerGetDatum(array);
-	MemoryContextSwitchTo(oldContext);
 
 	pfree(lbs);
 	pfree(elems);
@@ -603,7 +600,6 @@ static Datum plc_datum_from_udt(char *input, plcTypeInfo *type) {
 	Datum *values;
 	bool *nulls;
 	volatile int i, j;
-	MemoryContext oldContext;
 	plcUDT *udt = (plcUDT *) input;
 
 	/* Build tuple */
@@ -622,11 +618,9 @@ static Datum plc_datum_from_udt(char *input, plcTypeInfo *type) {
 		}
 	}
 
-	oldContext = MemoryContextSwitchTo(pl_container_caller_context);
 	desc = lookup_rowtype_tupdesc(type->typeOid, type->typmod);
 	tuple = heap_form_tuple(desc, values, nulls);
 	ReleaseTupleDesc(desc);
-	MemoryContextSwitchTo(oldContext);
 
 	pfree(values);
 	pfree(nulls);

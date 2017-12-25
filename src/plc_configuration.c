@@ -20,43 +20,124 @@
 #include "common/comm_utils.h"
 #include "common/comm_connectivity.h"
 #include "plcontainer.h"
+#include "plcontainer_common.h"
 #include "plc_backend_api.h"
 #include "plc_configuration.h"
 
-static runtimeConf *plcContConf = NULL;
-static int plcNumContainers = 0;
 // we just want to avoid cleanup process to remove previous domain
 // socket file, so int32 is sufficient
 static int domain_socket_no = 0;
 
-static int parse_container(xmlNode *node, runtimeConf *conf);
+static void init_runtime_configurations();
 
-static runtimeConf *get_containers(xmlNode *node, int *size);
+static void parse_runtime_configurations(xmlNode *node);
 
-static void free_containers(runtimeConf *conf, int size);
+static void get_runtime_configurations(xmlNode *node);
 
-static void print_containers(runtimeConf *conf, int size);
+static void free_runtime_conf_entry(runtimeConfEntry *conf);
+
+static void print_runtime_configurations();
 
 PG_FUNCTION_INFO_V1(refresh_plcontainer_config);
 
 PG_FUNCTION_INFO_V1(show_plcontainer_config);
 
+
+/*
+ * init runtime conf hash table.
+ */
+static void init_runtime_configurations() {
+
+	/* destroy hash table first if exists*/
+	if (rumtime_conf_table != NULL) {
+		HASH_SEQ_STATUS hash_status;
+		runtimeConfEntry *entry;
+
+		hash_seq_init(&hash_status, rumtime_conf_table);
+
+		while ((entry = (runtimeConfEntry *) hash_seq_search(&hash_status)) != NULL)
+		{
+			free_runtime_conf_entry(entry);
+		}
+		hash_destroy(rumtime_conf_table);
+	}
+	/* create the runtime conf hash table*/
+	HASHCTL		hash_ctl;
+
+	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = RUNTIME_ID_MAX_LENGTH;
+	hash_ctl.entrysize = sizeof(runtimeConfEntry);
+	hash_ctl.hash = string_hash;
+
+	rumtime_conf_table = hash_create("runtime configuration hash",
+								MAX_EXPECTED_RUNTIME_NUM,
+								&hash_ctl,
+								HASH_ELEM | HASH_FUNCTION);
+
+	if (rumtime_conf_table == NULL) {
+		elog(ERROR, "Error: could not create runtime conf hash table. Check your memory usage.");
+	}
+
+	return ;
+}
+
 /* Function parses the container XML definition and fills the passed
  * plcContainerConf structure that should be already allocated */
-static int parse_container(xmlNode *node, runtimeConf *conf) {
+static void parse_runtime_configurations(xmlNode *node) {
 	xmlNode *cur_node = NULL;
 	xmlChar *value = NULL;
-	int has_image = 0;
-	int has_id = 0;
-	int has_command = 0;
+	char *runtime_id = NULL;
+	int id_num = 0;
+	int image_num = 0;
+	int command_num = 0;
 	int num_shared_dirs = 0;
+
+
+	runtimeConfEntry *conf_entry = NULL;
+	bool		foundPtr;
+
+	if (rumtime_conf_table == NULL) {
+		elog(ERROR, "Runtime configuration table is not initialized.");
+	}
+
+	/* Find the hash key (runtime id) firstly.*/
+	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
+		if (cur_node->type == XML_ELEMENT_NODE &&
+				xmlStrcmp(cur_node->name, (const xmlChar *) "id") == 0) {
+			if (id_num++ > 0) {
+				elog(ERROR, "tag <id> must be specified only once in configuartion");
+			}
+			value = xmlNodeGetContent(cur_node);
+			runtime_id = pstrdup((char *) value);
+			if (value) {
+				xmlFree(value);
+				value = NULL;
+			}
+		}
+	}
+
+	if (id_num == 0) {
+		elog(ERROR, "tag <id> must be specified in configuartion");
+	}
+
+	//const char* rr = (const char*) runtime_id;
+	/* find the corresponding runtime config*/
+	conf_entry = (runtimeConfEntry *) hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_ENTER, &foundPtr);
+
+	/*check if runtime id already exists in hash table.*/
+	if (foundPtr) {
+		elog(ERROR, "Detecting duplicated runtime id %s in configuration file", runtime_id);
+	}
 
 	/* First iteration - parse name, container_id and memory_mb and count the
 	 * number of shared directories for later allocation of related structure */
-	memset((void *) conf, 0, sizeof(runtimeConf));
-	conf->memoryMb = 1024;
-	conf->enable_log = false;
-	conf->isNetworkConnection = false;
+
+	/*runtime_id will be freed with conf_entry*/
+	conf_entry->memoryMb = 1024;
+	conf_entry->enable_log = false;
+	conf_entry->isNetworkConnection = false;
+
+
 	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 		if (cur_node->type == XML_ELEMENT_NODE) {
 			int processed = 0;
@@ -64,23 +145,28 @@ static int parse_container(xmlNode *node, runtimeConf *conf) {
 
 			if (xmlStrcmp(cur_node->name, (const xmlChar *) "id") == 0) {
 				processed = 1;
-				has_id = 1;
-				value = xmlNodeGetContent(cur_node);
-				conf->runtimeid = plc_top_strdup((char *) value);
 			}
 
 			if (xmlStrcmp(cur_node->name, (const xmlChar *) "image") == 0) {
 				processed = 1;
-				has_image = 1;
+				image_num++;
 				value = xmlNodeGetContent(cur_node);
-				conf->image = plc_top_strdup((char *) value);
+				conf_entry->image = plc_top_strdup((char *) value);
+				if (value) {
+					xmlFree(value);
+					value = NULL;
+				}
 			}
 
 			if (xmlStrcmp(cur_node->name, (const xmlChar *) "command") == 0) {
 				processed = 1;
-				has_command = 1;
+				command_num++;
 				value = xmlNodeGetContent(cur_node);
-				conf->command = plc_top_strdup((char *) value);
+				conf_entry->command = plc_top_strdup((char *) value);
+				if (value) {
+					xmlFree(value);
+					value = NULL;
+				}
 			}
 
 			if (xmlStrcmp(cur_node->name, (const xmlChar *) "setting") == 0) {
@@ -90,13 +176,15 @@ static int parse_container(xmlNode *node, runtimeConf *conf) {
 				if (value != NULL) {
 					validSetting = true;
 					if (strcasecmp((char *) value, "enable") == 0) {
-						conf->enable_log = true;
+						conf_entry->enable_log = true;
 					} else if (strcasecmp((char *) value, "disable") == 0) {
-						conf->enable_log = false;
+						conf_entry->enable_log = false;
 					} else {
 						elog(ERROR, "SETTING element <log> only accepted \"enable\" or"
 							"\"disable\" only, current string is %s", value);
 					}
+					xmlFree(value);
+					value = NULL;
 				}
 				value = xmlGetProp(cur_node, (const xmlChar *) "memory_mb");
 				if (value != NULL) {
@@ -105,32 +193,36 @@ static int parse_container(xmlNode *node, runtimeConf *conf) {
 					if (memorySize <= 0) {
 						elog(ERROR, "container memory size could not less 0, current string is %s", value);
 					} else {
-						conf->memoryMb = conf->memoryMb;
+						conf_entry->memoryMb = conf_entry->memoryMb;
 					}
+					xmlFree(value);
+					value = NULL;
 				}
 				value = xmlGetProp(cur_node, (const xmlChar *) "use_network");
 				if (value != NULL) {
 					validSetting = true;
 					if (strcasecmp((char *) value, "false") == 0 ||
 					    strcasecmp((char *) value, "no") == 0) {
-						conf->isNetworkConnection = false;
+						conf_entry->isNetworkConnection = false;
 					} else if (strcasecmp((char *) value, "true") == 0 ||
 					         strcasecmp((char *) value, "yes") == 0) {
-						conf->isNetworkConnection = true;
+						conf_entry->isNetworkConnection = true;
 					} else {
 						elog(WARNING, "SETTING element <use_network> only accepted \"yes\"|\"true\" or"
 							"\"no\"|\"false\" only, current string is %s", value);
 
 					}
+					xmlFree(value);
+					value = NULL;
 				}
 				if (!validSetting) {
-					elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf->runtimeid);
+					elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf_entry->runtimeid);
 				}
 
 			}
 
 			if (xmlStrcmp(cur_node->name, (const xmlChar *) "shared_directory") == 0) {
-				num_shared_dirs += 1;
+				num_shared_dirs++;
 				processed = 1;
 			}
 
@@ -138,39 +230,39 @@ static int parse_container(xmlNode *node, runtimeConf *conf) {
 			if (processed == 0) {
 				elog(ERROR, "Unrecognized element '%s' inside of container specification",
 				     cur_node->name);
-				return -1;
 			}
 
 			/* Free the temp value if we have allocated it */
 			if (value) {
 				xmlFree(value);
+				value = NULL;
 			}
 		}
 	}
 
-	if (has_id == 0) {
-		elog(ERROR, "tag <id> must be specified in configuartion");
-		return -1;
+	if (image_num > 1) {
+		elog(ERROR, "There are more than one 'image' subelement in a runtime element %s", conf_entry->runtimeid);
+	}
+	else if (image_num < 1) {
+		elog(ERROR, "Lack of 'image' subelement in a runtime element %s", conf_entry->runtimeid);
 	}
 
-	if (has_image == 0) {
-		elog(ERROR, "tag <image> must be specified in configuration: %s", conf->runtimeid);
-		return -1;
+	if (command_num > 1) {
+		elog(ERROR, "There are more than one 'command' subelement in a runtime element %s", conf_entry->runtimeid);
 	}
-
-	if (has_command == 0) {
-		elog(ERROR, "tag <command> must be specified in configuration: %s", conf->runtimeid);
-		return -1;
+	else if (command_num < 1) {
+		elog(ERROR, "Lack of 'command' subelement in a runtime element %s", conf_entry->runtimeid);
 	}
 
 	/* Process the shared directories */
-	conf->nSharedDirs = num_shared_dirs;
-	conf->sharedDirs = NULL;
+	conf_entry->nSharedDirs = num_shared_dirs;
+	conf_entry->sharedDirs = NULL;
 	if (num_shared_dirs > 0) {
 		int i = 0;
+		int j = 0;
 
 		/* Allocate in top context as it should live between function calls */
-		conf->sharedDirs = plc_top_alloc(num_shared_dirs * sizeof(plcSharedDir));
+		conf_entry->sharedDirs = plc_top_alloc(num_shared_dirs * sizeof(plcSharedDir));
 		for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 			if (cur_node->type == XML_ELEMENT_NODE &&
 			    xmlStrcmp(cur_node->name, (const xmlChar *) "shared_directory") == 0) {
@@ -178,33 +270,38 @@ static int parse_container(xmlNode *node, runtimeConf *conf) {
 				value = xmlGetProp(cur_node, (const xmlChar *) "host");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'host' that is not found: %s", conf->runtimeid);
-					return -1;
+						" 'host' that is not found: %s", conf_entry->runtimeid);
 				}
-				conf->sharedDirs[i].host = plc_top_strdup((char *) value);
+				conf_entry->sharedDirs[i].host = plc_top_strdup((char *) value);
 				xmlFree(value);
 
 				value = xmlGetProp(cur_node, (const xmlChar *) "container");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'container' that is not found: %s", conf->runtimeid);
-					return -1;
+						" 'container' that is not found: %s", conf_entry->runtimeid);
 				}
-				conf->sharedDirs[i].container = plc_top_strdup((char *) value);
+				/* Shared folders will not be created a lot, so using array to search duplicated
+				 * container path is enough.
+				 * */
+				for (j =0; j< i; j++) {
+					if (strcasecmp((char *) value, conf_entry->sharedDirs[j].container) == 0) {
+						elog(ERROR, "Container path cannot be the same in 'shared_directory' element "
+								"in the runtime %s", conf_entry->runtimeid);
+					}
+				}
+				conf_entry->sharedDirs[i].container = plc_top_strdup((char *) value);
 				xmlFree(value);
 
 				value = xmlGetProp(cur_node, (const xmlChar *) "access");
 				if (value == NULL) {
 					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'access' that is not found: %s", conf->runtimeid);
-					return -1;
+						" 'access' that is not found: %s", conf_entry->runtimeid);
 				} else if (strcmp((char *) value, "ro") == 0) {
-					conf->sharedDirs[i].mode = PLC_ACCESS_READONLY;
+					conf_entry->sharedDirs[i].mode = PLC_ACCESS_READONLY;
 				} else if (strcmp((char *) value, "rw") == 0) {
-					conf->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
+					conf_entry->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
 				} else {
-					elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf->runtimeid);
-					return -1;
+					elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf_entry->runtimeid);
 				}
 				xmlFree(value);
 
@@ -213,89 +310,74 @@ static int parse_container(xmlNode *node, runtimeConf *conf) {
 		}
 	}
 
-	return 0;
+	return ;
 }
 
 /* Function returns an array of plcContainerConf structures based on the contents
  * of passed XML document tree. Returns NULL on failure */
-static runtimeConf *get_containers(xmlNode *node, int *size) {
+static void get_runtime_configurations(xmlNode *node) {
 	xmlNode *cur_node = NULL;
-	int nContainers = 0;
-	int i = 0;
-	int res = 0;
-	runtimeConf *result = NULL;
 
 	/* Validation that the root node matches the expected specification */
 	if (xmlStrcmp(node->name, (const xmlChar *) "configuration") != 0) {
 		elog(ERROR, "Wrong XML configuration provided. Expected 'configuration'"
 			" as root element, got '%s' instead", node->name);
-		return result;
 	}
 
-	/* Iterating through the list of containers to get the count */
+	/* Iterating through the list of containers to parse them */
 	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 		if (cur_node->type == XML_ELEMENT_NODE &&
 		    xmlStrcmp(cur_node->name, (const xmlChar *) "runtime") == 0) {
-			nContainers += 1;
+			parse_runtime_configurations(cur_node);
 		}
 	}
 
 	/* If no container definitions found - error */
-	if (nContainers == 0) {
+	if (hash_get_num_entries(rumtime_conf_table) == 0) {
 		elog(ERROR, "Did not find a single 'runtime' declaration in configuration");
-		return result;
 	}
 
-	result = plc_top_alloc(nContainers * sizeof(runtimeConf));
-
-	/* Iterating through the list of containers to parse them into plcContainerConf */
-	i = 0;
-	res = 0;
-	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
-		if (cur_node->type == XML_ELEMENT_NODE &&
-		    xmlStrcmp(cur_node->name, (const xmlChar *) "runtime") == 0) {
-			res |= parse_container(cur_node, &result[i]);
-			i += 1;
-		}
-	}
-
-	/* If error occurred during parsing - return NULL */
-	if (res != 0) {
-		free_containers(result, nContainers);
-		result = NULL;
-	}
-
-	*size = nContainers;
-	return result;
+	return ;
 }
 
 /* Safe way to deallocate container configuration list structure */
-static void free_containers(runtimeConf *conf, int size) {
+static void free_runtime_conf_entry(runtimeConfEntry *entry) {
+	if (entry->image)
+		pfree(entry->image);
+	if (entry->command)
+		pfree(entry->command);
 	int i;
-	for (i = 0; i < size; i++) {
-		if (conf[i].nSharedDirs > 0 && conf[i].sharedDirs != NULL) {
-			pfree(conf[i].sharedDirs);
-		}
+	for (i = 0; i < entry->nSharedDirs; i++) {
+		pfree(entry->sharedDirs[i].container);
+		pfree(entry->sharedDirs[i].host);
 	}
-	pfree(conf);
+	pfree(entry->sharedDirs);
 }
 
-static void print_containers(runtimeConf *conf, int size) {
-	int i, j;
-	for (i = 0; i < size; i++) {
-		elog(INFO, "Container '%s' configuration", conf[i].runtimeid);
-		elog(INFO, "    image = '%s'", conf[i].image);
-		elog(INFO, "    memory_mb = '%d'", conf[i].memoryMb);
-		elog(INFO, "    use network = '%s'", conf[i].isNetworkConnection ? "yes" : "no");
-		elog(INFO, "    enable log  = '%s'", conf[i].enable_log ? "yes" : "no");
-		for (j = 0; j < conf[i].nSharedDirs; j++) {
-			elog(INFO, "    shared directory from host '%s' to container '%s'",
-			     conf[i].sharedDirs[j].host,
-			     conf[i].sharedDirs[j].container);
-			if (conf[i].sharedDirs[j].mode == PLC_ACCESS_READONLY) {
-				elog(INFO, "        access = readonly");
-			} else {
-				elog(INFO, "        access = readwrite");
+static void print_runtime_configurations() {
+	int j = 0;
+	if (rumtime_conf_table != NULL) {
+		HASH_SEQ_STATUS hash_status;
+		runtimeConfEntry *conf_entry;
+
+		hash_seq_init(&hash_status, rumtime_conf_table);
+
+		while ((conf_entry = (runtimeConfEntry *) hash_seq_search(&hash_status)) != NULL)
+		{
+			elog(INFO, "Container '%s' configuration", conf_entry->runtimeid);
+			elog(INFO, "    image = '%s'", conf_entry->image);
+			elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
+			elog(INFO, "    use network = '%s'", conf_entry->isNetworkConnection ? "yes" : "no");
+			elog(INFO, "    enable log  = '%s'", conf_entry->enable_log ? "yes" : "no");
+			for (j = 0; j < conf_entry->nSharedDirs; j++) {
+				elog(INFO, "    shared directory from host '%s' to container '%s'",
+					 conf_entry->sharedDirs[j].host,
+					 conf_entry->sharedDirs[j].container);
+				if (conf_entry->sharedDirs[j].mode == PLC_ACCESS_READONLY) {
+					elog(INFO, "        access = readonly");
+				} else {
+					elog(INFO, "        access = readwrite");
+				}
 			}
 		}
 	}
@@ -305,6 +387,7 @@ static int plc_refresh_container_config(bool verbose) {
 	xmlDoc *doc = NULL;
 	char filename[1024];
 
+	init_runtime_configurations();
 	/*
 	 * this initialize the library and check potential ABI mismatches
 	 * between the version it was compiled for and the actual shared
@@ -320,14 +403,7 @@ static int plc_refresh_container_config(bool verbose) {
 		return -1;
 	}
 
-	/* Read the configuration */
-	if (plcContConf != NULL) {
-		free_containers(plcContConf, plcNumContainers);
-		plcContConf = NULL;
-		plcNumContainers = 0;
-	}
-
-	plcContConf = get_containers(xmlDocGetRootElement(doc), &plcNumContainers);
+	get_runtime_configurations(xmlDocGetRootElement(doc));
 
 	/* Free the document */
 	xmlFreeDoc(doc);
@@ -335,12 +411,12 @@ static int plc_refresh_container_config(bool verbose) {
 	/* Free the global variables that may have been allocated by the parser */
 	xmlCleanupParser();
 
-	if (plcContConf == NULL) {
+	if (hash_get_num_entries(rumtime_conf_table) == 0) {
 		return -1;
 	}
 
 	if (verbose) {
-		print_containers(plcContConf, plcNumContainers);
+		print_runtime_configurations();
 	}
 
 	return 0;
@@ -349,17 +425,17 @@ static int plc_refresh_container_config(bool verbose) {
 static int plc_show_container_config() {
 	int res = 0;
 
-	if (plcContConf == NULL) {
+	if (rumtime_conf_table == NULL) {
 		res = plc_refresh_container_config(false);
 		if (res != 0)
 			return -1;
 	}
 
-	if (plcContConf == NULL) {
+	if (rumtime_conf_table == NULL || hash_get_num_entries(rumtime_conf_table) == 0) {
 		return -1;
 	}
 
-	print_containers(plcContConf, plcNumContainers);
+	print_runtime_configurations();
 	return 0;
 }
 
@@ -389,29 +465,25 @@ show_plcontainer_config(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	}
 }
 
-runtimeConf *plc_get_runtime_configuration(char *runtime_id) {
+runtimeConfEntry *plc_get_runtime_configuration(char *runtime_id) {
 	int res = 0;
-	int i = 0;
-	runtimeConf *result = NULL;
+	runtimeConfEntry *entry = NULL;
 
-	if (plcContConf == NULL || plcNumContainers == 0) {
+	if (rumtime_conf_table == NULL) {
 		res = plc_refresh_container_config(0);
 		if (res < 0) {
 			return NULL;
 		}
 	}
 
-	for (i = 0; i < plcNumContainers; i++) {
-		if (strcmp(runtime_id, plcContConf[i].runtimeid) == 0) {
-			result = &plcContConf[i];
-			break;
-		}
-	}
+	//const char* rr = (const char*) runtime_id;
+	/* find the corresponding runtime config*/
+	entry = (runtimeConfEntry *) hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_FIND, NULL);
 
-	return result;
+	return entry;
 }
 
-char *get_sharing_options(runtimeConf *conf, int container_slot, bool *has_error, char **uds_dir) {
+char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_error, char **uds_dir) {
 	char *res = NULL;
 
 	*has_error = false;

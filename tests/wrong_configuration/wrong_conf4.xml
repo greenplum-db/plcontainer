@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python_shared</id>
+        <image>pivotaldata/plcontainer_python_shared:devel</image>
+        <command>/clientdir/pyclient.sh</command>
+        <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/>
+        <setting logs="enable"/>
+    </runtime>
+    <runtime>
+        <id>plc_r_shared</id>
+        <image>pivotaldata/plcontainer_r_shared:devel</image>
+        <command>/clientdir/rclient.sh</command>
+        <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/>
+        <setting logs="enable"/>
+    </runtime>
+    <runtime>
+        <id>plc_python_network</id>
+        <image>pivotaldata/plcontainer_python_shared:devel</image>
+	<shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/>
+        <setting logs="enable"/>
+        <setting use_network="yes"/>
+    </runtime>
+</configuration>
+
+
+
+
+
+
+
+
+
+
+
+

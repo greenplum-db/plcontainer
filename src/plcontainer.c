@@ -12,6 +12,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/faultinjector.h"
+#include "utils/memutils.h"
 
 /* PLContainer Headers */
 #include "common/comm_channel.h"
@@ -49,6 +50,9 @@ static void plcontainer_process_log(plcMsgLog *log);
 
 static bool DeleteBackendsWhenError;
 
+/* this is saved and restored by plcontainer_call_handler */
+MemoryContext pl_container_caller_context = NULL;
+
 void _PG_init(void);
 
 static void
@@ -75,7 +79,6 @@ _PG_init(void) {
 
 Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	Datum datumreturn = (Datum) 0;
-	MemoryContext oldMC = NULL;
 	int ret;
 
 	/* TODO: handle trigger requests as well */
@@ -84,11 +87,11 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 		return datumreturn;
 	}
 
-	/* save caller's context */
-	oldMC = pl_container_caller_context;
+	/* pl_container_caller_context refer to the CurrentMemoryContext(e.g. ExprContext)
+	 * since SPI_connect() will switch memory context to SPI_PROC, we need
+	 * to switch back to the pl_container_caller_context at plcontainer_get_result*/
 	pl_container_caller_context = CurrentMemoryContext;
 
-	/* Create a new memory context and switch to it */
 	ret = SPI_connect();
 	if (ret != SPI_OK_CONNECT)
 		elog(ERROR, "[plcontainer] SPI connect error: %d (%s)", ret,
@@ -113,17 +116,20 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 			delete_containers();
 			DeleteBackendsWhenError = false;
 		}
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	/* Return to old memory context */
+	/**
+	 *  TODO: SPI_finish() will switch back the memory context. Upstream code place it at earlier
+	 *  part of code, we'd better find the right place for it in plcontainer.
+	 */
 	ret = SPI_finish();
 	if (ret != SPI_OK_FINISH)
 		elog(ERROR, "[plcontainer] SPI finish error: %d (%s)", ret,
 		     SPI_result_code_string(ret));
 
-	pl_container_caller_context = oldMC;
 	return datumreturn;
 }
 
@@ -211,15 +217,15 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		runtime_id = parse_container_meta(req->proc.src);
 		conn = get_container_conn(runtime_id);
 		if (conn == NULL) {
-			runtimeConf *runtime_conf = NULL;
-			runtime_conf = plc_get_runtime_configuration(runtime_id);
-			if (runtime_conf == NULL) {
+			runtimeConfEntry *runtime_conf_entry = NULL;
+			runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
+			if (runtime_conf_entry == NULL) {
 				elog(ERROR, "Runtime '%s' is not defined in configuration "
 							"and cannot be used", runtime_id);
 			} else {
 				/* TODO: We could only remove this backend when error occurs. */
 				DeleteBackendsWhenError = true;
-				conn = start_backend(runtime_conf);
+				conn = start_backend(runtime_conf_entry);
 				DeleteBackendsWhenError = false;
 			}
 		}
@@ -362,7 +368,6 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
 
 	oldcontext = CurrentMemoryContext;
 	oldowner = CurrentResourceOwner;
-	MemoryContextSwitchTo(pl_container_caller_context);
 
 	res = handle_sql_message(msg, conn, pinfo);
 	if (res != NULL) {

@@ -202,7 +202,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 	return buffer;
 }
 
-int plc_docker_create_container(runtimeConf *conf, char **name, int container_id, char **uds_dir) {
+int plc_docker_create_container(runtimeConfEntry *conf, char **name, int container_id, char **uds_dir) {
 	char *createRequest =
 		"{\n"
 			"    \"AttachStdin\": false,\n"

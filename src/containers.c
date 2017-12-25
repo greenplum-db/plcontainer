@@ -315,7 +315,7 @@ static char *get_uds_fn(char *uds_dir) {
 	return uds_fn;
 }
 
-plcConn *start_backend(runtimeConf *conf) {
+plcConn *start_backend(runtimeConfEntry *conf) {
 	int port = 0;
 	unsigned int sleepus = 25000;
 	unsigned int sleepms = 0;

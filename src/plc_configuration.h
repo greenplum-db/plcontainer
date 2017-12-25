@@ -14,6 +14,12 @@
 #include "plcontainer.h"
 
 #define PLC_PROPERTIES_FILE "plcontainer_configuration.xml"
+#define SHARED_DIR_MAX_LENGTH 512
+#define RUNTIME_ID_MAX_LENGTH 512
+#define IMAGE_NAME_MAX_LENGTH 512
+#define COMMAND_MAX_LENGTH 512
+#define MAX_SHARED_DIR_NUM 16
+#define MAX_EXPECTED_RUNTIME_NUM 32
 
 typedef enum {
 	PLC_ACCESS_READONLY = 0,
@@ -33,16 +39,16 @@ typedef struct plcSharedDir {
 	plcFsAccessMode mode;
 } plcSharedDir;
 
-typedef struct runtimeConf {
-	char *runtimeid;
+typedef struct runtimeConfEntry {
+	char runtimeid[RUNTIME_ID_MAX_LENGTH];
 	char *image;
 	char *command;
 	int memoryMb;
 	int nSharedDirs;
-	plcSharedDir *sharedDirs;
+	plcSharedDir* sharedDirs;
 	bool isNetworkConnection;
 	bool enable_log;
-} runtimeConf;
+} runtimeConfEntry;
 
 /* entrypoint for all plcontainer procedures */
 Datum refresh_plcontainer_config(PG_FUNCTION_ARGS);
@@ -51,8 +57,8 @@ Datum show_plcontainer_config(PG_FUNCTION_ARGS);
 
 Datum containers_summary(PG_FUNCTION_ARGS);
 
-runtimeConf *plc_get_runtime_configuration(char *id);
+runtimeConfEntry *plc_get_runtime_configuration(char *id);
 
-char *get_sharing_options(runtimeConf *conf, int container_slot, bool *has_error, char **uds_dir);
+char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_error, char **uds_dir);
 
 #endif /* PLC_CONFIGURATION_H */

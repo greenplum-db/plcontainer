@@ -41,7 +41,7 @@ void plc_backend_prepareImplementation(enum PLC_BACKEND_TYPE imptype) {
 	}
 }
 
-int plc_backend_create(runtimeConf *conf, char **name, int container_slot, char **uds_dir) {
+int plc_backend_create(runtimeConfEntry *conf, char **name, int container_slot, char **uds_dir) {
 	return CurrentPLCImp.create != NULL ? CurrentPLCImp.create(conf, name, container_slot, uds_dir) : 0;
 }
 

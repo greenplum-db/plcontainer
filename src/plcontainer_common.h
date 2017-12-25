@@ -9,9 +9,11 @@
 #define PLC_PLCONTAINER_COMMON_H_
 
 #include "fmgr.h"
+#include "utils/hsearch.h"
 #include "utils/resowner.h"
 
-MemoryContext pl_container_caller_context;
+extern HTAB *rumtime_conf_table;
+extern MemoryContext pl_container_caller_context;
 
 /* list of explicit subtransaction data */
 List *explicit_subtransactions;

@@ -11,6 +11,8 @@
 
 #include "plcontainer_common.h"
 
+HTAB *rumtime_conf_table = NULL;
+
 /* Some utility functions
  * They are consistent with upstream plpython.c
  * where the functions are called PLy_free and PLy_malloc.
