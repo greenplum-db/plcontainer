@@ -314,6 +314,22 @@ plcontainer runtime-restore -f bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
 
 echo
+echo "**Test: <shared_directory>: container path should not be /tmp/plcontainer"
+cat >bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python</id>
+        <image>pivotaldata/plcontainer_python:0.1</image>
+        <command>./client</command>
+        <shared_directory access="ro" container="/tmp/plcontainer" host="/host/plcontainer_clients_2"/>
+    </runtime>
+</configuration>
+EOF
+plcontainer runtime-restore -f bad_xml_file \
+	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://'
+
+echo
 echo "**Test: <setting>: must be legal one"
 cat >bad_xml_file << EOF
 <?xml version="1.0" ?>

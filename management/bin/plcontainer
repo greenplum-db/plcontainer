@@ -488,6 +488,12 @@ def validate_xml(filename):
                     logger.error("Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime %s", runtime_id)
                     logger.error("Current: %s", share_folder.attrib.keys())
                     raise Exception("Validation failed")
+
+                # This path is reserved for unix domain socket connection.
+                if share_folder.attrib['container'] == '/tmp/plcontainer' or share_folder.attrib['container'] == '/tmp/plcontainer/':
+                    logger.error("container path should not be /tmp/plcontainer (reserved for unix domain socket connection) in runtime %s", runtime_id)
+                    raise Exception("Validation failed")
+
                 container_pathlist.append(share_folder.attrib['container'])
 
             tmp_list = list(set(container_pathlist))
@@ -521,7 +527,7 @@ def validate_xml(filename):
                     logger.error("Found illegal setting in runtime %s: %s", runtime_id, settings.attrib)
     except Exception, ex:
         correct = False 
-        logger.error("XML file does not conform XML specification.")
+        logger.error("XML file does not conform XML specification or wrong settings.")
         logger.error(str(ex))
     return correct
 

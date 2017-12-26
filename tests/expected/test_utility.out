@@ -200,76 +200,82 @@ Test xml validation: negative cases
 
 **Test <id> is needed
 -Lack of 'id' subelement in a runtime element.
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: No more than 1 <id> is allowed
 -Found 2 (1 is legal) 'id' subelements in a runtime element. The first one 'id': plc_python
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <id> naming requirement
 -'id' name with wrong format: *plc_python
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test <image> is needed
 -Lack of 'image' subelement in a runtime element in runtime plc_python.
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: No more than 1 <image> is allowed
 -Found 2 (1 is legal) 'image' subelements in a runtime plc_python. The first one 'image': pivotaldata/plcontainer_python:0.1
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <command> is needed
 -Lack of 'command' subelement in a runtime element in runtime plc_python.
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: No more than 1 <command> is allowed
 -Found 2 (1 is legal) 'command' subelements in runtime plc_python. The first one 'command': ./client
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: 'container' attr is needed
 -Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime plc_python
 -Current: ['access', 'host']
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: 'host' attr is needed
 -Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime plc_python
 -Current: ['access', 'container']
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: 'access' attr is is needed
 -Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime plc_python
 -Current: ['host', 'container']
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: access must be ro or rw
 -access should be 'ro' or 'rw' in shared_directory in runtime plc_python, but now: rx
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: container paths should not be duplicated
 -container should not have same mount points (check shared_directory) in runtime plc_python
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
+-Validation failed
+-Bad xml format. Please fix the file at first.
+
+**Test: <shared_directory>: container path should not be /tmp/plcontainer
+-container path should not be /tmp/plcontainer (reserved for unix domain socket connection) in runtime plc_python
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
@@ -280,25 +286,25 @@ Test xml validation: negative cases
 
 **Test: <setting>: memory_mb should be string with integer value
 -memory_mb should be a positive integer in runtime plc_python, but now: '123.4'
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <setting>: memory_mb should be string with positive integer value
 -memory_mb should > 0 in runtime plc_python, but now: '-123'
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <setting>: use_network should be yes or no
 -use_network should be 'yes' or 'no' in runtime plc_python, but now: 'y'
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <setting>: logs should be enable or disable
 -logs should be 'enable' or 'disable' in runtime plc_python, but now: 'yes'
--XML file does not conform XML specification.
+-XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
