@@ -100,215 +100,227 @@ static void parse_runtime_configurations(xmlNode *node) {
 		elog(ERROR, "Runtime configuration table is not initialized.");
 	}
 
-	/* Find the hash key (runtime id) firstly.*/
-	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
-		if (cur_node->type == XML_ELEMENT_NODE &&
-				xmlStrcmp(cur_node->name, (const xmlChar *) "id") == 0) {
-			if (id_num++ > 0) {
-				elog(ERROR, "tag <id> must be specified only once in configuartion");
-			}
-			value = xmlNodeGetContent(cur_node);
-			runtime_id = pstrdup((char *) value);
-			if (value) {
-				xmlFree(value);
-				value = NULL;
-			}
-		}
-	}
-
-	if (id_num == 0) {
-		elog(ERROR, "tag <id> must be specified in configuartion");
-	}
-
-	//const char* rr = (const char*) runtime_id;
-	/* find the corresponding runtime config*/
-	conf_entry = (runtimeConfEntry *) hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_ENTER, &foundPtr);
-
-	/*check if runtime id already exists in hash table.*/
-	if (foundPtr) {
-		elog(ERROR, "Detecting duplicated runtime id %s in configuration file", runtime_id);
-	}
-
-	/* First iteration - parse name, container_id and memory_mb and count the
-	 * number of shared directories for later allocation of related structure */
-
-	/*runtime_id will be freed with conf_entry*/
-	conf_entry->memoryMb = 1024;
-	conf_entry->enable_log = false;
-	conf_entry->isNetworkConnection = false;
-
-
-	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
-		if (cur_node->type == XML_ELEMENT_NODE) {
-			int processed = 0;
-			value = NULL;
-
-			if (xmlStrcmp(cur_node->name, (const xmlChar *) "id") == 0) {
-				processed = 1;
-			}
-
-			if (xmlStrcmp(cur_node->name, (const xmlChar *) "image") == 0) {
-				processed = 1;
-				image_num++;
-				value = xmlNodeGetContent(cur_node);
-				conf_entry->image = plc_top_strdup((char *) value);
-				if (value) {
-					xmlFree(value);
-					value = NULL;
-				}
-			}
-
-			if (xmlStrcmp(cur_node->name, (const xmlChar *) "command") == 0) {
-				processed = 1;
-				command_num++;
-				value = xmlNodeGetContent(cur_node);
-				conf_entry->command = plc_top_strdup((char *) value);
-				if (value) {
-					xmlFree(value);
-					value = NULL;
-				}
-			}
-
-			if (xmlStrcmp(cur_node->name, (const xmlChar *) "setting") == 0) {
-				bool validSetting = false;
-				processed = 1;
-				value = xmlGetProp(cur_node, (const xmlChar *) "logs");
-				if (value != NULL) {
-					validSetting = true;
-					if (strcasecmp((char *) value, "enable") == 0) {
-						conf_entry->enable_log = true;
-					} else if (strcasecmp((char *) value, "disable") == 0) {
-						conf_entry->enable_log = false;
-					} else {
-						elog(ERROR, "SETTING element <log> only accepted \"enable\" or"
-							"\"disable\" only, current string is %s", value);
-					}
-					xmlFree(value);
-					value = NULL;
-				}
-				value = xmlGetProp(cur_node, (const xmlChar *) "memory_mb");
-				if (value != NULL) {
-					validSetting = true;
-					long memorySize = pg_atoi((char *) value, sizeof(int), 0);
-					if (memorySize <= 0) {
-						elog(ERROR, "container memory size could not less 0, current string is %s", value);
-					} else {
-						conf_entry->memoryMb = conf_entry->memoryMb;
-					}
-					xmlFree(value);
-					value = NULL;
-				}
-				value = xmlGetProp(cur_node, (const xmlChar *) "use_network");
-				if (value != NULL) {
-					validSetting = true;
-					if (strcasecmp((char *) value, "false") == 0 ||
-					    strcasecmp((char *) value, "no") == 0) {
-						conf_entry->isNetworkConnection = false;
-					} else if (strcasecmp((char *) value, "true") == 0 ||
-					         strcasecmp((char *) value, "yes") == 0) {
-						conf_entry->isNetworkConnection = true;
-					} else {
-						elog(WARNING, "SETTING element <use_network> only accepted \"yes\"|\"true\" or"
-							"\"no\"|\"false\" only, current string is %s", value);
-
-					}
-					xmlFree(value);
-					value = NULL;
-				}
-				if (!validSetting) {
-					elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf_entry->runtimeid);
-				}
-
-			}
-
-			if (xmlStrcmp(cur_node->name, (const xmlChar *) "shared_directory") == 0) {
-				num_shared_dirs++;
-				processed = 1;
-			}
-
-			/* If the tag is not known - we raise the related error */
-			if (processed == 0) {
-				elog(ERROR, "Unrecognized element '%s' inside of container specification",
-				     cur_node->name);
-			}
-
-			/* Free the temp value if we have allocated it */
-			if (value) {
-				xmlFree(value);
-				value = NULL;
-			}
-		}
-	}
-
-	if (image_num > 1) {
-		elog(ERROR, "There are more than one 'image' subelement in a runtime element %s", conf_entry->runtimeid);
-	}
-	else if (image_num < 1) {
-		elog(ERROR, "Lack of 'image' subelement in a runtime element %s", conf_entry->runtimeid);
-	}
-
-	if (command_num > 1) {
-		elog(ERROR, "There are more than one 'command' subelement in a runtime element %s", conf_entry->runtimeid);
-	}
-	else if (command_num < 1) {
-		elog(ERROR, "Lack of 'command' subelement in a runtime element %s", conf_entry->runtimeid);
-	}
-
-	/* Process the shared directories */
-	conf_entry->nSharedDirs = num_shared_dirs;
-	conf_entry->sharedDirs = NULL;
-	if (num_shared_dirs > 0) {
-		int i = 0;
-		int j = 0;
-
-		/* Allocate in top context as it should live between function calls */
-		conf_entry->sharedDirs = plc_top_alloc(num_shared_dirs * sizeof(plcSharedDir));
+	PG_TRY();
+	{
+		/* Find the hash key (runtime id) firstly.*/
 		for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 			if (cur_node->type == XML_ELEMENT_NODE &&
-			    xmlStrcmp(cur_node->name, (const xmlChar *) "shared_directory") == 0) {
-
-				value = xmlGetProp(cur_node, (const xmlChar *) "host");
-				if (value == NULL) {
-					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'host' that is not found: %s", conf_entry->runtimeid);
+					xmlStrcmp(cur_node->name, (const xmlChar *) "id") == 0) {
+				if (id_num++ > 0) {
+					elog(ERROR, "tag <id> must be specified only once in configuartion");
 				}
-				conf_entry->sharedDirs[i].host = plc_top_strdup((char *) value);
-				xmlFree(value);
-
-				value = xmlGetProp(cur_node, (const xmlChar *) "container");
-				if (value == NULL) {
-					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'container' that is not found: %s", conf_entry->runtimeid);
+				value = xmlNodeGetContent(cur_node);
+				runtime_id = pstrdup((char *) value);
+				if (value) {
+					xmlFree(value);
+					value = NULL;
 				}
-				/* Shared folders will not be created a lot, so using array to search duplicated
-				 * container path is enough.
-				 * */
-				for (j =0; j< i; j++) {
-					if (strcasecmp((char *) value, conf_entry->sharedDirs[j].container) == 0) {
-						elog(ERROR, "Container path cannot be the same in 'shared_directory' element "
-								"in the runtime %s", conf_entry->runtimeid);
+			}
+		}
+
+		if (id_num == 0) {
+			elog(ERROR, "tag <id> must be specified in configuartion");
+		}
+
+		/* find the corresponding runtime config*/
+		conf_entry = (runtimeConfEntry *) hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_ENTER, &foundPtr);
+
+		/*check if runtime id already exists in hash table.*/
+		if (foundPtr) {
+			elog(ERROR, "Detecting duplicated runtime id %s in configuration file", runtime_id);
+		}
+
+		/* First iteration - parse name, container_id and memory_mb and count the
+		 * number of shared directories for later allocation of related structure */
+
+		/*runtime_id will be freed with conf_entry*/
+		conf_entry->memoryMb = 1024;
+		conf_entry->enable_log = false;
+		conf_entry->isNetworkConnection = false;
+
+
+		for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
+			if (cur_node->type == XML_ELEMENT_NODE) {
+				int processed = 0;
+				value = NULL;
+
+				if (xmlStrcmp(cur_node->name, (const xmlChar *) "id") == 0) {
+					processed = 1;
+				}
+
+				if (xmlStrcmp(cur_node->name, (const xmlChar *) "image") == 0) {
+					processed = 1;
+					image_num++;
+					value = xmlNodeGetContent(cur_node);
+					conf_entry->image = plc_top_strdup((char *) value);
+					if (value) {
+						xmlFree(value);
+						value = NULL;
 					}
 				}
-				conf_entry->sharedDirs[i].container = plc_top_strdup((char *) value);
-				xmlFree(value);
 
-				value = xmlGetProp(cur_node, (const xmlChar *) "access");
-				if (value == NULL) {
-					elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
-						" 'access' that is not found: %s", conf_entry->runtimeid);
-				} else if (strcmp((char *) value, "ro") == 0) {
-					conf_entry->sharedDirs[i].mode = PLC_ACCESS_READONLY;
-				} else if (strcmp((char *) value, "rw") == 0) {
-					conf_entry->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
-				} else {
-					elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf_entry->runtimeid);
+				if (xmlStrcmp(cur_node->name, (const xmlChar *) "command") == 0) {
+					processed = 1;
+					command_num++;
+					value = xmlNodeGetContent(cur_node);
+					conf_entry->command = plc_top_strdup((char *) value);
+					if (value) {
+						xmlFree(value);
+						value = NULL;
+					}
 				}
-				xmlFree(value);
 
-				i += 1;
+				if (xmlStrcmp(cur_node->name, (const xmlChar *) "setting") == 0) {
+					bool validSetting = false;
+					processed = 1;
+					value = xmlGetProp(cur_node, (const xmlChar *) "logs");
+					if (value != NULL) {
+						validSetting = true;
+						if (strcasecmp((char *) value, "enable") == 0) {
+							conf_entry->enable_log = true;
+						} else if (strcasecmp((char *) value, "disable") == 0) {
+							conf_entry->enable_log = false;
+						} else {
+							elog(ERROR, "SETTING element <log> only accepted \"enable\" or"
+								"\"disable\" only, current string is %s", value);
+						}
+						xmlFree(value);
+						value = NULL;
+					}
+					value = xmlGetProp(cur_node, (const xmlChar *) "memory_mb");
+					if (value != NULL) {
+						validSetting = true;
+						long memorySize = pg_atoi((char *) value, sizeof(int), 0);
+						if (memorySize <= 0) {
+							elog(ERROR, "container memory size could not less 0, current string is %s", value);
+						} else {
+							conf_entry->memoryMb = conf_entry->memoryMb;
+						}
+						xmlFree(value);
+						value = NULL;
+					}
+					value = xmlGetProp(cur_node, (const xmlChar *) "use_network");
+					if (value != NULL) {
+						validSetting = true;
+						if (strcasecmp((char *) value, "false") == 0 ||
+							strcasecmp((char *) value, "no") == 0) {
+							conf_entry->isNetworkConnection = false;
+						} else if (strcasecmp((char *) value, "true") == 0 ||
+								 strcasecmp((char *) value, "yes") == 0) {
+							conf_entry->isNetworkConnection = true;
+						} else {
+							elog(WARNING, "SETTING element <use_network> only accepted \"yes\"|\"true\" or"
+								"\"no\"|\"false\" only, current string is %s", value);
+
+						}
+						xmlFree(value);
+						value = NULL;
+					}
+					if (!validSetting) {
+						elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf_entry->runtimeid);
+					}
+
+				}
+
+				if (xmlStrcmp(cur_node->name, (const xmlChar *) "shared_directory") == 0) {
+					num_shared_dirs++;
+					processed = 1;
+				}
+
+				/* If the tag is not known - we raise the related error */
+				if (processed == 0) {
+					elog(ERROR, "Unrecognized element '%s' inside of container specification",
+						 cur_node->name);
+				}
+
+				/* Free the temp value if we have allocated it */
+				if (value) {
+					xmlFree(value);
+					value = NULL;
+				}
+			}
+		}
+
+		if (image_num > 1) {
+			elog(ERROR, "There are more than one 'image' subelement in a runtime element %s", conf_entry->runtimeid);
+		}
+		else if (image_num < 1) {
+			elog(ERROR, "Lack of 'image' subelement in a runtime element %s", conf_entry->runtimeid);
+		}
+
+		if (command_num > 1) {
+			elog(ERROR, "There are more than one 'command' subelement in a runtime element %s", conf_entry->runtimeid);
+		}
+		else if (command_num < 1) {
+			elog(ERROR, "Lack of 'command' subelement in a runtime element %s", conf_entry->runtimeid);
+		}
+
+		/* Process the shared directories */
+		conf_entry->nSharedDirs = num_shared_dirs;
+		conf_entry->sharedDirs = NULL;
+		if (num_shared_dirs > 0) {
+			int i = 0;
+			int j = 0;
+
+			/* Allocate in top context as it should live between function calls */
+			conf_entry->sharedDirs = plc_top_alloc(num_shared_dirs * sizeof(plcSharedDir));
+			for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
+				if (cur_node->type == XML_ELEMENT_NODE &&
+					xmlStrcmp(cur_node->name, (const xmlChar *) "shared_directory") == 0) {
+
+					value = xmlGetProp(cur_node, (const xmlChar *) "host");
+					if (value == NULL) {
+						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
+							" 'host' that is not found: %s", conf_entry->runtimeid);
+					}
+					conf_entry->sharedDirs[i].host = plc_top_strdup((char *) value);
+					xmlFree(value);
+
+					value = xmlGetProp(cur_node, (const xmlChar *) "container");
+					if (value == NULL) {
+						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
+							" 'container' that is not found: %s", conf_entry->runtimeid);
+					}
+					/* Shared folders will not be created a lot, so using array to search duplicated
+					 * container path is enough.
+					 * */
+					for (j =0; j< i; j++) {
+						if (strcasecmp((char *) value, conf_entry->sharedDirs[j].container) == 0) {
+							elog(ERROR, "Container path cannot be the same in 'shared_directory' element "
+									"in the runtime %s", conf_entry->runtimeid);
+						}
+					}
+					conf_entry->sharedDirs[i].container = plc_top_strdup((char *) value);
+					xmlFree(value);
+
+					value = xmlGetProp(cur_node, (const xmlChar *) "access");
+					if (value == NULL) {
+						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
+							" 'access' that is not found: %s", conf_entry->runtimeid);
+					} else if (strcmp((char *) value, "ro") == 0) {
+						conf_entry->sharedDirs[i].mode = PLC_ACCESS_READONLY;
+					} else if (strcmp((char *) value, "rw") == 0) {
+						conf_entry->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
+					} else {
+						elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf_entry->runtimeid);
+					}
+					xmlFree(value);
+
+					i += 1;
+				}
 			}
 		}
 	}
+	PG_CATCH();
+	{
+		if (value != NULL) {
+			xmlFree(value);
+			value = NULL;
+		}
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	return ;
 }
@@ -397,13 +409,27 @@ static int plc_refresh_container_config(bool verbose) {
 
 	/* Parse the file and get the DOM */
 	sprintf(filename, "%s/plcontainer_configuration.xml", data_directory);
-	doc = xmlReadFile(filename, NULL, 0);
-	if (doc == NULL) {
-		elog(ERROR, "Error: could not parse file %s, wrongly formatted XML or missing configuration file\n", filename);
-		return -1;
-	}
 
-	get_runtime_configurations(xmlDocGetRootElement(doc));
+	PG_TRY();
+	{
+		doc = xmlReadFile(filename, NULL, 0);
+		if (doc == NULL) {
+			elog(ERROR, "Error: could not parse file %s, wrongly formatted XML or missing configuration file\n", filename);
+			return -1;
+		}
+
+		get_runtime_configurations(xmlDocGetRootElement(doc));
+	}
+	PG_CATCH();
+	{
+		if (doc != NULL) {
+			xmlFreeDoc(doc);
+		}
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
 
 	/* Free the document */
 	xmlFreeDoc(doc);
