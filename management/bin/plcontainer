@@ -560,7 +560,7 @@ def distribute_file(pool, src_filename, dest_filename, gpdb_locations):
     """
     for l in gpdb_locations:
         dest_file = os.path.join(l[1], dest_filename)
-        logger.info("Distributing to %s:%s", l[0], dest_file)
+        logger.debug("Distributing to %s:%s", l[0], dest_file)
         cmd = Scp('distribute changed file',
                   src_filename,
                   dest_file,
@@ -660,7 +660,7 @@ def runtime_show_xml(filename, r_id):
                 sys.stdout.write("\n")
 
         if no_entry:
-            raise Exception("No related element was found.")
+            raise Exception("No runtime or no specified runtime was found.")
     except Exception, ex:
         logger.error("XML file does not conform XML specification or no related element was found.")
         logger.error(str(ex))
@@ -881,7 +881,7 @@ def main():
 
         if new_config:
             logger.info('Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions.' +
-                        ' New sessions will get new configuration automatically')
+                        ' New sessions will get new configuration automatically.')
 
     except Exception, ex:
         retval = 1

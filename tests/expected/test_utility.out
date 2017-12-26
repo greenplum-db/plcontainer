@@ -49,7 +49,7 @@ plcontainer: error: unrecognized arguments: not_exist
 
 Prepare a blank runtime configuration file and test runtime-backup
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 <?xml version="1.0" ?>
 <configuration>
 </configuration>
@@ -71,7 +71,7 @@ plcontainer runtime-add: error: argument -l/--language: invalid choice: 'java' (
 
 Test runtime-add, runtime-backup, and runtime-delete
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -82,7 +82,7 @@ Test runtime-add, runtime-backup, and runtime-delete
     </runtime>
 </configuration>
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 <?xml version="1.0" ?>
 <configuration>
     </configuration>
@@ -90,22 +90,22 @@ Test runtime-add, runtime-backup, and runtime-delete
 
 Test runtime-add with shared directories
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 
 Test runtime-add with both shared directories and settings
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 PL/Container Runtime Configuration: 
 -XML file does not conform XML specification or no related element was found.
--No related element was found.
+-No runtime or no specified runtime was found.
 -plcontainer failed. (Reason='runtime-show error') exiting...
 1
 PL/Container Runtime Configuration: 
@@ -143,12 +143,12 @@ PL/Container Runtime Configuration:
 ---------------------------------------------------------
 
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 PL/Container Runtime Configuration: 
 -XML file does not conform XML specification or no related element was found.
--No related element was found.
+-No runtime or no specified runtime was found.
 -plcontainer failed. (Reason='runtime-show error') exiting...
 
 Test runtime-replace: negative cases
@@ -166,7 +166,7 @@ plcontainer runtime-replace: error: argument -l/--language: invalid choice: 'jav
 Test runtime-replace: add a new one
 -runtime configuration does not exist. Adding a new one.
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -183,7 +183,7 @@ Test runtime-replace: add a new one
 
 Test runtime-replace: replace
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -282,7 +282,7 @@ Test xml validation: negative cases
 **Test: <setting>: must be legal one
 -Found illegal setting in runtime plc_python: {'logging': 'Enable'}
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 
 **Test: <setting>: memory_mb should be string with integer value
 -memory_mb should be a positive integer in runtime plc_python, but now: '123.4'
@@ -310,8 +310,8 @@ Test xml validation: negative cases
 
 Test xml validation: postive case
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 
 Recover the previous runtime configuration file
 -Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
