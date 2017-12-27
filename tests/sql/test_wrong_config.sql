@@ -1,4 +1,6 @@
-\! plcontainer  runtime-backup -f /tmp/conf_back
+-- start_ignore
+\! plcontainer  runtime-backup -f /tmp/conf.bak
+-- end_ignore
 
 \! $(pwd)/test_wrong_config.sh 1
 select pylog100();
@@ -20,5 +22,6 @@ select pylog100();
 
 \! $(pwd)/test_wrong_config.sh 7
 select pylog100();
-
- \! plcontainer  runtime-restore -f /tmp/conf_back
+-- start_ignore
+ \! plcontainer  runtime-restore -f /tmp/conf.bak
+-- end_ignore

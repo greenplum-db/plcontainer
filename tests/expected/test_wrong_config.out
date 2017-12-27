@@ -1,4 +1,6 @@
-\! plcontainer  runtime-backup -f /tmp/conf_back
+-- start_ignore
+\! plcontainer  runtime-backup -f /tmp/conf.bak
+-- end_ignore
 \! $(pwd)/test_wrong_config.sh 1
 Test lack of image
 select pylog100();
@@ -27,8 +29,10 @@ ERROR:  Container path cannot be the same in 'shared_directory' element in the r
 Test wrong use_network value.
 select pylog100();
 ERROR:  SETTING element <use_network> only accepted "yes"|"true" or"no"|"false" only, current string is enable (plc_configuration.c:218)
- \! plcontainer  runtime-restore -f /tmp/conf_back
-20171226:23:13:24:791011 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
-20171226:23:13:24:791011 plcontainer:localhost:gpadmin-[INFO]:-Distributing to localhost.localdomain:/home/gpadmin/workspace/gpdb/gpAux/gpdemo/datadirs/qddir/demoDataDir-1/plcontainer_configuration.xml
-20171226:23:13:24:791011 plcontainer:localhost:gpadmin-[INFO]:-Distributing to localhost.localdomain:/home/gpadmin/workspace/gpdb/gpAux/gpdemo/datadirs/dbfast1/demoDataDir0/plcontainer_configuration.xml
-20171226:23:13:24:791011 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-- start_ignore
+ \! plcontainer  runtime-restore -f /tmp/conf.bak
+20171226:23:26:20:008346 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20171226:23:26:20:008346 plcontainer:localhost:gpadmin-[INFO]:-Distributing to localhost.localdomain:/home/gpadmin/workspace/gpdb/gpAux/gpdemo/datadirs/qddir/demoDataDir-1/plcontainer_configuration.xml
+20171226:23:26:20:008346 plcontainer:localhost:gpadmin-[INFO]:-Distributing to localhost.localdomain:/home/gpadmin/workspace/gpdb/gpAux/gpdemo/datadirs/dbfast1/demoDataDir0/plcontainer_configuration.xml
+20171226:23:26:20:008346 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+-- end_ignore

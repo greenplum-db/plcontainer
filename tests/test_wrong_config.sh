@@ -133,7 +133,7 @@ function _main() {
   fi
 
   if [ -z "$MASTER_DATA_DIRECTORY" ]; then
-	  echo "Error: MASTER_DATA_DIRECTORY is unset"
+	  echo "Error: MASTER_DATA_DIRECTORY is not set"
 	  exit 1
   else
   	  cp bad_xml_file $MASTER_DATA_DIRECTORY/plcontainer_configuration.xml
