@@ -85,8 +85,12 @@ static void init_runtime_configurations() {
  * plcContainerConf structure that should be already allocated */
 static void parse_runtime_configuration(xmlNode *node) {
 	xmlNode *cur_node = NULL;
-	xmlChar *value = NULL;
-	char *runtime_id = NULL;
+	/* we add some cleanups in longjmp. longjmp may clobber the registers, 
+	 * so we need to add volatile qualifier to pointer. If the pointee is read
+	 * after longjmp, the pointee also need to include volatile qualifier.
+	 * */
+	xmlChar* volatile value = NULL;
+	volatile char* volatile runtime_id = NULL;
 	int id_num;
 	int image_num;
 	int command_num;
@@ -117,7 +121,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 
 				runtime_id = pstrdup((char *) value);
 				if (value) {
-					xmlFree(value);
+					xmlFree((void *) value);
 					value = NULL;
 				}
 			}
@@ -159,7 +163,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					value = xmlNodeGetContent(cur_node);
 					conf_entry->image = plc_top_strdup((char *) value);
 					if (value) {
-						xmlFree(value);
+						xmlFree((void *) value);
 						value = NULL;
 					}
 				}
@@ -170,7 +174,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					value = xmlNodeGetContent(cur_node);
 					conf_entry->command = plc_top_strdup((char *) value);
 					if (value) {
-						xmlFree(value);
+						xmlFree((void *) value);
 						value = NULL;
 					}
 				}
@@ -189,7 +193,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 							elog(ERROR, "SETTING element <log> only accepted \"enable\" or"
 								"\"disable\" only, current string is %s", value);
 						}
-						xmlFree(value);
+						xmlFree((void *) value);
 						value = NULL;
 					}
 					value = xmlGetProp(cur_node, (const xmlChar *) "memory_mb");
@@ -201,7 +205,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 						} else {
 							conf_entry->memoryMb = conf_entry->memoryMb;
 						}
-						xmlFree(value);
+						xmlFree((void *) value);
 						value = NULL;
 					}
 					value = xmlGetProp(cur_node, (const xmlChar *) "use_network");
@@ -218,7 +222,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 								"\"no\"|\"false\" only, current string is %s", value);
 
 						}
-						xmlFree(value);
+						xmlFree((void *) value);
 						value = NULL;
 					}
 					if (!validSetting) {
@@ -240,7 +244,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 
 				/* Free the temp value if we have allocated it */
 				if (value) {
-					xmlFree(value);
+					xmlFree((void *) value);
 					value = NULL;
 				}
 			}
@@ -279,7 +283,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 							" 'host' that is not found: %s", conf_entry->runtimeid);
 					}
 					conf_entry->sharedDirs[i].host = plc_top_strdup((char *) value);
-					xmlFree(value);
+					xmlFree((void *) value);
 					value = xmlGetProp(cur_node, (const xmlChar *) "container");
 					if (value == NULL) {
 						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
@@ -295,7 +299,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 						}
 					}
 					conf_entry->sharedDirs[i].container = plc_top_strdup((char *) value);
-					xmlFree(value);
+					xmlFree((void *) value);
 					value = xmlGetProp(cur_node, (const xmlChar *) "access");
 					if (value == NULL) {
 						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
@@ -307,7 +311,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					} else {
 						elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf_entry->runtimeid);
 					}
-					xmlFree(value);
+					xmlFree((void *) value);
 					value = NULL;
 					i += 1;
 				}
@@ -317,11 +321,11 @@ static void parse_runtime_configuration(xmlNode *node) {
 	PG_CATCH();
 	{
 		if (value != NULL) {
-			xmlFree(value);
+			xmlFree((void *) value);
 			value = NULL;
 		}
 
-		if (conf_entry != NULL && runtime_id != NULL) {
+		if (rumtime_conf_table != NULL && runtime_id != NULL) {
 			/* remove the broken runtime config entry in hash table*/
 			hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_REMOVE, NULL);
 
