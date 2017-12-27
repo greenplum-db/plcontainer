@@ -18,6 +18,8 @@ test: exception
 test: faultinject_python
 test: function_python_network
 
+# test wrong configuration
+test: test_wrong_config
 # PL/Container UDA test
 test: uda_python uda_r
 

@@ -87,10 +87,10 @@ static void parse_runtime_configuration(xmlNode *node) {
 	xmlNode *cur_node = NULL;
 	xmlChar *value = NULL;
 	char *runtime_id = NULL;
-	int id_num = 0;
-	int image_num = 0;
-	int command_num = 0;
-	int num_shared_dirs = 0;
+	int id_num;
+	int image_num;
+	int command_num;
+	int num_shared_dirs;
 
 
 	runtimeConfEntry *conf_entry = NULL;
@@ -102,6 +102,10 @@ static void parse_runtime_configuration(xmlNode *node) {
 
 	PG_TRY();
 	{
+		id_num = 0;
+		image_num = 0;
+		command_num = 0;
+		num_shared_dirs = 0;
 		/* Find the hash key (runtime id) firstly.*/
 		for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 			if (cur_node->type == XML_ELEMENT_NODE &&
@@ -110,6 +114,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					elog(ERROR, "tag <id> must be specified only once in configuartion");
 				}
 				value = xmlNodeGetContent(cur_node);
+
 				runtime_id = pstrdup((char *) value);
 				if (value) {
 					xmlFree(value);
@@ -275,7 +280,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					}
 					conf_entry->sharedDirs[i].host = plc_top_strdup((char *) value);
 					xmlFree(value);
-
+					value = NULL;
 					value = xmlGetProp(cur_node, (const xmlChar *) "container");
 					if (value == NULL) {
 						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
@@ -292,7 +297,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					}
 					conf_entry->sharedDirs[i].container = plc_top_strdup((char *) value);
 					xmlFree(value);
-
+					value = NULL;
 					value = xmlGetProp(cur_node, (const xmlChar *) "access");
 					if (value == NULL) {
 						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
@@ -305,7 +310,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 						elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf_entry->runtimeid);
 					}
 					xmlFree(value);
-
+					value = NULL;
 					i += 1;
 				}
 			}
@@ -506,7 +511,7 @@ runtimeConfEntry *plc_get_runtime_configuration(char *runtime_id) {
 	int res = 0;
 	runtimeConfEntry *entry = NULL;
 
-	if (rumtime_conf_table == NULL) {
+	if (rumtime_conf_table == NULL || hash_get_num_entries(rumtime_conf_table) == 0) {
 		res = plc_refresh_container_config(0);
 		if (res < 0) {
 			return NULL;
