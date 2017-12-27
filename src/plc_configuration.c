@@ -214,7 +214,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 								 strcasecmp((char *) value, "yes") == 0) {
 							conf_entry->isNetworkConnection = true;
 						} else {
-							elog(WARNING, "SETTING element <use_network> only accepted \"yes\"|\"true\" or"
+							elog(ERROR, "SETTING element <use_network> only accepted \"yes\"|\"true\" or"
 								"\"no\"|\"false\" only, current string is %s", value);
 
 						}

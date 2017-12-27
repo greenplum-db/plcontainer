@@ -18,4 +18,7 @@ select pylog100();
 \! $(pwd)/test_wrong_config.sh 6
 select pylog100();
 
+\! $(pwd)/test_wrong_config.sh 7
+select pylog100();
+
  \! plcontainer  runtime-restore -f /tmp/conf_back
