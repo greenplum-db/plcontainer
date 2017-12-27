@@ -32,7 +32,7 @@ ccp_gen_cluster_default_params_anchor: &ccp_gen_cluster_default_params
   AWS_ACCESS_KEY_ID: {{tf-machine-access-key-id}}
   AWS_SECRET_ACCESS_KEY: {{tf-machine-secret-access-key}}
   AWS_DEFAULT_REGION: {{aws-region}}
-  BUCKET_PATH: {{tf-bucket-path-plcontainer}}
+  BUCKET_PATH: clusters/
   BUCKET_NAME: {{tf-bucket-name}}
 
 ccp_options_anchor6: &ccp_options6
@@ -159,20 +159,7 @@ resources:
       # This is not parameterized, on purpose. All tfstates will go to this spot,
       # and different teams will place there clusters' tfstate files under different paths
       bucket: {{tf-bucket-name}}
-      ###########################################################
-      # Two conventions are allowed for bucket_path:            #
-      # 1) Cluster are expected to be destroyed automatically   #
-      #    Toolsmiths will reap old and orphaned clusters       #
-      #                                                         #
-      #      bucket_path: prod/[Pipeline Name]/                 #
-      #                                                         #
-      # 2) Long lived clusters for development.                 #
-      #    The team that creates it is responsible for cluster  #
-      #                                                         #
-      #     bucket_path: dev/[Team Name]/                       #
-      #                                                         #
-      ###########################################################
-      bucket_path: {{tf-bucket-path-plcontainer}}
+      bucket_path: clusters/
 
 # Docker images
 
