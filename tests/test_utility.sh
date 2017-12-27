@@ -1,5 +1,11 @@
 #!/bin/bash
-
+#------------------------------------------------------------------------------
+#
+#
+# Copyright (c) 2017-Present Pivotal Software, Inc
+#
+#------------------------------------------------------------------------------
+#
 # For plcontainer CLI testing. Called in sql/test_utility.sql
 
 plcontainer -h

@@ -1,4 +1,12 @@
-
+#!/bin/bash
+#------------------------------------------------------------------------------
+#
+#
+# Copyright (c) 2017-Present Pivotal Software, Inc
+#
+#------------------------------------------------------------------------------
+#
+# Test bad configuration in plcontainer C code. Called in sql/test_wrong_config.sql
 
 f1 () {
   echo "Test lack of image"

@@ -499,6 +499,7 @@ def validate_xml(filename):
             tmp_list = list(set(container_pathlist))
             if len(tmp_list) != len(container_pathlist):
                 logger.error("container should not have same mount points (check shared_directory) in runtime %s", runtime_id)
+                logger.error("Note if you are modifying/adding runtime configuration please do not use the reserved container paths /clientdir and /tmp/plcontainer")
                 raise Exception("Validation failed")
 
             # Settings
@@ -799,20 +800,28 @@ def main():
         if options.subparser_name == "runtime-add":
             elements = get_conf_elements(options)
             add_xml_config(tmp_file, elements)
-            logger.debug('Preparing the worker pool...')
-            pool = WorkerPool(PL_BATCH_SIZE)
-            logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-            distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-            new_config = True
+            valid_xml = validate_xml(tmp_file)
+            if not valid_xml:
+                retval = 1
+            else:
+                logger.debug('Preparing the worker pool...')
+                pool = WorkerPool(PL_BATCH_SIZE)
+                logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+                distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+                new_config = True
 
         if options.subparser_name == "runtime-replace":
             elements = get_conf_elements(options)
             update_xml_config(tmp_file, elements)
-            logger.debug('Preparing the worker pool...')
-            pool = WorkerPool(PL_BATCH_SIZE)
-            logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
-            distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
-            new_config = True
+            valid_xml = validate_xml(tmp_file)
+            if not valid_xml:
+                retval = 1
+            else:
+                logger.debug('Preparing the worker pool...')
+                pool = WorkerPool(PL_BATCH_SIZE)
+                logger.info('Distributing file %s to all locations...' % PLCONTAINER_CONFIG_FILE)
+                distribute_file(pool, tmp_file, PLCONTAINER_CONFIG_FILE, gpdb_locations)
+                new_config = True
 
         if options.subparser_name == "runtime-show":
             if options.runtime_id is None:

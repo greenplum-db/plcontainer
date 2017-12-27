@@ -269,6 +269,7 @@ Test xml validation: negative cases
 
 **Test: <shared_directory>: container paths should not be duplicated
 -container should not have same mount points (check shared_directory) in runtime plc_python
+-Note if you are modifying/adding runtime configuration please do not use the reserved container paths /clientdir and /tmp/plcontainer
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
