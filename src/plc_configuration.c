@@ -85,7 +85,7 @@ static void init_runtime_configurations() {
  * plcContainerConf structure that should be already allocated */
 static void parse_runtime_configuration(xmlNode *node) {
 	xmlNode *cur_node = NULL;
-	/* we add some cleanups in longjmp. longjmp may clobber the registers, 
+	/* we add some cleanups after longjmp. longjmp may clobber the registers, 
 	 * so we need to add volatile qualifier to pointer. If the pointee is read
 	 * after longjmp, the pointee also need to include volatile qualifier.
 	 * */
