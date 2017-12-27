@@ -280,7 +280,6 @@ static void parse_runtime_configuration(xmlNode *node) {
 					}
 					conf_entry->sharedDirs[i].host = plc_top_strdup((char *) value);
 					xmlFree(value);
-					value = NULL;
 					value = xmlGetProp(cur_node, (const xmlChar *) "container");
 					if (value == NULL) {
 						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
@@ -297,7 +296,6 @@ static void parse_runtime_configuration(xmlNode *node) {
 					}
 					conf_entry->sharedDirs[i].container = plc_top_strdup((char *) value);
 					xmlFree(value);
-					value = NULL;
 					value = xmlGetProp(cur_node, (const xmlChar *) "access");
 					if (value == NULL) {
 						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
