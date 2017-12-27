@@ -30,7 +30,7 @@ static int domain_socket_no = 0;
 
 static void init_runtime_configurations();
 
-static void parse_runtime_configurations(xmlNode *node);
+static void parse_runtime_configuration(xmlNode *node);
 
 static void get_runtime_configurations(xmlNode *node);
 
@@ -83,7 +83,7 @@ static void init_runtime_configurations() {
 
 /* Function parses the container XML definition and fills the passed
  * plcContainerConf structure that should be already allocated */
-static void parse_runtime_configurations(xmlNode *node) {
+static void parse_runtime_configuration(xmlNode *node) {
 	xmlNode *cur_node = NULL;
 	xmlChar *value = NULL;
 	char *runtime_id = NULL;
@@ -346,7 +346,7 @@ static void get_runtime_configurations(xmlNode *node) {
 	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 		if (cur_node->type == XML_ELEMENT_NODE &&
 		    xmlStrcmp(cur_node->name, (const xmlChar *) "runtime") == 0) {
-			parse_runtime_configurations(cur_node);
+			parse_runtime_configuration(cur_node);
 		}
 	}
 
@@ -360,16 +360,21 @@ static void get_runtime_configurations(xmlNode *node) {
 
 /* Safe way to deallocate container configuration list structure */
 static void free_runtime_conf_entry(runtimeConfEntry *entry) {
+	int i;
+
 	if (entry->image)
 		pfree(entry->image);
 	if (entry->command)
 		pfree(entry->command);
-	int i;
+
 	for (i = 0; i < entry->nSharedDirs; i++) {
-		pfree(entry->sharedDirs[i].container);
-		pfree(entry->sharedDirs[i].host);
+		if (entry->sharedDirs[i].container)
+			pfree(entry->sharedDirs[i].container);
+		if (entry->sharedDirs[i].host)
+			pfree(entry->sharedDirs[i].host);
 	}
-	pfree(entry->sharedDirs);
+	if (entry->sharedDirs)
+		pfree(entry->sharedDirs);
 }
 
 static void print_runtime_configurations() {

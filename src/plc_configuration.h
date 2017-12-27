@@ -14,11 +14,7 @@
 #include "plcontainer.h"
 
 #define PLC_PROPERTIES_FILE "plcontainer_configuration.xml"
-#define SHARED_DIR_MAX_LENGTH 512
 #define RUNTIME_ID_MAX_LENGTH 512
-#define IMAGE_NAME_MAX_LENGTH 512
-#define COMMAND_MAX_LENGTH 512
-#define MAX_SHARED_DIR_NUM 16
 #define MAX_EXPECTED_RUNTIME_NUM 32
 
 typedef enum {
@@ -45,7 +41,7 @@ typedef struct runtimeConfEntry {
 	char *command;
 	int memoryMb;
 	int nSharedDirs;
-	plcSharedDir* sharedDirs;
+	plcSharedDir *sharedDirs;
 	bool isNetworkConnection;
 	bool enable_log;
 } runtimeConfEntry;
