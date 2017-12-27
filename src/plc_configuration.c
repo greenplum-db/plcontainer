@@ -321,7 +321,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 			value = NULL;
 		}
 
-		if (conf_entry != NULL && runtime_id != NULL) {
+		if (rumtime_conf_table != NULL && runtime_id != NULL) {
 			/* remove the broken runtime config entry in hash table*/
 			hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_REMOVE, NULL);
 
