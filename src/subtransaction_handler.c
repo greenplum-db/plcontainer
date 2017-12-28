@@ -34,7 +34,7 @@ static int16 plcontainer_subtransaction_exit(plcMsgSubtransaction *msg);
 static int16
 plcontainer_subtransaction_enter() {
 	elog(DEBUG1, "subtransaction enter beigin");
-	PLySubtransactionData *subxactdata = NULL;
+	volatile PLySubtransactionData* volatile subxactdata = NULL;
 	MemoryContext oldcontext;
 	oldcontext = CurrentMemoryContext;
 

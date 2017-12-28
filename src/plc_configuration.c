@@ -414,7 +414,7 @@ static void print_runtime_configurations() {
 }
 
 static int plc_refresh_container_config(bool verbose) {
-	xmlDoc *doc = NULL;
+	xmlDoc* volatile doc = NULL;
 	char filename[1024];
 
 	init_runtime_configurations();

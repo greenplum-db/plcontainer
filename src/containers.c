@@ -40,8 +40,8 @@ typedef struct {
 #define CLEANUP_SLEEP_SEC 2
 #define CLEANUP_CONTAINER_CONNECT_RETRY_TIMES 60
 
-static int containers_init = 0;
-static container_t *containers;
+static volatile int containers_init = 0;
+static volatile container_t* volatile containers;
 static char *uds_fn_for_cleanup;
 
 static void init_containers();

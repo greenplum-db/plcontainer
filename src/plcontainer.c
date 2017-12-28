@@ -48,7 +48,7 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
 
 static void plcontainer_process_log(plcMsgLog *log);
 
-static bool DeleteBackendsWhenError;
+static volatile bool DeleteBackendsWhenError;
 
 /* this is saved and restored by plcontainer_call_handler */
 MemoryContext pl_container_caller_context = NULL;
