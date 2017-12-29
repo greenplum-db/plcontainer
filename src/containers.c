@@ -370,7 +370,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	 * Unblock signals after we insert the container identifier into the 
 	 * container slot for later cleanup.
 	 */
-	PG_SETMASK(&BlockSig);
+	PG_SETMASK(&UnBlockSig);
 
 	pfree(dockerid);
 	dockerid = containers[container_slot].dockerid;
