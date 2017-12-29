@@ -6,6 +6,7 @@
  */
 #include <ctype.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -339,6 +340,13 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	 *
 	 */
 	_loop_cnt = 0;
+
+	/*
+	 * We need to block signal when we are creating a container from docker,
+	 * until the created container is registered in the container slot, which 
+	 * can be used to cleanup the residual container when exeption happens.
+	 */
+	PG_SETMASK(&BlockSig);
 	while ((res = plc_backend_create(conf, &dockerid, container_slot, &uds_dir)) < 0) {
 		if (++_loop_cnt >= 3)
 			break;
@@ -358,6 +366,12 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	 * established.
 	 */
 	insert_container_slot(conf->runtimeid, dockerid, container_slot);
+	/*
+	 * Unblock signals after we insert the container identifier into the 
+	 * container slot for later cleanup.
+	 */
+	PG_SETMASK(&BlockSig);
+
 	pfree(dockerid);
 	dockerid = containers[container_slot].dockerid;
 
