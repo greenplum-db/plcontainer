@@ -63,8 +63,8 @@ static int start_listener_ipc() {
 	char *uds_fn;
 	int sz;
 	char *env_str, *endptr;
-	uid_t srv_uid, clt_uid;
-	gid_t srv_gid;
+	uid_t qe_uid, clt_uid;
+	gid_t qe_gid, clt_gid;
 	long val;
 
 	/* filename: IPC_CLIENT_DIR + '/' + UDS_SHARED_FILE */
@@ -99,6 +99,8 @@ static int start_listener_ipc() {
 	 * about this for current/future backends, so we still use environment
 	 * variable, instead of extracting them via reading the owner of the path.
 	 */
+
+	/* Get executor uid: for permission of the unix domain socket file. */
 	if ((env_str = getenv("EXECUTOR_UID")) == NULL)
 		lprintf (ERROR, "EXECUTOR_UID is not set, something wrong on QE side");
 	errno = 0;
@@ -109,9 +111,9 @@ static int start_listener_ipc() {
 	    *endptr != '\0') {
 		lprintf(ERROR, "EXECUTOR_UID is wrong:'%s'", env_str);
 	}
-	srv_uid = val;
+	qe_uid = val;
 
-	/* Get gid */
+	/* Get executor gid: for permission of the unix domain socket file. */
 	if ((env_str = getenv("EXECUTOR_GID")) == NULL)
 		lprintf (ERROR, "EXECUTOR_GID is not set, something wrong on QE side");
 	errno = 0;
@@ -122,12 +124,14 @@ static int start_listener_ipc() {
 	    *endptr != '\0') {
 		lprintf(ERROR, "EXECUTOR_GID is wrong:'%s'", env_str);
 	}
-	srv_gid = val;
+	qe_gid = val;
 
-	/* Change ownership & permission for the file for unix domain socket */
-	if (chown(uds_fn, srv_uid, srv_gid) < 0)
+	/* Change ownership & permission for the file for unix domain socket so
+	 * code on the QE side could access it and clean up it later.
+	 */
+	if (chown(uds_fn, qe_uid, qe_gid) < 0)
 		lprintf (ERROR, "Could not set ownership for file %s with owner %d, "
-			"group %d: %s", uds_fn, srv_uid, srv_gid, strerror(errno));
+			"group %d: %s", uds_fn, qe_uid, qe_gid, strerror(errno));
 	if (chmod(uds_fn, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) < 0) /* 0666*/
 		lprintf (ERROR, "Could not set permission for file %s: %s",
 			         uds_fn, strerror(errno));
@@ -136,24 +140,48 @@ static int start_listener_ipc() {
 		lprintf(ERROR, "Cannot listen the socket: %s", strerror(errno));
 	}
 
-	/*
-	 * Now we need to use another uid that can not write the path for safety
-	 * since the owner of the path is srv_uid generally.
-	 */
-	setuid(srv_uid + 1);
-	setgid(srv_gid + 1);
+	/* Get the uid that the client will run with */
+	if ((env_str = getenv("CLIENT_UID")) == NULL)
+		lprintf (ERROR, "CLIENT_UID is not set, something wrong on QE side");
+	errno = 0;
+	val = strtol(env_str, &endptr, 10);
+	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
+	    (errno != 0 && val == 0) ||
+	    endptr == env_str ||
+	    *endptr != '\0') {
+		lprintf(ERROR, "CLIENT_UID is wrong:'%s'", env_str);
+	}
+	clt_uid = val;
+
+	/* Get the gid that the client will run with */
+	if ((env_str = getenv("CLIENT_GID")) == NULL)
+		lprintf (ERROR, "CLIENT_GID is not set, something wrong on QE side");
+	errno = 0;
+	val = strtol(env_str, &endptr, 10);
+	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
+	    (errno != 0 && val == 0) ||
+	    endptr == env_str ||
+	    *endptr != '\0') {
+		lprintf(ERROR, "CLIENT_GID is wrong:'%s'", env_str);
+	}
+	clt_gid = val;
+
+	setuid(clt_uid);
+	setgid(clt_gid);
 
 	/*
-	 * Note: It is said on some platforms that if it is a setuid program,
-	 * it could setuid back to root if the real uid is root although this is not
-	 * the case on Linux. So we checks getuid() here also.
+	 * Note: 
+	 * 1) clt_uid should not be same as qe_uid.
+	 * 2) It is said on some platforms that if it is a setuid program,
+	 *    it could setuid back to root if the real uid is root although this
+	 *    is not the case on Linux. So we check here.
 	 */
 	clt_uid = getuid();
-	if (clt_uid == 0 || clt_uid == srv_uid || clt_uid != geteuid()) {
+	if (clt_uid == qe_uid || clt_uid == 0 || clt_uid != geteuid()) {
 		close(sock);
 		unlink(uds_fn);
-		lprintf(ERROR, "New uid (%d) is wrong: (%d %d %d): %s\n",
-			        clt_uid, 0, srv_uid, geteuid(), strerror(errno));
+		lprintf(ERROR, "New uid (%d) is wrong. (qe_uid: %d, euid: %d): %s\n",
+			        clt_uid, qe_uid, geteuid(), strerror(errno));
 		return -1;
 	}
 

@@ -212,6 +212,8 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"    \"Cmd\": [\"%s\"],\n"
 			"    \"Env\": [\"EXECUTOR_UID=%d\",\n"
 			"              \"EXECUTOR_GID=%d\",\n"
+			"              \"CLIENT_UID=%d\",\n"
+			"              \"CLIENT_GID=%d\",\n"
 			"              \"DB_USER_NAME=%s\",\n"
 			"              \"DB_NAME=%s\",\n"
 			"              \"DB_QE_PID=%d\",\n"
@@ -255,6 +257,8 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         conf->command,
 	         getuid(),
 	         getgid(),
+	         getuid() + 1,
+	         getgid() + 1,
 	         username,
 	         dbname,
 	         MyProcPid,
