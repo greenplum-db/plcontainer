@@ -438,10 +438,11 @@ plcontainer runtime-restore -f good_xml_file \
 	| grep -v 'Distributing to'
 rm -f good_xml_file
 
-#recover the origincal runtime configurations.
+#recover the original runtime configurations.
 echo
 echo "Recover the previous runtime configuration file"
 plcontainer runtime-restore -f test_backup_cfg_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' \
 	| grep -v 'Distributing to'
+rm -f /tmp/tmp.image-list.out /tmp/backup_file
 # We do not remove test_backup_cfg_file for checking in case there are test errors.

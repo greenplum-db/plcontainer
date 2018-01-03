@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pwd.h>
 #include <unistd.h>
 #include <curl/curl.h>
 
@@ -239,8 +240,23 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	int createStringSize = 0;
 	const char *username = GetUserNameFromId(GetUserId());
 	const char *dbname = MyProcPort->database_name;
+	struct passwd *pwd;
 
 	if (has_error == true) {
+		return -1;
+	}
+
+	/*
+	 * We run container processes with the uid/gid of user "nobody" on host.
+	 * We might want to allow to use uid/gid set in runtimeConfEntry but since
+	 * this is important (security concern) we simply use "nobody" by now.
+	 * Note this is used for IPC only at this momement.
+	 */
+	errno = 0;
+	pwd = getpwnam("nobody");
+	if (pwd == NULL) {
+		snprintf(api_error_message, sizeof(api_error_message),
+		         "Failed to get passwd info for user 'nobody': %d", errno);
 		return -1;
 	}
 
@@ -257,8 +273,8 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         conf->command,
 	         getuid(),
 	         getgid(),
-	         getuid() + 1,
-	         getgid() + 1,
+	         pwd->pw_uid,
+	         pwd->pw_gid,
 	         username,
 	         dbname,
 	         MyProcPid,
