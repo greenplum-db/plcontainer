@@ -53,7 +53,7 @@ def parseargs():
     runtime_replace_parser = subparsers.add_parser("runtime-replace", help = "Replace with a container runtime configuration on all hosts")
     runtime_show_parser = subparsers.add_parser("runtime-show", help = "Show container runtime configurations on the current host")
     runtime_delete_parser = subparsers.add_parser("runtime-delete", help = "Delete a given container runtime configuration on all hosts")
-    runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "Use editor to edit and then update configurations on all hosts")
+    runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "Use editor (vi by default) to edit and then update configurations on all hosts")
     runtime_backup_parser = subparsers.add_parser("runtime-backup", help = "Backup the local runtime configurations to a file")
     runtime_restore_parser = subparsers.add_parser("runtime-restore", help = "Restore the runtime configurations from a file and distribute them to all hosts")
     runtime_verify_parser = subparsers.add_parser("runtime-verify",
@@ -106,7 +106,7 @@ def parseargs():
 
     # For runtime-edit
     runtime_edit_parser.add_argument("-e", "--editor", dest="editor",
-                                    help="editor command (e.g. vim, etc)", required=True)
+                                    help="editor command (e.g. vim, etc)", required=False)
 
     # For runtime-backup
     runtime_backup_parser.add_argument("-f", "--file", dest="file",
@@ -840,6 +840,8 @@ def main():
                 logger.info('This runtime configuraiton does not exist. Ignoring.')
 
         if options.subparser_name == "runtime-edit":
+            if options.editor is None:
+                options.editor  = "vi"
             changed = edit_file(tmp_file, options.editor)
             if changed:
                 logger.debug('Preparing the worker pool...')
