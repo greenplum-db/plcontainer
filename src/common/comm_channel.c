@@ -98,7 +98,7 @@ static int receive_rawmsg(plcConn *conn, plcMessage **mRaw);
 
 int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
 	int res;
-	lprintf(DEBUG1, "start to send data, type is %c", msg->msgtype);
+	plc_elog(DEBUG1, "start to send data, type is %c", msg->msgtype);
 	switch (msg->msgtype) {
 		case MT_PING:
 			res = send_ping(conn);
@@ -128,7 +128,7 @@ int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
 			res = send_subtransaction(conn, (plcMsgSubtransaction *) msg);
 			break;
 		default:
-			lprintf(ERROR, "UNHANDLED MESSAGE: '%c'", msg->msgtype);
+			plc_elog(ERROR, "UNHANDLED MESSAGE: '%c'", msg->msgtype);
 			res = -1;
 			break;
 	}
@@ -143,7 +143,7 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask) {
 	conn->rx_timeout_sec = 0x7fffFFFF; /* Wait for ever at this moment */
 	res = receive_message_type(conn, &cType);
 	conn->rx_timeout_sec = TIMEOUT_SEC;
-	lprintf(DEBUG1, "start to receive data, type is %c", cType);
+	plc_elog(DEBUG1, "start to receive data, type is %c", cType);
 	if (res >= 0) {
 		switch (cType) {
 			case MT_PING:
@@ -192,7 +192,7 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask) {
 				res = receive_subtransaction_result(conn, msg);
 				break;
 			default:
-				lprintf(ERROR, "unknown message type: %d / '%c'", (int) cType, cType);
+				plc_elog(ERROR, "unknown message type: %d / '%c'", (int) cType, cType);
 				*msg = NULL;
 				return -1;
 		}
@@ -201,7 +201,7 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask) {
 
 	unexpected_type:
 	/* If lprint with level < ERROR, we need to free the message for various types. */
-	lprintf(ERROR, "unexpected message type: %d / '%c'. Mask of expected "
+	plc_elog(ERROR, "unexpected message type: %d / '%c'. Mask of expected "
 		    "message: 0x%llx", (int) cType, cType, (long long) mask);
 	*msg = NULL;
 	return -1;
@@ -218,44 +218,44 @@ static int message_end(plcConn *conn) {
 }
 
 static int send_char(plcConn *conn, char c) {
-	debug_print(WARNING, "    ===> sending int8/char '%d/%c'", (int) c, c);
+	channel_elog(WARNING, "    ===> sending int8/char '%d/%c'", (int) c, c);
 	return plcBufferAppend(conn, &c, 1);
 }
 
 static int send_int16(plcConn *conn, int16 i) {
-	debug_print(WARNING, "    ===> sending int16 '%d'", (int) i);
+	channel_elog(WARNING, "    ===> sending int16 '%d'", (int) i);
 	return plcBufferAppend(conn, (char *) &i, 2);
 }
 
 static int send_int32(plcConn *conn, int32 i) {
-	debug_print(WARNING, "    ===> sending int32 '%d'", i);
+	channel_elog(WARNING, "    ===> sending int32 '%d'", i);
 	return plcBufferAppend(conn, (char *) &i, 4);
 }
 
 static int send_uint32(plcConn *conn, uint32 i) {
-	debug_print(WARNING, "    ===> sending uint32 '%u'", i);
+	channel_elog(WARNING, "    ===> sending uint32 '%u'", i);
 	return plcBufferAppend(conn, (char *) &i, 4);
 }
 
 static int send_int64(plcConn *conn, int64 i) {
-	debug_print(WARNING, "    ===> sending int64 '%lld'", i);
+	channel_elog(WARNING, "    ===> sending int64 '%lld'", i);
 	return plcBufferAppend(conn, (char *) &i, 8);
 }
 
 static int send_float4(plcConn *conn, float4 f) {
-	debug_print(WARNING, "    ===> sending float4 '%f'", f);
+	channel_elog(WARNING, "    ===> sending float4 '%f'", f);
 	return plcBufferAppend(conn, (char *) &f, 4);
 }
 
 static int send_float8(plcConn *conn, float8 f) {
-	debug_print(WARNING, "    ===> sending float8 '%f'", f);
+	channel_elog(WARNING, "    ===> sending float8 '%f'", f);
 	return plcBufferAppend(conn, (char *) &f, 8);
 }
 
 static int send_cstring(plcConn *conn, char *s) {
 	int res = 0;
 
-	debug_print(WARNING, "    ===> sending cstring '%s'", s);
+	channel_elog(WARNING, "    ===> sending cstring '%s'", s);
 	if (s == NULL) {
 		res = send_int32(conn, -1);
 	} else {
@@ -273,7 +273,7 @@ static int send_cstring(plcConn *conn, char *s) {
 static int send_bytea(plcConn *conn, char *s) {
 	int res = 0;
 
-	debug_print(WARNING, "    ===> sending bytea of size '%d'", *((int *) s));
+	channel_elog(WARNING, "    ===> sending bytea of size '%d'", *((int *) s));
 	res |= send_int32(conn, *((int *) s));
 	res |= plcBufferAppend(conn, s + 4, *((int *) s));
 	return res;
@@ -283,10 +283,10 @@ static int send_raw_object(plcConn *conn, plcType *type, rawdata *obj) {
 	int res = 0;
 	if (obj->isnull) {
 		res |= send_char(conn, 'N');
-		debug_print(WARNING, "Object is null");
+		channel_elog(WARNING, "Object is null");
 	} else {
 		res |= send_char(conn, 'D');
-		debug_print(WARNING, "Object type is '%s' and value is:", plc_get_type_name(type->type));
+		channel_elog(WARNING, "Object type is '%s' and value is:", plc_get_type_name(type->type));
 		switch (type->type) {
 			case PLC_DATA_INT1:
 				res |= send_char(conn, *((char *) obj->value));
@@ -319,7 +319,7 @@ static int send_raw_object(plcConn *conn, plcType *type, rawdata *obj) {
 				res |= send_udt(conn, type, (plcUDT *) obj->value);
 				break;
 			default:
-				lprintf(ERROR, "Received unsupported argument type: %s [%d]",
+				plc_elog(ERROR, "Received unsupported argument type: %s [%d]",
 					    plc_get_type_name(type->type), type->type);
 				break;
 		}
@@ -357,8 +357,8 @@ static int send_type(plcConn *conn, plcType *type) {
 	int res = 0;
 	int i = 0;
 
-	debug_print(WARNING, "VVVVVVVVVVVVVVV");
-	debug_print(WARNING, "    Type '%s' with name '%s'", plc_get_type_name(type->type), type->typeName);
+	channel_elog(WARNING, "VVVVVVVVVVVVVVV");
+	channel_elog(WARNING, "    Type '%s' with name '%s'", plc_get_type_name(type->type), type->typeName);
 	res |= send_char(conn, (char) type->type);
 	res |= send_cstring(conn, type->typeName);
 	if (type->type == PLC_DATA_ARRAY || type->type == PLC_DATA_UDT) {
@@ -366,7 +366,7 @@ static int send_type(plcConn *conn, plcType *type) {
 		for (i = 0; i < type->nSubTypes && res == 0; i++)
 			res |= send_type(conn, &type->subTypes[i]);
 	}
-	debug_print(WARNING, "///////////////");
+	channel_elog(WARNING, "///////////////");
 
 	return res;
 }
@@ -375,7 +375,7 @@ static int send_udt(plcConn *conn, plcType *type, plcUDT *udt) {
 	int res = 0;
 	int i = 0;
 
-	debug_print(WARNING, "Sending user-defined type with %d members", type->nSubTypes);
+	channel_elog(WARNING, "Sending user-defined type with %d members", type->nSubTypes);
 
 	for (i = 0; i < type->nSubTypes && res == 0; i++) {
 		res |= send_raw_object(conn, &type->subTypes[i], &udt->data[i]);
@@ -394,49 +394,49 @@ static int receive_message_type(plcConn *conn, char *c) {
 
 static int receive_char(plcConn *conn, char *c) {
 	int res = plcBufferRead(conn, c, 1);
-	debug_print(WARNING, "    <=== receiving int8/char '%d/%c'", (int) *c, *c);
+	channel_elog(WARNING, "    <=== receiving int8/char '%d/%c'", (int) *c, *c);
 	return res;
 }
 
 static int receive_int16(plcConn *conn, int16 *i) {
 	int res = plcBufferRead(conn, (char *) i, 2);
-	debug_print(WARNING, "    <=== receiving int16 '%d'", (int) *i);
+	channel_elog(WARNING, "    <=== receiving int16 '%d'", (int) *i);
 	return res;
 }
 
 static int receive_int32(plcConn *conn, int32 *i) {
 	int res = plcBufferRead(conn, (char *) i, 4);
-	debug_print(WARNING, "    <=== receiving int32 '%d'", *i);
+	channel_elog(WARNING, "    <=== receiving int32 '%d'", *i);
 	return res;
 }
 
 static int receive_uint32(plcConn *conn, uint32 *i) {
 	int res = plcBufferRead(conn, (char *) i, 4);
-	debug_print(WARNING, "    <=== receiving uint32 '%u'", *i);
+	channel_elog(WARNING, "    <=== receiving uint32 '%u'", *i);
 	return res;
 }
 
 static int receive_int64(plcConn *conn, int64 *i) {
 	int res = plcBufferRead(conn, (char *) i, 8);
-	debug_print(WARNING, "    <=== receiving int64 '%lld'", *i);
+	channel_elog(WARNING, "    <=== receiving int64 '%lld'", *i);
 	return res;
 }
 
 static int receive_float4(plcConn *conn, float4 *f) {
 	int res = plcBufferRead(conn, (char *) f, 4);
-	debug_print(WARNING, "    <=== receiving float4 '%f'", *f);
+	channel_elog(WARNING, "    <=== receiving float4 '%f'", *f);
 	return res;
 }
 
 static int receive_float8(plcConn *conn, float8 *f) {
 	int res = plcBufferRead(conn, (char *) f, 8);
-	debug_print(WARNING, "    <=== receiving float8 '%f'", *f);
+	channel_elog(WARNING, "    <=== receiving float8 '%f'", *f);
 	return res;
 }
 
 static int receive_raw(plcConn *conn, char *s, size_t len) {
 	int res = plcBufferRead(conn, s, len);
-	debug_print(WARNING, "    <=== receiving raw '%d' bytes", (int) len);
+	channel_elog(WARNING, "    <=== receiving raw '%d' bytes", (int) len);
 	return res;
 }
 
@@ -451,7 +451,7 @@ static int receive_cstring(plcConn *conn, char **s) {
 	if (cnt == -1) {
 		*s = NULL;
 	} else if (cnt < 0) {
-			lprintf(LOG, "receive_cstring() returns a negative length: %d", cnt);
+			plc_elog(LOG, "receive_cstring() returns a negative length: %d", cnt);
 		return -1;
 	} else {
 		*s = pmalloc(cnt + 1);
@@ -461,7 +461,7 @@ static int receive_cstring(plcConn *conn, char **s) {
 		(*s)[cnt] = 0;
 	}
 
-	debug_print(WARNING, "    <=== receiving cstring '%s'", *s);
+	channel_elog(WARNING, "    <=== receiving cstring '%s'", *s);
 	return res;
 }
 
@@ -474,13 +474,13 @@ static int receive_bytea(plcConn *conn, char **s) {
 	}
 
 	*s = pmalloc(len + 4);
-	debug_print(WARNING, "    ===> receiving bytea of size '%d' at %p for %p", len, *s, s);
+	channel_elog(WARNING, "    ===> receiving bytea of size '%d' at %p for %p", len, *s, s);
 
 	*((int *) *s) = len;
 	if (len > 0) {
 		res = plcBufferRead(conn, *s + 4, len);
 	}
-	debug_print(WARNING, "    ===> receiving bytea '%s'", strndup(*s + 4, len));
+	channel_elog(WARNING, "    ===> receiving bytea '%s'", strndup(*s + 4, len));
 
 	return res;
 }
@@ -489,16 +489,16 @@ static int receive_raw_object(plcConn *conn, plcType *type, rawdata *obj) {
 	int res = 0;
 	char isn;
 	if (obj == NULL) {
-		lprintf(ERROR, "NULL object reference received by receive_raw_object");
+		plc_elog(ERROR, "NULL object reference received by receive_raw_object");
 	}
 	res |= receive_char(conn, &isn);
 	if (isn == 'N') {
 		obj->isnull = 1;
 		obj->value = NULL;
-		debug_print(WARNING, "Object is null");
+		channel_elog(WARNING, "Object is null");
 	} else {
 		obj->isnull = 0;
-		debug_print(WARNING, "Object value is:");
+		channel_elog(WARNING, "Object value is:");
 		switch (type->type) {
 			case PLC_DATA_INT1:
 				obj->value = (char *) pmalloc(1);
@@ -537,7 +537,7 @@ static int receive_raw_object(plcConn *conn, plcType *type, rawdata *obj) {
 				res |= receive_udt(conn, type, &obj->value);
 				break;
 			default:
-				lprintf(ERROR, "Received unsupported argument type: %s [%d]",
+				plc_elog(ERROR, "Received unsupported argument type: %s [%d]",
 					    plc_get_type_name(type->type), type->type);
 				break;
 		}
@@ -593,7 +593,7 @@ static int receive_array(plcConn *conn, plcType *type, rawdata *obj) {
 						res |= receive_udt(conn, type, &((char **) arr->data)[i]);
 						break;
 					default:
-						lprintf(ERROR, "Should not get here (type: %d)",
+						plc_elog(ERROR, "Should not get here (type: %d)",
 							    arr->meta->type);
 						break;
 				}
@@ -608,11 +608,11 @@ static int receive_type(plcConn *conn, plcType *type) {
 	int i = 0;
 	char typ;
 
-	debug_print(WARNING, "VVVVVVVVVVVVVVV");
+	channel_elog(WARNING, "VVVVVVVVVVVVVVV");
 	res |= receive_char(conn, &typ);
 	res |= receive_cstring(conn, &type->typeName);
 	type->type = (int) typ;
-	debug_print(WARNING, "    Type '%s' with name '%s'", plc_get_type_name(type->type), type->typeName);
+	channel_elog(WARNING, "    Type '%s' with name '%s'", plc_get_type_name(type->type), type->typeName);
 
 	if (type->type == PLC_DATA_ARRAY || type->type == PLC_DATA_UDT) {
 		res |= receive_int16(conn, &type->nSubTypes);
@@ -625,7 +625,7 @@ static int receive_type(plcConn *conn, plcType *type) {
 		type->nSubTypes = 0;
 		type->subTypes = NULL;
 	}
-	debug_print(WARNING, "///////////////");
+	channel_elog(WARNING, "///////////////");
 
 	return res;
 }
@@ -635,7 +635,7 @@ static int receive_udt(plcConn *conn, plcType *type, char **resdata) {
 	int i = 0;
 	plcUDT *udt;
 
-	debug_print(WARNING, "Receiving user-defined type with %d members", type->nSubTypes);
+	channel_elog(WARNING, "Receiving user-defined type with %d members", type->nSubTypes);
 
 	udt = plc_alloc_udt(type->nSubTypes);
 	for (i = 0; i < type->nSubTypes && res == 0; i++) {
@@ -650,9 +650,9 @@ static int receive_udt(plcConn *conn, plcType *type, char **resdata) {
 
 static int send_argument(plcConn *conn, plcArgument *arg) {
 	int res = 0;
-	debug_print(WARNING, "Sending argument '%s'", arg->name);
+	channel_elog(WARNING, "Sending argument '%s'", arg->name);
 	res |= send_cstring(conn, arg->name);
-	debug_print(WARNING, "Argument type is '%s'", plc_get_type_name(arg->type.type));
+	channel_elog(WARNING, "Argument type is '%s'", plc_get_type_name(arg->type.type));
 	res |= send_type(conn, &arg->type);
 	res |= send_raw_object(conn, &arg->type, &arg->data);
 	return res;
@@ -662,11 +662,11 @@ static int send_ping(plcConn *conn) {
 	int res = 0;
 	char *ping = "ping";
 
-	debug_print(WARNING, "Sending ping message");
+	channel_elog(WARNING, "Sending ping message");
 	res |= message_start(conn, MT_PING);
 	res |= send_cstring(conn, ping);
 	res |= message_end(conn);
-	debug_print(WARNING, "Finished ping message");
+	channel_elog(WARNING, "Finished ping message");
 	return res;
 }
 
@@ -674,28 +674,28 @@ static int send_call(plcConn *conn, plcMsgCallreq *call) {
 	int res = 0;
 	int i;
 
-	debug_print(WARNING, "Sending call request for function '%s'", call->proc.name);
+	channel_elog(WARNING, "Sending call request for function '%s'", call->proc.name);
 	res |= message_start(conn, MT_CALLREQ);
 	res |= send_cstring(conn, call->proc.name);
-	debug_print(WARNING, "Function source code:");
-	debug_print(WARNING, "%s", call->proc.src);
+	channel_elog(WARNING, "Function source code:");
+	channel_elog(WARNING, "%s", call->proc.src);
 	res |= send_cstring(conn, call->proc.src);
-	debug_print(WARNING, "Function OID is '%u'", call->objectid);
+	channel_elog(WARNING, "Function OID is '%u'", call->objectid);
 	res |= send_uint32(conn, call->objectid);
-	debug_print(WARNING, "Function has changed is '%d'", call->hasChanged);
+	channel_elog(WARNING, "Function has changed is '%d'", call->hasChanged);
 	res |= send_int32(conn, call->hasChanged);
-	debug_print(WARNING, "Function return type is '%s'", plc_get_type_name(call->retType.type));
+	channel_elog(WARNING, "Function return type is '%s'", plc_get_type_name(call->retType.type));
 	res |= send_type(conn, &call->retType);
-	debug_print(WARNING, "Function is set-returning: %d", (int) call->retset);
+	channel_elog(WARNING, "Function is set-returning: %d", (int) call->retset);
 	res |= send_int32(conn, call->retset);
-	debug_print(WARNING, "Function number of arguments is '%d'", call->nargs);
+	channel_elog(WARNING, "Function number of arguments is '%d'", call->nargs);
 	res |= send_int32(conn, call->nargs);
 
 	for (i = 0; i < call->nargs; i++)
 		res |= send_argument(conn, &call->args[i]);
 
 	res |= message_end(conn);
-	debug_print(WARNING, "Finished call request for function '%s'", call->proc.name);
+	channel_elog(WARNING, "Finished call request for function '%s'", call->proc.name);
 	return res;
 }
 
@@ -705,14 +705,14 @@ static int send_result(plcConn *conn, plcMsgResult *ret) {
 	plcMsgError *msg = NULL;
 
 	res |= message_start(conn, MT_RESULT);
-	debug_print(WARNING, "Sending result of %d rows and %d columns", ret->rows, ret->cols);
+	channel_elog(WARNING, "Sending result of %d rows and %d columns", ret->rows, ret->cols);
 	res |= send_int32(conn, ret->rows);
 	res |= send_int32(conn, ret->cols);
 
 	/* send columns types and names */
-	debug_print(WARNING, "Sending types and names of %d columns", ret->cols);
+	channel_elog(WARNING, "Sending types and names of %d columns", ret->cols);
 	for (i = 0; i < ret->cols; i++) {
-		debug_print(WARNING, "Column '%s' with type '%d'", ret->names[i], (int) ret->types[i].type);
+		channel_elog(WARNING, "Column '%s' with type '%d'", ret->names[i], (int) ret->types[i].type);
 		res |= send_type(conn, &ret->types[i]);
 		res |= send_cstring(conn, ret->names[i]);
 	}
@@ -720,7 +720,7 @@ static int send_result(plcConn *conn, plcMsgResult *ret) {
 	/* send rows */
 	for (i = 0; i < ret->rows; i++)
 		for (j = 0; j < ret->cols; j++) {
-			debug_print(WARNING, "Sending row %d column %d", i, j);
+			channel_elog(WARNING, "Sending row %d column %d", i, j);
 			res |= send_raw_object(conn, &ret->types[j], &ret->data[i][j]);
 		}
 
@@ -737,7 +737,7 @@ static int send_result(plcConn *conn, plcMsgResult *ret) {
 
 	res |= message_end(conn);
 
-	debug_print(WARNING, "Finished sending function result");
+	channel_elog(WARNING, "Finished sending function result");
 
 	return res;
 }
@@ -745,13 +745,13 @@ static int send_result(plcConn *conn, plcMsgResult *ret) {
 static int send_log(plcConn *conn, plcMsgLog *mlog) {
 	int res = 0;
 
-	debug_print(WARNING, "Sending log message to backend");
+	channel_elog(WARNING, "Sending log message to backend");
 	res |= message_start(conn, MT_LOG);
 	res |= send_int32(conn, mlog->level);
 	res |= send_cstring(conn, mlog->message);
 
 	res |= message_end(conn);
-	debug_print(WARNING, "Finished sending log message");
+	channel_elog(WARNING, "Finished sending log message");
 	return res;
 }
 
@@ -759,25 +759,25 @@ static int send_log(plcConn *conn, plcMsgLog *mlog) {
 static int send_subtransaction_result(plcConn *conn, plcMsgSubtransactionResult *mSubr) {
 	int res = 0;
 
-	debug_print(WARNING, "Sending subtransaction result message to client");
+	channel_elog(WARNING, "Sending subtransaction result message to client");
 	res |= message_start(conn, MT_SUBTRAN_RESULT);
 	res |= send_int16(conn, mSubr->result);
 
 	res |= message_end(conn);
-	debug_print(WARNING, "Finished sending subtransaction result message");
+	channel_elog(WARNING, "Finished sending subtransaction result message");
 	return res;
 }
 
 static int send_subtransaction(plcConn *conn, plcMsgSubtransaction *mSub) {
 	int res = 0;
 
-	debug_print(WARNING, "Sending subtransaction result message to backend");
+	channel_elog(WARNING, "Sending subtransaction result message to backend");
 	res |= message_start(conn, MT_SUBTRANSACTION);
 	res |= send_char(conn, mSub->action);
 	res |= send_char(conn, mSub->type);
 
 	res |= message_end(conn);
-	debug_print(WARNING, "Finished sending subtransaction message");
+	channel_elog(WARNING, "Finished sending subtransaction message");
 	return res;
 }
 
@@ -809,7 +809,7 @@ static int send_sql(plcConn *conn, plcMsgSQL *msg) {
 			break;
 		default:
 			res = -1;
-			lprintf(ERROR, "UNHANDLED SQL TYPE: %d for sql send", msg->sqltype);
+			plc_elog(ERROR, "UNHANDLED SQL TYPE: %d for sql send", msg->sqltype);
 			break;
 	}
 
@@ -914,7 +914,7 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
 	ret->msgtype = MT_RESULT;
 	res |= receive_uint32(conn, &ret->rows);
 	res |= receive_uint32(conn, &ret->cols);
-	debug_print(WARNING, "Receiving function result of %d rows and %d columns",
+	channel_elog(WARNING, "Receiving function result of %d rows and %d columns",
 	            ret->rows, ret->cols);
 
 	if (res == 0) {
@@ -923,7 +923,7 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
 		ret->names = NULL;
 
 		/* Receive data, if ret->cols == 0, it is update/delete/insert, no data need to receive */
-		debug_print(WARNING, "Receiving types and names of %d rows * %d columns", ret->rows, ret->cols);
+		channel_elog(WARNING, "Receiving types and names of %d rows * %d columns", ret->rows, ret->cols);
 		/* receive columns types and names */
 		if (ret->cols > 0) {
 			ret->types = pmalloc(ret->cols * sizeof(plcType));
@@ -932,7 +932,7 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
 			for (i = 0; i < ret->cols && res == 0; i++) {
 				res |= receive_type(conn, &ret->types[i]);
 				res |= receive_cstring(conn, &ret->names[i]);
-				debug_print(WARNING, "Column '%s' with type '%d'", ret->names[i], (int) ret->types[i].type);
+				channel_elog(WARNING, "Column '%s' with type '%d'", ret->names[i], (int) ret->types[i].type);
 			}
 			for (; i < ret->cols; i++) {
 				ret->types[i].typeName = NULL;
@@ -947,7 +947,7 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
 				for (i = 0; i < ret->rows && res == 0; i++) {
 					ret->data[i] = pmalloc(ret->cols * sizeof(*ret->data[i]));
 					for (j = 0; j < ret->cols; j++) {
-						debug_print(WARNING, "Receiving row %d column %d", i, j);
+						channel_elog(WARNING, "Receiving row %d column %d", i, j);
 						res |= receive_raw_object(conn, &ret->types[j], &ret->data[i][j]);
 					}
 				}
@@ -963,7 +963,7 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
 		free_result(ret, false);
 	}
 
-	debug_print(WARNING, "Finished receiving function result");
+	channel_elog(WARNING, "Finished receiving function result");
 	return res;
 }
 
@@ -971,14 +971,14 @@ static int receive_log(plcConn *conn, plcMessage **mLog) {
 	int res = 0;
 	plcMsgLog *ret;
 
-	debug_print(WARNING, "Receiving log message from client");
+	channel_elog(WARNING, "Receiving log message from client");
 	*mLog = pmalloc(sizeof(plcMsgLog));
 	ret = (plcMsgLog *) *mLog;
 	ret->msgtype = MT_LOG;
 	res |= receive_int32(conn, &ret->level);
 	res |= receive_cstring(conn, &ret->message);
 
-	debug_print(WARNING, "Finished receiving log message");
+	channel_elog(WARNING, "Finished receiving log message");
 	return res;
 }
 
@@ -1004,10 +1004,10 @@ static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
 	ret->msgtype = MT_SQL;
 	ret->sqltype = SQL_TYPE_PREPARE;
 
-	debug_print(WARNING, "Receiving spi prepare request");
+	channel_elog(WARNING, "Receiving spi prepare request");
 	res |= receive_int32(conn, &ret->nargs);
 	if (ret->nargs < 0) {
-		lprintf(LOG, "spi prepare request with nargs (%d) < 0", ret->nargs);
+		plc_elog(LOG, "spi prepare request with nargs (%d) < 0", ret->nargs);
 		return -1;
 	} else if (ret->nargs > 0) {
 		ret->args = pmalloc(ret->nargs * sizeof(*ret->args));
@@ -1017,7 +1017,7 @@ static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
 
 	res |= receive_cstring(conn, &ret->statement);
 
-	debug_print(WARNING, "Received spi prepare request and returned %d", res);
+	channel_elog(WARNING, "Received spi prepare request and returned %d", res);
 	return res;
 }
 
@@ -1031,11 +1031,11 @@ static int receive_sql_unprepare(plcConn *conn, plcMessage **mStmt) {
 	ret->msgtype = MT_SQL;
 	ret->sqltype = SQL_TYPE_UNPREPARE;
 
-	debug_print(WARNING, "Receiving spi unprepare request");
+	channel_elog(WARNING, "Receiving spi unprepare request");
 	res |= receive_int64(conn, &pplan);
 	ret->pplan = (void *) pplan;
 
-	debug_print(WARNING, "Received spi unprepare request and returned %d", res);
+	channel_elog(WARNING, "Received spi unprepare request and returned %d", res);
 	return res;
 }
 
@@ -1046,10 +1046,10 @@ static int receive_subtransaction(plcConn *conn, plcMessage **mSub) {
 	ret = (plcMsgSubtransaction *) *mSub;
 	ret->msgtype = MT_SUBTRANSACTION;
 
-	debug_print(WARNING, "Receiving subtransaction request");
+	channel_elog(WARNING, "Receiving subtransaction request");
 	res |= receive_char(conn, &ret->action);
 	res |= receive_char(conn, &ret->type);
-	debug_print(WARNING, "Received subtransaction request and returned %d", res);
+	channel_elog(WARNING, "Received subtransaction request and returned %d", res);
 
 	return res;
 }
@@ -1061,9 +1061,9 @@ static int receive_subtransaction_result(plcConn *conn, plcMessage **mSubr) {
 	ret = (plcMsgSubtransactionResult *) *mSubr;
 	ret->msgtype = MT_SUBTRAN_RESULT;
 
-	debug_print(WARNING, "Receiving subtransaction result");
+	channel_elog(WARNING, "Receiving subtransaction result");
 	res |= receive_int16(conn, &ret->result);
-	debug_print(WARNING, "Received subtransaction result and returned %d", res);
+	channel_elog(WARNING, "Received subtransaction result and returned %d", res);
 
 	return res;
 }
@@ -1079,10 +1079,10 @@ static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 	ret->msgtype = MT_SQL;
 	ret->sqltype = SQL_TYPE_PEXECUTE;
 
-	debug_print(WARNING, "Receiving spi pexecute request");
+	channel_elog(WARNING, "Receiving spi pexecute request");
 	res |= receive_int32(conn, &ret->nargs);
 	if (ret->nargs < 0) {
-		lprintf(LOG, "spi pexecute request with nargs (%d) < 0", ret->nargs);
+		plc_elog(LOG, "spi pexecute request with nargs (%d) < 0", ret->nargs);
 		return -1;
 	} else if (ret->nargs > 0) {
 		ret->args = pmalloc(ret->nargs * sizeof(*ret->args));
@@ -1093,16 +1093,16 @@ static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 	res |= receive_int64(conn, &pplan);
 	ret->pplan = (void *) pplan;
 
-	debug_print(WARNING, "Received spi pexecute request and returned %d", res);
+	channel_elog(WARNING, "Received spi pexecute request and returned %d", res);
 	return res;
 }
 
 static int receive_argument(plcConn *conn, plcArgument *arg) {
 	int res = 0;
 	res |= receive_cstring(conn, &arg->name);
-	debug_print(WARNING, "Receiving argument '%s'", arg->name);
+	channel_elog(WARNING, "Receiving argument '%s'", arg->name);
 	res |= receive_type(conn, &arg->type);
-	debug_print(WARNING, "Argument type is '%s'", plc_get_type_name(arg->type.type));
+	channel_elog(WARNING, "Argument type is '%s'", plc_get_type_name(arg->type.type));
 	res |= receive_raw_object(conn, &arg->type, &arg->data);
 	return res;
 }
@@ -1114,17 +1114,17 @@ static int receive_ping(plcConn *conn, plcMessage **mPing) {
 	*mPing = (plcMessage *) pmalloc(sizeof(plcMsgPing));
 	((plcMsgPing *) *mPing)->msgtype = MT_PING;
 
-	debug_print(WARNING, "Receiving ping message");
+	channel_elog(WARNING, "Receiving ping message");
 	res |= receive_cstring(conn, &ping);
 	if (res == 0) {
 		if (strncmp(ping, "ping", strlen("ping")) != 0) {
-			debug_print(WARNING, "Ping message receive failed");
+			channel_elog(WARNING, "Ping message receive failed");
 			res = -1;
 		}
 		pfree(ping);
 	}
 
-	debug_print(WARNING, "Finished receiving ping message");
+	channel_elog(WARNING, "Finished receiving ping message");
 	return res;
 }
 
@@ -1137,20 +1137,20 @@ static int receive_call(plcConn *conn, plcMessage **mCall) {
 	req = (plcMsgCallreq *) *mCall;
 	req->msgtype = MT_CALLREQ;
 	res |= receive_cstring(conn, &req->proc.name);
-	debug_print(WARNING, "Receiving call request for function '%s'", req->proc.name);
+	channel_elog(WARNING, "Receiving call request for function '%s'", req->proc.name);
 	res |= receive_cstring(conn, &req->proc.src);
-	debug_print(WARNING, "Function source code:");
-	debug_print(WARNING, "%s", req->proc.src);
+	channel_elog(WARNING, "Function source code:");
+	channel_elog(WARNING, "%s", req->proc.src);
 	res |= receive_uint32(conn, &req->objectid);
-	debug_print(WARNING, "Function OID is '%u'", req->objectid);
+	channel_elog(WARNING, "Function OID is '%u'", req->objectid);
 	res |= receive_int32(conn, &req->hasChanged);
-	debug_print(WARNING, "Function has changed is '%d'", req->hasChanged);
+	channel_elog(WARNING, "Function has changed is '%d'", req->hasChanged);
 	res |= receive_type(conn, &req->retType);
-	debug_print(WARNING, "Function return type is '%s'", plc_get_type_name(req->retType.type));
+	channel_elog(WARNING, "Function return type is '%s'", plc_get_type_name(req->retType.type));
 	res |= receive_int32(conn, &req->retset);
-	debug_print(WARNING, "Function is set-returning: %d", (int) req->retset);
+	channel_elog(WARNING, "Function is set-returning: %d", (int) req->retset);
 	res |= receive_int32(conn, &req->nargs);
-	debug_print(WARNING, "Function number of arguments is '%d'", req->nargs);
+	channel_elog(WARNING, "Function number of arguments is '%d'", req->nargs);
 	if (res == 0) {
 		req->args = NULL;
 		if (req->nargs > 0) {
@@ -1158,11 +1158,11 @@ static int receive_call(plcConn *conn, plcMessage **mCall) {
 			for (i = 0; i < req->nargs && res == 0; i++)
 				res |= receive_argument(conn, &req->args[i]);
 		} else if (req->nargs < 0) {
-			lprintf(LOG, "function call with nargs (%d) < 0", req->nargs);
+			plc_elog(LOG, "function call with nargs (%d) < 0", req->nargs);
 			return -1;
 		}
 	}
-	debug_print(WARNING, "Finished call request for function '%s'", req->proc.name);
+	channel_elog(WARNING, "Finished call request for function '%s'", req->proc.name);
 	return res;
 }
 
@@ -1187,7 +1187,7 @@ static int receive_sql(plcConn *conn, plcMessage **mSql) {
 				break;
 			default:
 				res = -1;
-				lprintf(ERROR, "UNHANDLED SQL TYPE: %d for sql receive", sqlType);
+				plc_elog(ERROR, "UNHANDLED SQL TYPE: %d for sql receive", sqlType);
 				break;
 		}
 	}
@@ -1215,13 +1215,13 @@ static int receive_rawmsg(plcConn *conn, plcMessage **mRaw) {
 
 void fill_prepare_argument(plcArgument *arg, char *str, plcDatatype plcData) {
 	if (arg == NULL || str == NULL)
-		lprintf (ERROR, "Impossible to reach here for spi prepare: %p, %p",
+		plc_elog (ERROR, "Impossible to reach here for spi prepare: %p, %p",
 			    arg, str);
 
 	if (str != NULL)
 		arg->type.typeName = pstrdup(str);
 	if (arg->type.typeName == NULL)
-		lprintf (ERROR, "Failed to allocate memory for spi prepare (size: %zd)",
+		plc_elog (ERROR, "Failed to allocate memory for spi prepare (size: %zd)",
 			    strlen(str));
 
 	arg->type.type = plcData;

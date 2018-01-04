@@ -33,7 +33,7 @@ static int16 plcontainer_subtransaction_exit(plcMsgSubtransaction *msg);
  */
 static int16
 plcontainer_subtransaction_enter() {
-	elog(DEBUG1, "subtransaction enter beigin");
+	plc_elog(DEBUG1, "subtransaction enter beigin");
 	PLySubtransactionData* volatile subxactdata = NULL;
 	MemoryContext oldcontext;
 	oldcontext = CurrentMemoryContext;
@@ -63,7 +63,7 @@ plcontainer_subtransaction_enter() {
 	MemoryContextSwitchTo(oldcontext);
 
 	explicit_subtransactions = lcons(subxactdata, explicit_subtransactions);
-	elog(DEBUG1, "subtransaction enter end, current explicit transaction num:%d",
+	plc_elog(DEBUG1, "subtransaction enter end, current explicit transaction num:%d",
 	     list_length(explicit_subtransactions));
 	return SUCCESS;
 }
@@ -74,7 +74,7 @@ plcontainer_subtransaction_enter() {
  *  When exit with exception, we need to rollback.
  */
 static int16 plcontainer_subtransaction_exit(plcMsgSubtransaction *msg) {
-	elog(DEBUG1, "subtransaction exit begin");
+	plc_elog(DEBUG1, "subtransaction exit begin");
 	PLySubtransactionData *subxactdata;
 	if (explicit_subtransactions == NIL) {
 		return NO_SUBTRANSACTION_ERROR;
@@ -106,7 +106,7 @@ static int16 plcontainer_subtransaction_exit(plcMsgSubtransaction *msg) {
 	 * case it did, make sure we remain connected.
 	 */
 	SPI_restore_connection();
-	elog(DEBUG1, "subtransaction exit end, current explicit transaction num: %d",
+	plc_elog(DEBUG1, "subtransaction exit end, current explicit transaction num: %d",
 	     list_length(explicit_subtransactions));
 	return SUCCESS;
 }
@@ -127,7 +127,7 @@ void plcontainer_process_subtransaction(plcMsgSubtransaction *msg, plcConn *conn
 
 	res = plcontainer_channel_send(conn, (plcMessage *) result);
 	if (res < 0) {
-		elog(ERROR, "Error sending data to the client, with errno %d. ", res);
+		plc_elog(ERROR, "Error sending data to the client, with errno %d. ", res);
 	}
 }
 
@@ -138,7 +138,7 @@ void plcontainer_process_subtransaction(plcMsgSubtransaction *msg, plcConn *conn
 void
 plcontainer_abort_open_subtransactions(int save_subxact_level) {
 	Assert(save_subxact_level >= 0);
-	elog(DEBUG1, "explicit_subtransactions length %d:%d", list_length(explicit_subtransactions), save_subxact_level);
+	plc_elog(DEBUG1, "explicit_subtransactions length %d:%d", list_length(explicit_subtransactions), save_subxact_level);
 	while (list_length(explicit_subtransactions) > save_subxact_level) {
 		PLySubtransactionData *subtransactiondata;
 

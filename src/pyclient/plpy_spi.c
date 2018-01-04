@@ -438,7 +438,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 	 * so if resp->cols > 0, it must be SELECT statment.
 	 */
 	if (resp->cols == 0) {
-		lprintf(DEBUG1, "the rows is %d", resp->rows);
+		plc_elog(DEBUG1, "the rows is %d", resp->rows);
 		PyObject *nrows = PyInt_FromLong((long) resp->rows);
 		/* only need one element for number of rows are processed*/
 		pyresult = PyList_New(1);
@@ -562,7 +562,7 @@ PLy_subtransaction_dealloc(PyObject *subxact UNUSED) {
 static PyObject *
 PLy_subtransaction_enter(PyObject *self, PyObject *unused UNUSED) {
 
-	lprintf(DEBUG1, "Subtransaction enter");
+	plc_elog(DEBUG1, "Subtransaction enter");
 	plcConn *conn = plcconn_global;
 	PLySubtransactionObject *subxact = (PLySubtransactionObject *) self;
 
@@ -628,7 +628,7 @@ PLy_subtransaction_enter(PyObject *self, PyObject *unused UNUSED) {
  */
 static PyObject *
 PLy_subtransaction_exit(PyObject *self, PyObject *args) {
-	lprintf(DEBUG1, "Subtransaction exit");
+	plc_elog(DEBUG1, "Subtransaction exit");
 	plcConn *conn = plcconn_global;
 	PyObject *type;
 	PyObject *value;
@@ -718,7 +718,7 @@ PLy_spi_execute_query(char *query, long limit) {
 	 * so if resp->cols > 0, it must be SELECT statment.
 	 */
 	if (resp->cols == 0) {
-		lprintf(DEBUG1, "the rows is %d", resp->rows);
+		plc_elog(DEBUG1, "the rows is %d", resp->rows);
 		PyObject *nrows = PyInt_FromLong((long) resp->rows);
 		/* only need one element for number of rows are processed*/
 		pyresult = PyList_New(1);
@@ -935,7 +935,7 @@ PLy_exception_set(PyObject *exc, const char *fmt, ...) {
 	vsnprintf(buf, sizeof(buf), dgettext(TEXTDOMAIN, fmt), ap);
 	va_end(ap);
 
-	lprintf(DEBUG1, "Python caught an exception: %s", buf);
+	plc_elog(DEBUG1, "Python caught an exception: %s", buf);
 
 	PyErr_SetString(exc, buf);
 }

@@ -75,7 +75,7 @@ static void init_runtime_configurations() {
 								HASH_ELEM | HASH_FUNCTION);
 
 	if (rumtime_conf_table == NULL) {
-		elog(ERROR, "Error: could not create runtime conf hash table. Check your memory usage.");
+		plc_elog(ERROR, "Error: could not create runtime conf hash table. Check your memory usage.");
 	}
 
 	return ;
@@ -101,7 +101,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 	bool		foundPtr;
 
 	if (rumtime_conf_table == NULL) {
-		elog(ERROR, "Runtime configuration table is not initialized.");
+		plc_elog(ERROR, "Runtime configuration table is not initialized.");
 	}
 
 	PG_TRY();
@@ -115,7 +115,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 			if (cur_node->type == XML_ELEMENT_NODE &&
 					xmlStrcmp(cur_node->name, (const xmlChar *) "id") == 0) {
 				if (id_num++ > 0) {
-					elog(ERROR, "tag <id> must be specified only once in configuartion");
+					plc_elog(ERROR, "tag <id> must be specified only once in configuartion");
 				}
 				value = xmlNodeGetContent(cur_node);
 
@@ -128,7 +128,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 		}
 
 		if (id_num == 0) {
-			elog(ERROR, "tag <id> must be specified in configuartion");
+			plc_elog(ERROR, "tag <id> must be specified in configuartion");
 		}
 
 		/* find the corresponding runtime config*/
@@ -136,7 +136,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 
 		/*check if runtime id already exists in hash table.*/
 		if (foundPtr) {
-			elog(ERROR, "Detecting duplicated runtime id %s in configuration file", runtime_id);
+			plc_elog(ERROR, "Detecting duplicated runtime id %s in configuration file", runtime_id);
 		}
 
 		/* First iteration - parse name, container_id and memory_mb and count the
@@ -190,7 +190,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 						} else if (strcasecmp((char *) value, "disable") == 0) {
 							conf_entry->enable_log = false;
 						} else {
-							elog(ERROR, "SETTING element <log> only accepted \"enable\" or"
+							plc_elog(ERROR, "SETTING element <log> only accepted \"enable\" or"
 								"\"disable\" only, current string is %s", value);
 						}
 						xmlFree((void *) value);
@@ -201,7 +201,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 						validSetting = true;
 						long memorySize = pg_atoi((char *) value, sizeof(int), 0);
 						if (memorySize <= 0) {
-							elog(ERROR, "container memory size could not less 0, current string is %s", value);
+							plc_elog(ERROR, "container memory size could not less 0, current string is %s", value);
 						} else {
 							conf_entry->memoryMb = conf_entry->memoryMb;
 						}
@@ -218,7 +218,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 								 strcasecmp((char *) value, "yes") == 0) {
 							conf_entry->isNetworkConnection = true;
 						} else {
-							elog(ERROR, "SETTING element <use_network> only accepted \"yes\"|\"true\" or"
+							plc_elog(ERROR, "SETTING element <use_network> only accepted \"yes\"|\"true\" or"
 								"\"no\"|\"false\" only, current string is %s", value);
 
 						}
@@ -226,7 +226,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 						value = NULL;
 					}
 					if (!validSetting) {
-						elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf_entry->runtimeid);
+						plc_elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf_entry->runtimeid);
 					}
 
 				}
@@ -238,7 +238,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 
 				/* If the tag is not known - we raise the related error */
 				if (processed == 0) {
-					elog(ERROR, "Unrecognized element '%s' inside of container specification",
+					plc_elog(ERROR, "Unrecognized element '%s' inside of container specification",
 						 cur_node->name);
 				}
 
@@ -251,17 +251,17 @@ static void parse_runtime_configuration(xmlNode *node) {
 		}
 
 		if (image_num > 1) {
-			elog(ERROR, "There are more than one 'image' subelement in a runtime element %s", conf_entry->runtimeid);
+			plc_elog(ERROR, "There are more than one 'image' subelement in a runtime element %s", conf_entry->runtimeid);
 		}
 		else if (image_num < 1) {
-			elog(ERROR, "Lack of 'image' subelement in a runtime element %s", conf_entry->runtimeid);
+			plc_elog(ERROR, "Lack of 'image' subelement in a runtime element %s", conf_entry->runtimeid);
 		}
 
 		if (command_num > 1) {
-			elog(ERROR, "There are more than one 'command' subelement in a runtime element %s", conf_entry->runtimeid);
+			plc_elog(ERROR, "There are more than one 'command' subelement in a runtime element %s", conf_entry->runtimeid);
 		}
 		else if (command_num < 1) {
-			elog(ERROR, "Lack of 'command' subelement in a runtime element %s", conf_entry->runtimeid);
+			plc_elog(ERROR, "Lack of 'command' subelement in a runtime element %s", conf_entry->runtimeid);
 		}
 
 		/* Process the shared directories */
@@ -279,14 +279,14 @@ static void parse_runtime_configuration(xmlNode *node) {
 
 					value = xmlGetProp(cur_node, (const xmlChar *) "host");
 					if (value == NULL) {
-						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
+						plc_elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
 							" 'host' that is not found: %s", conf_entry->runtimeid);
 					}
 					conf_entry->sharedDirs[i].host = plc_top_strdup((char *) value);
 					xmlFree((void *) value);
 					value = xmlGetProp(cur_node, (const xmlChar *) "container");
 					if (value == NULL) {
-						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
+						plc_elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
 							" 'container' that is not found: %s", conf_entry->runtimeid);
 					}
 					/* Shared folders will not be created a lot, so using array to search duplicated
@@ -294,7 +294,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					 * */
 					for (j =0; j< i; j++) {
 						if (strcasecmp((char *) value, conf_entry->sharedDirs[j].container) == 0) {
-							elog(ERROR, "Container path cannot be the same in 'shared_directory' element "
+							plc_elog(ERROR, "Container path cannot be the same in 'shared_directory' element "
 									"in the runtime %s", conf_entry->runtimeid);
 						}
 					}
@@ -302,14 +302,14 @@ static void parse_runtime_configuration(xmlNode *node) {
 					xmlFree((void *) value);
 					value = xmlGetProp(cur_node, (const xmlChar *) "access");
 					if (value == NULL) {
-						elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
+						plc_elog(ERROR, "Configuration tag 'shared_directory' has a mandatory element"
 							" 'access' that is not found: %s", conf_entry->runtimeid);
 					} else if (strcmp((char *) value, "ro") == 0) {
 						conf_entry->sharedDirs[i].mode = PLC_ACCESS_READONLY;
 					} else if (strcmp((char *) value, "rw") == 0) {
 						conf_entry->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
 					} else {
-						elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf_entry->runtimeid);
+						plc_elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf_entry->runtimeid);
 					}
 					xmlFree((void *) value);
 					value = NULL;
@@ -345,7 +345,7 @@ static void get_runtime_configurations(xmlNode *node) {
 
 	/* Validation that the root node matches the expected specification */
 	if (xmlStrcmp(node->name, (const xmlChar *) "configuration") != 0) {
-		elog(ERROR, "Wrong XML configuration provided. Expected 'configuration'"
+		plc_elog(ERROR, "Wrong XML configuration provided. Expected 'configuration'"
 			" as root element, got '%s' instead", node->name);
 	}
 
@@ -359,7 +359,7 @@ static void get_runtime_configurations(xmlNode *node) {
 
 	/* If no container definitions found - error */
 	if (hash_get_num_entries(rumtime_conf_table) == 0) {
-		elog(ERROR, "Did not find a single 'runtime' declaration in configuration");
+		plc_elog(ERROR, "Did not find a single 'runtime' declaration in configuration");
 	}
 
 	return ;
@@ -394,19 +394,19 @@ static void print_runtime_configurations() {
 
 		while ((conf_entry = (runtimeConfEntry *) hash_seq_search(&hash_status)) != NULL)
 		{
-			elog(INFO, "Container '%s' configuration", conf_entry->runtimeid);
-			elog(INFO, "    image = '%s'", conf_entry->image);
-			elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
-			elog(INFO, "    use network = '%s'", conf_entry->isNetworkConnection ? "yes" : "no");
-			elog(INFO, "    enable log  = '%s'", conf_entry->enable_log ? "yes" : "no");
+			plc_elog(INFO, "Container '%s' configuration", conf_entry->runtimeid);
+			plc_elog(INFO, "    image = '%s'", conf_entry->image);
+			plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
+			plc_elog(INFO, "    use network = '%s'", conf_entry->isNetworkConnection ? "yes" : "no");
+			plc_elog(INFO, "    enable log  = '%s'", conf_entry->enable_log ? "yes" : "no");
 			for (j = 0; j < conf_entry->nSharedDirs; j++) {
-				elog(INFO, "    shared directory from host '%s' to container '%s'",
+				plc_elog(INFO, "    shared directory from host '%s' to container '%s'",
 					 conf_entry->sharedDirs[j].host,
 					 conf_entry->sharedDirs[j].container);
 				if (conf_entry->sharedDirs[j].mode == PLC_ACCESS_READONLY) {
-					elog(INFO, "        access = readonly");
+					plc_elog(INFO, "        access = readonly");
 				} else {
-					elog(INFO, "        access = readwrite");
+					plc_elog(INFO, "        access = readwrite");
 				}
 			}
 		}
@@ -432,7 +432,7 @@ static int plc_refresh_container_config(bool verbose) {
 	{
 		doc = xmlReadFile(filename, NULL, 0);
 		if (doc == NULL) {
-			elog(ERROR, "Error: could not parse file %s, wrongly formatted XML or missing configuration file\n", filename);
+			plc_elog(ERROR, "Error: could not parse file %s, wrongly formatted XML or missing configuration file\n", filename);
 			return -1;
 		}
 
@@ -636,7 +636,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		container_list = json_tokener_parse(json_result);
 
 		if (container_list == NULL) {
-			elog(ERROR, "Parse JSON object error, cannot get the containers summary");
+			plc_elog(ERROR, "Parse JSON object error, cannot get the containers summary");
 		}
 
 		arraylen = json_object_array_length(container_list);
@@ -697,23 +697,23 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 
 			containerObj = json_object_array_get_idx(container_list, call_cntr);
 			if (containerObj == NULL) {
-				elog(ERROR, "Not a valid container.");
+				plc_elog(ERROR, "Not a valid container.");
 			}
 
 			struct json_object *statusObj = NULL;
 			if (!json_object_object_get_ex(containerObj, "Status", &statusObj)) {
-				elog(ERROR, "failed to get json \"Status\" field.");
+				plc_elog(ERROR, "failed to get json \"Status\" field.");
 			}
 			const char *statusStr = json_object_get_string(statusObj);
 			struct json_object *labelObj = NULL;
 			if (!json_object_object_get_ex(containerObj, "Labels", &labelObj)) {
-				elog(ERROR, "failed to get json \"Labels\" field.");
+				plc_elog(ERROR, "failed to get json \"Labels\" field.");
 			}
 			struct json_object *ownerObj = NULL;
 			if (!json_object_object_get_ex(labelObj, "owner", &ownerObj)) {
 				funcctx->call_cntr++;
 				call_cntr++;
-				elog(LOG, "failed to get json \"owner\" field. Maybe this container is not started by PL/Container");
+				plc_elog(LOG, "failed to get json \"owner\" field. Maybe this container is not started by PL/Container");
 				continue;
 			}
 			const char *ownerStr = json_object_get_string(ownerObj);
@@ -721,7 +721,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			if (strcmp(ownerStr, username) != 0 && superuser() == false) {
 				funcctx->call_cntr++;
 				call_cntr++;
-				elog(DEBUG1, "Current username %s (not super user) is not match conatiner owner %s, skip",
+				plc_elog(DEBUG1, "Current username %s (not super user) is not match conatiner owner %s, skip",
 					 username, ownerStr);
 				continue;
 			}
@@ -730,13 +730,13 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			if (!json_object_object_get_ex(labelObj, "dbid", &dbidObj)) {
 				funcctx->call_cntr++;
 				call_cntr++;
-				elog(LOG, "failed to get json \"dbid\" field. Maybe this container is not started by PL/Container");
+				plc_elog(LOG, "failed to get json \"dbid\" field. Maybe this container is not started by PL/Container");
 				continue;
 			}
 			const char *dbidStr = json_object_get_string(dbidObj);
 			struct json_object *idObj = NULL;
 			if (!json_object_object_get_ex(containerObj, "Id", &idObj)) {
-				elog(ERROR, "failed to get json \"Id\" field.");
+				plc_elog(ERROR, "failed to get json \"Id\" field.");
 			}
 			const char *idStr = json_object_get_string(idObj);
 
@@ -744,11 +744,11 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			containerStateObj = json_tokener_parse(containerState);
 			struct json_object *memoryObj = NULL;
 			if (!json_object_object_get_ex(containerStateObj, "memory_stats", &memoryObj)) {
-				elog(ERROR, "failed to get json \"memory_stats\" field.");
+				plc_elog(ERROR, "failed to get json \"memory_stats\" field.");
 			}
 			struct json_object *memoryUsageObj = NULL;
 			if (!json_object_object_get_ex(memoryObj, "usage", &memoryUsageObj)) {
-				elog(LOG, "failed to get json \"usage\" field.");
+				plc_elog(LOG, "failed to get json \"usage\" field.");
 			} else {
 				containerMemoryUsage = json_object_get_int64(memoryUsageObj) / 1024;
 			}

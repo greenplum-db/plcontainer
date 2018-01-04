@@ -70,7 +70,7 @@ plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
 	procoid = fcinfo->flinfo->fn_oid;
 	procHeapTup = SearchSysCache(PROCOID, procoid, 0, 0, 0);
 	if (!HeapTupleIsValid(procHeapTup)) {
-		elog(ERROR, "cannot find proc with oid %u", procoid);
+		plc_elog(ERROR, "cannot find proc with oid %u", procoid);
 	}
 
 	pinfo = function_cache_get(procoid);
@@ -88,7 +88,7 @@ plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
 		 */
 		pinfo = plc_top_alloc(sizeof(plcProcInfo));
 		if (pinfo == NULL) {
-			elog(FATAL, "Cannot allocate memory for plcProcInfo structure");
+			plc_elog(FATAL, "Cannot allocate memory for plcProcInfo structure");
 		}
 		/* Remember transactional information to allow caching */
 		pinfo->funcOid = procoid;
@@ -118,14 +118,14 @@ plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
 			if (!isnull) {
 				textHeapTup = SearchSysCache(TYPEOID, ObjectIdGetDatum(TEXTOID), 0, 0, 0);
 				if (!HeapTupleIsValid(textHeapTup)) {
-					elog(FATAL, "cannot find text type in cache");
+					plc_elog(FATAL, "cannot find text type in cache");
 				}
 				typeTup = (Form_pg_type) GETSTRUCT(textHeapTup);
 				deconstruct_array(DatumGetArrayTypeP(argnamesArray), TEXTOID,
 				                  typeTup->typlen, typeTup->typbyval, typeTup->typalign,
 				                  &argnames, &argnulls, &len);
 				if (len != pinfo->nargs) {
-					elog(FATAL, "something bad happened, nargs (%d) != len (%d)",
+					plc_elog(FATAL, "something bad happened, nargs (%d) != len (%d)",
 					     pinfo->nargs, len);
 				}
 			}
@@ -157,11 +157,11 @@ plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
 		/* Get the text and name of the function */
 		srcdatum = SysCacheGetAttr(PROCOID, procHeapTup, Anum_pg_proc_prosrc, &isnull);
 		if (isnull)
-			elog(ERROR, "null prosrc");
+			plc_elog(ERROR, "null prosrc");
 		pinfo->src = plc_top_strdup(DatumGetCString(DirectFunctionCall1(textout, srcdatum)));
 		namedatum = SysCacheGetAttr(PROCOID, procHeapTup, Anum_pg_proc_proname, &isnull);
 		if (isnull)
-			elog(ERROR, "null proname");
+			plc_elog(ERROR, "null proname");
 		pinfo->name = plc_top_strdup(DatumGetCString(DirectFunctionCall1(nameout, namedatum)));
 
 		/* Cache the function for later use */
@@ -224,7 +224,7 @@ static bool plc_type_valid(plcTypeInfo *type) {
 		// Get the pg_class tuple for the argument type
 		relTup = SearchSysCache1(RELOID, ObjectIdGetDatum(type->typ_relid));
 		if (!HeapTupleIsValid(relTup))
-			elog(ERROR, "PL/Container cache lookup failed for relation %u", type->typ_relid);
+			plc_elog(ERROR, "PL/Container cache lookup failed for relation %u", type->typ_relid);
 
 		// If commit transaction ID has changed or relation was moved within table
 		// our type information is no longer valid

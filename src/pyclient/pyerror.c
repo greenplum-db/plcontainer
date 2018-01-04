@@ -110,7 +110,7 @@ void raise_execution_error(const char *format, ...) {
 		if (res < 0 || res >= len) {
 			msg = strdup("Error formatting error message string in raise_execution_error()");
 		}
-			lprintf(WARNING, "Python client caught an error: %s", msg);
+			plc_elog(WARNING, "Python client caught an error: %s", msg);
 	}
 	stack = get_python_error();
 
@@ -127,8 +127,8 @@ void raise_execution_error(const char *format, ...) {
 		plcLastErrMessage = err;
 		plc_raise_delayed_error();
 	} else {
-			lprintf(WARNING, "Cannot send second subsequent error message to client:");
-			lprintf(WARNING, msg);
+			plc_elog(WARNING, "Cannot send second subsequent error message to client:");
+			plc_elog(WARNING, msg);
 		free(msg);
 		if (stack != NULL) {
 			free(stack);

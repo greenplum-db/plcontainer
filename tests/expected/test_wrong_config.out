@@ -4,35 +4,33 @@
 \! $(pwd)/test_wrong_config.sh 1
 Test lack of image
 select pylog100();
-ERROR:  Lack of 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:253)
+ERROR:  plcontainer: Lack of 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:257)
 \! $(pwd)/test_wrong_config.sh 2
 Test multiple image
 select pylog100();
-ERROR:  There are more than one 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:250)
+ERROR:  plcontainer: There are more than one 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:254)
 \! $(pwd)/test_wrong_config.sh 3
 Test multiple id
 select pylog100();
-ERROR:  tag <id> must be specified only once in configuartion (plc_configuration.c:114)
+ERROR:  plcontainer: tag <id> must be specified only once in configuartion (plc_configuration.c:118)
 \! $(pwd)/test_wrong_config.sh 4
 Test lack of command element
 select pylog100();
-ERROR:  Lack of 'command' subelement in a runtime element plc_python_shared (plc_configuration.c:260)
+ERROR:  plcontainer: Lack of 'command' subelement in a runtime element plc_python_shared (plc_configuration.c:264)
 \! $(pwd)/test_wrong_config.sh 5
 Test log values should only be enable/disable
 select pylog100();
-ERROR:  SETTING element <log> only accepted "enable" or"disable" only, current string is yes (plc_configuration.c:190)
+ERROR:  plcontainer: SETTING element <log> only accepted "enable" or"disable" only, current string is yes (plc_configuration.c:194)
 \! $(pwd)/test_wrong_config.sh 6
 Test duplicate container path.
 select pylog100();
-ERROR:  Container path cannot be the same in 'shared_directory' element in the runtime plc_python_shared (plc_configuration.c:295)
+ERROR:  plcontainer: Container path cannot be the same in 'shared_directory' element in the runtime plc_python_shared (plc_configuration.c:298)
 \! $(pwd)/test_wrong_config.sh 7
 Test wrong use_network value.
 select pylog100();
-ERROR:  SETTING element <use_network> only accepted "yes"|"true" or"no"|"false" only, current string is enable (plc_configuration.c:218)
+ERROR:  plcontainer: SETTING element <use_network> only accepted "yes"|"true" or"no"|"false" only, current string is enable (plc_configuration.c:222)
 -- start_ignore
  \! plcontainer  runtime-restore -f /tmp/conf.bak
-20171226:23:26:20:008346 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
-20171226:23:26:20:008346 plcontainer:localhost:gpadmin-[INFO]:-Distributing to localhost.localdomain:/home/gpadmin/workspace/gpdb/gpAux/gpdemo/datadirs/qddir/demoDataDir-1/plcontainer_configuration.xml
-20171226:23:26:20:008346 plcontainer:localhost:gpadmin-[INFO]:-Distributing to localhost.localdomain:/home/gpadmin/workspace/gpdb/gpAux/gpdemo/datadirs/dbfast1/demoDataDir0/plcontainer_configuration.xml
-20171226:23:26:20:008346 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically
+20180104:11:20:28:031148 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20180104:11:20:29:031148 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -- end_ignore

@@ -46,7 +46,7 @@ int main(int argc UNUSED, char **argv UNUSED) {
 	setenv("CLIENT_LANGUAGE", "pythonclient", 0);
 
 	sock = start_listener();
-	lprintf(LOG, "Client has started execution at %s", asctime(timeinfo));
+	plc_elog(LOG, "Client has started execution at %s", asctime(timeinfo));
 
 	// Initialize Python
 	status = python_init();
@@ -59,6 +59,6 @@ int main(int argc UNUSED, char **argv UNUSED) {
 		plc_raise_delayed_error();
 	}
 
-	lprintf(LOG, "Client has finished execution");
+	plc_elog(LOG, "Client has finished execution");
 	return 0;
 }

@@ -35,9 +35,9 @@ interpreted as representing official policies, either expressed or implied, of t
 //#define PLCONTAINER_CHANNEL_DEBUG
 
 #ifdef PLCONTAINER_CHANNEL_DEBUG
-	#define debug_print(...) lprintf(__VA_ARGS__)
+	#define channel_elog(...) plc_elog(__VA_ARGS__)
 #else
-	#define debug_print(...)
+	#define channel_elog(...)
 #endif
 
 int plcontainer_channel_send(plcConn *conn, plcMessage *msg);

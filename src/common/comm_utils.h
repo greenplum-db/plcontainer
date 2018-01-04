@@ -32,7 +32,7 @@ interpreted as representing official policies, either expressed or implied, of t
 /*
   COMM_STANDALONE should be defined for standalone interpreters
   running inside containers, since they don't have access to postgres
-  symbols. If it was defined, lprintf will print the logs to stdout or
+  symbols. If it was defined, plc_elog will print the logs to stdout or
   in case of an error to stderr. pmalloc, pfree & pstrdup will use the
   std library.
 */
@@ -77,7 +77,7 @@ typedef char bool;
 #define false   ((bool) 0)
 /* End of extraction from c.h */
 
-#define lprintf(lvl, fmt, ...)                                          \
+#define plc_elog(lvl, fmt, ...)                                          \
         do {                                                            \
             FILE *out = stdout;                                         \
             if (lvl >= ERROR) {                                         \
@@ -107,7 +107,7 @@ void set_signal_handlers(void);
 
 #include "postgres.h"
 
-#define lprintf elog
+#define plc_elog(lvl, fmt, ...) elog(lvl, "plcontainer: " fmt, ##__VA_ARGS__);
 #define pmalloc palloc
 
 /* pfree & pstrdup are already defined by postgres */

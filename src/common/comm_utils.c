@@ -30,7 +30,7 @@ char *plc_top_strdup(char *str) {
 void *pmalloc(size_t size) {
 	void *addr = malloc(size);
 	if (addr == NULL)
-		lprintf(ERROR, "Fail to allocate %ld bytes", (unsigned long) size);
+		plc_elog(ERROR, "Fail to allocate %ld bytes", (unsigned long) size);
 	return addr;
 }
 
@@ -47,7 +47,7 @@ static void set_signal_handler(int signo, int sigflags, signal_handler func) {
 
 	ret = sigaction(signo, &sa, NULL);
 	if (ret < 0) {
-			lprintf(ERROR, "sigaction(%d with flag 0x%x) failed: %s", signo,
+			plc_elog(ERROR, "sigaction(%d with flag 0x%x) failed: %s", signo,
 			        sigflags, strerror(errno));
 		return;
 	}
@@ -60,7 +60,7 @@ static void sigsegv_handler() {
 	int size;
 
 	size = backtrace(stack, 100);
-		lprintf(LOG, "signal SIGSEGV was captured in pl/container. Stack:");
+		plc_elog(LOG, "signal SIGSEGV was captured in pl/container. Stack:");
 	fflush(stdout);
 
 	/* Do not call backtrace_symbols() since it calls malloc(3) which is not

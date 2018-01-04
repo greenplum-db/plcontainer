@@ -83,7 +83,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 
 	/* TODO: handle trigger requests as well */
 	if (CALLED_AS_TRIGGER(fcinfo)) {
-		elog(ERROR, "PL/Container does not support triggers");
+		plc_elog(ERROR, "PL/Container does not support triggers");
 		return datumreturn;
 	}
 
@@ -94,7 +94,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 
 	ret = SPI_connect();
 	if (ret != SPI_OK_CONNECT)
-		elog(ERROR, "[plcontainer] SPI connect error: %d (%s)", ret,
+		plc_elog(ERROR, "[plcontainer] SPI connect error: %d (%s)", ret,
 		     SPI_result_code_string(ret));
 
 	/* We need to cover this in try-catch block to catch the even of user
@@ -110,7 +110,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 		/* If the reason is Cancel or Termination or Backend error. */
 		if (InterruptPending || QueryCancelPending || QueryFinishPending ||
 		    DeleteBackendsWhenError) {
-			elog(DEBUG1, "Terminating containers due to user request reason("
+			plc_elog(DEBUG1, "Terminating containers due to user request reason("
 				"Flags for debugging: %d %d %d %d", InterruptPending,
 			     QueryCancelPending, QueryFinishPending, DeleteBackendsWhenError);
 			delete_containers();
@@ -127,7 +127,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	 */
 	ret = SPI_finish();
 	if (ret != SPI_OK_FINISH)
-		elog(ERROR, "[plcontainer] SPI finish error: %d (%s)", ret,
+		plc_elog(ERROR, "[plcontainer] SPI finish error: %d (%s)", ret,
 		     SPI_result_code_string(ret));
 
 	return datumreturn;
@@ -220,7 +220,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 			runtimeConfEntry *runtime_conf_entry = NULL;
 			runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
 			if (runtime_conf_entry == NULL) {
-				elog(ERROR, "Runtime '%s' is not defined in configuration "
+				plc_elog(ERROR, "Runtime '%s' is not defined in configuration "
 							"and cannot be used", runtime_id);
 			} else {
 				/* TODO: We could only remove this backend when error occurs. */
@@ -239,7 +239,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 			SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_send_request");
 
 			if (res < 0) {
-				elog(ERROR, "Error sending data to the client: %d. "
+				plc_elog(ERROR, "Error sending data to the client: %d. "
 							"Maybe retry later.", res);
 				return NULL;
 			}
@@ -251,7 +251,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 				res = plcontainer_channel_receive(conn, &answer, MT_ALL_BITS);
 				SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_recv_request");
 				if (res < 0) {
-					elog(ERROR, "Error receiving data from the client: %d. "
+					plc_elog(ERROR, "Error receiving data from the client: %d. "
 								"Maybe retry later.", res);
 					break;
 				}
@@ -279,7 +279,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 								(plcMsgSubtransaction *) answer, conn);
 						break;
 					default:
-						elog(ERROR, "Received unhandled message with type id %d "
+						plc_elog(ERROR, "Received unhandled message with type id %d "
 								"from client", message_type);
 						break;
 				}
@@ -290,7 +290,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 			}
 		} else {
 			/* If conn == NULL, it should have longjump-ed earlier. */
-			elog(ERROR, "Could not create or connect to container.");
+			plc_elog(ERROR, "Could not create or connect to container.");
 		}
 		/*
 		 * Since plpy will only let you close subtransactions that you
@@ -322,7 +322,7 @@ static Datum plcontainer_process_result(FunctionCallInfo fcinfo,
 	plcMsgResult *resmsg = presult->resmsg;
 
 	if (resmsg->cols > 1) {
-		elog(ERROR, "Functions returning multiple columns are not supported yet");
+		plc_elog(ERROR, "Functions returning multiple columns are not supported yet");
 		return result;
 	}
 
@@ -373,7 +373,7 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
 	if (res != NULL) {
 		retval = plcontainer_channel_send(conn, res);
 		if (retval < 0) {
-			elog(ERROR, "Error sending data to the client: %d. "
+			plc_elog(ERROR, "Error sending data to the client: %d. "
 				"Maybe retry later.", retval);
 			return;
 		}

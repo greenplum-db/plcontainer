@@ -88,9 +88,9 @@ int python_init() {
 	 * initialize plpy module
 	 */
 	if (PyType_Ready(&PLy_PlanType) < 0)
-			lprintf (ERROR, "could not initialize PLy_PlanType");
+			plc_elog (ERROR, "could not initialize PLy_PlanType");
 	if (PyType_Ready(&PLy_SubtransactionType) < 0)
-			lprintf (ERROR, "could not initialize PLy_SubtransactionType");
+			plc_elog (ERROR, "could not initialize PLy_SubtransactionType");
 
 	/* create the plpy module */
 #if PY_MAJOR_VERSION >= 3

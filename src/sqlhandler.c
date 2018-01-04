@@ -47,7 +47,7 @@ static plcMsgResult *create_sql_result(bool isSelect) {
 		return result;
 
 	} else if (SPI_tuptable == NULL) {
-		elog(ERROR, "Unexpected error: SPI returns NULL result");
+		plc_elog(ERROR, "Unexpected error: SPI returns NULL result");
 	}
 
 	result->cols = SPI_tuptable->tupdesc->natts;
@@ -158,7 +158,7 @@ static int insert_pplan(plcConn *conn, int64 pplan) {
 
 	slot = conn->head_free_pplan_slot;
 	if (slot >= 0) {
-			lprintf(DEBUG1, "Inserting pplan 0x%llx at slot %d for container %d",
+			plc_elog(DEBUG1, "Inserting pplan 0x%llx at slot %d for container %d",
 			        (long long) pplan, slot, conn->container_slot);
 		pplans[slot].pplan = pplan;
 		conn->head_free_pplan_slot = pplans[slot].next;
@@ -175,7 +175,7 @@ static int delete_pplan(plcConn *conn, int64 pplan) {
 
 	if (slot >= 0) {
 		pplans = conn->pplans;
-			lprintf(DEBUG1, "Removing pplan 0x%llx at slot %d, for container %d",
+			plc_elog(DEBUG1, "Removing pplan 0x%llx at slot %d, for container %d",
 			        (long long) pplan, slot, conn->container_slot);
 		pplans[slot].pplan = 0;
 		pplans[slot].next = conn->head_free_pplan_slot;
@@ -267,10 +267,10 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 					plcTypeInfo *pexecType;
 
 					if (search_pplan(conn, (int64) msg->pplan) < 0)
-						elog(ERROR, "There is no such prepared plan: %p", msg->pplan);
+						plc_elog(ERROR, "There is no such prepared plan: %p", msg->pplan);
 					plc_plan = (plcPlan *) ((char *) msg->pplan - offsetof(plcPlan, plan));
 					if (plc_plan->nargs != msg->nargs) {
-						elog(ERROR, "argument number wrong for execute with plan: "
+						plc_elog(ERROR, "argument number wrong for execute with plan: "
 									"Saved number (%d) vs transferred number (%d)",
 								     plc_plan->nargs, msg->nargs);
 					}
@@ -323,7 +323,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 						result = (plcMessage *) create_sql_result(false);
 						break;
 					default:
-						elog(ERROR, "Cannot handle sql ('%s') with fn_readonly (%d) "
+						plc_elog(ERROR, "Cannot handle sql ('%s') with fn_readonly (%d) "
 									"and limit ("
 									INT64_FORMAT
 									"). Returns %d", msg->statement,
@@ -350,10 +350,10 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 						/*for R only*/
 						plc_plan->argOids[i] = (Oid) strtol(msg->args[i].type.typeName, NULL, 10);
 						if (errno == ERANGE) {
-							lprintf(ERROR, "unable to parse the given OID %s", msg->args[i].type.typeName);
+							plc_elog(ERROR, "unable to parse the given OID %s", msg->args[i].type.typeName);
 						}
 					} else {
-						lprintf(ERROR, "prepare type is bad, unexpected prepare sql type %d",
+						plc_elog(ERROR, "prepare type is bad, unexpected prepare sql type %d",
 								        msg->args[i].type.type);
 					}
 					argTypes[i] = plc_get_datatype_from_oid(plc_plan->argOids[i]);
@@ -368,11 +368,11 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 
 					if (insert_pplan(conn, (int64) &plc_plan->plan) < 0) {
 						SPI_freeplan(plc_plan->plan);
-						elog(ERROR, "Can not insert new prepared plan.");
+						plc_elog(ERROR, "Can not insert new prepared plan.");
 					}
 				} else {
 					/* Log the prepare failure but let the backend handle. */
-					elog(LOG, "SPI_prepare() fails for '%s', with %d arguments: %s",
+					plc_elog(LOG, "SPI_prepare() fails for '%s', with %d arguments: %s",
 							     msg->statement, plc_plan->nargs, SPI_result_code_string(SPI_result));
 					}
 				result = (plcMessage *) create_prepare_result((int64) &plc_plan->plan, argTypes,
@@ -383,7 +383,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 				result = (plcMessage *) create_unprepare_result(retval);
 				break;
 			default:
-				elog(ERROR, "Cannot handle sql type %d", msg->sqltype);
+				plc_elog(ERROR, "Cannot handle sql type %d", msg->sqltype);
 				break;
 		}
 

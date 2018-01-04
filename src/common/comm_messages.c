@@ -254,7 +254,7 @@ int plc_get_type_length(plcDatatype dt) {
 			break;
 		case PLC_DATA_ARRAY:
 		default:
-			lprintf(ERROR, "Type %s [%d] cannot be passed plc_get_type_length function",
+			plc_elog(ERROR, "Type %s [%d] cannot be passed plc_get_type_length function",
 				        plc_get_type_name(dt), (int) dt);
 			break;
 	}

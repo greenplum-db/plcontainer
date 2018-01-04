@@ -6,13 +6,14 @@
  */
 
 #include "plc_backend_api.h"
+#include "common/comm_utils.h"
 
 static PLC_FunctionEntriesData CurrentPLCImp;
 
 char api_error_message[256];
 
 /*
- * NOTE: Do not call elog(>=ERROR, ...) in backend api code. Let the callers
+ * NOTE: Do not call plc_elog(>=ERROR, ...) in backend api code. Let the callers
  * handle according to the return value and error message string.
  */
 
@@ -37,7 +38,7 @@ void plc_backend_prepareImplementation(enum PLC_BACKEND_TYPE imptype) {
 			plc_docker_init(&CurrentPLCImp);
 			break;
 		default:
-			elog(ERROR, "Unsupported plc backend type: %d", imptype);
+			plc_elog(ERROR, "Unsupported plc backend type: %d", imptype);
 	}
 }
 

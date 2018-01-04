@@ -230,7 +230,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
 		}
 		PG_END_TRY();
 	} else if (pid < 0) {
-		elog(ERROR, "Could not create cleanup process for container %s", dockerid);
+		plc_elog(ERROR, "Could not create cleanup process for container %s", dockerid);
 	}
 }
 
@@ -245,7 +245,7 @@ static int find_container_slot() {
 		}
 	}
 	// Fatal would cause the session to be closed
-	elog(FATAL, "Single session cannot handle more than %d open containers simultaneously", MAX_CONTAINER_NUMBER);
+	plc_elog(FATAL, "Single session cannot handle more than %d open containers simultaneously", MAX_CONTAINER_NUMBER);
 
 }
 
@@ -351,14 +351,14 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 		if (++_loop_cnt >= 3)
 			break;
 		pg_usleep(2000 * 1000L);
-		elog(LOG, "plc_backend_create() fails. Retrying [%d]", _loop_cnt);
+		plc_elog(LOG, "plc_backend_create() fails. Retrying [%d]", _loop_cnt);
 	}
 
 	if (res < 0) {
-		elog(ERROR, "Backend create error: %s", api_error_message);
+		plc_elog(ERROR, "Backend create error: %s", api_error_message);
 		return NULL;
 	}
-	elog(DEBUG1, "docker created with id %s.", dockerid);
+	plc_elog(DEBUG1, "docker created with id %s.", dockerid);
 
 	/* Insert it into containers[] so that in case below operations fails,
 	 * it could longjump to plcontainer_call_handler()->delete_containers()
@@ -383,12 +383,12 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 		if (++_loop_cnt >= 3)
 			break;
 		pg_usleep(2000 * 1000L);
-		elog(LOG, "plc_backend_start() fails. Retrying [%d]", _loop_cnt);
+		plc_elog(LOG, "plc_backend_start() fails. Retrying [%d]", _loop_cnt);
 	}
 	if (res < 0) {
 		if (!conf->isNetworkConnection)
 			cleanup_uds(uds_fn);
-		elog(ERROR, "Backend start error: %s", api_error_message);
+		plc_elog(ERROR, "Backend start error: %s", api_error_message);
 		return NULL;
 	}
 
@@ -396,7 +396,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	struct tm *timeinfo;
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
-	elog(DEBUG1, "container %s has started at %s", dockerid, asctime(timeinfo));
+	plc_elog(DEBUG1, "container %s has started at %s", dockerid, asctime(timeinfo));
 
 	/* For network connection only. */
 	if (conf->isNetworkConnection) {
@@ -405,7 +405,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 		if (res < 0) {
 			if (!conf->isNetworkConnection)
 				cleanup_uds(uds_fn);
-			elog(ERROR, "Backend inspect error: %s", api_error_message);
+			plc_elog(ERROR, "Backend inspect error: %s", api_error_message);
 			return NULL;
 		}
 		port = (int) strtol(element, NULL, 10);
@@ -445,7 +445,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 			conn = plcConnect_inet(port);
 
 		if (conn != NULL) {
-			elog(DEBUG1, "Connected to container via %s",
+			plc_elog(DEBUG1, "Connected to container via %s",
 			     conf->isNetworkConnection ? "network" : "unix domain socket");
 			conn->container_slot = container_slot;
 
@@ -457,11 +457,11 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 				if (res == 0) {
 					break;
 				} else {
-					elog(DEBUG1, "Failed to receive pong from client. Maybe expected. dockerid: %s", dockerid);
+					plc_elog(DEBUG1, "Failed to receive pong from client. Maybe expected. dockerid: %s", dockerid);
 					plcDisconnect(conn);
 				}
 			} else {
-				elog(DEBUG1, "Failed to send ping to client. Maybe expected. dockerid: %s", dockerid);
+				plc_elog(DEBUG1, "Failed to send ping to client. Maybe expected. dockerid: %s", dockerid);
 				plcDisconnect(conn);
 			}
 
@@ -481,11 +481,11 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 			 * the tcp connection once reconnect should never happen.
 			 */
 		} else {
-			elog(DEBUG1, "Failed to connect to client. Maybe expected. dockerid: %s", dockerid);
+			plc_elog(DEBUG1, "Failed to connect to client. Maybe expected. dockerid: %s", dockerid);
 		}
 
 		usleep(sleepus);
-		elog(DEBUG1, "Waiting for %u ms for before reconnecting", sleepus / 1000);
+		plc_elog(DEBUG1, "Waiting for %u ms for before reconnecting", sleepus / 1000);
 		sleepms += sleepus / 1000;
 		sleepus = sleepus >= 200000 ? 200000 : sleepus * 2;
 	}
@@ -493,7 +493,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	if (sleepms >= CONTAINER_CONNECT_TIMEOUT_MS) {
 		if (!conf->isNetworkConnection)
 			cleanup_uds(uds_fn);
-		elog(ERROR, "Cannot connect to the container, %d ms timeout reached",
+		plc_elog(ERROR, "Cannot connect to the container, %d ms timeout reached",
 		     CONTAINER_CONNECT_TIMEOUT_MS);
 		conn = NULL;
 	} else {
@@ -521,7 +521,7 @@ void delete_containers() {
 					while ((res = plc_backend_delete(containers[i].dockerid)) < 0 && _loop_cnt++ < 3)
 						pg_usleep(2000 * 1000L);
 					if (res < 0)
-						elog(NOTICE, "Backend delete error: %s", api_error_message);
+						plc_elog(NOTICE, "Backend delete error: %s", api_error_message);
 				}
 
 				plcDisconnect(containers[i].conn);
@@ -556,7 +556,7 @@ char *parse_container_meta(const char *source) {
 
 	/* If the string is too small or not starting with hash - no declaration */
 	if (last - first < DECLARATION_MIN_LENGTH || source[first] != '#') {
-		elog(ERROR, "Container declaration format should be '#container:container_name'");
+		plc_elog(ERROR, "Container declaration format should be '#container:container_name'");
 		return runtime_id;
 	}
 
@@ -567,7 +567,7 @@ char *parse_container_meta(const char *source) {
 
 	/* Line should be "# container :", fail if not so */
 	if (strncmp(&source[first], "container", strlen("container")) != 0) {
-		elog(ERROR, "Container declaration format should be '#container:container_name'");
+		plc_elog(ERROR, "Container declaration format should be '#container:container_name'");
 		return runtime_id;
 	}
 
@@ -578,7 +578,7 @@ char *parse_container_meta(const char *source) {
 
 	/* If no colon found - bad declaration */
 	if (first >= last) {
-		elog(ERROR, "Container declaration format should be '#container:container_name'");
+		plc_elog(ERROR, "Container declaration format should be '#container:container_name'");
 		return runtime_id;
 	}
 
@@ -590,7 +590,7 @@ char *parse_container_meta(const char *source) {
 		last--;
 	/* when first meets last, the name is blankspace or only one char*/
 	if (first == last && is_whitespace(source[first])) {
-		elog(ERROR, "Container id cannot be empty");
+		plc_elog(ERROR, "Container id cannot be empty");
 		return NULL;
 	}
 	/*
@@ -605,7 +605,7 @@ char *parse_container_meta(const char *source) {
 
 	int regt = check_runtime_id(runtime_id);
 	if (regt == -1) {
-		elog(ERROR, "Container id '%s' contains illegal character for container.", runtime_id);
+		plc_elog(ERROR, "Container id '%s' contains illegal character for container.", runtime_id);
 	}
 
 	return runtime_id;

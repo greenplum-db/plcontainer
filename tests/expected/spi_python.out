@@ -382,7 +382,7 @@ LINE 1: select datname from pg_database_invalid
                             ^
 QUERY:  select datname from pg_database_invalid
 select pyspi_bad_limit();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:330)
+ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Returns -6 (sqlhandler.c:330)
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 
@@ -398,9 +398,9 @@ DETAIL:
   File "<string>", line 4, in pyspi_bad_limit_pexecute
 TypeError: second argument of plpy.prepare must be a sequence
 select pyspi_bad_limit_immutable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:330)
+ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:330)
 select pyspi_bad_limit_stable();
-ERROR:  Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:330)
+ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Returns -6 (sqlhandler.c:330)
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 

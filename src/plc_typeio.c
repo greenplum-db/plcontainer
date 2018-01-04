@@ -92,7 +92,7 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 
 	typeTup = SearchSysCache(TYPEOID, typeOid, 0, 0, 0);
 	if (!HeapTupleIsValid(typeTup))
-		elog(ERROR, "cache lookup failed for type %u", typeOid);
+		plc_elog(ERROR, "cache lookup failed for type %u", typeOid);
 
 	typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 	ReleaseSysCache(typeTup);
@@ -232,7 +232,7 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 				type->typ_relid = typeidTypeRelid(desc->tdtypeid);
 				relTup = SearchSysCache1(RELOID, ObjectIdGetDatum(type->typ_relid));
 				if (!HeapTupleIsValid(relTup)) {
-					elog(ERROR, "cache lookup failed for relation %u", type->typ_relid);
+					plc_elog(ERROR, "cache lookup failed for relation %u", type->typ_relid);
 				}
 
 				/* Extract the XMIN value to later use it in PLy_procedure_valid */

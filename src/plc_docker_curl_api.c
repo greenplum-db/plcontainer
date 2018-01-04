@@ -11,6 +11,7 @@
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "libpq/libpq-be.h"
+#include "common/comm_utils.h"
 #include "plc_docker_api_common.h"
 #include "cdb/cdbvars.h"
 
@@ -175,9 +176,9 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 			         (len > 0) ? errbuf : curl_easy_strerror(res));
 			buffer->status = -2;
 
-			elog(LOG, "Curl Request with type: %d, url: %s", cType, fullurl);
-			elog(LOG, "Curl Request with http body: %s\n", body);
-			elog(LOG, "Curl Request costs "
+			plc_elog(LOG, "Curl Request with type: %d, url: %s", cType, fullurl);
+			plc_elog(LOG, "Curl Request with http body: %s\n", body);
+			plc_elog(LOG, "Curl Request costs "
 				UINT64_FORMAT
 				"ms", elapsed_us / 1000);
 
@@ -187,7 +188,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 
 			curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
 			buffer->status = (int) http_code;
-			elog(DEBUG1, "CURL response code is %ld. CURL response message is %s", http_code, buffer->data);
+			plc_elog(DEBUG1, "CURL response code is %ld. CURL response message is %s", http_code, buffer->data);
 		}
 
 		cleanup:
@@ -297,7 +298,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	if (res == 201) {
 		res = 0;
 	} else if (res >= 0) {
-		elog(LOG, "Docker fails to create container, response: %s", response->data);
+		plc_elog(LOG, "Docker fails to create container, response: %s", response->data);
 		snprintf(api_error_message, sizeof(api_error_message),
 		         "Failed to create container (return code: %d).", res);
 		res = -1;
@@ -309,7 +310,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	res = docker_inspect_string(response->data, name, PLC_INSPECT_NAME);
 
 	if (res < 0) {
-		elog(DEBUG1, "Error parsing container ID during creating container with errno %d.", res);
+		plc_elog(DEBUG1, "Error parsing container ID during creating container with errno %d.", res);
 		snprintf(api_error_message, sizeof(api_error_message),
 		         "Error parsing container ID during creating container");
 		goto cleanup;
@@ -337,7 +338,7 @@ int plc_docker_start_container(const char *name) {
 	if (res == 204 || res == 304) {
 		res = 0;
 	} else if (res >= 0) {
-		elog(DEBUG1, "start docker container %s failed with errno %d.", name, res);
+		plc_elog(DEBUG1, "start docker container %s failed with errno %d.", name, res);
 		snprintf(api_error_message, sizeof(api_error_message),
 		         "Failed to start container %s (return code: %d)", name, res);
 		res = -1;
@@ -352,7 +353,7 @@ int plc_docker_kill_container(const char *name) {
 	char *url = NULL;
 	int res = 0;
 
-	elog(FATAL, "Not finished yet. Do not call it.");
+	plc_elog(FATAL, "Not finished yet. Do not call it.");
 
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
@@ -385,7 +386,7 @@ int plc_docker_inspect_container(const char *name, char **element, plcInspection
 	}
 
 	if (res != 200) {
-		elog(LOG, "Docker cannot inspect container, response: %s", response->data);
+		plc_elog(LOG, "Docker cannot inspect container, response: %s", response->data);
 		snprintf(api_error_message, sizeof(api_error_message),
 		         "Docker inspect api returns http code %d on container %s", res, name);
 		res = -1;
@@ -411,7 +412,7 @@ int plc_docker_wait_container(const char *name) {
 	char *url = NULL;
 	int res = 0;
 
-	elog(FATAL, "Not finished yet. Do not call it.");
+	plc_elog(FATAL, "Not finished yet. Do not call it.");
 
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
