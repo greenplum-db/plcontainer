@@ -163,10 +163,10 @@ static void cleanup(char *dockerid, char *uds_fn) {
 				/* Check parent pid whether parent process is alive or not.
 				 * If not, kill and remove the container.
 				 */
-				if (log_min_messages <= DEBUG1)
+				if (client_log_level <= DEBUG1)
 					write_log("plcontainer cleanup process: Checking whether QE is alive");
 				res = qe_is_alive(dockerid);
-				if (log_min_messages <= DEBUG1)
+				if (client_log_level <= DEBUG1)
 					write_log("plcontainer cleanup process: QE alive status: %d", res);
 
 				/* res = 0, backend exited, backend has been successfully deleted.
@@ -186,10 +186,10 @@ static void cleanup(char *dockerid, char *uds_fn) {
 				/* Check whether conatiner is exited or not.
 				 * If exited, remove the container.
 				 */
-				if (log_min_messages <= DEBUG1)
+				if (client_log_level <= DEBUG1)
 					write_log("plcontainer cleanup process: Checking whether the backend is alive");
 				res = container_is_alive(dockerid);
-				if (log_min_messages <= DEBUG1)
+				if (client_log_level <= DEBUG1)
 					write_log("plcontainer cleanup process: Backend alive status: %d", res);
 
 				/* res = 0, container exited, container has been successfully deleted.

@@ -38,6 +38,7 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "utils/syscache.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 
 /* message and function definitions */
 #include "common/comm_utils.h"
@@ -195,6 +196,7 @@ plcMsgCallreq *plcontainer_create_call(FunctionCallInfo fcinfo, plcProcInfo *pin
 	req->msgtype = MT_CALLREQ;
 	req->proc.name = pinfo->name;
 	req->proc.src = pinfo->src;
+	req->logLevel = client_log_level;
 	req->objectid = pinfo->funcOid;
 	req->hasChanged = pinfo->hasChanged;
 	copy_type_info(&req->retType, &pinfo->rettype);

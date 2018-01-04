@@ -13,5 +13,4 @@
 
 /* entrypoint for all plcontainer procedures */
 Datum plcontainer_call_handler(PG_FUNCTION_ARGS);
-
 #endif /* PLC_PLCONTAINER_H */

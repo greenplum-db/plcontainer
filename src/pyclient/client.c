@@ -45,6 +45,8 @@ int main(int argc UNUSED, char **argv UNUSED) {
 	/* do not overwrite, if the CLIENT_NAME has already set */
 	setenv("CLIENT_LANGUAGE", "pythonclient", 0);
 
+	client_log_level = WARNING;
+
 	sock = start_listener();
 	plc_elog(LOG, "Client has started execution at %s", asctime(timeinfo));
 

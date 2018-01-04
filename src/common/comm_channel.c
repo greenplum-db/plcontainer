@@ -680,6 +680,8 @@ static int send_call(plcConn *conn, plcMsgCallreq *call) {
 	channel_elog(WARNING, "Function source code:");
 	channel_elog(WARNING, "%s", call->proc.src);
 	res |= send_cstring(conn, call->proc.src);
+	channel_elog(WARNING, "Log level is %d", call->logLevel);
+	res |=send_int32(conn, call->logLevel);
 	channel_elog(WARNING, "Function OID is '%u'", call->objectid);
 	res |= send_uint32(conn, call->objectid);
 	channel_elog(WARNING, "Function has changed is '%d'", call->hasChanged);
@@ -1141,6 +1143,8 @@ static int receive_call(plcConn *conn, plcMessage **mCall) {
 	res |= receive_cstring(conn, &req->proc.src);
 	channel_elog(WARNING, "Function source code:");
 	channel_elog(WARNING, "%s", req->proc.src);
+	res |= receive_int32(conn, &req->logLevel);
+	channel_elog(WARNING, "Receiving Log level %d",req->logLevel);
 	res |= receive_uint32(conn, &req->objectid);
 	channel_elog(WARNING, "Function OID is '%u'", req->objectid);
 	res |= receive_int32(conn, &req->hasChanged);

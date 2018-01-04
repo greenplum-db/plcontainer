@@ -13,4 +13,6 @@ char *dbName;
 int dbQePid;
 char *clientLanguage;
 
+int client_log_level;
+
 #endif /* PLC_COMM_LOG_H */

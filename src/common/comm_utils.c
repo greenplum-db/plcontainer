@@ -12,6 +12,28 @@
 #include "utils/memutils.h"
 #include "utils/palloc.h"
 
+
+int
+is_write_log(int elevel, int log_min_level)
+{
+	if (elevel == LOG || elevel == COMMERROR)
+	{
+		if (log_min_level == LOG || log_min_level <= ERROR)
+			return 1;
+	}
+	else if (log_min_level == LOG)
+	{
+		/* elevel != LOG */
+		if (elevel >= FATAL)
+			return 1;
+	}
+	/* Neither is LOG */
+	else if (elevel >= log_min_level)
+		return 1;
+
+	return 0;
+}
+
 void *plc_top_alloc(size_t bytes) {
 	/* We need our allocations to be long-lived, so use TopMemoryContext */
 	return MemoryContextAlloc(TopMemoryContext, bytes);

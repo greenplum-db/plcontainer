@@ -53,9 +53,13 @@ interpreted as representing official policies, either expressed or implied, of t
 #undef ERROR
 
 /* Error level codes from GPDB utils/elog.h header */
+#define DEBUG5     10
+#define DEBUG4     11
+#define DEBUG3     12
 #define DEBUG2     13
 #define DEBUG1     14
 #define LOG        15
+#define COMMERROR  16
 #define INFO       17
 #define NOTICE     18
 #define WARNING    19
@@ -77,18 +81,22 @@ typedef char bool;
 #define false   ((bool) 0)
 /* End of extraction from c.h */
 
+int is_write_log(int elevel, int log_min_level);
+
 #define plc_elog(lvl, fmt, ...)                                          \
         do {                                                            \
             FILE *out = stdout;                                         \
             if (lvl >= ERROR) {                                         \
                 out = stderr;                                           \
             }                                                           \
-            fprintf(out, "plcontainer log: %s, ", clientLanguage);      \
-            fprintf(out, "%s, %s, %d, ", dbUsername, dbName, dbQePid);  \
-            fprintf(out, #lvl ": ");                                    \
-            fprintf(out, fmt, ##__VA_ARGS__);                           \
-            fprintf(out, "\n");                                         \
-            fflush(out);                                                \
+            if (is_write_log(lvl, client_log_level)) {              \
+              fprintf(out, "plcontainer log: %s, ", clientLanguage);    \
+              fprintf(out, "%s, %s, %d, ", dbUsername, dbName, dbQePid);\
+              fprintf(out, #lvl ": ");                                  \
+              fprintf(out, fmt, ##__VA_ARGS__);                         \
+              fprintf(out, "\n");                                       \
+              fflush(out);                                              \
+            }                                                           \
             if (lvl >= ERROR) {                                         \
                 exit(1);                                                \
             }                                                           \
@@ -114,6 +122,8 @@ void set_signal_handlers(void);
 void *plc_top_alloc(size_t bytes);
 
 char *plc_top_strdup(char *str);
+
+int is_write_log(int elevel, int log_min_level);
 
 #endif /* COMM_STANDALONE */
 
