@@ -144,7 +144,7 @@ void handle_call(plcMsgCallreq *req, plcConn *conn) {
 
 	client_log_level = req->logLevel;
 
-	lprintf(DEBUG1, "python client receives a call");
+	plc_elog(DEBUG1, "python client receives a call");
 
 	dict = PyModule_GetDict(PyMainModule); // Returns borrowed reference
 	if (dict == NULL) {

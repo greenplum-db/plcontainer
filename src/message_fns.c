@@ -196,7 +196,7 @@ plcMsgCallreq *plcontainer_create_call(FunctionCallInfo fcinfo, plcProcInfo *pin
 	req->msgtype = MT_CALLREQ;
 	req->proc.name = pinfo->name;
 	req->proc.src = pinfo->src;
-	req->logLevel = client_log_level;
+	req->logLevel = log_min_messages;
 	req->objectid = pinfo->funcOid;
 	req->hasChanged = pinfo->hasChanged;
 	copy_type_info(&req->retType, &pinfo->rettype);

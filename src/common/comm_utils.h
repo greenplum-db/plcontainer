@@ -81,7 +81,7 @@ typedef char bool;
 #define false   ((bool) 0)
 /* End of extraction from c.h */
 
-int is_write_log(int elevel, int log_min_level);
+extern int is_write_log(int elevel, int log_min_level);
 
 #define plc_elog(lvl, fmt, ...)                                          \
         do {                                                            \
@@ -122,8 +122,6 @@ void set_signal_handlers(void);
 void *plc_top_alloc(size_t bytes);
 
 char *plc_top_strdup(char *str);
-
-int is_write_log(int elevel, int log_min_level);
 
 #endif /* COMM_STANDALONE */
 

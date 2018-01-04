@@ -12,6 +12,20 @@
 #include "utils/memutils.h"
 #include "utils/palloc.h"
 
+void *plc_top_alloc(size_t bytes) {
+	/* We need our allocations to be long-lived, so use TopMemoryContext */
+	return MemoryContextAlloc(TopMemoryContext, bytes);
+}
+
+char *plc_top_strdup(char *str) {
+	int len = strlen(str);
+	char *out = plc_top_alloc(len + 1);
+	memcpy(out, str, len);
+	out[len] = '\0';
+	return out;
+}
+
+#else
 
 int
 is_write_log(int elevel, int log_min_level)
@@ -33,21 +47,6 @@ is_write_log(int elevel, int log_min_level)
 
 	return 0;
 }
-
-void *plc_top_alloc(size_t bytes) {
-	/* We need our allocations to be long-lived, so use TopMemoryContext */
-	return MemoryContextAlloc(TopMemoryContext, bytes);
-}
-
-char *plc_top_strdup(char *str) {
-	int len = strlen(str);
-	char *out = plc_top_alloc(len + 1);
-	memcpy(out, str, len);
-	out[len] = '\0';
-	return out;
-}
-
-#else
 
 void *pmalloc(size_t size) {
 	void *addr = malloc(size);
