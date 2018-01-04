@@ -27,6 +27,9 @@ char *plc_top_strdup(char *str) {
 
 #else
 
+/*
+ * This function is copied from is_log_level_output in elog.c
+ */
 int
 is_write_log(int elevel, int log_min_level)
 {
