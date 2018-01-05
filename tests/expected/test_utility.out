@@ -70,6 +70,7 @@ usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
 plcontainer runtime-add: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python')
 
 Test runtime-add, runtime-backup, and runtime-delete
+-image image1 is not in the list of 'docker images'
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 <?xml version="1.0" ?>
@@ -89,18 +90,23 @@ Test runtime-add, runtime-backup, and runtime-delete
 -This runtime configuraiton does not exist. Ignoring.
 
 Test runtime-add with shared directories
+-image image1 is not in the list of 'docker images'
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+-image image1 is not in the list of 'docker images'
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 
 Test runtime-add with both shared directories and settings
+-image image1 is not in the list of 'docker images'
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+-image image1 is not in the list of 'docker images'
+-image image2 is not in the list of 'docker images'
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 PL/Container Runtime Configuration: 
@@ -165,6 +171,7 @@ plcontainer runtime-replace: error: argument -l/--language: invalid choice: 'jav
 
 Test runtime-replace: add a new one
 -runtime configuration does not exist. Adding a new one.
+-image image2 is not in the list of 'docker images'
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 <?xml version="1.0" ?>
@@ -182,6 +189,7 @@ Test runtime-replace: add a new one
 </configuration>
 
 Test runtime-replace: replace
+-image image2 is not in the list of 'docker images'
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 <?xml version="1.0" ?>
@@ -223,24 +231,27 @@ Test xml validation: negative cases
 -Bad xml format. Please fix the file at first.
 
 **Test: No more than 1 <image> is allowed
--Found 2 (1 is legal) 'image' subelements in a runtime plc_python. The first one 'image': pivotaldata/plcontainer_python:0.1
+-Found 2 (1 is legal) 'image' subelements in a runtime plc_python. The first one: image1:0.1
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <command> is needed
+-image image1:0.1 is not in the list of 'docker images'
 -Lack of 'command' subelement in a runtime element in runtime plc_python.
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: No more than 1 <command> is allowed
+-image image1:0.1 is not in the list of 'docker images'
 -Found 2 (1 is legal) 'command' subelements in runtime plc_python. The first one 'command': ./client
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: 'container' attr is needed
+-image image1:0.1 is not in the list of 'docker images'
 -Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime plc_python
 -Current: ['access', 'host']
 -XML file does not conform XML specification or wrong settings.
@@ -248,6 +259,7 @@ Test xml validation: negative cases
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: 'host' attr is needed
+-image image1:0.1 is not in the list of 'docker images'
 -Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime plc_python
 -Current: ['access', 'container']
 -XML file does not conform XML specification or wrong settings.
@@ -255,6 +267,7 @@ Test xml validation: negative cases
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: 'access' attr is is needed
+-image image1:0.1 is not in the list of 'docker images'
 -Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime plc_python
 -Current: ['host', 'container']
 -XML file does not conform XML specification or wrong settings.
@@ -262,12 +275,14 @@ Test xml validation: negative cases
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: access must be ro or rw
+-image image1:0.1 is not in the list of 'docker images'
 -access should be 'ro' or 'rw' in shared_directory in runtime plc_python, but now: rx
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: container paths should not be duplicated
+-image image1:0.1 is not in the list of 'docker images'
 -container should not have same mount points (check shared_directory) in runtime plc_python
 -Note if you are modifying/adding runtime configuration please do not use the reserved container paths /clientdir and /tmp/plcontainer
 -XML file does not conform XML specification or wrong settings.
@@ -275,44 +290,49 @@ Test xml validation: negative cases
 -Bad xml format. Please fix the file at first.
 
 **Test: <shared_directory>: container path should not be /tmp/plcontainer
+-image image1:0.1 is not in the list of 'docker images'
 -container path should not be /tmp/plcontainer (reserved for unix domain socket connection) in runtime plc_python
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <setting>: must be legal one
+-image image1:0.1 is not in the list of 'docker images'
 -Found illegal setting in runtime plc_python: {'logging': 'Enable'}
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 
 **Test: <setting>: memory_mb should be string with integer value
+-image image1:0.1 is not in the list of 'docker images'
 -memory_mb should be a positive integer in runtime plc_python, but now: '123.4'
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <setting>: memory_mb should be string with positive integer value
+-image image1:0.1 is not in the list of 'docker images'
 -memory_mb should > 0 in runtime plc_python, but now: '-123'
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <setting>: use_network should be yes or no
+-image image1:0.1 is not in the list of 'docker images'
 -use_network should be 'yes' or 'no' in runtime plc_python, but now: 'y'
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 **Test: <setting>: logs should be enable or disable
+-image image1:0.1 is not in the list of 'docker images'
 -logs should be 'enable' or 'disable' in runtime plc_python, but now: 'yes'
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
 Test xml validation: postive case
+-image image1:0.1 is not in the list of 'docker images'
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 
 Recover the previous runtime configuration file
--Distributing file plcontainer_configuration.xml to all locations...
--Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.

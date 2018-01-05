@@ -436,6 +436,10 @@ def copy_file_to_tmp(host, file):
 
 
 def validate_xml(filename):
+    image_list=[]
+    for line in os.popen("docker images | awk 'NR>1 {print $1 \":\" $2}'"):
+        line = line.strip('\n')
+        image_list.append(line)
     correct = True
     try:
         xmltree = ElementTree.parse(filename);
@@ -463,9 +467,12 @@ def validate_xml(filename):
                 logger.error("Lack of 'image' subelement in a runtime element in runtime %s.", runtime_id)
                 raise Exception("Validation failed")
             if num > 1:
-                logger.error("Found %d (1 is legal) 'image' subelements in a runtime %s. The first one 'image': %s", num, runtime_id, runtime.find('image').text)
+                logger.error("Found %d (1 is legal) 'image' subelements in a runtime %s. The first one: %s", num, runtime_id, runtime.find('image').text)
                 raise Exception("Validation failed")
             # FIXME: Need to check the naming convention?
+
+            if not runtime.find('image').text in image_list:
+                logger.warn("image %s is not in the list of 'docker images'" % runtime.find('image').text)
 
             # Only one 'command' subelement is allowed.
             num = len(runtime.findall('command'))
