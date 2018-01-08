@@ -48,9 +48,9 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 /* Initialize Curl response receiving buffer */
 static plcCurlBuffer *plcCurlBufferInit() {
 	plcCurlBuffer *buf = palloc(sizeof(plcCurlBuffer));
-	buf->data = palloc(8192);   /* will be grown as needed by the realloc above */
-	memset(buf->data, 0, 8192); /* set to zeros to avoid errors */
-	buf->bufsize = 8192;        /* initial size of the buffer */
+	buf->data = palloc(BUFFER_SIZE);   /* will be grown as needed by the realloc above */
+	memset(buf->data, 0, BUFFER_SIZE); /* set to zeros to avoid errors */
+	buf->bufsize = BUFFER_SIZE;        /* initial size of the buffer */
 	buf->size = 0;              /* amount of data in this buffer */
 	buf->status = 0;            /* status of the Curl call */
 	return buf;
@@ -71,6 +71,9 @@ static size_t plcCurlCallback(void *contents, size_t size, size_t nmemb, void *u
 	plcCurlBuffer *mem = (plcCurlBuffer *) userp;
 
 	if (mem->size + realsize + 1 > mem->bufsize) {
+		/*  repalloc will preserve the content of the memory block,
+		 *  up to the lesser of the new and old sizes
+		 */
 		mem->data = repalloc(mem->data, 3 * (mem->size + realsize + 1) / 2);
 		mem->bufsize = 3 * (mem->size + realsize + 1) / 2;
 	}
@@ -235,6 +238,13 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"}\n";
 	bool has_error;
 	char *volumeShare = get_sharing_options(conf, container_id, &has_error, uds_dir);
+	/*
+	 *  no shared volumes should not be treated as an error, so we use has_error to
+	 *  identifier whether there is an error when parse sharing options.
+	 */
+	if (has_error == true) {
+		return -1;
+	}
 	char *messageBody = NULL;
 	plcCurlBuffer *response = NULL;
 	int res = 0;
@@ -243,9 +253,6 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	const char *dbname = MyProcPort->database_name;
 	struct passwd *pwd;
 
-	if (has_error == true) {
-		return -1;
-	}
 
 	/*
 	 * We run container processes with the uid/gid of user "nobody" on host.
@@ -344,6 +351,8 @@ int plc_docker_start_container(const char *name) {
 		res = -1;
 	}
 
+	pfree(url);
+
 	return res;
 }
 
@@ -353,7 +362,7 @@ int plc_docker_kill_container(const char *name) {
 	char *url = NULL;
 	int res = 0;
 
-	plc_elog(FATAL, "Not finished yet. Do not call it.");
+	plc_elog(FATAL, "Not implemented yet. Do not call it.");
 
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
@@ -362,6 +371,8 @@ int plc_docker_kill_container(const char *name) {
 	res = response->status;
 
 	plcCurlBufferFree(response);
+
+	pfree(url);
 
 	return res;
 }
@@ -402,6 +413,7 @@ int plc_docker_inspect_container(const char *name, char **element, plcInspection
 
 	cleanup:
 	plcCurlBufferFree(response);
+	pfree(url);
 
 	return res;
 }
@@ -412,7 +424,7 @@ int plc_docker_wait_container(const char *name) {
 	char *url = NULL;
 	int res = 0;
 
-	plc_elog(FATAL, "Not finished yet. Do not call it.");
+	plc_elog(FATAL, "Not implemented yet. Do not call it.");
 
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
@@ -421,6 +433,8 @@ int plc_docker_wait_container(const char *name) {
 	res = response->status;
 
 	plcCurlBufferFree(response);
+
+	pfree(url);
 
 	return res;
 }
@@ -447,6 +461,8 @@ int plc_docker_delete_container(const char *name) {
 		res = -1;
 	}
 
+	pfree(url);
+
 	return res;
 }
 
@@ -470,6 +486,9 @@ int plc_docker_list_container(char **result) {
 		res = -1;
 	}
 	*result = pstrdup(response->data);
+
+	pfree(url);
+
 	return res;
 }
 
@@ -493,5 +512,8 @@ int plc_docker_get_container_state(const char *name, char **result) {
 	}
 
 	*result = pstrdup(response->data);
+
+	pfree(url);
+
 	return res;
 }

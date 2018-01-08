@@ -537,6 +537,7 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 		int totallen = 0;
 		char *pos;
 		int i;
+		int j;
 		char comma = ' ';
 
 		volumes = palloc((conf->nSharedDirs + 1) * sizeof(char *));
@@ -556,6 +557,10 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 				         "Cannot determine directory sharing mode: %d",
 				         conf->sharedDirs[i].mode);
 				*has_error = true;
+				for (j = 0; j <= i ;j++) {
+					pfree(volumes[i]);
+				}
+				pfree(volumes);
 				return NULL;
 			}
 			totallen += strlen(volumes[i]);
@@ -580,6 +585,10 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 				         "Cannot create directory %s: %s",
 				         *uds_dir, strerror(errno));
 				*has_error = true;
+				for (j = 0; j <= i ;j++) {
+					pfree(volumes[i]);
+				}
+				pfree(volumes);
 				return NULL;
 			}
 		}
