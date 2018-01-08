@@ -12,7 +12,7 @@
 #include "plc_configuration.h"
 #include "plc_docker_common.h"
 
-#define BUFFER_SIZE 8192
+#define CURL_BUFFER_SIZE 8192
 
 typedef enum {
 	PLC_HTTP_GET = 0,

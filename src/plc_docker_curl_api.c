@@ -48,9 +48,8 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 /* Initialize Curl response receiving buffer */
 static plcCurlBuffer *plcCurlBufferInit() {
 	plcCurlBuffer *buf = palloc(sizeof(plcCurlBuffer));
-	buf->data = palloc(BUFFER_SIZE);   /* will be grown as needed by the realloc above */
-	memset(buf->data, 0, BUFFER_SIZE); /* set to zeros to avoid errors */
-	buf->bufsize = BUFFER_SIZE;        /* initial size of the buffer */
+	buf->data = palloc0(CURL_BUFFER_SIZE);   /* will be grown as needed by the realloc above */
+	buf->bufsize = CURL_BUFFER_SIZE;        /* initial size of the buffer */
 	buf->size = 0;              /* amount of data in this buffer */
 	buf->status = 0;            /* status of the Curl call */
 	return buf;
