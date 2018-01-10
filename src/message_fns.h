@@ -20,6 +20,10 @@ The views and conclusions contained in the software and documentation are those 
 interpreted as representing official policies, either expressed or implied, of the PL-J Project.
 */
 
+/*
+ * Portions Copyright © 2016-Present Pivotal Software, Inc.
+ */
+
 #ifndef PLC_MESSAGE_FNS_H
 #define PLC_MESSAGE_FNS_H
 

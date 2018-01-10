@@ -26,6 +26,10 @@ interpreted as representing official policies, either expressed or implied, of t
  * author:            Laszlo Hornyak
  */
 
+/*
+ * Portions Copyright © 2016-Present Pivotal Software, Inc.
+ */
+
 #include <stdlib.h>
 
 #include "comm_utils.h"

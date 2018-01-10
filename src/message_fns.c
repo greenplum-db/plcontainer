@@ -30,6 +30,10 @@ interpreted as representing official policies, either expressed or implied, of t
  * author:        Laszlo Hornyak
  */
 
+/*
+ * Portions Copyright © 2016-Present Pivotal Software, Inc.
+ */
+
 /* Greenplum headers */
 #include "postgres.h"
 #include "executor/spi.h"

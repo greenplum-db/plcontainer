@@ -26,6 +26,10 @@ interpreted as representing official policies, either expressed or implied, of t
  * author:			Laszlo Hornyak Kocka
  */
 
+/*
+ * Portions Copyright © 2016-Present Pivotal Software, Inc.
+ */
+
 #ifndef PLC_COMM_CHANNEL_H
 #define PLC_COMM_CHANNEL_H
 
