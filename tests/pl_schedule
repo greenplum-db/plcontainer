@@ -23,6 +23,9 @@ test: test_wrong_config
 # PL/Container UDA test
 test: uda_python uda_r
 
+# Miscellaneous test
+test: misc
+
 # PL/Container parallel test (io & cpu)
 test: parallel_prepare
 test: parallel_1 parallel_2 parallel_3 parallel_4 parallel_5 parallel_6 parallel_7 parallel_8
