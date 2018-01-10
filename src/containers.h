@@ -15,11 +15,6 @@
 
 #define CONTAINER_CONNECT_TIMEOUT_MS 10000
 
-/* currently the declaration format for the container in function is:
- * #container:name
- */
-#define DECLARATION_MIN_LENGTH (signed)(strlen("#container:") + 1)
-
 /* given source code of the function, extract the container name */
 char *parse_container_meta(const char *source);
 

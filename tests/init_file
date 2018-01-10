@@ -13,6 +13,8 @@ m/ls: cannot access '.*'.*/
 s/ls: cannot access '(.*)'(.*)/ls: cannot access $1$2/
 m/plcontainer.c:\d+\)/
 s/plcontainer.c:\d+\)/plcontainer.c:xxx/
+m/containers.c:\d+\)/
+s/containers.c:\d+\)/containers.c:xxx/
 m/plc_configuration.c:\d+\)/
 s/plc_configuration.c:\d+\)/plc_configuration.c:xxx/
 m/sqlhandler.c:\d+\)/

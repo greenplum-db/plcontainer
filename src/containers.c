@@ -47,8 +47,6 @@ static char *uds_fn_for_cleanup;
 
 static void init_containers();
 
-static inline bool is_whitespace(const char c);
-
 static int check_runtime_id(const char *id);
 
 #ifndef CONTAINER_DEBUG
@@ -534,10 +532,6 @@ void delete_containers() {
 	containers_init = 0;
 }
 
-static inline bool is_whitespace(const char c) {
-	return (c == ' ' || c == '\n' || c == '\t' || c == '\r');
-}
-
 char *parse_container_meta(const char *source) {
 	int first, last, len;
 	char *runtime_id = NULL;
@@ -545,58 +539,63 @@ char *parse_container_meta(const char *source) {
 	first = 0;
 	len = strlen(source);
 
-	/* Ignore whitespaces in the beginning of the function declaration */
-	while (first < len && is_whitespace(source[first]))
+	/* If the string is not starting with hash, fail */
+	/* Must call isspace() since there is heading '\n'. */
+	while (first < len && isspace(source[first]))
 		first++;
+	if (first == len || source[first] != '#') {
+		plc_elog(ERROR, "Runtime declaration format should be '#container: runtime_id': (No '#' is found): %d %d %d", first, len, (int) source[first]);
+		return runtime_id;
+	}
+	first++;
 
-	/* Read everything up to the first newline or end of string */
+	/* If the string does not proceed with "container", fail */
+	while (first < len && isblank(source[first]))
+		first++;
+	if (first == len || strncmp(&source[first], "container", strlen("container")) != 0) {
+		plc_elog(ERROR, "Runtime declaration format should be '#container: runtime_id': (Not 'container'): %d %d %d", first, len, (int) source[first]);
+		return runtime_id;
+	}
+	first += strlen("container");
+
+	/* If no colon found - bad declaration */
+	while (first < len && isblank(source[first]))
+		first++;
+	if (first == len || source[first] != ':') {
+		plc_elog(ERROR, "Runtime declaration format should be '#container: runtime_id': (No ':' is found after 'container'): %d %d %d", first, len, (int) source[first]);
+		return runtime_id;
+	}
+	first++;
+
+	/* Ignore blanks before runtime_id. */
+	while (first < len && isblank(source[first]))
+		first++;
+	if (first == len) {
+		plc_elog(ERROR, "Runtime declaration format should be '#container: runtime_id': (runtime id is empty)");
+		return runtime_id;
+	}
+
+ 	/* Read everything up to the first newline or end of string */
 	last = first;
 	while (last < len && source[last] != '\n' && source[last] != '\r')
 		last++;
-
-	/* If the string is too small or not starting with hash - no declaration */
-	if (last - first < DECLARATION_MIN_LENGTH || source[first] != '#') {
-		plc_elog(ERROR, "Container declaration format should be '#container:container_name'");
+	if (last == len) {
+		plc_elog(ERROR, "Runtime declaration format should be '#container: runtime_id': (no carriage return in code)");
 		return runtime_id;
 	}
+	last--; /* For '\n' or '\r' */
 
-	first++;
-	/* Ignore whitespaces after the hash sign */
-	while (first < len && is_whitespace(source[first]))
-		first++;
-
-	/* Line should be "# container :", fail if not so */
-	if (strncmp(&source[first], "container", strlen("container")) != 0) {
-		plc_elog(ERROR, "Container declaration format should be '#container:container_name'");
-		return runtime_id;
-	}
-
-	/* Follow the line up to colon sign */
-	while (first < last && source[first] != ':')
-		first++;
-	first++;
-
-	/* If no colon found - bad declaration */
-	if (first >= last) {
-		plc_elog(ERROR, "Container declaration format should be '#container:container_name'");
-		return runtime_id;
-	}
-
-	/* Ignore whitespace after colon sign */
-	while (first < last && is_whitespace(source[first]))
-		first++;
 	/* Ignore whitespace in the end of the line */
-	while (last > first && is_whitespace(source[last]))
+	while (last >= first && isblank(source[last]))
 		last--;
-	/* when first meets last, the name is blankspace or only one char*/
-	if (first == last && is_whitespace(source[first])) {
-		plc_elog(ERROR, "Container id cannot be empty");
+	if (first > last) {
+		plc_elog(ERROR, "Runtime id cannot be empty");
 		return NULL;
 	}
+
 	/*
 	 * Allocate container id variable and copy container id 
-	 * the character length of id is last-first+1
-	 * +1 for terminator
+	 * the character length of id is last-first.
 	 */
 	runtime_id = (char *) pmalloc(last - first + 1 + 1);
 	memcpy(runtime_id, &source[first], last - first + 1);

@@ -8,6 +8,9 @@ test: test_utility
 # configuration function tests
 test: test_configuration
 
+# test declaration combinations in function definitions.
+test: runtimeid_declaration
+
 # set R and Python function
 test: function_r function_r_gpdb5 function_python function_python_gpdb5
 
