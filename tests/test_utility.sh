@@ -139,7 +139,7 @@ echo "Test xml validation: negative cases"
 
 echo
 echo "**Test <id> is needed"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -148,12 +148,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: No more than 1 <id> is allowed"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -164,12 +164,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <id> naming requirement"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -179,12 +179,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test <image> is needed"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -193,12 +193,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: No more than 1 <image> is allowed"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -209,12 +209,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <command> is needed"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -223,12 +223,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: No more than 1 <command> is allowed"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -239,12 +239,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <shared_directory>: 'container' attr is needed"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -255,12 +255,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <shared_directory>: 'host' attr is needed"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -271,12 +271,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <shared_directory>: 'access' attr is is needed"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -287,12 +287,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <shared_directory>: access must be ro or rw"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -303,12 +303,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <shared_directory>: container paths should not be duplicated"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -320,12 +320,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <shared_directory>: container path should not be /tmp/plcontainer"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -336,12 +336,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <setting>: must be legal one"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -352,13 +352,13 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://' \
 	| grep -v 'Distributing to'
 
 echo
 echo "**Test: <setting>: memory_mb should be string with integer value"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -369,12 +369,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <setting>: memory_mb should be string with positive integer value"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -385,12 +385,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <setting>: use_network should be yes or no"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -401,12 +401,12 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
 echo "**Test: <setting>: logs should be enable or disable"
-cat >bad_xml_file << EOF
+cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
     <runtime>
@@ -417,9 +417,9 @@ cat >bad_xml_file << EOF
     </runtime>
 </configuration>
 EOF
-plcontainer runtime-restore -f bad_xml_file \
+plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
-rm -f bad_xml_file
+rm -f /tmp/bad_xml_file
 
 echo
 echo "Test xml validation: postive case"

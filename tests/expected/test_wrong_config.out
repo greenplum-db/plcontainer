@@ -1,14 +1,18 @@
 -- start_ignore
 \! plcontainer  runtime-backup -f /tmp/conf.bak
 -- end_ignore
+\! $(pwd)/test_wrong_config.sh 0
+Test lack of id
+select pylog100();
+ERROR:  plcontainer: tag <id> must be specified in configuartion (plc_configuration.c:131)
 \! $(pwd)/test_wrong_config.sh 1
 Test lack of image
 select pylog100();
-ERROR:  plcontainer: Lack of 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:257)
+ERROR:  plcontainer: Lack of 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:251)
 \! $(pwd)/test_wrong_config.sh 2
 Test multiple image
 select pylog100();
-ERROR:  plcontainer: There are more than one 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:254)
+ERROR:  plcontainer: There are more than one 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:248)
 \! $(pwd)/test_wrong_config.sh 3
 Test multiple id
 select pylog100();
@@ -16,7 +20,7 @@ ERROR:  plcontainer: tag <id> must be specified only once in configuartion (plc_
 \! $(pwd)/test_wrong_config.sh 4
 Test lack of command element
 select pylog100();
-ERROR:  plcontainer: Lack of 'command' subelement in a runtime element plc_python_shared (plc_configuration.c:264)
+ERROR:  plcontainer: Lack of 'command' subelement in a runtime element plc_python_shared (plc_configuration.c:258)
 \! $(pwd)/test_wrong_config.sh 5
 Test log values should only be enable/disable
 select pylog100();
@@ -24,13 +28,37 @@ ERROR:  plcontainer: SETTING element <log> only accepted "enable" or"disable" on
 \! $(pwd)/test_wrong_config.sh 6
 Test duplicate container path.
 select pylog100();
-ERROR:  plcontainer: Container path cannot be the same in 'shared_directory' element in the runtime plc_python_shared (plc_configuration.c:298)
+ERROR:  plcontainer: Container path cannot be the same in 'shared_directory' element in the runtime plc_python_shared (plc_configuration.c:292)
 \! $(pwd)/test_wrong_config.sh 7
 Test wrong use_network value.
 select pylog100();
 ERROR:  plcontainer: SETTING element <use_network> only accepted "yes"|"true" or"no"|"false" only, current string is enable (plc_configuration.c:222)
+\! $(pwd)/test_wrong_config.sh 8
+Test duplicate id
+select pylog100();
+ERROR:  plcontainer: tag <id> must be specified only once in configuartion (plc_configuration.c:118)
+\! $(pwd)/test_wrong_config.sh 9
+Test logs/use_network disable
+select pylog100();
+ERROR:  plcontainer: SETTING element <use_network> only accepted "yes"|"true" or"no"|"false" only, current string is disable (plc_configuration.c:222)
+\! $(pwd)/test_wrong_config.sh 10
+Test wrong setting
+select pylog100();
+ERROR:  plcontainer: Unrecognized setting options, please check the configuration file: plc_python_shared (plc_configuration.c:229)
+\! $(pwd)/test_wrong_config.sh 11
+Test wrong memory_mb
+select pylog100();
+ERROR:  plcontainer: container memory size could not less 0, current string is -100 (plc_configuration.c:204)
+\! $(pwd)/test_wrong_config.sh 12
+Test wrong element
+select pylog100();
+ERROR:  plcontainer: Unrecognized element 'images' inside of container specification (plc_configuration.c:242)
+\! $(pwd)/test_wrong_config.sh 13
+Test more than 1 command
+select pylog100();
+ERROR:  plcontainer: There are more than one 'command' subelement in a runtime element plc_python_shared (plc_configuration.c:255)
 -- start_ignore
  \! plcontainer  runtime-restore -f /tmp/conf.bak
-20180104:11:20:28:031148 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
-20180104:11:20:29:031148 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+20180110:17:37:56:011904 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20180110:17:37:56:011904 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -- end_ignore

@@ -203,7 +203,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 						if (memorySize <= 0) {
 							plc_elog(ERROR, "container memory size could not less 0, current string is %s", value);
 						} else {
-							conf_entry->memoryMb = conf_entry->memoryMb;
+							conf_entry->memoryMb = memorySize;
 						}
 						xmlFree((void *) value);
 						value = NULL;
@@ -240,12 +240,6 @@ static void parse_runtime_configuration(xmlNode *node) {
 				if (processed == 0) {
 					plc_elog(ERROR, "Unrecognized element '%s' inside of container specification",
 						 cur_node->name);
-				}
-
-				/* Free the temp value if we have allocated it */
-				if (value) {
-					xmlFree((void *) value);
-					value = NULL;
 				}
 			}
 		}
