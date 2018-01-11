@@ -35,7 +35,7 @@ plcontainer image-list not_exist
 echo
 echo "Prepare a blank runtime configuration file and test runtime-backup"
 #Backup the runtime configurations.
-plcontainer runtime-backup -f test_backup_cfg_file
+plcontainer runtime-backup -f /tmp/test_backup_cfg_file_test_utility
 cat <<EOF >tmp_cfg_file
 <?xml version="1.0" ?>
 <configuration>
@@ -445,6 +445,6 @@ rm -f good_xml_file
 #recover the original runtime configurations.
 echo
 echo "Recover the previous runtime configuration file"
-plcontainer runtime-restore -f test_backup_cfg_file >/dev/null
+plcontainer runtime-restore -f /tmp/test_backup_cfg_file_test_utility >/dev/null
 rm -f /tmp/tmp.image-list.out /tmp/backup_file
-# We do not remove test_backup_cfg_file for checking in case there are test errors.
+# We do not remove /tmp/test_backup_cfg_file_test_utility since we might want to check it in case there are test errors.

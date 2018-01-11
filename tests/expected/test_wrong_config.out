@@ -1,5 +1,5 @@
 -- start_ignore
-\! plcontainer  runtime-backup -f /tmp/conf.bak
+\! plcontainer  runtime-backup -f /tmp/test_backup_cfg_file_wrong_config
 -- end_ignore
 \! $(pwd)/test_wrong_config.sh 0
 Test lack of id
@@ -57,8 +57,28 @@ ERROR:  plcontainer: Unrecognized element 'images' inside of container specifica
 Test more than 1 command
 select pylog100();
 ERROR:  plcontainer: There are more than one 'command' subelement in a runtime element plc_python_shared (plc_configuration.c:255)
+\! $(pwd)/test_wrong_config.sh 14
+Test 'host' missing in shared_directory
+select pylog100();
+ERROR:  plcontainer: Configuration tag 'shared_directory' has a mandatory element 'host' that is not found: plc_python_shared (plc_configuration.c:277)
+\! $(pwd)/test_wrong_config.sh 15
+Test 'container' missing in shared_directory
+select pylog100();
+ERROR:  plcontainer: Configuration tag 'shared_directory' has a mandatory element 'container' that is not found: plc_python_shared (plc_configuration.c:284)
+\! $(pwd)/test_wrong_config.sh 16
+Test 'access' missing in shared_directory
+select pylog100();
+ERROR:  plcontainer: Configuration tag 'shared_directory' has a mandatory element 'access' that is not found: plc_python_shared (plc_configuration.c:300)
+\! $(pwd)/test_wrong_config.sh 17
+Test bad access in shared_directory
+select pylog100();
+ERROR:  plcontainer: Directory access mode should be either 'ro' or 'rw', but passed value is 'rx': plc_python_shared (plc_configuration.c:306)
+\! $(pwd)/test_wrong_config.sh 18
+Test good format (but it still fails since the configuration is not legal)
+select pylog100();
+ERROR:  plcontainer: Backend create error: Failed to create container (return code: 404). (containers.c:356)
 -- start_ignore
- \! plcontainer  runtime-restore -f /tmp/conf.bak
-20180110:17:37:56:011904 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
-20180110:17:37:56:011904 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+ \! plcontainer  runtime-restore -f /tmp/test_backup_cfg_file_wrong_config
+20180111:11:27:37:025178 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20180111:11:27:37:025178 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -- end_ignore

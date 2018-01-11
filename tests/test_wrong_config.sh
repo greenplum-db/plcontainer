@@ -224,6 +224,85 @@ f13 () {
 EOF
 }
 
+f14 () {
+  echo "Test 'host' missing in shared_directory"
+  cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python_shared</id>
+        <image>pivotaldata/plcontainer_python:0.1</image>
+        <command>./client</command>
+        <shared_directory access="ro" container="/clientdir"/> 
+    </runtime>
+</configuration>
+EOF
+}
+
+f15 () {
+  echo "Test 'container' missing in shared_directory"
+  cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python_shared</id>
+        <image>pivotaldata/plcontainer_python:0.1</image>
+        <command>./client</command>
+        <shared_directory access="ro" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/> 
+    </runtime>
+</configuration>
+EOF
+}
+
+f16 () {
+  echo "Test 'access' missing in shared_directory"
+  cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python_shared</id>
+        <image>pivotaldata/plcontainer_python:0.1</image>
+        <command>./client</command>
+        <shared_directory container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/> 
+    </runtime>
+</configuration>
+EOF
+}
+
+f17 () {
+  echo "Test bad access in shared_directory"
+  cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python_shared</id>
+        <image>pivotaldata/plcontainer_python:0.1</image>
+        <command>./client</command>
+        <shared_directory access="rx" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/> 
+    </runtime>
+</configuration>
+EOF
+}
+
+f18 () {
+  echo "Test good format (but it still fails since the configuration is not legal)"
+  cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python_shared</id>
+        <image>not_exist_pivotaldata/plcontainer_python:0.1</image>
+        <command>./not_exist_client</command>
+        <shared_directory access="rw" container="/clientdir1" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients1"/> 
+        <shared_directory access="ro" container="/clientdir2" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients2"/> 
+        <setting logs="disable"/>
+        <setting use_network="yes"/>
+        <setting memory_mb="512"/>
+    </runtime>
+</configuration>
+EOF
+}
+
 function _main() {
   local config_id="${1}"
   if [ "$config_id" = "0" ]; then
@@ -254,6 +333,16 @@ function _main() {
 	  f12
   elif [ "$config_id" = "13" ]; then
 	  f13
+  elif [ "$config_id" = "14" ]; then
+	  f14
+  elif [ "$config_id" = "15" ]; then
+	  f15
+  elif [ "$config_id" = "16" ]; then
+	  f16
+  elif [ "$config_id" = "17" ]; then
+	  f17
+  elif [ "$config_id" = "18" ]; then
+	  f18
   fi
 
   if [ -z "$MASTER_DATA_DIRECTORY" ]; then

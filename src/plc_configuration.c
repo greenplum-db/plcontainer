@@ -303,7 +303,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					} else if (strcmp((char *) value, "rw") == 0) {
 						conf_entry->sharedDirs[i].mode = PLC_ACCESS_READWRITE;
 					} else {
-						plc_elog(ERROR, "Directory access mode should be either 'ro' or 'rw', passed value is '%s': %s", value, conf_entry->runtimeid);
+						plc_elog(ERROR, "Directory access mode should be either 'ro' or 'rw', but passed value is '%s': %s", value, conf_entry->runtimeid);
 					}
 					xmlFree((void *) value);
 					value = NULL;
