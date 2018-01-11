@@ -520,3 +520,7 @@ import os
 os.open("/tmp/plcontainer/test_file", os.O_RDWR|os.O_CREAT)
 return 0
 $$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION py_udt_return_null() RETURNS test_type AS $$
+# container: plc_python_shared
+return {'a': True, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'h': None}
+$$ LANGUAGE plcontainer;

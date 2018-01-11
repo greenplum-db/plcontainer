@@ -451,7 +451,7 @@ static int receive_cstring(plcConn *conn, char **s) {
 	if (cnt == -1) {
 		*s = NULL;
 	} else if (cnt < 0) {
-			plc_elog(LOG, "receive_cstring() returns a negative length: %d", cnt);
+		plc_elog(LOG, "receive_cstring() returns a negative length: %d", cnt);
 		return -1;
 	} else {
 		*s = pmalloc(cnt + 1);

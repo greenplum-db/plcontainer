@@ -687,3 +687,9 @@ select pysubtransaction('t');
  t
 (1 row)
 
+SELECT py_udt_return_null();
+ py_udt_return_null 
+--------------------
+ (t,1,2,3,4,5,6,)
+(1 row)
+

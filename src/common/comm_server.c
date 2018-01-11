@@ -5,6 +5,8 @@
  *
  *------------------------------------------------------------------------------
  */
+#ifdef COMM_STANDALONE
+
 #include <errno.h>
 #include <netinet/ip.h>
 #include <stdlib.h>
@@ -326,3 +328,5 @@ void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *), plcConn *conn
 		free_callreq((plcMsgCallreq *) msg, false, false);
 	}
 }
+
+#endif

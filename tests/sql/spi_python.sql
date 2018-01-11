@@ -204,6 +204,16 @@ for r in rv:
 
 $$ LANGUAGE plcontainer;
 
+CREATE OR REPLACE FUNCTION py_spi_simple_num() RETURNS void AS $$
+# container: plc_python_shared
+
+plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["numeric"])
+rv = plpy.execute(plan1, [10.5]);
+for r in rv:
+    plpy.notice(str(r))
+
+$$ LANGUAGE plcontainer;
+
 select py_spi_simple_t4();
 select py_spi_illegal_pexecute1();
 select py_spi_illegal_pexecute2();
@@ -211,6 +221,7 @@ select py_spi_simple_t4();
 select py_spi_illegal_pexecute3();
 select py_spi_illegal_pexecute4();
 select py_spi_simple_t4();
+SELECT py_spi_simple_num();
 
 CREATE OR REPLACE FUNCTION pyspi_illegal_sql() RETURNS integer AS $$
 # container: plc_python_shared

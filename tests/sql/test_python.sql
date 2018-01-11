@@ -116,3 +116,4 @@ select pybadarr();
 select pybadarr2();
 select pyinvalid_function();
 select pysubtransaction('t');
+SELECT py_udt_return_null();
