@@ -329,6 +329,10 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 
 	container_slot = find_container_slot();
 
+	/*
+	 * Hardcode as Docker at this moment. In the future the type should
+	 * be set in conf.
+	 */
 	enum PLC_BACKEND_TYPE plc_backend_type = BACKEND_DOCKER;
 	plc_backend_prepareImplementation(plc_backend_type);
 

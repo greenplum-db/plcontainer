@@ -410,7 +410,7 @@ int plc_docker_inspect_container(const char *name, char **element, plcInspection
 		goto cleanup;
 	}
 
-	cleanup:
+cleanup:
 	plcCurlBufferFree(response);
 	pfree(url);
 
