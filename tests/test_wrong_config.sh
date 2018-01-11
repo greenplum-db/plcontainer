@@ -45,7 +45,7 @@ f2 () {
         <image>pivotaldata/plcontainer_python:0.1</image>
         <command>./client</command>
         <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/> 
-        <setting logs="enable"/>
+        <setting use_container_logging="yes"/>
     </runtime>
 </configuration>
 EOF
@@ -62,7 +62,7 @@ f3 () {
         <image>pivotaldata/plcontainer_python:0.1</image>
         <command>./client</command>
         <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/>
-        <setting logs="enable"/>
+        <setting use_container_logging="yes"/>
     </runtime>
 </configuration>
 EOF
@@ -77,14 +77,14 @@ f4 () {
         <id>plc_python_shared</id>
         <image>pivotaldata/plcontainer_python:0.0</image>
         <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/>
-        <setting logs="enable"/>
+        <setting use_container_logging="yes"/>
     </runtime>
 </configuration>
 EOF
 }
 
 f5 () {
-  echo "Test log values should only be enable/disable"
+  echo "Test use_container_logging values should only be yes/no"
   cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
@@ -93,7 +93,7 @@ f5 () {
         <image>pivotaldata/plcontainer_python:0.1</image>
         <command>./client</command>
         <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/>
-        <setting logs="yes"/>
+        <setting use_container_logging="enable"/>
     </runtime>
 </configuration>
 EOF
@@ -110,14 +110,14 @@ f6 () {
         <command>./client</command>
         <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/>
         <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients2"/>
-        <setting logs="enable"/>
+        <setting use_container_logging="yes"/>
     </runtime>
 </configuration>
 EOF
 }
 
 f7 () {
-  echo "Test wrong use_network value."
+  echo "Test wrong use_container_network value."
   cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
@@ -126,8 +126,8 @@ f7 () {
         <image>pivotaldata/plcontainer_python:0.1</image>
         <command>./client</command>
         <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/>
-        <setting logs="enable"/>
-        <setting use_network="enable"/>
+        <setting use_container_network="enable"/>
+        <setting use_container_logging="yes"/>
     </runtime>
 </configuration>
 EOF
@@ -157,8 +157,8 @@ f9 () {
         <id>plc_python_shared</id>
         <image>pivotaldata/plcontainer_python:0.1</image>
         <command>./client</command>
-        <setting logs="disable"/>
-        <setting use_network="disable"/>
+        <setting use_container_logging="no"/>
+        <setting use_container_network="disable"/>
         <setting memory_mb="512"/>
     </runtime>
 </configuration>
@@ -295,8 +295,8 @@ f18 () {
         <command>./not_exist_client</command>
         <shared_directory access="rw" container="/clientdir1" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients1"/> 
         <shared_directory access="ro" container="/clientdir2" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients2"/> 
-        <setting logs="disable"/>
-        <setting use_network="yes"/>
+        <setting use_container_logging="no"/>
+        <setting use_container_network="yes"/>
         <setting memory_mb="512"/>
     </runtime>
 </configuration>

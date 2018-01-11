@@ -144,8 +144,8 @@ static void parse_runtime_configuration(xmlNode *node) {
 
 		/*runtime_id will be freed with conf_entry*/
 		conf_entry->memoryMb = 1024;
-		conf_entry->enable_log = false;
-		conf_entry->isNetworkConnection = false;
+		conf_entry->useContainerLogging = false;
+		conf_entry->useContainerNetwork = false;
 
 
 		for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
@@ -182,16 +182,16 @@ static void parse_runtime_configuration(xmlNode *node) {
 				if (xmlStrcmp(cur_node->name, (const xmlChar *) "setting") == 0) {
 					bool validSetting = false;
 					processed = 1;
-					value = xmlGetProp(cur_node, (const xmlChar *) "logs");
+					value = xmlGetProp(cur_node, (const xmlChar *) "use_container_logging");
 					if (value != NULL) {
 						validSetting = true;
-						if (strcasecmp((char *) value, "enable") == 0) {
-							conf_entry->enable_log = true;
-						} else if (strcasecmp((char *) value, "disable") == 0) {
-							conf_entry->enable_log = false;
+						if (strcasecmp((char *) value, "yes") == 0) {
+							conf_entry->useContainerLogging = true;
+						} else if (strcasecmp((char *) value, "no") == 0) {
+							conf_entry->useContainerLogging = false;
 						} else {
-							plc_elog(ERROR, "SETTING element <log> only accepted \"enable\" or"
-								"\"disable\" only, current string is %s", value);
+							plc_elog(ERROR, "SETTING element <use_container_logging> only accepted \"yes\" or"
+								"\"no\" only, current string is %s", value);
 						}
 						xmlFree((void *) value);
 						value = NULL;
@@ -208,18 +208,16 @@ static void parse_runtime_configuration(xmlNode *node) {
 						xmlFree((void *) value);
 						value = NULL;
 					}
-					value = xmlGetProp(cur_node, (const xmlChar *) "use_network");
+					value = xmlGetProp(cur_node, (const xmlChar *) "use_container_network");
 					if (value != NULL) {
 						validSetting = true;
-						if (strcasecmp((char *) value, "false") == 0 ||
-							strcasecmp((char *) value, "no") == 0) {
-							conf_entry->isNetworkConnection = false;
-						} else if (strcasecmp((char *) value, "true") == 0 ||
-								 strcasecmp((char *) value, "yes") == 0) {
-							conf_entry->isNetworkConnection = true;
+						if (strcasecmp((char *) value, "no") == 0) {
+							conf_entry->useContainerNetwork = false;
+						} else if (strcasecmp((char *) value, "yes") == 0) {
+							conf_entry->useContainerNetwork = true;
 						} else {
-							plc_elog(ERROR, "SETTING element <use_network> only accepted \"yes\"|\"true\" or"
-								"\"no\"|\"false\" only, current string is %s", value);
+							plc_elog(ERROR, "SETTING element <use_container_network> only accepts \"yes\" or"
+								"\"no\"only, current string is %s", value);
 
 						}
 						xmlFree((void *) value);
@@ -391,8 +389,8 @@ static void print_runtime_configurations() {
 			plc_elog(INFO, "Container '%s' configuration", conf_entry->runtimeid);
 			plc_elog(INFO, "    image = '%s'", conf_entry->image);
 			plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
-			plc_elog(INFO, "    use network = '%s'", conf_entry->isNetworkConnection ? "yes" : "no");
-			plc_elog(INFO, "    enable log  = '%s'", conf_entry->enable_log ? "yes" : "no");
+			plc_elog(INFO, "    use container network = '%s'", conf_entry->useContainerNetwork ? "yes" : "no");
+			plc_elog(INFO, "    use container logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
 			for (j = 0; j < conf_entry->nSharedDirs; j++) {
 				plc_elog(INFO, "    shared directory from host '%s' to container '%s'",
 					 conf_entry->sharedDirs[j].host,
@@ -560,7 +558,7 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 			totallen += strlen(volumes[i]);
 		}
 
-		if (!conf->isNetworkConnection) {
+		if (!conf->useContainerNetwork) {
 			if (i > 0)
 				comma = ',';
 			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
@@ -589,7 +587,7 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 
 		res = palloc(totallen + conf->nSharedDirs + 1 + 1);
 		pos = res;
-		for (i = 0; i < (conf->isNetworkConnection ? conf->nSharedDirs : conf->nSharedDirs + 1); i++) {
+		for (i = 0; i < (conf->useContainerNetwork ? conf->nSharedDirs : conf->nSharedDirs + 1); i++) {
 			memcpy(pos, volumes[i], strlen(volumes[i]));
 			pos += strlen(volumes[i]);
 			*pos = ' ';

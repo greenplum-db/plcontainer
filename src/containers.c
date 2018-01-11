@@ -377,7 +377,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	pfree(dockerid);
 	dockerid = containers[container_slot].dockerid;
 
-	if (!conf->isNetworkConnection)
+	if (!conf->useContainerNetwork)
 		uds_fn = get_uds_fn(uds_dir);
 
 	_loop_cnt = 0;
@@ -388,7 +388,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 		plc_elog(LOG, "plc_backend_start() fails. Retrying [%d]", _loop_cnt);
 	}
 	if (res < 0) {
-		if (!conf->isNetworkConnection)
+		if (!conf->useContainerNetwork)
 			cleanup_uds(uds_fn);
 		plc_elog(ERROR, "Backend start error: %s", api_error_message);
 		return NULL;
@@ -401,11 +401,11 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	plc_elog(DEBUG1, "container %s has started at %s", dockerid, asctime(timeinfo));
 
 	/* For network connection only. */
-	if (conf->isNetworkConnection) {
+	if (conf->useContainerNetwork) {
 		char *element = NULL;
 		res = plc_backend_inspect(dockerid, &element, PLC_INSPECT_PORT);
 		if (res < 0) {
-			if (!conf->isNetworkConnection)
+			if (!conf->useContainerNetwork)
 				cleanup_uds(uds_fn);
 			plc_elog(ERROR, "Backend inspect error: %s", api_error_message);
 			return NULL;
@@ -441,14 +441,14 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 		int res = 0;
 		plcMessage *mresp = NULL;
 
-		if (!conf->isNetworkConnection)
+		if (!conf->useContainerNetwork)
 			conn = plcConnect_ipc(uds_fn);
 		else
 			conn = plcConnect_inet(port);
 
 		if (conn != NULL) {
 			plc_elog(DEBUG1, "Connected to container via %s",
-			     conf->isNetworkConnection ? "network" : "unix domain socket");
+			     conf->useContainerNetwork ? "network" : "unix domain socket");
 			conn->container_slot = container_slot;
 
 			res = plcontainer_channel_send(conn, (plcMessage *) mping);
@@ -493,7 +493,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	}
 
 	if (sleepms >= CONTAINER_CONNECT_TIMEOUT_MS) {
-		if (!conf->isNetworkConnection)
+		if (!conf->useContainerNetwork)
 			cleanup_uds(uds_fn);
 		plc_elog(ERROR, "Cannot connect to the container, %d ms timeout reached",
 		     CONTAINER_CONNECT_TIMEOUT_MS);

@@ -94,7 +94,7 @@ plcontainer runtime-add -r runtime1 -i image1 -l python -v /host_dir1/shared1:/c
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://' \
 	| grep -v 'Distributing to'
 plcontainer runtime-add -r runtime2 -i image2 -l r -v /host_dir2/shared1:/container_dir2/shared1:rw \
-		-v /host_dir2/shared2:/container_dir2/shared2:ro -s memory_mb=512 -s use_network=yes \
+		-v /host_dir2/shared2:/container_dir2/shared2:ro -s memory_mb=512 -s use_container_network=yes \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://' \
 	| grep -v 'Distributing to'
 plcontainer runtime-show -r runtime_not_exist \
@@ -122,14 +122,14 @@ plcontainer runtime-replace -r runtime3 -i image3 -l r -s user_network=yes \
 echo
 echo "Test runtime-replace: add a new one"
 plcontainer runtime-replace -r runtime3 -i image2 -l r -v /host_dir3/shared1:/container_dir3/shared1:rw \
-	-v /host_dir3/shared2:/container_dir3/shared2:ro -s memory_mb=512 -s use_network=yes \
+	-v /host_dir3/shared2:/container_dir3/shared2:ro -s memory_mb=512 -s use_container_network=yes \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://' \
 	| grep -v 'Distributing to'
 plcontainer runtime-backup -f /tmp/backup_file; cat /tmp/backup_file |  sed -e "s|${GPHOME}|GPHOME|"
 echo
 echo "Test runtime-replace: replace"
 plcontainer runtime-replace -r runtime3 -i image2 -l r -v /host_dir3/shared3:/container_dir3/shared3:rw \
-	-s use_network=no \
+	-s use_container_network=no \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://' \
 	| grep -v 'Distributing to'
 plcontainer runtime-backup -f /tmp/backup_file; cat /tmp/backup_file |  sed -e "s|${GPHOME}|GPHOME|"
@@ -389,7 +389,7 @@ plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
-echo "**Test: <setting>: use_network should be yes or no"
+echo "**Test: <setting>: use_container_network should be yes or no"
 cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
@@ -397,7 +397,7 @@ cat >/tmp/bad_xml_file << EOF
         <id>plc_python</id>
         <image>image1:0.1</image>
         <command>./client</command>
-        <setting use_network="y"/>
+        <setting use_container_network="y"/>
     </runtime>
 </configuration>
 EOF
@@ -405,7 +405,7 @@ plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
-echo "**Test: <setting>: logs should be enable or disable"
+echo "**Test: <setting>: use_container_logging should be yes or no"
 cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
@@ -413,7 +413,7 @@ cat >/tmp/bad_xml_file << EOF
         <id>plc_python</id>
         <image>image1:0.1</image>
         <command>./client</command>
-        <setting logs="yes"/>
+        <setting use_container_logging="enable"/>
     </runtime>
 </configuration>
 EOF
@@ -430,8 +430,8 @@ cat >good_xml_file << EOF
         <id>plc_python</id>
         <image>image1:0.1</image>
         <setting memory_mb="512"/>
-        <setting use_network="NO"/>
-        <setting logs="Enable"/>
+        <setting use_container_network="NO"/>
+        <setting use_container_logging="Yes"/>
         <command>./client</command>
         <shared_directory access="rw" container="/clientdir" host="/host/plcontainer_clients"/>
     </runtime>

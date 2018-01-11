@@ -521,15 +521,15 @@ def validate_xml(filename):
                     except ValueError:
                         logger.error("memory_mb should be a positive integer in runtime %s, but now: '%s'", runtime_id, memory_mb_str)
                         raise Exception("Validation failed")
-                elif 'use_network' in settings.attrib:
-                    use_network_str = settings.attrib['use_network'].lower()
-                    if use_network_str != 'yes' and use_network_str != 'no':
-                        logger.error("use_network should be 'yes' or 'no' in runtime %s, but now: '%s'", runtime_id, use_network_str)
+                elif 'use_container_network' in settings.attrib:
+                    use_container_network_str = settings.attrib['use_container_network'].lower()
+                    if use_container_network_str != 'yes' and use_container_network_str != 'no':
+                        logger.error("use_container_network should be 'yes' or 'no' in runtime %s, but now: '%s'", runtime_id, use_container_network_str)
                         raise Exception("Validation failed")
-                elif 'logs' in settings.attrib:
-                    logs_str = settings.attrib['logs'].lower()
-                    if logs_str != 'enable' and logs_str != 'disable':
-                        logger.error("logs should be 'enable' or 'disable' in runtime %s, but now: '%s'", runtime_id, logs_str)
+                elif 'use_container_logging' in settings.attrib:
+                    use_container_logging_str = settings.attrib['use_container_logging'].lower()
+                    if use_container_logging_str != 'yes' and use_container_logging_str != 'no':
+                        logger.error("'use_container_logging' should be 'yes' or 'no' in runtime %s, but now: '%s'", runtime_id, use_container_logging_str)
                         raise Exception("Validation failed")
                 else:
                     logger.error("Found illegal setting in runtime %s: %s", runtime_id, settings.attrib)
@@ -657,10 +657,10 @@ def runtime_show_xml(filename, r_id):
                 for settings in runtime.findall('setting'):
                     if 'memory_mb' in settings.attrib:
                         sys.stdout.write("  ---- Container Memory Limited: %s MB\n" % settings.attrib['memory_mb'])
-                    elif 'use_network' in settings.attrib:
-                        sys.stdout.write("  ---- Container Use Network For Communication: %s\n" % settings.attrib['use_network'])
-                    elif 'logs' in settings.attrib:
-                        sys.stdout.write("  ---- Container Client Logging: %s\n" % settings.attrib['logs'])
+                    elif 'use_container_network' in settings.attrib:
+                        sys.stdout.write("  ---- Use Container Network For Communication: %s\n" % settings.attrib['use_container_network'])
+                    elif 'use_container_logging' in settings.attrib:
+                        sys.stdout.write("  ---- Use Container Logging: %s\n" % settings.attrib['use_container_logging'])
                 sys.stdout.write("  Shared Directory: \n")
                 for share_folder in runtime.findall('shared_directory'):
                     sys.stdout.write("  ---- Shared Directory From HOST '%s' to Container '%s', access mode is '%s'\n" % (share_folder.attrib['host'], share_folder.attrib['container'], share_folder.attrib['access']))
@@ -684,7 +684,7 @@ def get_conf_settings(options, elements):
         strList = setting.split("=")
         if len(strList) != 2:
             raise Exception("Bad setting format: %s" % setting)
-        if strList[0] != "use_network" and strList[0] != "memory_mb" and strList[0] != "logs":
+        if strList[0] != "use_container_network" and strList[0] != "memory_mb" and strList[0] != "use_container_logging":
             raise Exception("Bad setting key: %s" % strList[0])
         elements['setting'][strList[0]] = strList[1]
 

@@ -192,7 +192,7 @@ static int start_listener_ipc() {
 
 int start_listener() {
 	int sock;
-	char *network;
+	char *use_container_network;
 	char *env_str, *endptr;
 	long val;
 
@@ -228,20 +228,23 @@ int start_listener() {
 		clientLanguage = strdup(env_str);
 	}
 
-	network = getenv("USE_NETWORK");
-	if (network == NULL) {
-		network = "no";
-		plc_elog(WARNING, "USE_NETWORK is not set, use default value \"no\".");
+	use_container_network = getenv("USE_CONTAINER_NETWORK");
+	if (use_container_network == NULL) {
+		use_container_network = "false";
+		plc_elog(WARNING, "USE_CONTAINER_NETWORK is not set, use default value \"no\".");
 	}
 
-	if (strcasecmp("true", network) == 0 || strcasecmp("yes", network) == 0) {
+	if (strcasecmp("true", use_container_network) == 0) {
 		sock = start_listener_inet();
-	} else {
+	} else if (strcasecmp("false", use_container_network) == 0){
 		if (geteuid() != 0 || getuid() != 0) {
 			plc_elog(ERROR, "Must run as root and then downgrade to usual user.");
 			return -1;
 		}
 		sock = start_listener_ipc();
+	} else {
+		sock = -1;
+		plc_elog(ERROR, "USE_CONTAINER_NETWORK is set to wrong value '%s'", use_container_network);
 	}
 
 	return sock;

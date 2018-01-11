@@ -221,7 +221,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"              \"DB_USER_NAME=%s\",\n"
 			"              \"DB_NAME=%s\",\n"
 			"              \"DB_QE_PID=%d\",\n"
-			"              \"USE_NETWORK=%s\"],\n"
+			"              \"USE_CONTAINER_NETWORK=%s\"],\n"
 			"    \"NetworkDisabled\": %s,\n"
 			"    \"Image\": \"%s\",\n"
 			"    \"HostConfig\": {\n"
@@ -275,8 +275,8 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	snprintf(messageBody,
 	         createStringSize,
 	         createRequest,
-	         conf->enable_log ? "true" : "false",
-	         conf->enable_log ? "true" : "false",
+	         conf->useContainerLogging ? "true" : "false",
+	         conf->useContainerLogging ? "true" : "false",
 	         conf->command,
 	         getuid(),
 	         getgid(),
@@ -285,12 +285,12 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         username,
 	         dbname,
 	         MyProcPid,
-	         conf->isNetworkConnection ? "true" : "false",
-	         conf->isNetworkConnection ? "false" : "true",
+	         conf->useContainerNetwork ? "true" : "false",
+	         conf->useContainerNetwork ? "false" : "true",
 	         conf->image,
 	         volumeShare,
 	         ((long long) conf->memoryMb) * 1024 * 1024,
-	         conf->enable_log ? default_log_dirver : "none",
+	         conf->useContainerLogging ? default_log_dirver : "none",
 	         username,
 	         GpIdentity.dbid);
 

@@ -42,8 +42,8 @@ typedef struct runtimeConfEntry {
 	int memoryMb;
 	int nSharedDirs;
 	plcSharedDir *sharedDirs;
-	bool isNetworkConnection;
-	bool enable_log;
+	bool useContainerNetwork;
+	bool useContainerLogging;
 } runtimeConfEntry;
 
 /* entrypoint for all plcontainer procedures */

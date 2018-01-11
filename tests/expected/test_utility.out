@@ -130,7 +130,7 @@ PL/Container Runtime Configuration:
   Linked Docker Image: image2
   Runtime Setting(s): 
   ---- Container Memory Limited: 512 MB
-  ---- Container Use Network For Communication: yes
+  ---- Use Container Network For Communication: yes
   Shared Directory: 
   ---- Shared Directory From HOST 'GPHOME/bin/plcontainer_clients' to Container '/clientdir', access mode is 'ro'
   ---- Shared Directory From HOST '/host_dir2/shared1' to Container '/container_dir2/shared1', access mode is 'rw'
@@ -184,7 +184,7 @@ Test runtime-replace: add a new one
         <shared_directory access="rw" container="/container_dir3/shared1" host="/host_dir3/shared1"/>
         <shared_directory access="ro" container="/container_dir3/shared2" host="/host_dir3/shared2"/>
         <setting memory_mb="512"/>
-        <setting use_network="yes"/>
+        <setting use_container_network="yes"/>
     </runtime>
 </configuration>
 
@@ -200,7 +200,7 @@ Test runtime-replace: replace
         <command>/clientdir/rclient.sh</command>
         <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/plcontainer_clients"/>
         <shared_directory access="rw" container="/container_dir3/shared3" host="/host_dir3/shared3"/>
-        <setting use_network="no"/>
+        <setting use_container_network="no"/>
     </runtime>
 </configuration>
 
@@ -316,16 +316,16 @@ Test xml validation: negative cases
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
-**Test: <setting>: use_network should be yes or no
+**Test: <setting>: use_container_network should be yes or no
 -image image1:0.1 is not in the list of 'docker images'
--use_network should be 'yes' or 'no' in runtime plc_python, but now: 'y'
+-use_container_network should be 'yes' or 'no' in runtime plc_python, but now: 'y'
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
-**Test: <setting>: logs should be enable or disable
+**Test: <setting>: use_container_logging should be yes or no
 -image image1:0.1 is not in the list of 'docker images'
--logs should be 'enable' or 'disable' in runtime plc_python, but now: 'yes'
+-'use_container_logging' should be 'yes' or 'no' in runtime plc_python, but now: 'enable'
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.
