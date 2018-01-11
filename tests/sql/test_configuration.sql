@@ -22,3 +22,11 @@ SET ROLE gpadmin;
 
 DROP FUNCTION pyconf();
 DROP ROLE pluser;
+
+-- Test non-exsited images
+CREATE OR REPLACE FUNCTION py_no_exsited() RETURNS int4 AS $$
+# container: plc_python_shared1
+return 10
+$$ LANGUAGE plcontainer;
+
+SELECT py_no_exsited();
