@@ -426,7 +426,7 @@ static int plc_refresh_container_config(bool verbose) {
 	LIBXML_TEST_VERSION
 
 	/* Parse the file and get the DOM */
-	sprintf(filename, "%s/"#PLC_PROPERTIES_FILE"", data_directory);
+	sprintf(filename, "%s/%s", data_directory, PLC_PROPERTIES_FILE);
 
 	PG_TRY();
 	{
