@@ -35,6 +35,9 @@
         "plcontainer runtime-edit" command.
     -->
 
+    <!--
+        runtime configuration examples:
+
     <runtime>
         <id>plc_python_example1</id>
         <image>pivotaldata/plcontainer_python_with_clients:0.1</image>
@@ -58,5 +61,7 @@
         <shared_directory access="ro" container="/clientdir" host="/usr/local/greenplum-db/bin/plcontainer_clients"/>
         <setting use_container_logging="yes"/>
     </runtime>
+
+    -->
 
 </configuration>
