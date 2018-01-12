@@ -285,7 +285,7 @@ EOF
 }
 
 f18 () {
-  echo "Test long runtime id"
+  echo "Test long runtime id which exceeds the length limit"
   cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>

@@ -37,7 +37,7 @@ typedef struct plcSharedDir {
 
 /*
  * Struct runtimeConfEntry is the entry of hash table.
- * the key of hash table must be the fisrt field of struct.
+ * The key of hash table must be the first field of struct.
  */
 typedef struct runtimeConfEntry {
 	char runtimeid[RUNTIME_ID_MAX_LENGTH];

@@ -74,7 +74,7 @@ Test bad access in shared_directory
 select plcontainer_refresh_local_config(true);
 ERROR:  plcontainer: Directory access mode should be either 'ro' or 'rw', but passed value is 'rx': plc_python_shared (plc_configuration.c:306)
 \! $(pwd)/test_wrong_config.sh 18
-Test long runtime id
+Test long runtime id which exceeds the length limit
 select plcontainer_refresh_local_config(true);
 ERROR:  plcontainer: runtimeid should not be longer than 64 bytes. (plc_configuration.c:134)
 \! $(pwd)/test_wrong_config.sh 19
