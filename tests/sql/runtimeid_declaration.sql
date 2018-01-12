@@ -15,7 +15,12 @@ return 1
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_lots_space() RETURNS int8 AS $$
-	  # 	container  	:      	 plc_python_shared   	     
+	  # container 	:  	 plc_python_shared  
+return 1
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION runtime_id_too_long() RETURNS int8 AS $$
+          #container: plc_python_shared_toooooooooooooooooooooooooooooooooooooooooooooooooooooooo_long
 return 1
 $$ LANGUAGE plcontainer;
 
@@ -73,6 +78,7 @@ SELECT runtime_id_cr();
 SELECT runtime_id_no_name();
 SELECT runtime_id_no_hash();
 SELECT runtime_id_lots_space();
+SELECT runtime_id_too_long();
 SELECT runtime_id_blank_line();
 SELECT runtime_id_wrong_start();
 SELECT runtime_id_extra_char();
@@ -89,6 +95,7 @@ DROP FUNCTION runtime_id_cr();
 DROP FUNCTION runtime_id_no_name();
 DROP FUNCTION runtime_id_no_hash();
 DROP FUNCTION runtime_id_lots_space();
+DROP FUCNTION runtime_id_too_long();
 DROP FUNCTION runtime_id_blank_line();
 DROP FUNCTION runtime_id_wrong_start();
 DROP FUNCTION runtime_id_extra_char();

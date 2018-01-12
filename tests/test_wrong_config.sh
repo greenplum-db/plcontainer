@@ -285,6 +285,22 @@ EOF
 }
 
 f18 () {
+  echo "Test long runtime id"
+  cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python_shared_toooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_long</id>
+        <image>pivotaldata/plcontainer_python:0.1</image>
+        <command>./client</command>
+        <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/>
+        <setting use_container_logging="yes"/>
+    </runtime>
+</configuration>
+EOF
+}
+
+f19 () {
   echo "Test good format (but it still fails since the configuration is not legal)"
   cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
@@ -302,6 +318,7 @@ f18 () {
 </configuration>
 EOF
 }
+
 
 function _main() {
   local config_id="${1}"
@@ -343,6 +360,8 @@ function _main() {
 	  f17
   elif [ "$config_id" = "18" ]; then
 	  f18
+  elif [ "$config_id" = "19" ]; then
+	  f19
   fi
 
   if [ -z "$MASTER_DATA_DIRECTORY" ]; then

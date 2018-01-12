@@ -542,7 +542,6 @@ char *parse_container_meta(const char *source) {
 
 	first = 0;
 	len = strlen(source);
-
 	/* If the string is not starting with hash, fail */
 	/* Must call isspace() since there is heading '\n'. */
 	while (first < len && isspace(source[first]))
@@ -601,6 +600,10 @@ char *parse_container_meta(const char *source) {
 	 * Allocate container id variable and copy container id 
 	 * the character length of id is last-first.
 	 */
+
+	if (last - first + 1 + 1 >= RUNTIME_ID_MAX_LENGTH) {
+                plc_elog(ERROR, "Runtimeid should not be longer than 64 bytes.");
+        }
 	runtime_id = (char *) pmalloc(last - first + 1 + 1);
 	memcpy(runtime_id, &source[first], last - first + 1);
 

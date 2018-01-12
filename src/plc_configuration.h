@@ -14,7 +14,7 @@
 #include "plcontainer.h"
 
 #define PLC_PROPERTIES_FILE "plcontainer_configuration.xml"
-#define RUNTIME_ID_MAX_LENGTH 512
+#define RUNTIME_ID_MAX_LENGTH 64
 #define MAX_EXPECTED_RUNTIME_NUM 32
 
 typedef enum {
@@ -35,6 +35,10 @@ typedef struct plcSharedDir {
 	plcFsAccessMode mode;
 } plcSharedDir;
 
+/*
+ * Struct runtimeConfEntry is the entry of hash table.
+ * the key of hash table must be the fisrt field of struct.
+ */
 typedef struct runtimeConfEntry {
 	char runtimeid[RUNTIME_ID_MAX_LENGTH];
 	char *image;

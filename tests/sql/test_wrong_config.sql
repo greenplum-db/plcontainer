@@ -59,6 +59,9 @@ select plcontainer_refresh_local_config(true);
 \! $(pwd)/test_wrong_config.sh 18
 select plcontainer_refresh_local_config(true);
 
+\! $(pwd)/test_wrong_config.sh 19
+select plcontainer_refresh_local_config(true);
+
 select plcontainer_show_local_config();
 
 -- start_ignore
