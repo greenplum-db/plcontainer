@@ -34,7 +34,7 @@ PLCONTAINER_GPDB_DIR = 'share/postgresql/plcontainer'
 PLCONTAINER_CLIENT_DIR = "bin/plcontainer_clients"
 
 PL_BATCH_SIZE = 64
-RUNTIME_ID_MAX_LENGTH = 63
+RUNTIME_ID_MAX_LENGTH = 64
 TMP = '/tmp'
 TAR_GZ = '.tar.gz'
 
@@ -459,7 +459,7 @@ def validate_xml(filename):
 
             runtime_id = runtime.find('id').text
 
-            if len(runtime_id) > RUNTIME_ID_MAX_LENGTH:
+            if len(runtime_id) >= RUNTIME_ID_MAX_LENGTH:
                 logger.error("length of runtime id %s should not exceeds 63.", runtime_id)
                 raise Exception("Validation failed")
             if  not pattern.match(runtime_id):
