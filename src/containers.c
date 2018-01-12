@@ -601,7 +601,7 @@ char *parse_container_meta(const char *source) {
 	 * the character length of id is last-first.
 	 */
 
-	if (last - first + 1 + 1 > RUNTIME_ID_MAX_LENGTH - 1) {
+	if (last - first + 1 + 1 > RUNTIME_ID_MAX_LENGTH) {
 		plc_elog(ERROR, "Runtime id should not be longer than 63 bytes.");
 	}
 	runtime_id = (char *) pmalloc(last - first + 1 + 1);
