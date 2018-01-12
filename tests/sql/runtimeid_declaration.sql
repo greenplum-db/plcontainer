@@ -95,7 +95,7 @@ DROP FUNCTION runtime_id_cr();
 DROP FUNCTION runtime_id_no_name();
 DROP FUNCTION runtime_id_no_hash();
 DROP FUNCTION runtime_id_lots_space();
-DROP FUCNTION runtime_id_too_long();
+DROP FUNCTION runtime_id_too_long();
 DROP FUNCTION runtime_id_blank_line();
 DROP FUNCTION runtime_id_wrong_start();
 DROP FUNCTION runtime_id_extra_char();
