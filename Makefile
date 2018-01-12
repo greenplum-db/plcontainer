@@ -109,3 +109,8 @@ build-clients:
 clean-clients:
 	$(MAKE) -C $(SRCDIR)/pyclient clean
 	$(MAKE) -C $(SRCDIR)/rclient clean
+
+.PHONY: report
+report:
+	lcov -c -o coverage.info -d .
+	genhtml coverage.info -o coverage_result
