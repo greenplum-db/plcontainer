@@ -324,7 +324,7 @@ Test xml validation: negative cases
 -Bad xml format. Please fix the file at first.
 
 **Test: the length of runtime id exceeds the max limit.
--length of runtime id plc_python_toooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_long should not exceeds 64.
+-length of runtime id plc_python_toooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_long should not exceeds 63.
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.

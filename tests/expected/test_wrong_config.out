@@ -76,7 +76,7 @@ ERROR:  plcontainer: Directory access mode should be either 'ro' or 'rw', but pa
 \! $(pwd)/test_wrong_config.sh 18
 Test long runtime id which exceeds the length limit
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: runtimeid should not be longer than 64 bytes. (plc_configuration.c:134)
+ERROR:  plcontainer: runtimeid should not be longer than 63 bytes. (plc_configuration.c:134)
 \! $(pwd)/test_wrong_config.sh 19
 Test good format (but it still fails since the configuration is not legal)
 select plcontainer_refresh_local_config(true);

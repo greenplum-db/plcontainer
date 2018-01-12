@@ -71,7 +71,7 @@ SELECT runtime_id_lots_space();
 (1 row)
 
 SELECT runtime_id_too_long();
-ERROR:  plcontainer: Runtimeid should not be longer than 64 bytes. (containers.c:605)
+ERROR:  plcontainer: Runtimeid should not be longer than 63 bytes. (containers.c:605)
 SELECT runtime_id_blank_line();
 ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No '#' is found): 2 11 114 (containers.c:550)
 SELECT runtime_id_wrong_start();
