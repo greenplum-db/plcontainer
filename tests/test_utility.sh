@@ -405,6 +405,22 @@ plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
+echo "**Test: the length of runtime id exceeds the max limit."
+cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python_toooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_long</id>
+        <image>image1:0.1</image>
+        <command>./client</command>
+    </runtime>
+</configuration>
+EOF
+plcontainer runtime-restore -f /tmp/bad_xml_file \
+        | sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
+
+
+echo
 echo "**Test: <setting>: use_container_logging should be yes or no"
 cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>

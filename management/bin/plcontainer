@@ -457,6 +457,10 @@ def validate_xml(filename):
                 raise Exception("Validation failed")
 
             runtime_id = runtime.find('id').text
+
+            if len(runtime_id) >= 64:
+                logger.error("length of runtime id %s should not exceeds 64.", runtime_id)
+                raise Exception("Validation failed")
             if  not pattern.match(runtime_id):
                 logger.error("'id' name with wrong format: %s", runtime_id)
                 raise Exception("Validation failed")

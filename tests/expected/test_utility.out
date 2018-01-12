@@ -323,6 +323,12 @@ Test xml validation: negative cases
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
+**Test: the length of runtime id exceeds the max limit.
+-length of runtime id plc_python_toooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_long should not exceeds 64.
+-XML file does not conform XML specification or wrong settings.
+-Validation failed
+-Bad xml format. Please fix the file at first.
+
 **Test: <setting>: use_container_logging should be yes or no
 -image image1:0.1 is not in the list of 'docker images'
 -'use_container_logging' should be 'yes' or 'no' in runtime plc_python, but now: 'enable'
