@@ -10,6 +10,7 @@
 #include "regex/regex.h"
 
 int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
+	int i;
 	plc_elog(DEBUG1, "plcontainer: docker_inspect_string:%s", buf);
 	struct json_object *response = json_tokener_parse(buf);
 	if (response == NULL)
@@ -44,7 +45,7 @@ int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 			return -1;
 		}
 		int arraylen = json_object_array_length(HostPortArray);
-		for (int i = 0; i < arraylen; i++) {
+		for (i = 0; i < arraylen; i++) {
 			struct json_object *PortBindingObj = NULL;
 			PortBindingObj = json_object_array_get_idx(HostPortArray, i);
 			if (PortBindingObj == NULL) {

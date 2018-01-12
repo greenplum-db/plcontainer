@@ -22,6 +22,8 @@ OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 
+CLIENT_CFLAG = -Werror -Wextra -Wall
+
 # Curl
 CURL_CONFIG = $(shell type -p curl-config || echo no)
 ifneq ($(CURL_CONFIG),no)
@@ -58,13 +60,14 @@ endif
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 
 override CFLAGS += -Werror -Wextra -Wall
+override CFLAGS += $(COVERAGE_FLAG)
+override SHLIB_LINK += $(COVERAGE_LINK_FLAG)
 
 # detected the docker API version, only for centos 6
 RHEL_MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
 ifeq ($(RHEL_MAJOR_OS), 6)
   override CFLAGS +=  -DDOCKER_API_LOW
 endif
-
 all: all-lib build-clients
 	@echo "Build PL/Container Done."
 
@@ -99,8 +102,8 @@ installcheck:
 
 .PHONY: build-clients
 build-clients:
-	CC='$(CC)' CFLAGS='$(CFLAGS)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/pyclient all
-	CC='$(CC)' CFLAGS='$(CFLAGS)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/rclient all
+	CC='$(CC)' CFLAGS='$(CLIENT_CFLAG)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/pyclient all
+	CC='$(CC)' CFLAGS='$(CLIENT_CFLAG)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/rclient all
 
 .PHONY: clean-clients
 clean-clients:
