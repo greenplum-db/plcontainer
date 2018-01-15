@@ -29,6 +29,8 @@ You can build PL/Container in a following way:
 1. Go to the PL/Container directory: `cd /plcontainer`
 1. plcontainer needs libcurl >=7.40. If the libcurl version on your system is low, you need to upgrade at first. For example, you could download source code and then compile and install, following this page: [Install libcurl from source](https://curl.haxx.se/docs/install.html). Note you should make sure the libcurl library path is in the list for library lookup. Typically you might want to add the path into LD_LIBRARY_PATH and export them in shell configuration or greenplum_path.sh on all nodes.
 1. Make and install it: `make clean && make && make install`
+1. Make with code coverae enabled: `make clean && make enable_coverage=true && make install`
+1. Generate code coverage report: `make report`
 
 Database restart is not required to catch up new container execution library,
 you can simply connect to the database and all the calls you will make to

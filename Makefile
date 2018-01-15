@@ -63,6 +63,11 @@ override CFLAGS += -Werror -Wextra -Wall
 override CFLAGS += $(COVERAGE_FLAG)
 override SHLIB_LINK += $(COVERAGE_LINK_FLAG)
 
+ifeq ($(enable_coverage), true)
+  override CFLAGS += -coverage
+  override SHLIB_LINK += -lgcov --coverage
+endif
+
 # detected the docker API version, only for centos 6
 RHEL_MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
 ifeq ($(RHEL_MAJOR_OS), 6)
