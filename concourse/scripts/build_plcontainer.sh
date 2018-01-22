@@ -15,6 +15,7 @@ build_plcontainer() {
   gppkg -i plr*.gppkg
   popd
   source /usr/local/greenplum-db/greenplum_path.sh
+  source /opt/gcc_env.sh
  
   # build plcontainer
   pushd plcontainer_src
