@@ -531,6 +531,8 @@ def validate_xml(filename):
                     if use_container_network_str != 'yes' and use_container_network_str != 'no':
                         logger.error("use_container_network should be 'yes' or 'no' in runtime %s, but now: '%s'", runtime_id, use_container_network_str)
                         raise Exception("Validation failed")
+                    if use_container_network_str != 'no':
+                        logger.warn("Encourage to set use_container_network as 'no' (default value) for performance purpose.")
                 elif 'use_container_logging' in settings.attrib:
                     use_container_logging_str = settings.attrib['use_container_logging'].lower()
                     if use_container_logging_str != 'yes' and use_container_logging_str != 'no':

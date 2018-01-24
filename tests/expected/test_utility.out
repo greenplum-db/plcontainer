@@ -107,6 +107,7 @@ Test runtime-add with both shared directories and settings
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -image image1 is not in the list of 'docker images'
 -image image2 is not in the list of 'docker images'
+-Encourage to set use_container_network as 'no' (default value) for performance purpose.
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 PL/Container Runtime Configuration: 
@@ -172,6 +173,7 @@ plcontainer runtime-replace: error: argument -l/--language: invalid choice: 'jav
 Test runtime-replace: add a new one
 -runtime configuration does not exist. Adding a new one.
 -image image2 is not in the list of 'docker images'
+-Encourage to set use_container_network as 'no' (default value) for performance purpose.
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 <?xml version="1.0" ?>
