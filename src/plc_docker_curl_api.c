@@ -193,7 +193,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 			plc_elog(DEBUG1, "CURL response code is %ld. CURL response message is %s", http_code, buffer->data);
 		}
 
-		cleanup:
+cleanup:
 		pfree(fullurl);
 		curl_slist_free_all(headers);
 		curl_easy_cleanup(curl);
@@ -308,6 +308,9 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 		snprintf(api_error_message, sizeof(api_error_message),
 		         "Failed to create container (return code: %d).", res);
 		res = -1;
+	} else {
+		snprintf(api_error_message, sizeof(api_error_message),
+		         "Failed to create container (return code: %d).", res);
 	}
 
 	if (res < 0) {
@@ -322,7 +325,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 		goto cleanup;
 	}
 
-	cleanup:
+cleanup:
 	plcCurlBufferFree(response);
 
 	return res;
@@ -348,6 +351,9 @@ int plc_docker_start_container(const char *name) {
 		snprintf(api_error_message, sizeof(api_error_message),
 		         "Failed to start container %s (return code: %d)", name, res);
 		res = -1;
+	} else {
+		snprintf(api_error_message, sizeof(api_error_message),
+		         "Failed to start container %s (return code: %d)", name, res);
 	}
 
 	pfree(url);
@@ -451,13 +457,16 @@ int plc_docker_delete_container(const char *name) {
 	res = response->status;
 	plcCurlBufferFree(response);
 
-	/* 200 = deleted success, 404 = container not found, both are OK for delete */
+	/* 204 = deleted success, 404 = container not found, both are OK for delete */
 	if (res == 204 || res == 404) {
 		res = 0;
 	} else if (res >= 0) {
 		snprintf(api_error_message, sizeof(api_error_message),
 		         "Failed to delete container %s (return code: %d)", name, res);
 		res = -1;
+	} else {
+		snprintf(api_error_message, sizeof(api_error_message),
+		         "Failed to delete container %s (return code: %d)", name, res);
 	}
 
 	pfree(url);
@@ -483,6 +492,9 @@ int plc_docker_list_container(char **result) {
 		snprintf(api_error_message, sizeof(api_error_message),
 		         "Failed to list containers (return code: %d), dbid is %d", res, GpIdentity.dbid);
 		res = -1;
+	} else {
+		snprintf(api_error_message, sizeof(api_error_message),
+		         "Failed to list containers (return code: %d), dbid is %d", res, GpIdentity.dbid);
 	}
 	*result = pstrdup(response->data);
 
@@ -508,6 +520,9 @@ int plc_docker_get_container_state(const char *name, char **result) {
 		snprintf(api_error_message, sizeof(api_error_message),
 		         "Failed to get container %s state (return code: %d)", name, res);
 		res = -1;
+	} else {
+		snprintf(api_error_message, sizeof(api_error_message),
+		         "Failed to get container %s state (return code: %d)", name, res);
 	}
 
 	*result = pstrdup(response->data);

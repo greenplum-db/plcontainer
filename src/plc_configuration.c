@@ -617,6 +617,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	FuncCallContext *funcctx;
 	int call_cntr;
 	int max_calls;
+	int res;
 	TupleDesc tupdesc;
 	AttInMetadata *attinmeta;
 	struct json_object *container_list = NULL;
@@ -635,7 +636,10 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		/* switch to memory context appropriate for multiple function calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		plc_docker_list_container(&json_result);
+		res = plc_docker_list_container(&json_result);
+		if (res < 0) {
+			plc_elog(ERROR, "Docker container list error: %s", api_error_message);
+		}
 
 		/* no container running */
 		if (strcmp(json_result, "[]") == 0) {
@@ -695,6 +699,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			char **values;
 			HeapTuple tuple;
 			Datum result;
+			int res;
 			char *containerState = NULL;
 			struct json_object *containerObj = NULL;
 			struct json_object *containerStateObj = NULL;
@@ -749,7 +754,11 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			}
 			const char *idStr = json_object_get_string(idObj);
 
-			plc_docker_get_container_state(idStr, &containerState);
+			res = plc_docker_get_container_state(idStr, &containerState);
+			if (res < 0) {
+				plc_elog(ERROR, "Fail to get docker container state: %s", api_error_message);
+			}
+
 			containerStateObj = json_tokener_parse(containerState);
 			struct json_object *memoryObj = NULL;
 			if (!json_object_object_get_ex(containerStateObj, "memory_stats", &memoryObj)) {
