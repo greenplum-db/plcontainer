@@ -1,5 +1,3 @@
-
-
 /**
  * SQL message handler implementation.
  *
@@ -14,8 +12,17 @@
 #include "access/xact.h"
 
 #include "common/comm_channel.h"
-#include "plcontainer_common.h"
 #include "subtransaction_handler.h"
+
+/* list of explicit subtransaction data */
+List *explicit_subtransactions;
+
+/* explicit subtransaction data */
+typedef struct PLySubtransactionData {
+	MemoryContext oldcontext;
+	ResourceOwner oldowner;
+} PLySubtransactionData;
+
 
 
 static int16 plcontainer_subtransaction_enter();
@@ -40,7 +47,7 @@ plcontainer_subtransaction_enter() {
 
 	PG_TRY();
 	{
-		subxactdata = plcontainer_malloc(sizeof(*subxactdata));
+		subxactdata = plc_top_alloc(sizeof(*subxactdata));
 		subxactdata->oldcontext = oldcontext;
 		subxactdata->oldowner = CurrentResourceOwner;
 
@@ -99,7 +106,7 @@ static int16 plcontainer_subtransaction_exit(plcMsgSubtransaction *msg) {
 
 	MemoryContextSwitchTo(subxactdata->oldcontext);
 	CurrentResourceOwner = subxactdata->oldowner;
-	plcontainer_free(subxactdata);
+	pfree(subxactdata);
 
 	/*
 	 * AtEOSubXact_SPI() should not have popped any SPI context, but just in
@@ -156,7 +163,7 @@ plcontainer_abort_open_subtransactions(int save_subxact_level) {
 
 		MemoryContextSwitchTo(subtransactiondata->oldcontext);
 		CurrentResourceOwner = subtransactiondata->oldowner;
-		plcontainer_free(subtransactiondata);
+		pfree(subtransactiondata);
 	}
 }
 

@@ -43,9 +43,9 @@ static void plcCurlBufferFree(plcCurlBuffer *buf);
 
 static size_t plcCurlCallback(void *contents, size_t size, size_t nmemb, void *userp);
 
-static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
-                                         char *url,
-                                         char *body);
+static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType, char *url, char *body);
+
+static int docker_inspect_string(char *buf, char **element, plcInspectionMode type);
 
 /* Initialize Curl response receiving buffer */
 static plcCurlBuffer *plcCurlBufferInit() {
@@ -534,7 +534,7 @@ int plc_docker_get_container_state(const char *name, char **result) {
 	return res;
 }
 
-int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
+static int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 	int i;
 	plc_elog(DEBUG1, "plcontainer: docker_inspect_string:%s", buf);
 	struct json_object *response = json_tokener_parse(buf);

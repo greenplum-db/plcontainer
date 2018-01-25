@@ -24,7 +24,6 @@
 #include "plc_typeio.h"
 #include "common/comm_utils.h"
 #include "message_fns.h"
-#include "plcontainer_common.h"
 
 static void fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type,
                                  bool isArrayElement, bool isUDTElement);

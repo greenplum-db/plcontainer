@@ -11,6 +11,8 @@
 #include "common/messages/messages.h"
 #include "message_fns.h"
 
+extern List *explicit_subtransactions;
+
 extern void plcontainer_abort_open_subtransactions(int save_subxact_level);
 
 extern void plcontainer_process_subtransaction(plcMsgSubtransaction *msg, plcConn *conn);

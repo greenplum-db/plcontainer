@@ -20,7 +20,6 @@
 #include "common/comm_utils.h"
 #include "common/comm_connectivity.h"
 #include "plcontainer.h"
-#include "plcontainer_common.h"
 #include "plc_backend_api.h"
 #include "plc_docker_api.h"
 #include "plc_configuration.h"
@@ -43,6 +42,7 @@ PG_FUNCTION_INFO_V1(refresh_plcontainer_config);
 
 PG_FUNCTION_INFO_V1(show_plcontainer_config);
 
+static HTAB *rumtime_conf_table;
 
 /*
  * init runtime conf hash table.
