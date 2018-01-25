@@ -11,7 +11,6 @@
 #include "postgres.h"
 
 #include "plc_configuration.h"
-#include "plc_docker_api_common.h"
 
 extern char api_error_message[256];
 

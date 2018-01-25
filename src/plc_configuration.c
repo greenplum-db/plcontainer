@@ -22,6 +22,7 @@
 #include "plcontainer.h"
 #include "plcontainer_common.h"
 #include "plc_backend_api.h"
+#include "plc_docker_api.h"
 #include "plc_configuration.h"
 
 // we just want to avoid cleanup process to remove previous domain
