@@ -39,8 +39,8 @@ int plc_docker_wait_container(const char *name);
 
 int plc_docker_delete_container(const char *name);
 
-int plc_docker_list_container(char **result);
+int plc_docker_list_container(char **result) __attribute__((warn_unused_result));
 
-int plc_docker_get_container_state(const char *name, char **result);
+int plc_docker_get_container_state(const char *name, char **result) __attribute__((warn_unused_result));
 
 #endif /* PLC_DOCKER_API_H */

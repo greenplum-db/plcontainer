@@ -49,16 +49,16 @@ void plc_backend_prepareImplementation(enum PLC_BACKEND_TYPE imptype);
 
 /* interfaces for plc backend. */
 
-int plc_backend_create(runtimeConfEntry *conf, char **name, int container_slot, char **uds_dir);
+int plc_backend_create(runtimeConfEntry *conf, char **name, int container_slot, char **uds_dir) __attribute__((warn_unused_result));
 
-int plc_backend_start(const char *name);
+int plc_backend_start(const char *name) __attribute__((warn_unused_result));
 
-int plc_backend_kill(const char *name);
+int plc_backend_kill(const char *name) __attribute__((warn_unused_result));
 
-int plc_backend_inspect(const char *name, char **element, plcInspectionMode type);
+int plc_backend_inspect(const char *name, char **element, plcInspectionMode type) __attribute__((warn_unused_result));
 
-int plc_backend_wait(const char *name);
+int plc_backend_wait(const char *name) __attribute__((warn_unused_result));
 
-int plc_backend_delete(const char *name);
+int plc_backend_delete(const char *name) __attribute__((warn_unused_result));
 
 #endif /* PLC_BACKEND_API_H */
