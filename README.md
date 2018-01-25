@@ -17,7 +17,7 @@ Get the code repo
 git clone https://github.com/greenplum-db/plcontainer.git
 ```
 
-You can build PL/Container in a following way:
+You can build PL/Container in the following way:
 
 1. Go to the PL/Container directory: `cd /plcontainer`
 1. plcontainer needs libcurl >=7.40. If the libcurl version on your system is low, you need to upgrade at first. For example, you could download source code and then compile and install, following this page: [Install libcurl from source](https://curl.haxx.se/docs/install.html). Note you should make sure the libcurl library path is in the list for library lookup. Typically you might want to add the path into LD_LIBRARY_PATH and export them in shell configuration or greenplum_path.sh on all nodes.
@@ -31,11 +31,17 @@ You need to restart database only for the first time you build&install plcontain
 
 To configure PL/Container environment, you need to do the following steps (take python as an example):
 1. Enable PL/Container for specific databases by running 
-   `psql -d your_database -f $GPHOME/share/postgresql/plcontainer/plcontainer_install.sql`
+   ```shell
+   psql -d your_database -f $GPHOME/share/postgresql/plcontainer/plcontainer_install.sql
+   ```
 1. Install the PL/Container image by running 
-   `plcontainer image-add -i /home/gpadmin/plcontainer-python-images-1.0.0.tar.gz`
+   ```shell
+   plcontainer image-add -i /home/gpadmin/plcontainer-python-images-1.0.0.tar.gz
+   ```
 1. Configure the runtime by running
-   `plcontainer runtime-add -r plc_python_shared -i pivotaldata/plcontainer_python_shared:devel -l python`
+   ```shell
+   plcontainer runtime-add -r plc_python_shared -i pivotaldata/plcontainer_python_shared:devel -l python
+   ```
 
 ### Running the tests
 
