@@ -7,12 +7,12 @@ implement sandboxing.
 ### Requirements
 
 1. PL/Container runs on CentOS/RHEL 7.x or CentOS/RHEL 6.6+
-1. PL/Container requires Docker 17.05 for CentOS/RHEL 7.x and Docker 1.7 CentOS/RHEL 6.6+
+1. PL/Container requires Docker version 17.05 for CentOS/RHEL 7.x and Docker version 1.7 CentOS/RHEL 6.6+
 1. GPDB version should be 5.2.0 or later
 
 ### Building PL/Container Language
 
-Get te code repo
+Get the code repo
 ```shell
 git clone https://github.com/greenplum-db/plcontainer.git
 ```
