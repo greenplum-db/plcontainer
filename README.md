@@ -43,16 +43,16 @@ To configure PL/Container environment, you need to do the following steps (take 
 
 ### Running the tests
 
-1. Make sure your runtimes for Python and R are both added, suppose you have installed the python environment.
+1. Tests require three runtimes(Python,R and Network) are added. Suppose you have installed the python runtime in the above section.
    Install the PL/Container R image by running
    ```shell
    plcontainer image-add -f /home/gpadmin/plcontainer-r-images.tar.gz;
    ```
-   Add r runtime by running
+   Add R runtime by running
    ```shell
    plcontainer runtime-add -r plc_r_shared -i pivotaldata/plcontainer_r_shared:devel -l r -s use_container_logging=yes;
    ```
-   Add network runtime by running
+   Add Network runtime by running
    ```shell
    plcontainer runtime-add -r plc_python_network -i pivotaldata/plcontainer_python_shared:devel -l python -s use_container_logging=yes -s use_container_network=yes;
    ```
