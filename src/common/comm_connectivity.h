@@ -24,7 +24,7 @@ typedef struct plcBuffer {
 	int bufSize;
 } plcBuffer;
 
-#ifndef COMM_STANDALONE
+#ifndef PLC_CLIENT
 #define MAX_PPLAN 32 /* Max number of pplan saved in one connection. */
 struct pplan_slots {
 	int64 pplan;
@@ -36,7 +36,7 @@ typedef struct plcConn {
 	int sock;
 	int rx_timeout_sec;
 	plcBuffer *buffer[2];
-#ifndef COMM_STANDALONE
+#ifndef PLC_CLIENT
 	char *uds_fn; /* File for unix domain socket connection only. */
 	int container_slot;
 	int head_free_pplan_slot;  /* free list of spi pplan slot */
@@ -49,7 +49,7 @@ typedef struct plcConn {
 #define IPC_GPDB_BASE_DIR "/tmp/plcontainer"
 #define MAX_SHARED_FILE_SZ strlen(UDS_SHARED_FILE)
 
-#ifndef COMM_STANDALONE
+#ifndef PLC_CLIENT
 
 plcConn *plcConnect_inet(int port);
 

@@ -8,7 +8,7 @@
  */
 #include "comm_utils.h"
 
-#ifndef COMM_STANDALONE
+#ifndef PLC_CLIENT
 
 #include "utils/memutils.h"
 #include "utils/palloc.h"
@@ -101,4 +101,4 @@ void set_signal_handlers() {
 	set_signal_handler(SIGSEGV, SA_RESETHAND, sigsegv_handler);
 }
 
-#endif /* COMM_STANDALONE */
+#endif /* PLC_CLIENT */

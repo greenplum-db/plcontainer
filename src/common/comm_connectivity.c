@@ -377,7 +377,7 @@ plcConn *plcConnInit(int sock) {
 	return conn;
 }
 
-#ifndef COMM_STANDALONE
+#ifndef PLC_CLIENT
 
 /* A bit ugly. Maybe move pplan stuffs out of conn* later. */
 extern void init_pplan_slots(plcConn *conn);

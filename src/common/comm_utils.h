@@ -34,13 +34,13 @@ interpreted as representing official policies, either expressed or implied, of t
 #define PLC_COMM_UTILS_H
 
 /*
-  COMM_STANDALONE should be defined for standalone interpreters
+  PLC_CLIENT should be defined for standalone interpreters
   running inside containers, since they don't have access to postgres
   symbols. If it was defined, plc_elog will print the logs to stdout or
   in case of an error to stderr. pmalloc, pfree & pstrdup will use the
   std library.
 */
-#ifdef COMM_STANDALONE
+#ifdef PLC_CLIENT
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -115,7 +115,7 @@ void *pmalloc(size_t size);
 
 void set_signal_handlers(void);
 
-#else /* COMM_STANDALONE */
+#else /* PLC_CLIENT */
 
 #include "postgres.h"
 
@@ -127,6 +127,6 @@ void *plc_top_alloc(size_t bytes);
 
 char *plc_top_strdup(char *str);
 
-#endif /* COMM_STANDALONE */
+#endif /* PLC_CLIENT */
 
 #endif /* PLC_COMM_UTILS_H */

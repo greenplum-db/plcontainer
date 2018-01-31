@@ -5,7 +5,7 @@
  *
  *------------------------------------------------------------------------------
  */
-#ifdef COMM_STANDALONE
+#ifdef PLC_CLIENT
 
 #include <errno.h>
 #include <netinet/ip.h>
