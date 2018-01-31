@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 
 #include "postgres.h"
+#include "commands/resgroupcmds.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "libpq/libpq-be.h"
@@ -155,6 +156,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 		conf_entry->memoryMb = 1024;
 		conf_entry->useContainerLogging = false;
 		conf_entry->useContainerNetwork = false;
+		conf_entry->resgroupOid = InvalidOid;
 
 
 		for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
@@ -229,6 +231,31 @@ static void parse_runtime_configuration(xmlNode *node) {
 								"\"no\"only, current string is %s", value);
 
 						}
+						xmlFree((void *) value);
+						value = NULL;
+					}
+					value = xmlGetProp(cur_node, (const xmlChar *) "resource_group_name");
+					if (value != NULL) {
+						ResGroupCaps		caps;
+						validSetting = true;
+						/*check gp_resgroup to find the oid of resgroup*/
+						if (strlen((char *) value) == 0) {
+							plc_elog(ERROR, "SETTING length of element <resource_group_name> is zero");
+						}
+						Oid resgroupOid = GetResGroupIdForName((char *) value, ShareLock);
+						if (resgroupOid == InvalidOid) {
+							plc_elog(ERROR, "SETTING element <resource_group_name> must be a resource group in greenplum. "
+									"Current setting is: %s", (char *) value);
+						}
+						Relation pg_resgroupcapability_rel = heap_open(ResGroupCapabilityRelationId,
+								AccessShareLock);
+						GetResGroupCapabilities(pg_resgroupcapability_rel, resgroupOid, &caps);
+						heap_close(pg_resgroupcapability_rel, AccessShareLock);
+						if (caps.concurrency != 0) {
+							plc_elog(ERROR, "SETTING element <resource_group_name> must be a resource group with concurrency zero,"
+									" Current concurrency is %d", caps.concurrency);
+						}
+						conf_entry->resgroupOid = resgroupOid;
 						xmlFree((void *) value);
 						value = NULL;
 					}
@@ -400,6 +427,7 @@ static void print_runtime_configurations() {
 			plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
 			plc_elog(INFO, "    use container network = '%s'", conf_entry->useContainerNetwork ? "yes" : "no");
 			plc_elog(INFO, "    use container logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
+			plc_elog(INFO, "    resource group name  = '%u'", conf_entry->resgroupOid);
 			for (j = 0; j < conf_entry->nSharedDirs; j++) {
 				plc_elog(INFO, "    shared directory from host '%s' to container '%s'",
 					 conf_entry->sharedDirs[j].host,
