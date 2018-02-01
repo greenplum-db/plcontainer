@@ -7,39 +7,39 @@ install_docker() {
     case "$platform" in
       centos6)
         ssh centos@$node "sudo bash -c \" \
-           set -exo pipefail; \
-           sudo rpm -iUvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm; \
-           sudo yum -y install docker-io; \
-           sudo service docker start; \
-           sudo groupadd docker; \
-           sudo chown root:docker /var/run/docker.sock; \
-           sudo usermod -a -G docker gpadmin; \
-           sudo service docker stop; \
+           yum -y install http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm; \
+           yum -y install docker-io; \
+           service docker start; \
+           groupadd docker; \
+           chown root:docker /var/run/docker.sock; \
+           usermod -a -G docker gpadmin; \
+           service docker stop; \
            sleep 5; \
-           sudo umount /var/lib/docker/devicemapper || true; \
-           sudo mv /var/lib/docker /data/gpdata/docker; \
-           sudo ln -s /data/gpdata/docker /var/lib/docker; \
-           sudo service docker start; \
+           umount /var/lib/docker/devicemapper; \
+           set -exo pipefail; \
+           mv /var/lib/docker /data/gpdata/docker; \
+           ln -s /data/gpdata/docker /var/lib/docker; \
+           service docker start; \
 	\""
         ;;
       centos7)
         ssh centos@$node "sudo bash -c \" \
-           set -exo pipefail; \
-           sudo yum install -y yum-utils device-mapper-persistent-data lvm2; \
-           sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo; \
-           sudo yum makecache fast; \
-           sudo yum install -y docker-ce; \
-           sudo yum install -y cpan; \
-           sudo yum install -y perl-Module-CoreList; \
-           sudo systemctl start docker; \
-           sudo groupadd docker; \
-           sudo chown root:docker /var/run/docker.sock; \
-           sudo usermod -a -G docker gpadmin; \
-           sudo service docker stop; \
+           yum install -y yum-utils device-mapper-persistent-data lvm2; \
+           yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo; \
+           yum makecache fast; \
+           yum install -y docker-ce; \
+           yum install -y cpan; \
+           yum install -y perl-Module-CoreList; \
+           systemctl start docker; \
+           groupadd docker; \
+           chown root:docker /var/run/docker.sock; \
+           usermod -a -G docker gpadmin; \
+           service docker stop; \
            sleep 5; \
-           sudo mv /var/lib/docker /data/gpdata/docker; \
-           sudo ln -s /data/gpdata/docker /var/lib/docker; \
-           sudo service docker start; \
+           set -exo pipefail; \
+           mv /var/lib/docker /data/gpdata/docker; \
+           ln -s /data/gpdata/docker /var/lib/docker; \
+           service docker start; \
         \""
         ;;
     esac 
