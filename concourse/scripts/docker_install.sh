@@ -7,11 +7,16 @@ install_docker() {
     case "$platform" in
       centos6)
         ssh centos@$node "sudo bash -c \"sudo rpm -iUvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm; \
- 	  sudo yum -y install docker-io; \
- 	  sudo service docker start; \
- 	  sudo groupadd docker; \
- 	  sudo chown root:docker /var/run/docker.sock; \
- 	  sudo usermod -a -G docker gpadmin; \
+           sudo yum -y install docker-io; \
+           sudo service docker start; \
+           sudo groupadd docker; \
+           sudo chown root:docker /var/run/docker.sock; \
+           sudo usermod -a -G docker gpadmin; \
+           sudo service docker stop; \
+           sudo mkdir /data/gpdata/docker; \
+           sudo mv /var/lib/docker /data/gpdata/docker; \
+           sudo ln -s /data/gpdata/docker /var/lib/docker; \
+           sudo service docker start; \
 	\""
         ;;
       centos7)
@@ -26,6 +31,11 @@ install_docker() {
            sudo groupadd docker; \
            sudo chown root:docker /var/run/docker.sock; \
            sudo usermod -a -G docker gpadmin; \
+           sudo service docker stop; \
+           sudo mkdir /data/gpdata/docker; \
+           sudo mv /var/lib/docker /data/gpdata/docker; \
+           sudo ln -s /data/gpdata/docker /var/lib/docker; \
+           sudo service docker start; \
         \""
         ;;
     esac 
