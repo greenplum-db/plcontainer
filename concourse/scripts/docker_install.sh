@@ -6,7 +6,9 @@ install_docker() {
     local node=$1
     case "$platform" in
       centos6)
-        ssh centos@$node "sudo bash -c \"sudo rpm -iUvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm; \
+        ssh centos@$node "sudo bash -c \" \
+           set -exo pipefail; \
+           sudo rpm -iUvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm; \
            sudo yum -y install docker-io; \
            sudo service docker start; \
            sudo groupadd docker; \
@@ -14,7 +16,7 @@ install_docker() {
            sudo usermod -a -G docker gpadmin; \
            sudo service docker stop; \
            sleep 5; \
-           sudo umount /var/lib/docker/devicemapper; \
+           sudo umount /var/lib/docker/devicemapper || true; \
            sudo mv /var/lib/docker /data/gpdata/docker; \
            sudo ln -s /data/gpdata/docker /var/lib/docker; \
            sudo service docker start; \
@@ -22,6 +24,7 @@ install_docker() {
         ;;
       centos7)
         ssh centos@$node "sudo bash -c \" \
+           set -exo pipefail; \
            sudo yum install -y yum-utils device-mapper-persistent-data lvm2; \
            sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo; \
            sudo yum makecache fast; \
