@@ -13,7 +13,8 @@ install_docker() {
            sudo chown root:docker /var/run/docker.sock; \
            sudo usermod -a -G docker gpadmin; \
            sudo service docker stop; \
-           sudo mkdir /data/gpdata/docker; \
+           sleep 5; \
+           sudo umount /var/lib/docker/devicemapper; \
            sudo mv /var/lib/docker /data/gpdata/docker; \
            sudo ln -s /data/gpdata/docker /var/lib/docker; \
            sudo service docker start; \
@@ -32,7 +33,7 @@ install_docker() {
            sudo chown root:docker /var/run/docker.sock; \
            sudo usermod -a -G docker gpadmin; \
            sudo service docker stop; \
-           sudo mkdir /data/gpdata/docker; \
+           sleep 5; \
            sudo mv /var/lib/docker /data/gpdata/docker; \
            sudo ln -s /data/gpdata/docker /var/lib/docker; \
            sudo service docker start; \
