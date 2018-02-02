@@ -366,26 +366,35 @@ jobs:
   plan:
   - aggregate:
     - get: plcontainer_src
+      tags: ["ccp"]
       passed:
       - plcontainer_build_centos6
     - get: gpdb_src
+      tags: ["ccp"]
     - get: gpdb_binary
+      tags: ["ccp"]
       resource: bin_gpdb_centos6
     - get: ccp_src
+      tags: ["ccp"]
       passed: [plcontainer_build_python_image, plcontainer_build_r_image]
     - get: centos-gpdb-dev-6
+      tags: ["ccp"]
     - get: plcontainer_pyclient_docker_image
+      tags: ["ccp"]
       resource: plcontainer_docker_image_centos_python
       passed: [plcontainer_build_python_image]
       trigger: true
     - get: plcontainer_rclient_docker_image
+      tags: ["ccp"]
       resource: plcontainer_docker_image_centos_r
       passed: [plcontainer_build_r_image]
       trigger: true
     - get: plcontainer_gpdb_centos6_build
+      tags: ["ccp"]
       passed: [plcontainer_build_centos6]
       trigger: true
   - put: terraform
+    tags: ["ccp"]
     params:
       <<: *ccp_default_params
       vars:
@@ -417,24 +426,33 @@ jobs:
   plan:
   - aggregate:
     - get: plcontainer_src
+      tags: ["ccp"]
       passed:
       - plcontainer_function_test_centos6
     - get: gpdb_src
+      tags: ["ccp"]
     - get: gpdb_binary
+      tags: ["ccp"]
       resource: bin_gpdb_centos6
     - get: ccp_src
+      tags: ["ccp"]
       passed:
       - plcontainer_function_test_centos6
     - get: centos-gpdb-dev-6
+      tags: ["ccp"]
     - get: plcontainer_pyclient_docker_image
+      tags: ["ccp"]
       resource: plcontainer_docker_image_centos_python
       passed: [plcontainer_function_test_centos6]
     - get: plcontainer_rclient_docker_image
+      tags: ["ccp"]
       resource: plcontainer_docker_image_centos_r
       passed: [plcontainer_function_test_centos6]
     - get: plcontainer_gpdb_centos6_build
+      tags: ["ccp"]
       passed: [plcontainer_function_test_centos6]
   - put: terraform
+    tags: ["ccp"]
     params:
       <<: *ccp_default_params
       vars:
@@ -460,9 +478,11 @@ jobs:
       <<: *debug_sleep6
   - aggregate:
     - put: pl_perf_pl1
+      tags: ["ccp"]
       params:
         file: plcontainer_perf_result/perf_pl1
     - put: pl_perf_py1
+      tags: ["ccp"]
       params:
         file: plcontainer_perf_result/perf_py1
   - *ccp_destroy6
@@ -473,26 +493,35 @@ jobs:
   plan:
   - aggregate:
     - get: plcontainer_src
+      tags: ["ccp"]
       passed:
       - plcontainer_build_centos7
     - get: gpdb_src
+      tags: ["ccp"]
     - get: gpdb_binary
+      tags: ["ccp"]
       resource: bin_gpdb_centos7
     - get: ccp_src
+      tags: ["ccp"]
       passed: [plcontainer_build_python_image, plcontainer_build_r_image]
     - get: centos-gpdb-dev-7
+      tags: ["ccp"]
     - get: plcontainer_pyclient_docker_image
+      tags: ["ccp"]
       resource: plcontainer_docker_image_centos_python
       passed: [plcontainer_build_python_image]
       trigger: true
     - get: plcontainer_rclient_docker_image
+      tags: ["ccp"]
       resource: plcontainer_docker_image_centos_r
       passed: [plcontainer_build_r_image]
       trigger: true
     - get: plcontainer_gpdb_centos7_build
+      tags: ["ccp"]
       passed: [plcontainer_build_centos7]
       trigger: true
   - put: terraform
+    tags: ["ccp"]
     params:
       <<: *ccp_default_params
       vars:
@@ -524,24 +553,33 @@ jobs:
   plan:
   - aggregate:
     - get: plcontainer_src
+      tags: ["ccp"]
       passed:
       - plcontainer_function_test_centos7
     - get: gpdb_src
+      tags: ["ccp"]
     - get: gpdb_binary
+      tags: ["ccp"]
       resource: bin_gpdb_centos7
     - get: ccp_src
+      tags: ["ccp"]
       passed:
       - plcontainer_function_test_centos7
     - get: centos-gpdb-dev-7
+      tags: ["ccp"]
     - get: plcontainer_pyclient_docker_image
+      tags: ["ccp"]
       resource: plcontainer_docker_image_centos_python
       passed: [plcontainer_function_test_centos7]
     - get: plcontainer_rclient_docker_image
+      tags: ["ccp"]
       resource: plcontainer_docker_image_centos_r
       passed: [plcontainer_function_test_centos7]
     - get: plcontainer_gpdb_centos7_build
+      tags: ["ccp"]
       passed: [plcontainer_function_test_centos7]
   - put: terraform
+    tags: ["ccp"]
     params:
       <<: *ccp_default_params
       vars:
@@ -567,9 +605,11 @@ jobs:
       <<: *debug_sleep7
   - aggregate:
     - put: pl_perf_pl1
+      tags: ["ccp"]
       params:
         file: plcontainer_perf_result/perf_pl1
     - put: pl_perf_py1
+      tags: ["ccp"]
       params:
         file: plcontainer_perf_result/perf_py1
   - *ccp_destroy7
@@ -582,21 +622,31 @@ jobs:
   plan:
   - aggregate:
     - get: plcontainer_src
+      tags: ["ccp"]
     - get: gpdb_src
+      tags: ["ccp"]
     - get: gpdb_binary
+      tags: ["ccp"]
       resource: bin_gpdb_centos6
     - get: ccp_src
+      tags: ["ccp"]
     - get: centos-gpdb-dev-6
+      tags: ["ccp"]
     - get: data-science-bundle
+      tags: ["ccp"]
     - get: python
+      tags: ["ccp"]
       trigger: true
       resource: python-gp5
     - get: datascience
+      tags: ["ccp"]
       trigger: true
       resource: datascience-python-gp5
     - get: openssl
+      tags: ["ccp"]
       trigger: true
   - put: terraform
+    tags: ["ccp"]
     params:
       <<: *ccp_default_params
       vars:
@@ -622,6 +672,7 @@ jobs:
     on_failure:
       <<: *debug_sleep7
   - put: plcontainer_docker_image_centos_python
+    tags: ["ccp"]
     params:
       file: plcontainer_docker_image/plcontainer-python-images-devel.tar.gz
   - *ccp_destroy7
@@ -631,19 +682,28 @@ jobs:
   plan:
   - aggregate:
     - get: plcontainer_src
+      tags: ["ccp"]
     - get: gpdb_src
+      tags: ["ccp"]
     - get: gpdb_binary
+      tags: ["ccp"]
       resource: bin_gpdb_centos6
     - get: ccp_src
+      tags: ["ccp"]
     - get: centos-gpdb-dev-6
+      tags: ["ccp"]
     - get: data-science-bundle
+      tags: ["ccp"]
     - get: r
+      tags: ["ccp"]
       trigger: true
       resource: r-gp5
     - get: datascience
+      tags: ["ccp"]
       trigger: true
       resource: datascience-r-gp5
   - put: terraform
+    tags: ["ccp"]
     params:
       <<: *ccp_default_params
       vars:
@@ -669,6 +729,7 @@ jobs:
     on_failure:
       <<: *debug_sleep7
   - put: plcontainer_docker_image_centos_r
+    tags: ["ccp"]
     params:
       file: plcontainer_docker_image/plcontainer-r-images-devel.tar.gz
   - *ccp_destroy7
