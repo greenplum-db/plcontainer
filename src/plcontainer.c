@@ -14,7 +14,8 @@
 #include "utils/faultinjector.h"
 #include "utils/memutils.h"
 #include "utils/guc.h"
-
+#include "utils/resgroup.h"
+#include "utils/resgroup-ops.h"
 /* PLContainer Headers */
 #include "common/comm_channel.h"
 #include "common/messages/messages.h"
@@ -48,6 +49,9 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
 
 static void plcontainer_process_log(plcMsgLog *log);
 
+static bool ResGroupPLDec(void *arg);
+static bool ResGroupPLInc(void *arg);
+static bool ResGroupPLCompare(void *arg1, void *arg2);
 static volatile bool DeleteBackendsWhenError;
 
 /* this is saved and restored by plcontainer_call_handler */
@@ -235,6 +239,17 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		if (conn != NULL) {
 			int res;
 
+			/* register hook to increase/decrease memory limit in cgroup node*/
+			runtimeConfEntry *runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
+			if(runtime_conf_entry->resgroupOid != InvalidOid) {
+				Oid 		*hookArg = NULL;
+				hookArg = (Oid *)MemoryContextAlloc(TopMemoryContext, sizeof(Oid));
+				*hookArg = runtime_conf_entry->resgroupOid;
+
+				RegisterResGroupMemoryHook(RES_GROUP_MEMORY_HOOK_DEC, ResGroupPLDec, (void *)hookArg, ResGroupPLCompare);
+				RegisterResGroupMemoryHook(RES_GROUP_MEMORY_HOOK_INC, ResGroupPLInc, (void *)hookArg, ResGroupPLCompare);
+			}
+
 			res = plcontainer_channel_send(conn, (plcMessage *) req);
 			SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_send_request");
 
@@ -418,4 +433,73 @@ static void plcontainer_process_exception(plcMsgError *msg) {
 			        errmsg("PL/Container client exception occurred: \n %s", msg->message)));
 	}
 	free_error(msg);
+}
+
+static bool
+ResGroupPLDec(void *arg)
+{
+	Oid groupId;
+	int32 memory_usage;
+	int32 memory_expected;
+	int32 memory_limit, memory_limit_new;
+
+	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+
+	groupId = *(Oid *)arg;
+
+	memory_limit = ResGroupOps_GetMemoryLimit(groupId);
+	memory_usage = ResGroupOps_GetMemoryUsage(groupId);
+	memory_expected = ResGroup_GetMemoryExpected(groupId);
+
+	/* no intention to decrease memory limit */
+	if (memory_limit <= memory_expected)
+		return true;
+
+	/* no room to decrease memory limit */
+	if (memory_limit <= memory_usage)
+		return true;
+
+	memory_limit_new = Max(memory_usage, memory_expected);
+
+	ResGroupOps_SetMemoryLimitByValue(groupId, memory_limit_new);
+	ResGroup_ReclaimMemoryFromExternal(groupId, memory_limit - memory_limit_new);
+
+	return true;
+}
+
+static bool
+ResGroupPLInc(void *arg)
+{
+	Oid groupId;
+	int32 memory_expected;
+	int32 memory_limit;
+	int32 memory_inc;
+
+	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+
+	groupId = *(Oid *)arg;
+
+	memory_limit = ResGroupOps_GetMemoryLimit(groupId);
+	memory_expected = ResGroup_GetMemoryExpected(groupId);
+
+	/* no intention to increase memory limit */
+	if (memory_limit >= memory_expected)
+		return true;
+
+	memory_inc = ResGroup_AssignMemoryToExternal(groupId, memory_expected - memory_limit);
+
+	if (memory_inc > 0)
+	{
+		ResGroupOps_SetMemoryLimitByValue(groupId, memory_limit + memory_inc);
+	}
+
+	return true;
+}
+
+static bool
+ResGroupPLCompare(void *arg1, void *arg2)
+{
+	Oid groupid1 = *(Oid *)arg1;
+	Oid groupid2 = *(Oid *)arg2;
+	return groupid1 == groupid2;
 }

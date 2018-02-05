@@ -549,7 +549,6 @@ runtimeConfEntry *plc_get_runtime_configuration(char *runtime_id) {
 		}
 	}
 
-	//const char* rr = (const char*) runtime_id;
 	/* find the corresponding runtime config*/
 	entry = (runtimeConfEntry *) hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_FIND, NULL);
 

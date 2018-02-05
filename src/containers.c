@@ -21,7 +21,8 @@
 #include "libpq/pqsignal.h"
 #include "utils/ps_status.h"
 #include "utils/faultinjector.h"
-
+#include "utils/resgroup.h"
+#include "utils/resgroup-ops.h"
 #include "common/comm_utils.h"
 #include "common/comm_channel.h"
 #include "common/comm_connectivity.h"
@@ -37,6 +38,11 @@ typedef struct {
 	plcConn *conn;
 } container_t;
 
+typedef struct {
+	Oid groupid;
+	char dockerid[CONTAINER_ID_MAX_LENGTH];
+} resgroup_cleanup_hook_data;
+
 #define MAX_CONTAINER_NUMBER 10
 #define CLEANUP_SLEEP_SEC 2
 #define CLEANUP_CONTAINER_CONNECT_RETRY_TIMES 60
@@ -49,6 +55,13 @@ static void init_containers();
 
 static int check_runtime_id(const char *id);
 
+static bool ResGroupPLCompare(void *arg1, void *arg2);
+
+static bool ResGroupPLCleanup(void *arg);
+
+static bool ContainerMemoryUsageIsHigh(Oid groupid);
+
+static int memory_redzone_to_clean_up = 20;
 #ifndef CONTAINER_DEBUG
 
 static int qe_is_alive(char *dockerid) {
@@ -426,6 +439,15 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	while (wait3(&wait_status, WNOHANG, NULL) > 0);
 #endif
 
+	/* Register container cleanup callhook*/
+	if(conf->resgroupOid != InvalidOid) {
+		resgroup_cleanup_hook_data *hookArg = NULL;
+		hookArg = (resgroup_cleanup_hook_data *)MemoryContextAlloc(TopMemoryContext, sizeof(resgroup_cleanup_hook_data));
+		hookArg->groupid = conf->resgroupOid;
+		strncpy(hookArg->dockerid, dockerid, sizeof(hookArg->dockerid));
+
+		RegisterResGroupMemoryHook(RES_GROUP_MEMORY_HOOK_CLEAN, ResGroupPLCleanup, (void *)hookArg, ResGroupPLCompare);
+	}	
 	/* Create a process to clean up the container after it finishes */
 	cleanup(dockerid, uds_fn);
 
@@ -633,4 +655,59 @@ static int check_runtime_id(const char *id) {
 		return -1;
 	}
 	return 0;
+}
+
+static bool ContainerMemoryUsageIsHigh(Oid groupId)
+{
+	int32 memory_usage;
+        int32 memory_expected;
+
+        Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+
+        memory_usage = ResGroupOps_GetMemoryUsage(groupId);
+        memory_expected = ResGroup_GetMemoryExpected(groupId);
+	
+	return memory_usage > memory_expected * memory_redzone_to_clean_up / 100;
+}
+static bool
+ResGroupPLCleanup(void *arg)
+{
+	Oid groupId;
+	char dockerid[CONTAINER_ID_MAX_LENGTH];
+	int res;
+	int _loop_cnt = 0;
+	
+
+	resgroup_cleanup_hook_data *cleanupData = (resgroup_cleanup_hook_data *)arg;
+	groupId = cleanupData->groupid;
+	strncpy(dockerid, cleanupData->dockerid, sizeof(dockerid));
+	pfree(arg);
+
+	if(!ContainerMemoryUsageIsHigh(groupId))
+		return false;
+
+	while ((res = plc_backend_delete(dockerid)) < 0 && _loop_cnt++ < 3)
+		pg_usleep(2000 * 1000L);
+
+	if (res < 0) {
+		plc_elog(NOTICE, "Container delete error at transation end: %s", api_error_message);
+		return false;
+	}
+
+	return true;
+}
+
+static bool
+ResGroupPLCompare(void *arg1, void *arg2)
+{
+	resgroup_cleanup_hook_data *cleanupData1 = (resgroup_cleanup_hook_data *)arg1;
+	resgroup_cleanup_hook_data *cleanupData2 = (resgroup_cleanup_hook_data *)arg2;
+
+	if (cleanupData1->groupid != cleanupData2->groupid)
+		return false;
+
+	if (strcmp(cleanupData1->dockerid, cleanupData2->dockerid))
+		return false;
+
+	return true;
 }
