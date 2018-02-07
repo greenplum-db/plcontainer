@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#------------------------------------------------------------------------------
+#
+# Copyright (c) 2017-Present Pivotal Software, Inc
+#
+#------------------------------------------------------------------------------
+
 set -eox pipefail
 
 scp -r plcontainer_gpdb_build mdw:/tmp/
