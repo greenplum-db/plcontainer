@@ -19,46 +19,43 @@ git clone https://github.com/greenplum-db/plcontainer.git
 
 You can build PL/Container in the following way:
 
-1. Go to the PL/Container directory: `cd /plcontainer`
-1. plcontainer needs libcurl >=7.40. If the libcurl version on your system is low, you need to upgrade at first. For example, you could download source code and then compile and install, following this page: [Install libcurl from source](https://curl.haxx.se/docs/install.html). Note you should make sure the libcurl library path is in the list for library lookup. Typically you might want to add the path into LD_LIBRARY_PATH and export them in shell configuration or greenplum_path.sh on all nodes.
+1. Go to the PL/Container directory: `cd plcontainer`
+1. plcontainer needs libcurl >=7.40. If the libcurl version on your system is low, you need to upgrade at first. For example, you could download source code and then compile and install, following this page: [Install libcurl from source](https://curl.haxx.se/docs/install.html). Note you should make sure the libcurl library path is in the list for library lookup. Typically you might want to add the path into LD_LIBRARY_PATH and export them in shell configuration or greenplum_path.sh on all nodes (Note you need to restart the Greenplum cluster).
 1. Make and install it: `make clean && make && make install`
-1. Make with code coverae enabled: `make clean && make enable_coverage=true && make install`. After running test, generate code coverage report: `make coverage-report`
+1. Make with code coverae enabled (For dev and test only): `make clean && make enable_coverage=true && make install`. After running test, generate code coverage report: `make coverage-report`
 
 
 ### Configuring PL/Container
 
-To configure PL/Container environment, you need to do the following steps (take python as an example):
-1. Enable PL/Container for specific databases by running 
+To configure PL/Container environment, you need to enable PL/Container for specific databases by running 
    ```shell
    psql -d your_database -f $GPHOME/share/postgresql/plcontainer/plcontainer_install.sql
    ```
-1. Install the PL/Container image by running 
-   ```shell
-   plcontainer image-add -f /home/gpadmin/plcontainer-python-images.tar.gz
-   ```
-1. Configure the runtime by running
-   ```shell
-   plcontainer runtime-add -r plc_python_shared -i pivotaldata/plcontainer_python_shared:devel -l python -s use_container_logging=yes
-   ```
 
-### Running the tests
+### Running the regression tests
 
-1. Tests require three runtimes(Python, R and Network) are added. Suppose you have installed the python runtime in the above section.
+1. Prepare docker images for R & Python environment.
+   Refer TOADD for docker file examples.
 
-   Install the PL/Container R image by running
+1. Tests require some images and runtime configurations are installed.
+
+   Install the PL/Container R & Python docker images by running
    ```shell
    plcontainer image-add -f /home/gpadmin/plcontainer-r-images.tar.gz;
+   plcontainer image-add -f /home/gpadmin/plcontainer-python-images.tar.gz
    ```
-   Add R runtime by running
+
+   Add runtime configurations as below
    ```shell
-   plcontainer runtime-add -r plc_r_shared -i pivotaldata/plcontainer_r_shared:devel -l r -s use_container_logging=yes;
+   plcontainer runtime-add -r plc_r_shared -i pivotaldata/plcontainer_r_shared:devel -l r
+   plcontainer runtime-add -r plc_python_shared -i pivotaldata/plcontainer_python_shared:devel -l python
+   plcontainer runtime-add -r plc_python_network -i pivotaldata/plcontainer_python_shared:devel -l python -s use_container_network=yes;
    ```
-   Add Network runtime by running
-   ```shell
-   plcontainer runtime-add -r plc_python_network -i pivotaldata/plcontainer_python_shared:devel -l python -s use_container_logging=yes -s use_container_network=yes;
-   ```
-1. Go to the PL/Container test directory: `cd /plcontainer/tests`
+
+1. Go to the PL/Container test directory: `cd plcontainer/tests`
 1. Make it: `make tests`
+
+Note that if you just want to test or run your own R or Python code, you do just need to install the image and runtime for that language.
 
 ### Design
 
@@ -75,18 +72,9 @@ There are a couple of things you need to pay attention to:
 
 1. The `LANGUAGE` argument to Greenplum is `plcontainer`
 
-1. The function definition starts with the line `# container: plc_python_share` which defines the name of runtime that will be used for running this function. To check the list of runtimes defined in the system you can run the command `plcontainer runtime-show`. Each runtime is mapped to a single docker image, you can list the ones available in your system with command `docker images`
+1. The function definition starts with the line `# container: plc_python_shared` which defines the name of runtime that will be used for running this function. To check the list of runtimes defined in the system you can run the command `plcontainer runtime-show`. Each runtime is mapped to a single docker image, you can list the ones available in your system with command `docker images`
 
-
-For example, to define a function that uses a container that runs the `R`
-interpreter, simply make the following definition:
-```sql
-CREATE FUNCTION dummyR() RETURNS text AS $$
-# container: plc_r_shared
-return (log10(100))
-$$ LANGUAGE plcontainer;
-```
-
+plcontainer supports various parameters for docker run, and also it supports some useful UDFs for monitoring or debugging. Please read the official document for details. 
 
 ### Contributing
 PL/Container is maintained by a core team of developers with commit rights to the [plcontainer repository](https://github.com/greenplum-db/plcontainer) on GitHub. At the same time, we are very eager to receive contributions and any discussions about it from anybody in the wider community.
