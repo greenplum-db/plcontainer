@@ -5,9 +5,6 @@
 #------------------------------------------------------------------------------
 MODULE_big = plcontainer
 
-# Release versions
-include release.mk
-
 # Directories
 SRCDIR = ./src
 COMMONDIR = ./src/common
