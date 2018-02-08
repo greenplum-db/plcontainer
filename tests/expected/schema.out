@@ -1,4 +1,5 @@
 -- Creating UDTs
+CREATE EXTENSION plcontainer;
 CREATE TYPE type_record AS (
     first text,
     second int4

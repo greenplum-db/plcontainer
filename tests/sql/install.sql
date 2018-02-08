@@ -1,1 +1,0 @@
-../../management/sql/plcontainer_install.sql

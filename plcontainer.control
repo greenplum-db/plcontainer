@@ -1,0 +1,7 @@
+# plcontainer extension
+comment = 'GPDB execution sandboxing for Python and R'
+# this is the install/uninstall script version
+default_version = '1.0.0'
+module_pathname = '$libdir/plcontainer'
+relocatable = true
+superuser = true

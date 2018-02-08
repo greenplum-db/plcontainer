@@ -9,7 +9,7 @@ PostInstall:
           echo '==========================================================================';
           echo 'PL/Container installation is complete! To proceed, follow these steps:';
           echo '1. Source your new $GPHOME/greenplum_path.sh file and restart the database.';
-          echo '2. Enable PL/Container language in one of your databases by running \"psql -f $GPHOME/share/postgresql/plcontainer/plcontainer_install.sql -d mydatabase\"';
+          echo '2. Enable PL/Container language in one of your databases by running \"CREATE EXTENSION plcontainer;\" directly in your database';
           echo '3. Add docker images on master node, for example add a python image by running \"plcontainer image-add -f plcontainer-python-images.tar.gz;\"';
           echo '4. Add container runtimes on master node, for example add a runtime by running \"plcontainer runtime-add -r plc_python_shared -i pivotaldata/plcontainer_python_shared:devel -l python;\" Refer to the installation guide for options';
           echo '==========================================================================';"

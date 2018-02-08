@@ -4,6 +4,8 @@
 #
 #------------------------------------------------------------------------------
 MODULE_big = plcontainer
+# for extension
+EXTENSION = plcontainer
 
 # Directories
 SRCDIR = ./src
@@ -11,6 +13,11 @@ COMMONDIR = ./src/common
 MGMTDIR = ./management
 PYCLIENTDIR = src/pyclient/bin
 RCLIENTDIR = src/rclient/bin
+
+# the DATA is including files for extension use
+DATA = $(MGMTDIR)/sql/plcontainer--1.0.0.sql $(MGMTDIR)/sql/plcontainer--unpackaged--1.0.0.sql plcontainer.control
+# DATA_built will built sql from .in file
+DATA_built = $(MGMTDIR)/sql/plcontainer_install.sql $(MGMTDIR)/sql/plcontainer_uninstall.sql
 
 # Files to build
 FILES = $(shell find $(SRCDIR) -not -path "*client*" -type f -name "*.c")
@@ -85,10 +92,10 @@ uninstall: uninstall-lib
 
 .PHONY: install-extra
 install-extra: installdirs
-	$(INSTALL_PROGRAM) '$(MGMTDIR)/bin/plcontainer'                      '$(DESTDIR)$(bindir)/plcontainer'
-	$(INSTALL_DATA)    '$(MGMTDIR)/config/plcontainer_configuration.xml' '$(PLCONTAINERDIR)/'
-	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_install.sql'          '$(PLCONTAINERDIR)/'
-	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_uninstall.sql'        '$(PLCONTAINERDIR)/'
+	$(INSTALL_PROGRAM) '$(MGMTDIR)/bin/plcontainer'                         '$(DESTDIR)$(bindir)/plcontainer'
+	$(INSTALL_DATA)    '$(MGMTDIR)/config/plcontainer_configuration.xml'    '$(PLCONTAINERDIR)/'
+	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_install.sql'             '$(PLCONTAINERDIR)/'
+	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_uninstall.sql'           '$(PLCONTAINERDIR)/'
 
 .PHONY: install-clients
 install-clients: build-clients
