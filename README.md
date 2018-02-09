@@ -22,7 +22,7 @@ You can build PL/Container in the following way:
 1. Go to the PL/Container directory: `cd plcontainer`
 1. plcontainer needs libcurl >=7.40. If the libcurl version on your system is low, you need to upgrade at first. For example, you could download source code and then compile and install, following this page: [Install libcurl from source](https://curl.haxx.se/docs/install.html). Note you should make sure the libcurl library path is in the list for library lookup. Typically you might want to add the path into LD_LIBRARY_PATH and export them in shell configuration or greenplum_path.sh on all nodes (Note you need to restart the Greenplum cluster).
 1. Make and install it: `make clean && make && make install`
-1. Make with code coverae enabled (For dev and test only): `make clean && make enable_coverage=true && make install`. After running test, generate code coverage report: `make coverage-report`
+1. Make with code coverage enabled (For dev and test only): `make clean && make ENABLE_COVERAGE=yes && make install`. After running test, generate code coverage report: `make coverage-report`
 
 
 ### Configuring PL/Container

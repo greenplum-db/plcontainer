@@ -19,7 +19,8 @@ endif
 CLIENT_CFLAGS = $(shell $(PYTHON) -c "from distutils import sysconfig; import sys; sys.stdout.write('-I' + sysconfig.get_python_inc())")
 CLIENT_LDFLAGS = $(shell $(PYTHON) -c "from distutils import sysconfig; import sys; sys.stdout.write(sysconfig.get_config_var('BLDLIBRARY'))")
 
-override CFLAGS += $(CUSTOMFLAGS) -I$(PLCONTAINER_DIR)/ -DPLC_CLIENT -Wall -Wextra -Werror
+override CFLAGS += $(CLIENT_CFLAGS) -I$(PLCONTAINER_DIR)/ -DPLC_CLIENT -Wall -Wextra -Werror
+override LDFLAGS += $(CLIENT_LDFLAGS)
 
 CLIENT = pyclient
 common_src = $(shell find $(PLCONTAINER_DIR)/common -name "*.c")
@@ -31,20 +32,18 @@ client_objs = $(foreach src,$(client_src),$(subst .c,.o,$(src)))
 default: all
 
 $(common_objs): %.$(CLIENT).o: %.c
-	$(CC) $(CLIENT_CFLAGS) $(CFLAGS) -c -o $@ $^
+	$(CC) $(CFLAGS) -c -o $@ $^
 
 $(client_objs): %.o: %.c
-	$(CC) $(CLIENT_CFLAGS) $(CFLAGS) -c -o $@ $^
-
-build: $(client_objs) $(common_objs)
-	LIBRARY_PATH=$(LD_LIBRARY_PATH) $(CC) -o $(CLIENT) $^ $(CLIENT_LDFLAGS) $(LIBS)
-	cp $(CLIENT) bin
+	$(CC) $(CFLAGS) -c -o $@ $^
 
 .PHONY: all
-all: CUSTOMFLAGS = -O3 -g
-all: build
+all: $(client_objs) $(common_objs)
+	LIBRARY_PATH=$(LD_LIBRARY_PATH) $(CC) -o $(CLIENT) $^ $(LDFLAGS) $(LIBS)
+	cp $(CLIENT) bin
 
-distclean clean:
+.PHONY: clean
+clean:
 	rm -f $(common_objs)
 	rm -f *.o
 	rm -f $(CLIENT)

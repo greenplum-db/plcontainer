@@ -26,8 +26,6 @@ OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 
-CLIENT_CFLAG = -Werror -Wextra -Wall
-
 # Curl
 CURL_CONFIG = $(shell type -p curl-config || echo no)
 ifneq ($(CURL_CONFIG),no)
@@ -65,9 +63,13 @@ PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 
 override CFLAGS += -Werror -Wextra -Wall
 
-ifeq ($(enable_coverage), true)
+ifeq ($(ENABLE_COVERAGE),yes)
   override CFLAGS += -coverage
   override SHLIB_LINK += -lgcov --coverage
+  override CLIENT_CFLAGS += -coverage -O0 -g
+  override CLIENT_LDFLAGS += -lgcov --coverage
+else
+  override CLIENT_CFLAGS += -O3 -g
 endif
 
 # detected the docker API version, only for centos 6
@@ -80,7 +82,7 @@ all: all-lib build-clients
 
 install: all installdirs install-lib install-extra install-clients
 
-clean: clean-clients
+clean: clean-clients clean-coverage
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
@@ -109,13 +111,19 @@ installcheck:
 
 .PHONY: build-clients
 build-clients:
-	CC='$(CC)' CFLAGS='$(CLIENT_CFLAG)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/pyclient all
-	CC='$(CC)' CFLAGS='$(CLIENT_CFLAG)' CPPFLAGS='$(CPPFLAGS)' $(MAKE) -C $(SRCDIR)/rclient all
+	CC='$(CC)' CFLAGS='$(CLIENT_CFLAGS)' LDFLAGS='$(CLIENT_LDFLAGS)' $(MAKE) -C $(SRCDIR)/pyclient all
+	CC='$(CC)' CFLAGS='$(CLIENT_CFLAGS)' LDFLAGS='$(CLIENT_LDFLAGS)' $(MAKE) -C $(SRCDIR)/rclient all
 
 .PHONY: clean-clients
 clean-clients:
 	$(MAKE) -C $(SRCDIR)/pyclient clean
 	$(MAKE) -C $(SRCDIR)/rclient clean
+
+.PHONY: clean-coverage
+clean-coverage:
+	rm -f `find . -name '*.gcda' -print`
+	rm -f `find . -name '*.gcno' -print`
+	rm -rf coverage.info coverage_result
 
 .PHONY: coverage-report
 coverage-report:
