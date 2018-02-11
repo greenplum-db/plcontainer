@@ -66,7 +66,7 @@ static int qe_is_alive(char *dockerid) {
 	return return_code;
 }
 
-static int container_is_alive(char *dockerid) {
+static int delete_backend_if_exited(char *dockerid) {
 	char *element = NULL;
 
 	int return_code = 1;
@@ -176,7 +176,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
 				} else if (res < 0) {
 					wait_times++;
 					write_log("plcontainer cleanup process: Failed to delete backend in cleanup process (%s). "
-					          "Will retry later.", api_error_message);
+					          "Will retry later.", backend_error_message);
 				} else {
 					wait_times = 0;
 				}
@@ -186,7 +186,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
 				 */
 				if (log_min_messages <= DEBUG1)
 					write_log("plcontainer cleanup process: Checking whether the backend is alive");
-				res = container_is_alive(dockerid);
+				res = delete_backend_if_exited(dockerid);
 				if (log_min_messages <= DEBUG1)
 					write_log("plcontainer cleanup process: Backend alive status: %d", res);
 
@@ -200,7 +200,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
 					wait_times++;
 					write_log(
 						"plcontainer cleanup process: Failed to inspect or delete backend in cleanup process (%s). "
-						"Will retry later.", api_error_message);
+						"Will retry later.", backend_error_message);
 				} else {
 					wait_times = 0;
 				}
@@ -357,17 +357,19 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	}
 
 	if (res < 0) {
-		plc_elog(ERROR, "Backend create error: %s", api_error_message);
+		plc_elog(ERROR, "Backend create error: %s", backend_error_message);
 		return NULL;
 	}
 	plc_elog(DEBUG1, "docker created with id %s.", dockerid);
 
-	/* Insert it into containers[] so that in case below operations fails,
+	/*
+	 * Insert it into containers[] so that in case below operations fails,
 	 * it could longjump to plcontainer_call_handler()->delete_containers()
 	 * to delete all the containers. We will fill in conn after the connection is
 	 * established.
 	 */
 	insert_container_slot(conf->runtimeid, dockerid, container_slot);
+
 	/*
 	 * Unblock signals after we insert the container identifier into the 
 	 * container slot for later cleanup.
@@ -390,7 +392,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	if (res < 0) {
 		if (!conf->useContainerNetwork)
 			cleanup_uds(uds_fn);
-		plc_elog(ERROR, "Backend start error: %s", api_error_message);
+		plc_elog(ERROR, "Backend start error: %s", backend_error_message);
 		return NULL;
 	}
 
@@ -407,14 +409,15 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 		if (res < 0) {
 			if (!conf->useContainerNetwork)
 				cleanup_uds(uds_fn);
-			plc_elog(ERROR, "Backend inspect error: %s", api_error_message);
+			plc_elog(ERROR, "Backend inspect error: %s", backend_error_message);
 			return NULL;
 		}
 		port = (int) strtol(element, NULL, 10);
 		pfree(element);
 	}
 
-	/* Give chance to reap some possible zoombie cleanup processes here.
+	/*
+	 * Give chance to reap some possible zoombie cleanup processes here.
 	 * zoombie occurs only when container exits abnormally and QE process
 	 * exists, which should not happen often. We could daemonize the cleanup
 	 * process to avoid this but having QE as its parent seems to be more
@@ -431,7 +434,8 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_started");
 
-	/* Making a series of connection attempts unless connection timeout of
+	/*
+	 * Making a series of connection attempts unless connection timeout of
 	 * CONTAINER_CONNECT_TIMEOUT_MS is reached. Exponential backoff for
 	 * reconnecting first attempts: 25ms, 50ms, 100ms, 200ms, 200ms, etc.
 	 */
@@ -515,18 +519,36 @@ void delete_containers() {
 		for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
 			if (containers[i].runtimeid != NULL) {
 
+				/*
+				 * Disconnect at first so that container has chance to exit gracefully.
+				 * When running code coverage for client code, client needs to
+				 * have chance to flush the gcda files thus direct kill-9 is not
+				 * proper.
+				 */
+				plcDisconnect(containers[i].conn);
+
 				/* Terminate container process */
 				if (containers[i].dockerid != NULL) {
 					int res;
-					int _loop_cnt = 0;
+					int _loop_cnt;
 
-					while ((res = plc_backend_delete(containers[i].dockerid)) < 0 && _loop_cnt++ < 3)
-						pg_usleep(2000 * 1000L);
+					/* Check to see whether backend is exited or not. */
+					_loop_cnt = 0;
+					while ((res = delete_backend_if_exited(containers[i].dockerid)) != 0 && _loop_cnt++ < 5) {
+						pg_usleep(200 * 1000L);
+					}
+
+					/* Force to delete the backend if needed. */
+					if (res != 0) {
+						_loop_cnt = 0;
+						while ((res = plc_backend_delete(containers[i].dockerid)) < 0 && _loop_cnt++ < 3)
+							pg_usleep(1000 * 1000L);
+					}
+
+					/* Logging this if still failing to delete the backend. */
 					if (res < 0)
-						plc_elog(NOTICE, "Backend delete error: %s", api_error_message);
+						plc_elog(NOTICE, "Backend delete error: %s", backend_error_message);
 				}
-
-				plcDisconnect(containers[i].conn);
 
 				delete_container_slot(i);
 			}

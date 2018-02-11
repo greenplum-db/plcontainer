@@ -554,7 +554,7 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 				sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, conf->sharedDirs[i].host,
 				        conf->sharedDirs[i].container);
 			} else {
-				snprintf(api_error_message, sizeof(api_error_message),
+				snprintf(backend_error_message, sizeof(backend_error_message),
 				         "Cannot determine directory sharing mode: %d",
 				         conf->sharedDirs[i].mode);
 				*has_error = true;
@@ -582,7 +582,7 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 
 			/* Create the directory. */
 			if (mkdir(*uds_dir, S_IRWXU) < 0 && errno != EEXIST) {
-				snprintf(api_error_message, sizeof(api_error_message),
+				snprintf(backend_error_message, sizeof(backend_error_message),
 				         "Cannot create directory %s: %s",
 				         *uds_dir, strerror(errno));
 				*has_error = true;
@@ -639,7 +639,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 
 		res = plc_docker_list_container(&json_result);
 		if (res < 0) {
-			plc_elog(ERROR, "Docker container list error: %s", api_error_message);
+			plc_elog(ERROR, "Docker container list error: %s", backend_error_message);
 		}
 
 		/* no container running */
@@ -757,7 +757,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 
 			res = plc_docker_get_container_state(idStr, &containerState);
 			if (res < 0) {
-				plc_elog(ERROR, "Fail to get docker container state: %s", api_error_message);
+				plc_elog(ERROR, "Fail to get docker container state: %s", backend_error_message);
 			}
 
 			containerStateObj = json_tokener_parse(containerState);

@@ -12,7 +12,7 @@
 
 #include "plc_configuration.h"
 
-extern char api_error_message[256];
+extern char backend_error_message[256];
 
 typedef int ( *PLC_FPTR_create)(runtimeConfEntry *conf, char **name, int container_slot, char **uds_dir);
 

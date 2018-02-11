@@ -11,7 +11,8 @@
 
 static PLC_FunctionEntriesData *CurrentBackend;
 
-char api_error_message[256];
+/* If backend api returns error, the string will include more details. */
+char backend_error_message[256];
 
 static PLC_FunctionEntriesData DockerBackend =
 {
@@ -45,7 +46,7 @@ void plc_backend_prepareImplementation(enum PLC_BACKEND_TYPE imptype) {
 
 int plc_backend_create(runtimeConfEntry *conf, char **name, int container_slot, char **uds_dir) {
 	if (CurrentBackend == NULL || CurrentBackend->create_backend == NULL) {
-		snprintf(api_error_message, sizeof(api_error_message), "Fail to get interface for backend create");
+		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend create");
 		return -1;
 	}
 
@@ -54,7 +55,7 @@ int plc_backend_create(runtimeConfEntry *conf, char **name, int container_slot, 
 
 int plc_backend_start(const char *name) {
 	if (CurrentBackend == NULL || CurrentBackend->start_backend == NULL) {
-		snprintf(api_error_message, sizeof(api_error_message), "Fail to get interface for backend start");
+		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend start");
 		return -1;
 	}
 
@@ -63,7 +64,7 @@ int plc_backend_start(const char *name) {
 
 int plc_backend_kill(const char *name) {
 	if (CurrentBackend == NULL || CurrentBackend->kill_backend == NULL) {
-		snprintf(api_error_message, sizeof(api_error_message), "Fail to get interface for backend kill");
+		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend kill");
 		return -1;
 	}
 
@@ -72,7 +73,7 @@ int plc_backend_kill(const char *name) {
 
 int plc_backend_inspect(const char *name, char **element, plcInspectionMode type) {
 	if (CurrentBackend == NULL || CurrentBackend->inspect_backend == NULL) {
-		snprintf(api_error_message, sizeof(api_error_message), "Fail to get interface for backend inspect");
+		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend inspect");
 		return -1;
 	}
 
@@ -81,7 +82,7 @@ int plc_backend_inspect(const char *name, char **element, plcInspectionMode type
 
 int plc_backend_wait(const char *name) {
 	if (CurrentBackend == NULL || CurrentBackend->wait_backend == NULL) {
-		snprintf(api_error_message, sizeof(api_error_message), "Fail to get interface for backend wait");
+		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend wait");
 		return -1;
 	}
 
@@ -90,7 +91,7 @@ int plc_backend_wait(const char *name) {
 
 int plc_backend_delete(const char *name) {
 	if (CurrentBackend == NULL || CurrentBackend->delete_backend == NULL) {
-		snprintf(api_error_message, sizeof(api_error_message), "Fail to get interface for backend delete");
+		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend delete");
 		return -1;
 	}
 

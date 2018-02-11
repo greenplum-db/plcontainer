@@ -151,7 +151,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 				break;
 			default:
-				snprintf(api_error_message, sizeof(api_error_message),
+				snprintf(backend_error_message, sizeof(backend_error_message),
 				         "Unsupported call type for PL/Container Docker Curl API: %d", cType);
 				buffer->status = -1;
 				goto cleanup;
@@ -175,7 +175,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 				((uint64) end_time.tv_sec) * 1000000 + end_time.tv_usec -
 				((uint64) start_time.tv_sec) * 1000000 - start_time.tv_usec;
 
-			snprintf(api_error_message, sizeof(api_error_message),
+			snprintf(backend_error_message, sizeof(backend_error_message),
 			         "PL/Container libcurl returns code %d, error '%s'", res,
 			         (len > 0) ? errbuf : curl_easy_strerror(res));
 			buffer->status = -2;
@@ -200,7 +200,7 @@ cleanup:
 		curl_slist_free_all(headers);
 		curl_easy_cleanup(curl);
 	} else {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to start a curl session for unknown reason");
 		buffer->status = -1;
 	}
@@ -264,7 +264,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	errno = 0;
 	pwd = getpwnam("nobody");
 	if (pwd == NULL) {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to get passwd info for user 'nobody': %d", errno);
 		return -1;
 	}
@@ -307,11 +307,11 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 		res = 0;
 	} else if (res >= 0) {
 		plc_elog(LOG, "Docker fails to create container, response: %s", response->data);
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to create container (return code: %d).", res);
 		res = -1;
 	} else {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to create container (return code: %d).", res);
 	}
 
@@ -322,7 +322,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 
 	if (res < 0) {
 		plc_elog(DEBUG1, "Error parsing container ID during creating container with errno %d.", res);
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Error parsing container ID during creating container");
 		goto cleanup;
 	}
@@ -350,11 +350,11 @@ int plc_docker_start_container(const char *name) {
 		res = 0;
 	} else if (res >= 0) {
 		plc_elog(DEBUG1, "start docker container %s failed with errno %d.", name, res);
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to start container %s (return code: %d)", name, res);
 		res = -1;
 	} else {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to start container %s (return code: %d)", name, res);
 	}
 
@@ -405,7 +405,7 @@ int plc_docker_inspect_container(const char *name, char **element, plcInspection
 
 	if (res != 200) {
 		plc_elog(LOG, "Docker cannot inspect container, response: %s", response->data);
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Docker inspect api returns http code %d on container %s", res, name);
 		res = -1;
 		goto cleanup;
@@ -413,7 +413,7 @@ int plc_docker_inspect_container(const char *name, char **element, plcInspection
 
 	res = docker_inspect_string(response->data, element, type);
 	if (res < 0) {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to inspect the container.");
 		goto cleanup;
 	}
@@ -463,11 +463,11 @@ int plc_docker_delete_container(const char *name) {
 	if (res == 204 || res == 404) {
 		res = 0;
 	} else if (res >= 0) {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to delete container %s (return code: %d)", name, res);
 		res = -1;
 	} else {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to delete container %s (return code: %d)", name, res);
 	}
 
@@ -491,11 +491,11 @@ int plc_docker_list_container(char **result) {
 	if (res == 200) {
 		res = 0;
 	} else if (res >= 0) {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to list containers (return code: %d), dbid is %d", res, GpIdentity.dbid);
 		res = -1;
 	} else {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to list containers (return code: %d), dbid is %d", res, GpIdentity.dbid);
 	}
 	*result = pstrdup(response->data);
@@ -519,11 +519,11 @@ int plc_docker_get_container_state(const char *name, char **result) {
 	if (res == 200) {
 		res = 0;
 	} else if (res >= 0) {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to get container %s state (return code: %d)", name, res);
 		res = -1;
 	} else {
-		snprintf(api_error_message, sizeof(api_error_message),
+		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to get container %s state (return code: %d)", name, res);
 	}
 
