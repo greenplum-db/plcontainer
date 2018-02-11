@@ -1,4 +1,4 @@
-# setup
+# setup - need to be first
 test: schema
 
 # Test plcontainer utility.
@@ -10,7 +10,7 @@ test: test_configuration
 # test declaration combinations in function definitions.
 test: runtimeid_declaration
 
-# set R and Python function
+# set R and Python function - need before "test PL/Container normal function"
 test: function_r function_r_gpdb5 function_python function_python_gpdb5
 
 # test PL/Container normal function
@@ -37,3 +37,5 @@ test: memory_consuming_python memory_consuming_r
 test: memory_parallel_python memory_parallel_r
 test: memory_parallel_python_1 memory_parallel_python_2 memory_parallel_python_3 memory_parallel_python_4 memory_parallel_python_5 memory_parallel_r_1 memory_parallel_r_2 memory_parallel_r_3 memory_parallel_r_4 memory_parallel_r_5
 
+# Drop the extension - need to be last
+test: drop

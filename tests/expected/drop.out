@@ -1,0 +1,7 @@
+DROP EXTENSION plcontainer CASCADE;
+\df
+                       List of functions
+ Schema | Name | Result data type | Argument data types | Type
+--------+------+------------------+---------------------+------
+(0 rows)
+

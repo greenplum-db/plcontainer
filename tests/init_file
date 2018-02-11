@@ -5,6 +5,7 @@
 -- start_matchignore
 # match ignore docker api WARNING message
 m/^WARNING:  Docker API.*/
+m/^NOTICE:  drop cascades to function*/
 # match plcontainer command outputs: startswith timestamp: 20170906:14:06:03
 m/^[0-9]{8}:[0-9]{2}:[0-9]{2}:[0-9]{2}.*/
 -- end_matchignore
