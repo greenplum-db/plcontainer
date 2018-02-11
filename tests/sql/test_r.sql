@@ -72,6 +72,7 @@ select rpg_spi_exec('select 1');
 
 select rlogging();
 select rlogging2();
+\! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
 
 select rsetofint4();
 select rsetofint8();

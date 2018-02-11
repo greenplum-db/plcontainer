@@ -239,6 +239,11 @@ CREATE OR REPLACE FUNCTION rlogging2() RETURNS void AS $$
 pg.spi.exec('select rlogging()');
 $$ LANGUAGE plcontainer;
 
+CREATE OR REPLACE FUNCTION rlogging_fatal() RETURNS void AS $$
+# container: plc_r_shared
+plr.fatal('this is the fatal message')
+$$ LANGUAGE plcontainer;
+
 CREATE OR REPLACE FUNCTION runargs1(varchar) RETURNS text AS $$
 # container: plc_r_shared
 return (args[0])
