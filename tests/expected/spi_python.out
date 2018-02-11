@@ -30,6 +30,7 @@ for r in rv:
 
 plpy.notice("Test text")
 plan = plpy.prepare("select * from t2 where name=$1 order by id", ["text"])
+plpy.notice(plan.status())
 rv = plpy.execute(plan, ["bob1"])
 for r in rv:
     plpy.notice(str(r))
@@ -79,6 +80,7 @@ NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  Test query targetlist containing NULL
 NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
 NOTICE:  Test text
+NOTICE:  True
 NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
 NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
@@ -756,3 +758,13 @@ select spi_prepared_plan_test_nested('smith');
  there are 1 smiths
 (1 row)
 
+CREATE FUNCTION spi_fatal() RETURNS void AS $$
+# container: plc_python_shared
+plpy.fatal("test plpy fatal")
+$$ LANGUAGE plcontainer;
+select spi_fatal();
+FATAL:  test plpy fatal
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+connection to server was lost

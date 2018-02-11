@@ -28,6 +28,7 @@ for r in rv:
 
 plpy.notice("Test text")
 plan = plpy.prepare("select * from t2 where name=$1 order by id", ["text"])
+plpy.notice(plan.status())
 rv = plpy.execute(plan, ["bob1"])
 for r in rv:
     plpy.notice(str(r))
@@ -517,3 +518,10 @@ select nested_call_one('pass this along');
 select spi_prepared_plan_test_one('doe');
 select spi_prepared_plan_test_one('smith');
 select spi_prepared_plan_test_nested('smith');
+
+CREATE FUNCTION spi_fatal() RETURNS void AS $$
+# container: plc_python_shared
+plpy.fatal("test plpy fatal")
+$$ LANGUAGE plcontainer;
+
+select spi_fatal();
