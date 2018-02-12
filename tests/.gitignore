@@ -1,3 +1,5 @@
 /results/
 *.diffs
 regression.out
+expected/uda_python.out
+expected/test_python.out
