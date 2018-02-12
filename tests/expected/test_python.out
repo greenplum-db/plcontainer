@@ -693,3 +693,9 @@ SELECT py_udt_return_null();
  (t,1,2,3,4,5,6,)
 (1 row)
 
+\! psql -d ${PL_TESTDB} -c "select pythonlogging_fatal();"
+FATAL:  test plpy fatal
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+connection to server was lost

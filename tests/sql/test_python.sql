@@ -117,3 +117,4 @@ select pybadarr2();
 select pyinvalid_function();
 select pysubtransaction('t');
 SELECT py_udt_return_null();
+\! psql -d ${PL_TESTDB} -c "select pythonlogging_fatal();"

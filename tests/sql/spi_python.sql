@@ -518,10 +518,3 @@ select nested_call_one('pass this along');
 select spi_prepared_plan_test_one('doe');
 select spi_prepared_plan_test_one('smith');
 select spi_prepared_plan_test_nested('smith');
-
-CREATE FUNCTION spi_fatal() RETURNS void AS $$
-# container: plc_python_shared
-plpy.fatal("test plpy fatal")
-$$ LANGUAGE plcontainer;
-
-select spi_fatal();

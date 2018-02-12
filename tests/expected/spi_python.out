@@ -757,14 +757,3 @@ select spi_prepared_plan_test_nested('smith');
 -------------------------------
  there are 1 smiths
 (1 row)
-
-CREATE FUNCTION spi_fatal() RETURNS void AS $$
-# container: plc_python_shared
-plpy.fatal("test plpy fatal")
-$$ LANGUAGE plcontainer;
-select spi_fatal();
-FATAL:  test plpy fatal
-server closed the connection unexpectedly
-	This probably means the server terminated abnormally
-	before or while processing the request.
-connection to server was lost

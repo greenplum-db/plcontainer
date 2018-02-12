@@ -613,3 +613,8 @@ CREATE OR REPLACE FUNCTION py_udt_return_null() RETURNS test_type AS $$
 # container: plc_python_shared
 return {'a': True, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'h': None}
 $$ LANGUAGE plcontainer;
+
+CREATE FUNCTION pythonlogging_fatal() RETURNS void AS $$
+# container: plc_python_shared
+plpy.fatal("test plpy fatal")
+$$ LANGUAGE plcontainer;
