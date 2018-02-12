@@ -757,3 +757,4 @@ select spi_prepared_plan_test_nested('smith');
 -------------------------------
  there are 1 smiths
 (1 row)
+
