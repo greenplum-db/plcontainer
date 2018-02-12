@@ -1,3 +1,18 @@
+-- Test trigger (not supported at this moment).
+CREATE TABLE trigger_tbl (a int);
+
+CREATE OR REPLACE FUNCTION test_trigger_func() RETURNS TRIGGER AS $$
+# container: plc_python_shared
+plpy.notice("trigger not supported");
+$$ LANGUAGE plcontainer;
+
+CREATE TRIGGER test_trigger AFTER INSERT ON trigger_tbl FOR EACH ROW EXECUTE PROCEDURE test_trigger_func();
+
+INSERT INTO trigger_tbl values(0);
+
+DROP TRIGGER test_trigger on trigger_tbl;
+DROP TABLE trigger_tbl;
+
 --  Test <defunct> processes are reaped after a new backend is created.
 select pykillself();
 SELECT pg_sleep(5);

@@ -1,6 +1,5 @@
 set datestyle='ISO,MDY';
 select rshouldnotparse();
-WARNING:  Docker API 'create' call returned warning message: '["Your kernel does not support swap limit capabilities, memory limited without swap."]'
 ERROR:  PL/Container client exception occurred:
 DETAIL:  
  Parse Error
@@ -374,8 +373,8 @@ CONTEXT:  SQL statement "select rlogging()"
 \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
 FATAL:  this is the fatal message
 server closed the connection unexpectedly
-    This probably means the server terminated abnormally
-    before or while processing the request.
+	This probably means the server terminated abnormally
+	before or while processing the request.
 connection to server was lost
 select rsetofint4();
  rsetofint4 

@@ -59,11 +59,11 @@ CREATE OR REPLACE FUNCTION runtime_id_no_cr() RETURNS int8 AS $$
 CREATE OR REPLACE FUNCTION runtime_id_blank() RETURNS int8 AS $$
 #container:  	$$ LANGUAGE plcontainer;
 SELECT runtime_id_cr();
-ERROR:  plcontainer: Runtime id cannot be empty (containers.c:595)
+ERROR:  plcontainer: Runtime id cannot be empty (containers.c:617)
 SELECT runtime_id_no_name();
-ERROR:  plcontainer: Runtime id cannot be empty (containers.c:595)
+ERROR:  plcontainer: Runtime id cannot be empty (containers.c:617)
 SELECT runtime_id_no_hash();
-ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No '#' is found): 1 21 99 (containers.c:550)
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No '#' is found): 1 21 99 (containers.c:572)
 SELECT runtime_id_lots_space();
  runtime_id_lots_space 
 -----------------------
@@ -71,23 +71,23 @@ SELECT runtime_id_lots_space();
 (1 row)
 
 SELECT runtime_id_too_long();
-ERROR:  plcontainer: Runtimeid should not be longer than 63 bytes. (containers.c:605)
+ERROR:  plcontainer: Runtime id should not be longer than 63 bytes. (containers.c:627)
 SELECT runtime_id_blank_line();
-ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No '#' is found): 2 11 114 (containers.c:550)
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No '#' is found): 2 11 114 (containers.c:572)
 SELECT runtime_id_wrong_start();
-ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (Not 'container'): 3 47 101 (containers.c:559)
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (Not 'container'): 3 47 101 (containers.c:581)
 SELECT runtime_id_extra_char();
-ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No ':' is found after 'container'): 12 47 95 (containers.c:568)
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No ':' is found after 'container'): 12 47 95 (containers.c:590)
 SELECT runtime_id_space_inner();
-ERROR:  plcontainer: Container id 'plc_python_  shared' contains illegal character for container. (containers.c:614)
+ERROR:  plcontainer: Container id 'plc_python_  shared' contains illegal character for container. (containers.c:636)
 SELECT runtime_id_space_in_container();
-ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (Not 'container'): 3 43 99 (containers.c:559)
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (Not 'container'): 3 43 99 (containers.c:581)
 SELECT runtime_id_wrong_char();
-ERROR:  plcontainer: Container id 'plc_#python#_shared' contains illegal character for container. (containers.c:614)
+ERROR:  plcontainer: Container id 'plc_#python#_shared' contains illegal character for container. (containers.c:636)
 SELECT runtime_id_no_id();
-ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No '#' is found): 1 10 114 (containers.c:550)
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No '#' is found): 1 10 114 (containers.c:572)
 SELECT runtime_id_no_colon();
-ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No ':' is found after 'container'): 13 40 112 (containers.c:568)
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No ':' is found after 'container'): 13 40 112 (containers.c:590)
 SELECT runtime_id_no_space();
  runtime_id_no_space 
 ---------------------
@@ -95,9 +95,9 @@ SELECT runtime_id_no_space();
 (1 row)
 
 SELECT runtime_id_no_cr();
-ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (no carriage return in code) (containers.c:586)
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (no carriage return in code) (containers.c:608)
 SELECT runtime_id_blank();
-ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (runtime id is empty) (containers.c:577)
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (runtime id is empty) (containers.c:599)
 DROP FUNCTION runtime_id_cr();
 DROP FUNCTION runtime_id_no_name();
 DROP FUNCTION runtime_id_no_hash();
