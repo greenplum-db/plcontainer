@@ -115,3 +115,10 @@ select * from rtestudt13( (1,2,'a')::test_type3 );
 --select rtest_spi_tup('select fname, lname,username from users order by 1,2,3');
 -- This function is of "return setof record" type which is not supported yet
 -- select rtest_spi_ta('select oid, typname from pg_type where typname = ''oid'' or typname = ''text''');
+select rvectornull_bool();
+select rvectornull_int2();
+select rvectornull_int4();
+select rvectornull_int8();
+select rvectornull_float4();
+select rvectornull_float8();
+select rvectornull_numeric();

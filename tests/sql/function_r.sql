@@ -484,3 +484,38 @@ CREATE OR REPLACE FUNCTION rexit() RETURNS integer AS $$
 # container : plc_r_shared
 quit("no")
 $$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rvectornull_bool() RETURNS bool[] AS $$
+# container : plc_r_shared
+rep(NA, 10)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rvectornull_int2() RETURNS int2[] AS $$
+# container : plc_r_shared
+rep(NA, 10)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rvectornull_int4() RETURNS int4[] AS $$
+# container : plc_r_shared
+rep(NA, 10)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rvectornull_int8() RETURNS int8[] AS $$
+# container : plc_r_shared
+rep(NA, 10)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rvectornull_float4() RETURNS float4[] AS $$
+# container : plc_r_shared
+rep(NA, 10)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rvectornull_float8() RETURNS float8[] AS $$
+# container : plc_r_shared
+rep(NA, 10)
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION rvectornull_numeric() RETURNS numeric[] AS $$
+# container : plc_r_shared
+rep(NA, 10)
+$$ LANGUAGE plcontainer;
