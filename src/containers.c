@@ -545,9 +545,19 @@ void delete_containers() {
 							pg_usleep(1000 * 1000L);
 					}
 
-					/* Logging this if still failing to delete the backend. */
+					/*
+					 * On rhel6/centos6 there is chance that delete api could fail here
+					 * since cleanup process might have just called delete api.
+					 * That is due to the docker issue below:
+					 *   https://github.com/moby/moby/issues/17170
+					 * Thus here we should not expose the log to usual users else
+					 * that will confuse them. In the long run, when our cleanup
+					 * process is more stable (e.g. PG background worker process
+					 * or as an independent service with HA), things might be
+					 * different - QE is not responsbile for container deletion.
+					 */
 					if (res < 0)
-						plc_elog(NOTICE, "Backend delete error: %s", backend_error_message);
+						plc_elog(LOG, "Backend delete error: %s", backend_error_message);
 				}
 
 				delete_container_slot(i);
