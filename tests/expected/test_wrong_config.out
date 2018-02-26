@@ -8,11 +8,11 @@ ERROR:  plcontainer: tag <id> must be specified in configuartion (plc_configurat
 \! $(pwd)/test_wrong_config.sh 1
 Test lack of image
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: Lack of 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:258)
+ERROR:  plcontainer: Lack of 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:271)
 \! $(pwd)/test_wrong_config.sh 2
 Test multiple image
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: There are more than one 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:255)
+ERROR:  plcontainer: There are more than one 'image' subelement in a runtime element plc_python_shared (plc_configuration.c:268)
 \! $(pwd)/test_wrong_config.sh 3
 Test multiple id
 select plcontainer_refresh_local_config(true);
@@ -20,19 +20,19 @@ ERROR:  plcontainer: tag <id> must be specified only once in configuartion (plc_
 \! $(pwd)/test_wrong_config.sh 4
 Test lack of command element
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: Lack of 'command' subelement in a runtime element plc_python_shared (plc_configuration.c:265)
+ERROR:  plcontainer: Lack of 'command' subelement in a runtime element plc_python_shared (plc_configuration.c:278)
 \! $(pwd)/test_wrong_config.sh 5
 Test use_container_logging values should only be yes/no
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: SETTING element <use_container_logging> only accepted "yes" or"no" only, current string is enable (plc_configuration.c:203)
+ERROR:  plcontainer: SETTING element <use_container_logging> only accepted "yes" or"no" only, current string is enable (plc_configuration.c:204)
 \! $(pwd)/test_wrong_config.sh 6
 Test duplicate container path.
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: Container path cannot be the same in 'shared_directory' element in the runtime plc_python_shared (plc_configuration.c:299)
+ERROR:  plcontainer: Container path cannot be the same in 'shared_directory' element in the runtime plc_python_shared (plc_configuration.c:312)
 \! $(pwd)/test_wrong_config.sh 7
 Test wrong use_container_network value.
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: SETTING element <use_container_network> only accepts "yes" or"no"only, current string is enable (plc_configuration.c:229)
+ERROR:  plcontainer: SETTING element <use_container_network> only accepts "yes" or"no"only, current string is enable (plc_configuration.c:242)
 \! $(pwd)/test_wrong_config.sh 8
 Test duplicate id
 select plcontainer_refresh_local_config(true);
@@ -40,49 +40,58 @@ ERROR:  plcontainer: tag <id> must be specified only once in configuartion (plc_
 \! $(pwd)/test_wrong_config.sh 9
 Test logs/use_network disable
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: SETTING element <use_container_network> only accepts "yes" or"no"only, current string is disable (plc_configuration.c:229)
+ERROR:  plcontainer: SETTING element <use_container_network> only accepts "yes" or"no"only, current string is disable (plc_configuration.c:242)
 \! $(pwd)/test_wrong_config.sh 10
 Test wrong setting
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: Unrecognized setting options, please check the configuration file: plc_python_shared (plc_configuration.c:236)
+ERROR:  plcontainer: Unrecognized setting options, please check the configuration file: plc_python_shared (plc_configuration.c:249)
 \! $(pwd)/test_wrong_config.sh 11
 Test wrong memory_mb
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: container memory size could not less 0, current string is -100 (plc_configuration.c:213)
+ERROR:  plcontainer: container memory size couldn't be equal or less than 0, current string is -100 (plc_configuration.c:214)
 \! $(pwd)/test_wrong_config.sh 12
 Test wrong element
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: Unrecognized element 'images' inside of container specification (plc_configuration.c:249)
+ERROR:  plcontainer: Unrecognized element 'images' inside of container specification (plc_configuration.c:262)
 \! $(pwd)/test_wrong_config.sh 13
 Test more than 1 command
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: There are more than one 'command' subelement in a runtime element plc_python_shared (plc_configuration.c:262)
+ERROR:  plcontainer: There are more than one 'command' subelement in a runtime element plc_python_shared (plc_configuration.c:275)
 \! $(pwd)/test_wrong_config.sh 14
 Test 'host' missing in shared_directory
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: Configuration tag 'shared_directory' has a mandatory element 'host' that is not found: plc_python_shared (plc_configuration.c:284)
+ERROR:  plcontainer: Configuration tag 'shared_directory' has a mandatory element 'host' that is not found: plc_python_shared (plc_configuration.c:297)
 \! $(pwd)/test_wrong_config.sh 15
 Test 'container' missing in shared_directory
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: Configuration tag 'shared_directory' has a mandatory element 'container' that is not found: plc_python_shared (plc_configuration.c:291)
+ERROR:  plcontainer: Configuration tag 'shared_directory' has a mandatory element 'container' that is not found: plc_python_shared (plc_configuration.c:304)
 \! $(pwd)/test_wrong_config.sh 16
 Test 'access' missing in shared_directory
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: Configuration tag 'shared_directory' has a mandatory element 'access' that is not found: plc_python_shared (plc_configuration.c:307)
+ERROR:  plcontainer: Configuration tag 'shared_directory' has a mandatory element 'access' that is not found: plc_python_shared (plc_configuration.c:320)
 \! $(pwd)/test_wrong_config.sh 17
 Test bad access in shared_directory
 select plcontainer_refresh_local_config(true);
-ERROR:  plcontainer: Directory access mode should be either 'ro' or 'rw', but passed value is 'rx': plc_python_shared (plc_configuration.c:313)
+ERROR:  plcontainer: Directory access mode should be either 'ro' or 'rw', but passed value is 'rx': plc_python_shared (plc_configuration.c:326)
 \! $(pwd)/test_wrong_config.sh 18
 Test long runtime id which exceeds the length limit
 select plcontainer_refresh_local_config(true);
 ERROR:  plcontainer: runtime id should not be longer than 63 bytes. (plc_configuration.c:141)
 \! $(pwd)/test_wrong_config.sh 19
+Test wrong cpu_share name
+select plcontainer_refresh_local_config(true);
+ERROR:  plcontainer: Unrecognized setting options, please check the configuration file: plc_python_shared (plc_configuration.c:249)
+\! $(pwd)/test_wrong_config.sh 20
+Test wrong cpu_share value
+select plcontainer_refresh_local_config(true);
+ERROR:  plcontainer: container cpu share couldn't be equal or less than 0, current string is -100 (plc_configuration.c:226)
+\! $(pwd)/test_wrong_config.sh 21
 Test good format (but it still fails since the configuration is not legal)
 select plcontainer_refresh_local_config(true);
 INFO:  plcontainer: Container 'plc_python_shared' configuration
 INFO:  plcontainer:     image = 'not_exist_pivotaldata/plcontainer_python:0.1'
 INFO:  plcontainer:     memory_mb = '512'
+INFO:  plcontainer:     cpuShare = '1024'
 INFO:  plcontainer:     use container network = 'yes'
 INFO:  plcontainer:     use container logging  = 'no'
 INFO:  plcontainer:     shared directory from host '/home/gpadmin/gpdb.devel/bin/plcontainer_clients1' to container '/clientdir1'
@@ -98,6 +107,7 @@ select plcontainer_show_local_config();
 INFO:  plcontainer: Container 'plc_python_shared' configuration
 INFO:  plcontainer:     image = 'not_exist_pivotaldata/plcontainer_python:0.1'
 INFO:  plcontainer:     memory_mb = '512'
+INFO:  plcontainer:     cpuShare = '1024'
 INFO:  plcontainer:     use container network = 'yes'
 INFO:  plcontainer:     use container logging  = 'no'
 INFO:  plcontainer:     shared directory from host '/home/gpadmin/gpdb.devel/bin/plcontainer_clients1' to container '/clientdir1'
@@ -111,7 +121,7 @@ INFO:  plcontainer:         access = readonly
 
 -- start_ignore
  \! plcontainer  runtime-restore -f /tmp/test_backup_cfg_file_wrong_config
-20180212:14:18:38:020544 plcontainer:paul6:gpadmin-[WARNING]:-Encourage to set use_container_network as 'no' (default value) for performance purpose.
-20180212:14:18:39:020544 plcontainer:paul6:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
-20180212:14:18:39:020544 plcontainer:paul6:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+20180226:04:30:27:369203 plcontainer:localhost:gpadmin-[WARNING]:-Encourage to set use_container_network as 'no' (default value) for performance purpose.
+20180226:04:30:27:369203 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20180226:04:30:27:369203 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -- end_ignore

@@ -131,6 +131,7 @@ PL/Container Runtime Configuration:
   Linked Docker Image: image2
   Runtime Setting(s): 
   ---- Container Memory Limited: 512 MB
+  ---- Container CPU share: 1024
   ---- Use Container Network For Communication: yes
   Shared Directory: 
   ---- Shared Directory From HOST 'GPHOME/bin/plcontainer_clients' to Container '/clientdir', access mode is 'ro'
@@ -311,9 +312,23 @@ Test xml validation: negative cases
 -Validation failed
 -Bad xml format. Please fix the file at first.
 
+**Test: <setting>: cpu_share should be string with integer value
+-image image1:0.1 is not in the list of 'docker images'
+-cpu_share should be a positive integer in runtime plc_python, but now: '102.4'
+-XML file does not conform XML specification or wrong settings.
+-Validation failed
+-Bad xml format. Please fix the file at first.
+
 **Test: <setting>: memory_mb should be string with positive integer value
 -image image1:0.1 is not in the list of 'docker images'
 -memory_mb should > 0 in runtime plc_python, but now: '-123'
+-XML file does not conform XML specification or wrong settings.
+-Validation failed
+-Bad xml format. Please fix the file at first.
+
+**Test: <setting>: cpu_share should be string with positive integer value
+-image image1:0.1 is not in the list of 'docker images'
+-cpu_share should > 0 in runtime plc_python, but now: '-123'
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.

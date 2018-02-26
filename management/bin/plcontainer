@@ -526,7 +526,7 @@ def validate_xml(filename):
                     except ValueError:
                         logger.error("memory_mb should be a positive integer in runtime %s, but now: '%s'", runtime_id, memory_mb_str)
                         raise Exception("Validation failed")
-                if 'cpu_share' in settings.attrib:
+                elif 'cpu_share' in settings.attrib:
                     cpu_share_str = settings.attrib['cpu_share']
                     try:
                         cpu_share = int(cpu_share_str)
@@ -674,7 +674,7 @@ def runtime_show_xml(filename, r_id):
                 for settings in runtime.findall('setting'):
                     if 'memory_mb' in settings.attrib:
                         sys.stdout.write("  ---- Container Memory Limited: %s MB\n" % settings.attrib['memory_mb'])
-                    if 'cpu_share' in settings.attrib:
+                    elif 'cpu_share' in settings.attrib:
                         sys.stdout.write("  ---- Container CPU share: %s\n" % settings.attrib['cpu_share'])
                     elif 'use_container_network' in settings.attrib:
                         sys.stdout.write("  ---- Use Container Network For Communication: %s\n" % settings.attrib['use_container_network'])

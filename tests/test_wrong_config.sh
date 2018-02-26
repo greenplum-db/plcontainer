@@ -392,9 +392,9 @@ function _main() {
 	  f18
   elif [ "$config_id" = "19" ]; then
 	  f19
-  elif [ "$config_id" = "19" ]; then
+  elif [ "$config_id" = "20" ]; then
 	  f20
-  elif [ "$config_id" = "19" ]; then
+  elif [ "$config_id" = "21" ]; then
 	  f21
   fi
 
