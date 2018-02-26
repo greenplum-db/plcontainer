@@ -44,6 +44,7 @@ typedef struct runtimeConfEntry {
 	char *image;
 	char *command;
 	int memoryMb;
+	int cpuShare;
 	int nSharedDirs;
 	plcSharedDir *sharedDirs;
 	bool useContainerNetwork;

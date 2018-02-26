@@ -153,6 +153,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 
 		/*runtime_id will be freed with conf_entry*/
 		conf_entry->memoryMb = 1024;
+		conf_entry->cpuShare = 1024;
 		conf_entry->useContainerLogging = false;
 		conf_entry->useContainerNetwork = false;
 
@@ -210,9 +211,21 @@ static void parse_runtime_configuration(xmlNode *node) {
 						validSetting = true;
 						long memorySize = pg_atoi((char *) value, sizeof(int), 0);
 						if (memorySize <= 0) {
-							plc_elog(ERROR, "container memory size could not less 0, current string is %s", value);
+							plc_elog(ERROR, "container memory size couldn't be equal or less than 0, current string is %s", value);
 						} else {
 							conf_entry->memoryMb = memorySize;
+						}
+						xmlFree((void *) value);
+						value = NULL;
+					}
+					value = xmlGetProp(cur_node, (const xmlChar *) "cpu_share");
+					if (value != NULL) {
+						validSetting = true;
+						long cpuShare = pg_atoi((char *) value, sizeof(int), 0);
+						if (cpuShare <= 0) {
+							plc_elog(ERROR, "container cpu share couldn't be equal or less than 0, current string is %s", value);
+						} else {
+							conf_entry->cpuShare = cpuShare;
 						}
 						xmlFree((void *) value);
 						value = NULL;
@@ -398,6 +411,7 @@ static void print_runtime_configurations() {
 			plc_elog(INFO, "Container '%s' configuration", conf_entry->runtimeid);
 			plc_elog(INFO, "    image = '%s'", conf_entry->image);
 			plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
+			plc_elog(INFO, "    cpuShare = '%d'", conf_entry->cpuShare);
 			plc_elog(INFO, "    use container network = '%s'", conf_entry->useContainerNetwork ? "yes" : "no");
 			plc_elog(INFO, "    use container logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
 			for (j = 0; j < conf_entry->nSharedDirs; j++) {

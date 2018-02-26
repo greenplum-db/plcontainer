@@ -229,6 +229,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"    \"HostConfig\": {\n"
 			"        \"Binds\": [%s],\n"
 			"        \"Memory\": %lld,\n"
+			"        \"CpuShares\": %lld, \n"
 			"        \"PublishAllPorts\": true,\n"
 			"        \"LogConfig\":{\"Type\": \"%s\"}\n"
 			"    },\n"
@@ -292,6 +293,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         conf->image,
 	         volumeShare,
 	         ((long long) conf->memoryMb) * 1024 * 1024,
+			 ((long long) conf->cpuShare),
 	         conf->useContainerLogging ? default_log_dirver : "none",
 	         username,
 	         GpIdentity.dbid);
