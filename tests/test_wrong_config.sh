@@ -301,6 +301,36 @@ EOF
 }
 
 f19 () {
+  echo "Test wrong cpu_share name"
+  cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python_shared</id>
+        <image>pivotaldata/plcontainer_python:0.1</image>
+        <command>./client</command>
+        <setting cpu="100"/>
+    </runtime>
+</configuration>
+EOF
+}
+
+f20 () {
+  echo "Test wrong cpu_share value"
+  cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python_shared</id>
+        <image>pivotaldata/plcontainer_python:0.1</image>
+        <command>./client</command>
+        <setting cpu_share="-100"/>
+    </runtime>
+</configuration>
+EOF
+}
+
+f21 () {
   echo "Test good format (but it still fails since the configuration is not legal)"
   cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
@@ -314,11 +344,11 @@ f19 () {
         <setting use_container_logging="no"/>
         <setting use_container_network="yes"/>
         <setting memory_mb="512"/>
+        <setting cpu_share="1024"/>
     </runtime>
 </configuration>
 EOF
 }
-
 
 function _main() {
   local config_id="${1}"
@@ -362,6 +392,10 @@ function _main() {
 	  f18
   elif [ "$config_id" = "19" ]; then
 	  f19
+  elif [ "$config_id" = "19" ]; then
+	  f20
+  elif [ "$config_id" = "19" ]; then
+	  f21
   fi
 
   if [ -z "$MASTER_DATA_DIRECTORY" ]; then

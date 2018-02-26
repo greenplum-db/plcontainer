@@ -94,7 +94,7 @@ plcontainer runtime-add -r runtime1 -i image1 -l python -v /host_dir1/shared1:/c
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://' \
 	| grep -v 'Distributing to'
 plcontainer runtime-add -r runtime2 -i image2 -l r -v /host_dir2/shared1:/container_dir2/shared1:rw \
-		-v /host_dir2/shared2:/container_dir2/shared2:ro -s memory_mb=512 -s use_container_network=yes \
+		-v /host_dir2/shared2:/container_dir2/shared2:ro -s memory_mb=512 -s cpu_share=1024 -s use_container_network=yes \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://' \
 	| grep -v 'Distributing to'
 plcontainer runtime-show -r runtime_not_exist \
@@ -373,6 +373,22 @@ plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
 
 echo
+echo "**Test: <setting>: cpu_share should be string with integer value"
+cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+        <id>plc_python</id>
+        <image>image1:0.1</image>
+        <command>./client</command>
+        <setting cpu_share="102.4"/>
+    </runtime>
+</configuration>
+EOF
+plcontainer runtime-restore -f /tmp/bad_xml_file \
+	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
+
+echo
 echo "**Test: <setting>: memory_mb should be string with positive integer value"
 cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
@@ -387,6 +403,23 @@ cat >/tmp/bad_xml_file << EOF
 EOF
 plcontainer runtime-restore -f /tmp/bad_xml_file \
 	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
+
+echo
+echo "**Test: <setting>: cpu_share should be string with positive integer value"
+cat >/tmp/bad_xml_file << EOF
+<?xml version="1.0" ?>
+<configuration>
+    <runtime>
+	<id>plc_python</id>
+	<image>image1:0.1</image>
+	<command>./client</command>
+	<setting cpu_share="-123"/>
+    </runtime>
+</configuration>
+EOF
+plcontainer runtime-restore -f /tmp/bad_xml_file \
+	| sed -e 's/.*ERROR]://' -e 's/.*INFO]://' -e 's/.*CRITICAL]://' -e 's/.*WARNING]://'
+
 
 echo
 echo "**Test: <setting>: use_container_network should be yes or no"
@@ -446,6 +479,7 @@ cat >good_xml_file << EOF
         <id>plc_python</id>
         <image>image1:0.1</image>
         <setting memory_mb="512"/>
+        <setting cpu_share="1024"/>
         <setting use_container_network="NO"/>
         <setting use_container_logging="Yes"/>
         <command>./client</command>
