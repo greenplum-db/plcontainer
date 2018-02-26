@@ -411,7 +411,7 @@ static void print_runtime_configurations() {
 			plc_elog(INFO, "Container '%s' configuration", conf_entry->runtimeid);
 			plc_elog(INFO, "    image = '%s'", conf_entry->image);
 			plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
-			plc_elog(INFO, "    cpuShare = '%d'", conf_entry->cpuShare);
+			plc_elog(INFO, "    cpu_share = '%d'", conf_entry->cpuShare);
 			plc_elog(INFO, "    use container network = '%s'", conf_entry->useContainerNetwork ? "yes" : "no");
 			plc_elog(INFO, "    use container logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
 			for (j = 0; j < conf_entry->nSharedDirs; j++) {
