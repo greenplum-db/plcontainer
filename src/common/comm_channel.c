@@ -34,6 +34,7 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "comm_utils.h"
 #include "comm_connectivity.h"
 #include "comm_server.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -664,11 +665,10 @@ static int send_argument(plcConn *conn, plcArgument *arg) {
 
 static int send_ping(plcConn *conn) {
 	int res = 0;
-	char *ping = "ping";
 
 	channel_elog(WARNING, "Sending ping message");
 	res |= message_start(conn, MT_PING);
-	res |= send_cstring(conn, ping);
+	res |= send_cstring(conn, PLCONTAINER_VERSION);
 	res |= message_end(conn);
 	channel_elog(WARNING, "Finished ping message");
 	return res;
@@ -1115,19 +1115,19 @@ static int receive_argument(plcConn *conn, plcArgument *arg) {
 
 static int receive_ping(plcConn *conn, plcMessage **mPing) {
 	int res = 0;
-	char *ping;
+	char *version;
 
 	*mPing = (plcMessage *) pmalloc(sizeof(plcMsgPing));
 	((plcMsgPing *) *mPing)->msgtype = MT_PING;
 
 	channel_elog(WARNING, "Receiving ping message");
-	res |= receive_cstring(conn, &ping);
+	res |= receive_cstring(conn, &version);
 	if (res == 0) {
-		if (strncmp(ping, "ping", strlen("ping")) != 0) {
-			channel_elog(WARNING, "Ping message receive failed");
+		if (strncmp(version, PLCONTAINER_VERSION, strlen(PLCONTAINER_VERSION)) != 0) {
+			plc_elog(ERROR, "Version mismatch (require '%s' but get '%s')", PLCONTAINER_VERSION, version);
 			res = -1;
 		}
-		pfree(ping);
+		pfree(version);
 	}
 
 	channel_elog(WARNING, "Finished receiving ping message");

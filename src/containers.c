@@ -499,8 +499,8 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	if (sleepms >= CONTAINER_CONNECT_TIMEOUT_MS) {
 		if (!conf->useContainerNetwork)
 			cleanup_uds(uds_fn);
-		plc_elog(ERROR, "Cannot connect to the container, %d ms timeout reached",
-		     CONTAINER_CONNECT_TIMEOUT_MS);
+		plc_elog(ERROR, "Cannot connect to the container, %d ms timeout reached. "
+			"Check container logs for details.", CONTAINER_CONNECT_TIMEOUT_MS);
 		conn = NULL;
 	} else {
 		set_container_conn(conn);

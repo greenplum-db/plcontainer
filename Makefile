@@ -26,6 +26,18 @@ OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 
+# FIXME: We might need a configure script to handle below checks later.
+# See https://github.com/greenplum-db/plcontainer/issues/322
+
+# Plcontainer version
+PLCONTAINER_VERSION = $(shell git describe)
+ifeq ($(PLCONTAINER_VERSION),)
+  $(error can not determine the plcontainer version)
+else
+  ver = \#define PLCONTAINER_VERSION \"$(PLCONTAINER_VERSION)\"
+  $(shell if [ ! -f src/common/config.h ] || [ "$(ver)" != "`cat src/common/config.h`" ]; then echo "$(ver)" > src/common/config.h; fi)
+endif
+
 # Curl
 CURL_CONFIG = $(shell type -p curl-config || echo no)
 ifneq ($(CURL_CONFIG),no)
@@ -83,6 +95,7 @@ all: all-lib build-clients
 install: all installdirs install-lib install-extra install-clients
 
 clean: clean-clients clean-coverage
+distclean: distclean-config
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
@@ -124,6 +137,10 @@ clean-coverage:
 	rm -f `find . -name '*.gcda' -print`
 	rm -f `find . -name '*.gcno' -print`
 	rm -rf coverage.info coverage_result
+
+.PHONY: distclean-config
+distclean-config:
+	rm -f src/common/config.h
 
 .PHONY: coverage-report
 coverage-report:
