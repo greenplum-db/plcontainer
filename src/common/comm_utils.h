@@ -115,6 +115,8 @@ void *pmalloc(size_t size);
 
 void set_signal_handlers(void);
 
+int sanity_check_client(void);
+
 #else /* PLC_CLIENT */
 
 #include "postgres.h"

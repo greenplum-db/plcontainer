@@ -26,13 +26,7 @@ int main(int argc UNUSED, char **argv UNUSED) {
 	plcConn *conn;
 	int status;
 
-	assert(sizeof(int8) == 1);
-	assert(sizeof(int16) == 2);
-	assert(sizeof(int32) == 4);
-	assert(sizeof(uint32) == 4);
-	assert(sizeof(int64) == 8);
-	assert(sizeof(float4) == 4);
-	assert(sizeof(float8) == 8);
+	sanity_check_client();
 
 	set_signal_handlers();
 

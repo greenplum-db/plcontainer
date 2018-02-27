@@ -101,4 +101,44 @@ void set_signal_handlers() {
 	set_signal_handler(SIGSEGV, SA_RESETHAND, sigsegv_handler);
 }
 
+int sanity_check_client()
+{
+	if (sizeof(int8) != 1) {
+		plc_elog(ERROR, "length of int8 (%ld) is not 1", sizeof(int8));
+		return -1;
+	}
+
+	if (sizeof(int16) != 2) {
+		plc_elog(ERROR, "length of int16 (%ld) is not 2", sizeof(int16));
+		return -1;
+	}
+
+	if (sizeof(int32) != 4) {
+		plc_elog(ERROR, "length of int32 (%ld) is not 4", sizeof(int32));
+		return -1;
+	}
+
+	if (sizeof(uint32) != 4) {
+		plc_elog(ERROR, "length of uint32 (%ld) is not 4", sizeof(uint32));
+		return -1;
+	}
+
+	if (sizeof(int64) != 8) {
+		plc_elog(ERROR, "length of int64 (%ld) is not 8", sizeof(int64));
+		return -1;
+	}
+
+	if (sizeof(float4) != 4) {
+		plc_elog(ERROR, "length of float4 (%ld) is not 4", sizeof(float4));
+		return -1;
+	}
+
+	if (sizeof(float8) != 8) {
+		plc_elog(ERROR, "length of float8 (%ld) is not 8", sizeof(float8));
+		return -1;
+	}
+
+	return 0;
+}
+
 #endif /* PLC_CLIENT */
