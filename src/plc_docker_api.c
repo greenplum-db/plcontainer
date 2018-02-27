@@ -228,6 +228,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"    \"Image\": \"%s\",\n"
 			"    \"HostConfig\": {\n"
 			"        \"Binds\": [%s],\n"
+			"        \"CgroupParent\": \"%s\",\n"
 			"        \"Memory\": %lld,\n"
 			"        \"PublishAllPorts\": true,\n"
 			"        \"LogConfig\":{\"Type\": \"%s\"}\n"
@@ -269,6 +270,16 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 		return -1;
 	}
 
+	/*
+	 * generate cgroup parent path when using resource group feature
+	 * set cgroupParent to empty string when resgroupOid is not valid
+	 * and cgroup parent of containers will be 'docker' as default.
+	 * Note that this feature is only for gpdb with resource group enable.
+	 */
+	char cgroupParent[RES_GROUP_PATH_MAX_LENGTH] = "";
+	if (conf->resgroupOid != InvalidOid) {
+		snprintf(cgroupParent,RES_GROUP_PATH_MAX_LENGTH,"/gpdb/%d",conf->resgroupOid);
+	}
 	/* Get Docket API "create" call JSON message body */
 	createStringSize = 100 + strlen(createRequest) + strlen(conf->command)
 	                   + strlen(conf->image) + strlen(volumeShare) + strlen(username) * 2
@@ -291,6 +302,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         conf->useContainerNetwork ? "false" : "true",
 	         conf->image,
 	         volumeShare,
+	       	 cgroupParent,
 	         ((long long) conf->memoryMb) * 1024 * 1024,
 	         conf->useContainerLogging ? default_log_dirver : "none",
 	         username,

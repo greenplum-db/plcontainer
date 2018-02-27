@@ -14,7 +14,7 @@
 #include "plc_configuration.h"
 
 #define CONTAINER_CONNECT_TIMEOUT_MS 10000
-
+#define CONTAINER_ID_MAX_LENGTH 128
 /* given source code of the function, extract the container name */
 char *parse_container_meta(const char *source);
 

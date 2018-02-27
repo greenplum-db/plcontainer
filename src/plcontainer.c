@@ -14,7 +14,8 @@
 #include "utils/faultinjector.h"
 #include "utils/memutils.h"
 #include "utils/guc.h"
-
+#include "utils/resgroup.h"
+#include "utils/resgroup-ops.h"
 /* PLContainer Headers */
 #include "common/comm_channel.h"
 #include "common/messages/messages.h"
@@ -48,7 +49,14 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
 
 static void plcontainer_process_log(plcMsgLog *log);
 
+static bool ContainerMemoryUsageIsHigh(Oid groupId);
+static bool ResGroupPLCleanup(void *arg);
+static bool ResGroupPLDec(void *arg);
+static bool ResGroupPLInc(void *arg);
+static bool ResGroupPLCompare(void *arg1, void *arg2);
 static volatile bool DeleteBackendsWhenError;
+
+static int memory_redzone_to_clean_up = 20;
 
 /* this is saved and restored by plcontainer_call_handler */
 MemoryContext pl_container_caller_context = NULL;
@@ -235,6 +243,18 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		if (conn != NULL) {
 			int res;
 
+			/* register hook to increase/decrease memory limit in cgroup node*/
+			runtimeConfEntry *runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
+			if(runtime_conf_entry->resgroupOid != InvalidOid) {
+				Oid 		*hookArg = NULL;
+				hookArg = (Oid *)MemoryContextAlloc(TopMemoryContext, sizeof(Oid));
+				*hookArg = runtime_conf_entry->resgroupOid;
+
+				RegisterResGroupMemoryHook(RES_GROUP_MEMORY_HOOK_DEC, ResGroupPLDec, (void *)hookArg, ResGroupPLCompare);
+				RegisterResGroupMemoryHook(RES_GROUP_MEMORY_HOOK_INC, ResGroupPLInc, (void *)hookArg, ResGroupPLCompare);
+				RegisterResGroupMemoryHook(RES_GROUP_MEMORY_HOOK_CLEAN, ResGroupPLCleanup, (void *)hookArg, ResGroupPLCompare);
+			}
+
 			res = plcontainer_channel_send(conn, (plcMessage *) req);
 			SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_send_request");
 
@@ -418,4 +438,119 @@ static void plcontainer_process_exception(plcMsgError *msg) {
 			        errmsg("PL/Container client exception occurred: \n %s", msg->message)));
 	}
 	free_error(msg);
+}
+
+static bool
+ResGroupPLDec(void *arg)
+{
+	Oid groupId;
+	int32 memory_usage;
+	int32 memory_limit;
+	int32 memory_gap;
+	int32 pl_freeable_memory;
+	int32 pl_decreased_memory;
+	int fd;
+
+	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+
+	groupId = *(Oid *)arg;
+
+	memory_gap = ResGroup_GetMemoryGap(groupId);
+	
+	if (memory_gap <= 0) 
+		return true;
+
+	/* Lock the cgroup node to decreate the memory limit in an exclusive way
+	 * Since other segment may change the memory limit at the same time.
+	 * */
+	fd = ResGroupOps_LockGroup(groupId, "memory", true);
+	memory_limit = ResGroupOps_GetMemoryLimit(groupId);
+	memory_usage = ResGroupOps_GetMemoryUsage(groupId);
+	pl_freeable_memory = memory_limit*0.8 - memory_usage;
+	
+	if (pl_freeable_memory <= 0)
+	{
+		ResGroupOps_UnLockGroup(groupId, fd);
+		return true;
+	}
+	pl_decreased_memory = Min(pl_freeable_memory, memory_gap);
+	ResGroupOps_SetMemoryLimitByValue(groupId, memory_limit - pl_decreased_memory);
+	ResGroupOps_UnLockGroup(groupId, fd);
+
+	ResGroup_ReclaimMemoryFromExternal(groupId, pl_decreased_memory);
+	ResGroup_SetMemoryGap(groupId, memory_gap - pl_decreased_memory);
+	
+	return true;
+}
+
+static bool
+ResGroupPLInc(void *arg)
+{
+	Oid groupId;
+	int32 memory_limit;
+	int32 pl_increased_memory;
+	int32 memory_gap;
+
+	Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+
+	groupId = *(Oid *)arg;
+
+	memory_gap = ResGroup_GetMemoryGap(groupId);
+	
+	if (memory_gap >= 0) 
+		return true;
+
+	pl_increased_memory = ResGroup_AssignMemoryToExternal(groupId, memory_gap * -1);
+
+	if (pl_increased_memory > 0)
+	{
+		int fd;
+
+		fd = ResGroupOps_LockGroup(groupId, "memory", true);
+		memory_limit = ResGroupOps_GetMemoryLimit(groupId);
+		ResGroupOps_SetMemoryLimitByValue(groupId, memory_limit + pl_increased_memory);
+		ResGroupOps_UnLockGroup(groupId, fd);
+
+		ResGroup_SetMemoryGap(groupId, memory_gap + pl_increased_memory);
+	}
+
+	return true;
+}
+
+
+static bool
+ResGroupPLCleanup(void *arg)
+{
+	Oid groupId;
+	
+	groupId = *(Oid *)arg;
+	if(!ContainerMemoryUsageIsHigh(groupId))
+		return false;
+
+	delete_containers();
+
+	pfree(arg);
+
+	return true;
+}
+
+static bool ContainerMemoryUsageIsHigh(Oid groupId)
+{
+        int32 memory_usage;
+        int32 memory_expected;
+
+        Assert(LWLockHeldExclusiveByMe(ResGroupLock));
+
+        memory_usage = ResGroupOps_GetMemoryUsage(groupId);
+        memory_expected = ResGroup_GetMemoryExpected(groupId);
+
+        return memory_usage > memory_expected * memory_redzone_to_clean_up / 100;
+}
+
+static bool
+ResGroupPLCompare(void *arg1, void *arg2)
+{
+	Oid groupid1 = *(Oid *)arg1;
+	Oid groupid2 = *(Oid *)arg2;
+	return groupid1 == groupid2;
 }
