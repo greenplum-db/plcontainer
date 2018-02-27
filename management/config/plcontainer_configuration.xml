@@ -18,11 +18,14 @@
            use its default value.
             6.1. "memory_mb" - container memory limit in MB. Optional. When not set,
                  container can utilize all the available OS memory
-                 directory shared between host and container.
-            6.2. "use_container_network" - set to "yes" or "no" to specify whether use tcp or ipc
+		 directory shared between host and container.
+	    6.2. "cpu_share" - container CPU share value. Optional. CPU share is an integer
+		 value representing this container's relative CPU weight versus other containers.
+		 When not set, the default CPU share is 1024.
+            6.3. "use_container_network" - set to "yes" or "no" to specify whether use tcp or ipc
                  for communication between gpdb process and container process. Optional.
                  By default, we set "no".
-            6.3. "use_container_logging" - set to "yes" or "no" for container logging (not for backend)
+            6.4. "use_container_logging" - set to "yes" or "no" for container logging (not for backend)
                  By default, we set "no".
         All the container images not manually defined in this file will not be
         available for use by endusers in PL/Container
@@ -49,7 +52,8 @@
         <image>pivotaldata/plcontainer_python_without_clients:0.1</image>
         <command>/clientdir/pyclient.sh</command>
         <shared_directory access="ro" container="/clientdir" host="/usr/local/greenplum-db/bin/plcontainer_clients"/>
-        <setting memory_mb="512"/>
+	<setting memory_mb="512"/>
+	<setting cpu_share="1024"/>
         <setting use_container_network="yes"/>
         <setting use_container_logging="yes"/>
     </runtime>
