@@ -243,7 +243,7 @@ static int send_uint32(plcConn *conn, uint32 i) {
 }
 
 static int send_int64(plcConn *conn, int64 i) {
-	channel_elog(WARNING, "    ===> sending int64 '%lld'", i);
+	channel_elog(WARNING, "    ===> sending int64 '" INT64_FORMAT "'", i);
 	return plcBufferAppend(conn, (char *) &i, 8);
 }
 
@@ -423,7 +423,7 @@ static int receive_uint32(plcConn *conn, uint32 *i) {
 
 static int receive_int64(plcConn *conn, int64 *i) {
 	int res = plcBufferRead(conn, (char *) i, 8);
-	channel_elog(WARNING, "    <=== receiving int64 '%lld'", *i);
+	channel_elog(WARNING, "    <=== receiving int64 '" INT64_FORMAT "'", *i);
 	return res;
 }
 
