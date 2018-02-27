@@ -91,7 +91,7 @@ select plcontainer_refresh_local_config(true);
 INFO:  plcontainer: Container 'plc_python_shared' configuration
 INFO:  plcontainer:     image = 'not_exist_pivotaldata/plcontainer_python:0.1'
 INFO:  plcontainer:     memory_mb = '512'
-INFO:  plcontainer:     cpuShare = '1024'
+INFO:  plcontainer:     cpu_share = '1024'
 INFO:  plcontainer:     use container network = 'yes'
 INFO:  plcontainer:     use container logging  = 'no'
 INFO:  plcontainer:     shared directory from host '/home/gpadmin/gpdb.devel/bin/plcontainer_clients1' to container '/clientdir1'
@@ -107,7 +107,7 @@ select plcontainer_show_local_config();
 INFO:  plcontainer: Container 'plc_python_shared' configuration
 INFO:  plcontainer:     image = 'not_exist_pivotaldata/plcontainer_python:0.1'
 INFO:  plcontainer:     memory_mb = '512'
-INFO:  plcontainer:     cpuShare = '1024'
+INFO:  plcontainer:     cpu_share = '1024'
 INFO:  plcontainer:     use container network = 'yes'
 INFO:  plcontainer:     use container logging  = 'no'
 INFO:  plcontainer:     shared directory from host '/home/gpadmin/gpdb.devel/bin/plcontainer_clients1' to container '/clientdir1'
