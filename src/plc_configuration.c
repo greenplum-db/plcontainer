@@ -230,21 +230,10 @@ static void parse_runtime_configuration(xmlNode *node) {
 						xmlFree((void *) value);
 						value = NULL;
 					}
-					value = xmlGetProp(cur_node, (const xmlChar *) "use_container_network");
-					if (value != NULL) {
-						validSetting = true;
-						if (strcasecmp((char *) value, "no") == 0) {
-							conf_entry->useContainerNetwork = false;
-						} else if (strcasecmp((char *) value, "yes") == 0) {
-							conf_entry->useContainerNetwork = true;
-						} else {
-							plc_elog(ERROR, "SETTING element <use_container_network> only accepts \"yes\" or"
-								"\"no\"only, current string is %s", value);
-
-						}
-						xmlFree((void *) value);
-						value = NULL;
-					}
+					/* Enforce to not use network for connection. In the future
+					 * this should be set by various backend implementation.
+					 */
+					conf_entry->useContainerNetwork = false;
 					if (!validSetting) {
 						plc_elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf_entry->runtimeid);
 					}
@@ -412,7 +401,6 @@ static void print_runtime_configurations() {
 			plc_elog(INFO, "    image = '%s'", conf_entry->image);
 			plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
 			plc_elog(INFO, "    cpu_share = '%d'", conf_entry->cpuShare);
-			plc_elog(INFO, "    use container network = '%s'", conf_entry->useContainerNetwork ? "yes" : "no");
 			plc_elog(INFO, "    use container logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
 			for (j = 0; j < conf_entry->nSharedDirs; j++) {
 				plc_elog(INFO, "    shared directory from host '%s' to container '%s'",

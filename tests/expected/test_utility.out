@@ -107,7 +107,6 @@ Test runtime-add with both shared directories and settings
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -image image1 is not in the list of 'docker images'
 -image image2 is not in the list of 'docker images'
--Encourage to set use_container_network as 'no' (default value) for performance purpose.
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 PL/Container Runtime Configuration: 
@@ -132,7 +131,6 @@ PL/Container Runtime Configuration:
   Runtime Setting(s): 
   ---- Container Memory Limited: 512 MB
   ---- Container CPU share: 1024
-  ---- Use Container Network For Communication: yes
   Shared Directory: 
   ---- Shared Directory From HOST 'GPHOME/bin/plcontainer_clients' to Container '/clientdir', access mode is 'ro'
   ---- Shared Directory From HOST '/host_dir2/shared1' to Container '/container_dir2/shared1', access mode is 'rw'
@@ -169,12 +167,11 @@ plcontainer runtime-replace: error: argument -l/--language is required
 usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
                                    {r,python} [-v SHARED] [-s SETTING]
 plcontainer runtime-replace: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python')
--plcontainer failed. (Reason='Bad setting key: user_network') exiting...
+-plcontainer failed. (Reason='Bad setting key: use_container_network') exiting...
 
 Test runtime-replace: add a new one
 -runtime configuration does not exist. Adding a new one.
 -image image2 is not in the list of 'docker images'
--Encourage to set use_container_network as 'no' (default value) for performance purpose.
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 <?xml version="1.0" ?>
@@ -187,7 +184,6 @@ Test runtime-replace: add a new one
         <shared_directory access="rw" container="/container_dir3/shared1" host="/host_dir3/shared1"/>
         <shared_directory access="ro" container="/container_dir3/shared2" host="/host_dir3/shared2"/>
         <setting memory_mb="512"/>
-        <setting use_container_network="yes"/>
     </runtime>
 </configuration>
 
@@ -201,9 +197,9 @@ Test runtime-replace: replace
         <id>runtime3</id>
         <image>image2</image>
         <command>/clientdir/rclient.sh</command>
+        <setting memory_mb="512"/>
         <shared_directory access="ro" container="/clientdir" host="GPHOME/bin/plcontainer_clients"/>
         <shared_directory access="rw" container="/container_dir3/shared3" host="/host_dir3/shared3"/>
-        <setting use_container_network="no"/>
     </runtime>
 </configuration>
 
@@ -329,13 +325,6 @@ Test xml validation: negative cases
 **Test: <setting>: cpu_share should be string with positive integer value
 -image image1:0.1 is not in the list of 'docker images'
 -cpu_share should > 0 in runtime plc_python, but now: '-123'
--XML file does not conform XML specification or wrong settings.
--Validation failed
--Bad xml format. Please fix the file at first.
-
-**Test: <setting>: use_container_network should be yes or no
--image image1:0.1 is not in the list of 'docker images'
--use_container_network should be 'yes' or 'no' in runtime plc_python, but now: 'y'
 -XML file does not conform XML specification or wrong settings.
 -Validation failed
 -Bad xml format. Please fix the file at first.

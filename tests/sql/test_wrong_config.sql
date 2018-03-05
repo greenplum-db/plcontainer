@@ -67,6 +67,7 @@ select plcontainer_refresh_local_config(true);
 
 \! $(pwd)/test_wrong_config.sh 21
 select plcontainer_refresh_local_config(true);
+select pyint(0);
 
 select plcontainer_show_local_config();
 

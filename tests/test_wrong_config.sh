@@ -117,7 +117,7 @@ EOF
 }
 
 f7 () {
-  echo "Test wrong use_container_network value."
+  echo "Test deleted parameter use_container_network"
   cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
@@ -126,8 +126,7 @@ f7 () {
         <image>pivotaldata/plcontainer_python:0.1</image>
         <command>./client</command>
         <shared_directory access="ro" container="/clientdir" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients"/>
-        <setting use_container_network="enable"/>
-        <setting use_container_logging="yes"/>
+        <setting use_container_network="yes"/>
     </runtime>
 </configuration>
 EOF
@@ -149,7 +148,7 @@ EOF
 }
 
 f9 () {
-  echo "Test logs/use_network disable"
+  echo "Test use_container_logging disable"
   cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
@@ -157,8 +156,7 @@ f9 () {
         <id>plc_python_shared</id>
         <image>pivotaldata/plcontainer_python:0.1</image>
         <command>./client</command>
-        <setting use_container_logging="no"/>
-        <setting use_container_network="disable"/>
+        <setting use_container_logging="disable"/>
         <setting memory_mb="512"/>
     </runtime>
 </configuration>
@@ -331,7 +329,7 @@ EOF
 }
 
 f21 () {
-  echo "Test good format (but it still fails since the configuration is not legal)"
+	echo "Test good format (but it still fails since the configuration (image/command) is not legal)"
   cat >/tmp/bad_xml_file << EOF
 <?xml version="1.0" ?>
 <configuration>
@@ -342,7 +340,6 @@ f21 () {
         <shared_directory access="rw" container="/clientdir1" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients1"/> 
         <shared_directory access="ro" container="/clientdir2" host="/home/gpadmin/gpdb.devel/bin/plcontainer_clients2"/> 
         <setting use_container_logging="no"/>
-        <setting use_container_network="yes"/>
         <setting memory_mb="512"/>
         <setting cpu_share="1024"/>
     </runtime>
