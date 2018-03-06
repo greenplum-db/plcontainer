@@ -29,7 +29,7 @@ You can build PL/Container in the following way:
 
 To configure PL/Container environment, you need to enable PL/Container for specific databases by running 
    ```shell
-   psql -d your_database -f $GPHOME/share/postgresql/plcontainer/plcontainer_install.sql
+   psql -d your_database -c 'create extension plcontainer;'
    ```
 
 ### Running the regression tests
@@ -49,7 +49,6 @@ To configure PL/Container environment, you need to enable PL/Container for speci
    ```shell
    plcontainer runtime-add -r plc_r_shared -i pivotaldata/plcontainer_r_shared:devel -l r
    plcontainer runtime-add -r plc_python_shared -i pivotaldata/plcontainer_python_shared:devel -l python
-   plcontainer runtime-add -r plc_python_network -i pivotaldata/plcontainer_python_shared:devel -l python -s use_container_network=yes;
    ```
 
 1. Go to the PL/Container test directory: `cd plcontainer/tests`
