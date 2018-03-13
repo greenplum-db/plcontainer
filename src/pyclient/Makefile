@@ -31,8 +31,8 @@ client_objs = $(foreach src,$(client_src),$(subst .c,.o,$(src)))
 .PHONY: default
 default: all
 
-# add auto dependency for common src used by pyclient, reference to the following link:
-# http://wiki.ubuntu.org.cn/%E8%B7%9F%E6%88%91%E4%B8%80%E8%B5%B7%E5%86%99Makefile:%E4%B9%A6%E5%86%99%E8%A7%84%E5%88%99#.E8.87.AA.E5.8A.A8.E7.94.9F.E6.88.90.E4.BE.9D.E8.B5.96.E6.80.A7
+# add auto dependency for common src used by pyclient. Refer to the following link:
+# https://www.gnu.org/software/make/manual/html_node/Automatic-Prerequisites.html
 common_dep = $(foreach src,$(common_src),$(subst .c,.$(CLIENT).d,$(src)))
 $(common_dep): $(common_src)
 	@set -e; rm -f $@; $(CC) -M $(CFLAGS) $< > $@.$$$$; sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; rm -f $@.$$$$
@@ -40,7 +40,7 @@ $(common_dep): $(common_src)
 $(common_objs): %.$(CLIENT).o: %.c $(common_dep)
 	$(CC)  $(CFLAGS) -c -o $@ $<
 
-# add auto dependency for pyclient Makefile. reference to the following link:
+# add auto dependency for pyclient Makefile. Refer to the following link:
 # http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/#combine
 DEPDIR := .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
