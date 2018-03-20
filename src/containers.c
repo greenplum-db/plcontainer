@@ -66,11 +66,39 @@ static int qe_is_alive(char *dockerid) {
 	return return_code;
 }
 
+static int check_container_if_oomkilled(char *dockerid) {
+	char *element = NULL;
+
+	int return_code;
+	int res;
+
+	/*
+	 * sleep CLEANUP_SLEEP_SEC seconds to make sure the docker container
+	 * status is synced
+	 */
+	sleep(CLEANUP_SLEEP_SEC);
+
+	res = plc_backend_inspect(dockerid, &element, PLC_INSPECT_OOM);
+	if (res < 0) {
+		return_code = res;
+	} else if (element != NULL) {
+		if ((strcmp("false", element) == 0))
+			return_code = 0;
+		else if ((strcmp("true", element) == 0))
+			return_code = 1;
+		else
+			return_code = -1;
+
+		pfree(element);
+	}
+
+	return return_code;
+}
+
 static int delete_backend_if_exited(char *dockerid) {
 	char *element = NULL;
 
 	int return_code = 1;
-
 	int res;
 	res = plc_backend_inspect(dockerid, &element, PLC_INSPECT_STATUS);
 	if (res < 0) {
@@ -78,7 +106,20 @@ static int delete_backend_if_exited(char *dockerid) {
 	} else if (element != NULL) {
 		if ((strcmp("exited", element) == 0 ||
 		     strcmp("false", element) == 0)) {
+			if (check_container_if_oomkilled(dockerid) == 1) {
+				/*
+				 * check if the process is QE or not
+				 */
+				if (getppid() == PostmasterPid) {
+					plc_elog(WARNING, "container has been killed due to out of memory, please check your"
+							 " configuration or resource group settings");
+				} else {
+					write_log("plcontainer cleanup process: container %s has been killed by oomkiller", dockerid);
+				}
+			}
+
 			return_code = plc_backend_delete(dockerid);
+
 		} else if (strcmp("unexist", element) == 0) {
 			return_code = 0;
 		}

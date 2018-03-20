@@ -613,6 +613,20 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 		*element = pstrdup(StatusStr);
 		return 0;
 #endif
+	} else if (type == PLC_INSPECT_OOM) {
+		struct json_object *StateObj = NULL;
+		if (!json_object_object_get_ex(response, "State", &StateObj)) {
+			plc_elog(WARNING, "failed to get json \"State\" field.");
+			return -1;
+		}
+		struct json_object *OOMKillObj = NULL;
+		if (!json_object_object_get_ex(StateObj, "OOMKilled", &OOMKillObj)) {
+			plc_elog(WARNING, "failed to get json \"OOMKilled\" field.");
+			return -1;
+		}
+		const char *OOMKillStr = json_object_get_string(OOMKillObj);
+		*element = pstrdup(OOMKillStr);
+		return 0;
 	} else {
 		plc_elog(LOG, "Error PLC inspection mode, unacceptable inpsection type %d", type);
 		return -1;

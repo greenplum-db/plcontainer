@@ -1,0 +1,74 @@
+-- Parallel tests on QD
+select py_memory_allocate_oom(1);
+ py_memory_allocate_oom 
+------------------------
+ 
+(1 row)
+
+select py_memory_allocate_oom(1);
+ py_memory_allocate_oom 
+------------------------
+ 
+(1 row)
+
+select py_memory_allocate_oom(1);
+ py_memory_allocate_oom 
+------------------------
+ 
+(1 row)
+
+select py_memory_allocate_normal(512);
+ py_memory_allocate_normal 
+---------------------------
+ 
+(1 row)
+
+select py_memory_allocate_normal(512);
+ py_memory_allocate_normal 
+---------------------------
+ 
+(1 row)
+
+select py_memory_allocate_normal(512);
+ py_memory_allocate_normal 
+---------------------------
+ 
+(1 row)
+
+-- Parallel tests on QE
+select count(py_memory_allocate_oom(num)) from OOM_TEST;
+ count 
+-------
+     0
+(1 row)
+
+select count(py_memory_allocate_oom(num)) from OOM_TEST;
+ count 
+-------
+     0
+(1 row)
+
+select count(py_memory_allocate_oom(num)) from OOM_TEST;
+ count 
+-------
+     0
+(1 row)
+
+select count(py_memory_allocate_normal(aux)) from OOM_TEST;
+ count 
+-------
+     0
+(1 row)
+
+select count(py_memory_allocate_oom(num)) from OOM_TEST;
+ count 
+-------
+     0
+(1 row)
+
+select count(py_memory_allocate_normal(aux)) from OOM_TEST;
+ count 
+-------
+     0
+(1 row)
+

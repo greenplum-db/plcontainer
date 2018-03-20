@@ -1,0 +1,22 @@
+-- set test functions
+CREATE OR REPLACE FUNCTION py_memory_allocate_oom(num int) RETURNS void AS $$
+# container: plc_python_shared_oom
+allocate = 'a' * num * 1024 * 1024
+$$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION py_memory_allocate_normal(num int) RETURNS void AS $$
+# container: plc_python_shared
+allocate = 'a' * num * 1024 * 1024
+$$ LANGUAGE plcontainer;
+
+DROP TABLE IF EXISTS OOM_TEST;
+CREATE TABLE OOM_TEST (num int, aux int) DISTRIBUTED RANDOMLY;
+INSERT INTO OOM_TEST VALUES (1,512);
+INSERT INTO OOM_TEST VALUES (2,512);
+INSERT INTO OOM_TEST VALUES (3,512);
+INSERT INTO OOM_TEST VALUES (4,512);
+INSERT INTO OOM_TEST VALUES (5,512);
+INSERT INTO OOM_TEST VALUES (6,512);
+INSERT INTO OOM_TEST VALUES (7,512);
+INSERT INTO OOM_TEST VALUES (8,512);
+INSERT INTO OOM_TEST VALUES (9,512);
