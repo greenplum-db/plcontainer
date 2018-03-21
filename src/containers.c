@@ -69,7 +69,7 @@ static int qe_is_alive(char *dockerid) {
 static int check_container_if_oomkilled(char *dockerid) {
 	char *element = NULL;
 
-	int return_code;
+	int return_code = 0;
 	int res;
 
 	/*
