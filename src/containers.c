@@ -38,7 +38,7 @@ typedef struct {
 } container_t;
 
 #define MAX_CONTAINER_NUMBER 10
-#define CLEANUP_SLEEP_SEC 2
+#define CLEANUP_SLEEP_SEC 3
 #define CLEANUP_CONTAINER_CONNECT_RETRY_TIMES 60
 
 static volatile int containers_init = 0;
@@ -111,8 +111,8 @@ static int delete_backend_if_exited(char *dockerid) {
 				 * check if the process is QE or not
 				 */
 				if (getppid() == PostmasterPid) {
-					plc_elog(WARNING, "container has been killed due to out of memory, please check your"
-							 " configuration or resource group settings");
+					plc_elog(WARNING, "docker reports container has been terminated due to out of memory," 
+							 " it could be the program over memory limit or crashed");
 				} else {
 					write_log("plcontainer cleanup process: container %s has been killed by oomkiller", dockerid);
 				}

@@ -5,6 +5,7 @@
 -- start_matchignore
 # match ignore docker api WARNING message
 m/^WARNING:  Docker API.*/
+m/^WARNING:  plcontainer: docker reports container*/
 
 # for drop extension
 m/^NOTICE:  drop cascades to \d+ other objects*/
