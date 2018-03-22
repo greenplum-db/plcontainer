@@ -24,7 +24,7 @@ SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
 show optimizer;
 SELECT gp_inject_fault('plcontainer_before_container_started', 'fatal', 2);
 SELECT pyint(i) from tbl;
-SELECT pg_sleep(5);
+SELECT pg_sleep(10);
 -- end_ignore
 
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a </dev/null | wc -l
@@ -37,7 +37,7 @@ SELECT sum(pyint(i)) from tbl;
 -- QE crash when connnecting to an existing container
 SELECT gp_inject_fault('plcontainer_before_container_connected', 'fatal', 2);
 SELECT pyint(i) from tbl;
-SELECT pg_sleep(5);
+SELECT pg_sleep(10);
 -- end_ignore
 
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a </dev/null | wc -l
@@ -47,7 +47,7 @@ SELECT sum(pyint(i)) from tbl;
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_send_request', 'fatal', 2);
 SELECT pyint(i) from tbl;
-SELECT pg_sleep(5);
+SELECT pg_sleep(10);
 -- end_ignore
 
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a </dev/null | wc -l
@@ -57,7 +57,7 @@ SELECT sum(pyint(i)) from tbl;
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_recv_request', 'fatal', 2);
 SELECT pyint(i) from tbl;
-SELECT pg_sleep(5);
+SELECT pg_sleep(10);
 -- end_ignore
 
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a </dev/null | wc -l
@@ -67,7 +67,7 @@ SELECT sum(pyint(i)) from tbl;
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_before_udf_finish', 'fatal', 2);
 SELECT pyint(i) from tbl;
-SELECT pg_sleep(5);
+SELECT pg_sleep(10);
 -- end_ignore
 
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a </dev/null | wc -l
@@ -92,7 +92,7 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 1);
 show optimizer;
 SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
 SELECT pyint(0);
-SELECT pg_sleep(5);
+SELECT pg_sleep(10);
 -- end_ignore
 
 \! docker ps -a </dev/null | wc -l
@@ -102,7 +102,7 @@ SELECT pyint(1);
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_send_request', 'error', 1);
 SELECT pyint(2);
-SELECT pg_sleep(5);
+SELECT pg_sleep(10);
 -- end_ignore
 
 \! docker ps -a </dev/null | wc -l

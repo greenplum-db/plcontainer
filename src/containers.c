@@ -111,8 +111,8 @@ static int delete_backend_if_exited(char *dockerid) {
 				 * check if the process is QE or not
 				 */
 				if (getppid() == PostmasterPid) {
-					plc_elog(WARNING, "docker reports container has been terminated due to out of memory," 
-							 " it could be the program over memory limit or crashed");
+					plc_elog(WARNING, "docker reports container has been terminated due to out of memory." 
+							 " This could be either the container was over memory limit or inside program crashed");
 				} else {
 					write_log("plcontainer cleanup process: container %s has been killed by oomkiller", dockerid);
 				}

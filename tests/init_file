@@ -5,6 +5,7 @@
 -- start_matchignore
 # match ignore docker api WARNING message
 m/^WARNING:  Docker API.*/
+# ignore due to docker in centos 6 could not detect OOM accurately 
 m/^WARNING:  plcontainer: docker reports container*/
 
 # for drop extension
