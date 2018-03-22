@@ -12,3 +12,6 @@ test: faultinject_python
 
 # PL/Container UDA test
 test: uda_python uda_r
+
+# Drop the extension - need to be last
+test: drop

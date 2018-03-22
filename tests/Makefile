@@ -19,9 +19,9 @@ all: tests
 
 .PHONY: resgroup
 resgroup:
-	@echo "Tests require three runtime configurations. Will check the three"
+	@echo "Tests require two runtime configurations. Will check the two"
 	@echo "runtime configurations soon. If there is configuration missing,"
-	@echo "please refer plcontainer script concourse/scripts/run_plcontainer_tests.sh"
+	@echo "please refer plcontainer script concourse/scripts/run_plcontainer_resgroup_tests.sh"
 	@echo "as example to learn how to set up those configurations"
 	plcontainer runtime-show -r plc_python_shared
 	plcontainer runtime-show -r plc_r_shared
@@ -39,7 +39,7 @@ resgroup:
 				--psqldir=$(PSQLDIR) $(RESGROUP_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
 .PHONY: tests
 tests:
-	@echo "Tests require three runtime configurations. Will check the three"
+	@echo "Tests require two runtime configurations. Will check the two"
 	@echo "runtime configurations soon. If there is configuration missing,"
 	@echo "please refer plcontainer script concourse/scripts/run_plcontainer_tests.sh"
 	@echo "as example to learn how to set up those configurations"
