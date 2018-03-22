@@ -16,6 +16,7 @@
 #define PLC_PROPERTIES_FILE "plcontainer_configuration.xml"
 #define RUNTIME_ID_MAX_LENGTH 64
 #define MAX_EXPECTED_RUNTIME_NUM 32
+#define RES_GROUP_PATH_MAX_LENGTH 256
 
 typedef enum {
 	PLC_ACCESS_READONLY = 0,
@@ -44,6 +45,7 @@ typedef struct runtimeConfEntry {
 	char runtimeid[RUNTIME_ID_MAX_LENGTH];
 	char *image;
 	char *command;
+	Oid resgroupOid;
 	int memoryMb;
 	int cpuShare;
 	int nSharedDirs;

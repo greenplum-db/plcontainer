@@ -541,6 +541,11 @@ def validate_xml(filename):
                     if use_container_logging_str != 'yes' and use_container_logging_str != 'no':
                         logger.error("'use_container_logging' should be 'yes' or 'no' in runtime %s, but now: '%s'", runtime_id, use_container_logging_str)
                         raise Exception("Validation failed")
+                elif 'resource_group_id' in settings.attrib:
+                    resource_group_id_str = settings.attrib['resource_group_id']
+                    if(len(resource_group_id_str) == 0):
+                        logger.error("length of 'resource_group_id_str' should not be zero.")
+                        raise Exception("Validation failed")
                 else:
                     logger.error("Found illegal setting in runtime %s: %s", runtime_id, settings.attrib)
     except Exception, ex:
@@ -671,6 +676,8 @@ def runtime_show_xml(filename, r_id):
                         sys.stdout.write("  ---- Container CPU share: %s\n" % settings.attrib['cpu_share'])
                     elif 'use_container_logging' in settings.attrib:
                         sys.stdout.write("  ---- Use Container Logging: %s\n" % settings.attrib['use_container_logging'])
+                    elif 'resource_group_id' in settings.attrib:
+                        sys.stdout.write("  ---- Resource Group ID: %s\n" % settings.attrib['resource_group_id'])
                 sys.stdout.write("  Shared Directory: \n")
                 for share_folder in runtime.findall('shared_directory'):
                     sys.stdout.write("  ---- Shared Directory From HOST '%s' to Container '%s', access mode is '%s'\n" % (share_folder.attrib['host'], share_folder.attrib['container'], share_folder.attrib['access']))
@@ -694,7 +701,7 @@ def get_conf_settings(options, elements):
         strList = setting.split("=")
         if len(strList) != 2:
             raise Exception("Bad setting format: %s" % setting)
-        if strList[0] != "memory_mb" and strList[0] != "cpu_share" and strList[0] != "use_container_logging":
+        if strList[0] != "memory_mb" and strList[0] != "cpu_share" and strList[0] != "use_container_logging" and strList[0] != "resource_group_id":
             raise Exception("Bad setting key: %s" % strList[0])
         elements['setting'][strList[0]] = strList[1]
 

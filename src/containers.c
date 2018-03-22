@@ -21,7 +21,6 @@
 #include "libpq/pqsignal.h"
 #include "utils/ps_status.h"
 #include "utils/faultinjector.h"
-
 #include "common/comm_utils.h"
 #include "common/comm_channel.h"
 #include "common/comm_connectivity.h"

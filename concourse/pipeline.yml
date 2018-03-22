@@ -10,8 +10,10 @@ groups:
   - plcontainer_build_python_image
   - plcontainer_build_r_image
   - plcontainer_function_test_centos6
+  - plcontainer_resgroup_test_centos6
   - plcontainer_perf_test_centos6
   - plcontainer_function_test_centos7
+  - plcontainer_resgroup_test_centos7
   - plcontainer_perf_test_centos7
 
 ################################################################################
@@ -134,8 +136,8 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: master
-    uri: https://github.com/greenplum-db/plcontainer.git
+    branch: {{plcontainer_git_branch}}
+    uri: {{plcontainer_git_remote}}
 
 - name: gpdb_src
   type: git
@@ -422,6 +424,67 @@ jobs:
 
 
 
+- name: plcontainer_resgroup_test_centos6
+  plan:
+  - aggregate:
+    - get: plcontainer_src
+      tags: ["ccp"]
+      passed:
+      - plcontainer_build_centos6
+    - get: gpdb_src
+      tags: ["ccp"]
+    - get: gpdb_binary
+      tags: ["ccp"]
+      resource: bin_gpdb_centos6
+    - get: ccp_src
+      tags: ["ccp"]
+      passed: [plcontainer_build_python_image, plcontainer_build_r_image]
+    - get: centos-gpdb-dev-6
+      tags: ["ccp"]
+    - get: plcontainer_pyclient_docker_image
+      tags: ["ccp"]
+      resource: plcontainer_docker_image_centos_python
+      passed: [plcontainer_build_python_image]
+      trigger: true
+    - get: plcontainer_rclient_docker_image
+      tags: ["ccp"]
+      resource: plcontainer_docker_image_centos_r
+      passed: [plcontainer_build_r_image]
+      trigger: true
+    - get: plcontainer_gpdb_centos6_build
+      tags: ["ccp"]
+      passed: [plcontainer_build_centos6]
+      trigger: true
+  - put: terraform
+    tags: ["ccp"]
+    params:
+      <<: *ccp_default_params
+      vars:
+        aws_instance-node-instance_type: t2.large
+        platform: centos6
+  - task: gen_cluster
+    tags: ["ccp"]
+    file: ccp_src/ci/tasks/gen_cluster.yml
+    params:
+      <<: *ccp_gen_cluster_default_params
+      platform: centos6
+    on_failure:
+      <<: *ccp_destroy6
+  - task: plcontainer_resgroup
+    tags: ["ccp"]
+    file: plcontainer_src/concourse/tasks/plcontainer_resgroup_tests.yml
+    params:
+      TEST_OS: centos6
+      platform: centos6
+    image: centos-gpdb-dev-6
+    input_mapping:
+      plcontainer_gpdb_build: plcontainer_gpdb_centos6_build
+    on_failure:
+      <<: *debug_sleep6
+  - *ccp_destroy6
+
+
+
 - name: plcontainer_perf_test_centos6
   plan:
   - aggregate:
@@ -546,6 +609,68 @@ jobs:
     on_failure:
       <<: *debug_sleep7
   - *ccp_destroy7
+
+
+
+- name: plcontainer_resgroup_test_centos7
+  plan:
+  - aggregate:
+    - get: plcontainer_src
+      tags: ["ccp"]
+      passed:
+      - plcontainer_build_centos7
+    - get: gpdb_src
+      tags: ["ccp"]
+    - get: gpdb_binary
+      tags: ["ccp"]
+      resource: bin_gpdb_centos7
+    - get: ccp_src
+      tags: ["ccp"]
+      passed: [plcontainer_build_python_image, plcontainer_build_r_image]
+    - get: centos-gpdb-dev-7
+      tags: ["ccp"]
+    - get: plcontainer_pyclient_docker_image
+      tags: ["ccp"]
+      resource: plcontainer_docker_image_centos_python
+      passed: [plcontainer_build_python_image]
+      trigger: true
+    - get: plcontainer_rclient_docker_image
+      tags: ["ccp"]
+      resource: plcontainer_docker_image_centos_r
+      passed: [plcontainer_build_r_image]
+      trigger: true
+    - get: plcontainer_gpdb_centos7_build
+      tags: ["ccp"]
+      passed: [plcontainer_build_centos7]
+      trigger: true
+  - put: terraform
+    tags: ["ccp"]
+    params:
+      <<: *ccp_default_params
+      vars:
+        aws_instance-node-instance_type: t2.large
+        platform: centos7
+  - task: gen_cluster
+    tags: ["ccp"]
+    file: ccp_src/ci/tasks/gen_cluster.yml
+    params:
+      <<: *ccp_gen_cluster_default_params
+      platform: centos7
+    on_failure:
+      <<: *ccp_destroy7
+  - task: plcontainer_resgroup
+    tags: ["ccp"]
+    file: plcontainer_src/concourse/tasks/plcontainer_resgroup_tests.yml
+    params:
+      TEST_OS: centos7
+      platform: centos7
+    image: centos-gpdb-dev-7
+    input_mapping:
+      plcontainer_gpdb_build: plcontainer_gpdb_centos7_build
+    on_failure:
+      <<: *debug_sleep7
+  - *ccp_destroy7
+
 
 
 

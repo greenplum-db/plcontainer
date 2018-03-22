@@ -14,7 +14,6 @@
 #include "utils/faultinjector.h"
 #include "utils/memutils.h"
 #include "utils/guc.h"
-
 /* PLContainer Headers */
 #include "common/comm_channel.h"
 #include "common/messages/messages.h"

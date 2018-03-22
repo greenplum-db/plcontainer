@@ -1,0 +1,14 @@
+regression.diffs
+regression.out
+*/dummy.sql
+*/dummy.out
+
+# Local binaries and symbolic links
+/pg_isolation2_regress
+/atmsort.pm
+/explain.pm
+/gpdiff.pl
+/gpstringsubs.pl
+
+# Generated subdirectories
+/results/
