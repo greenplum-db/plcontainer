@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 
 #include "postgres.h"
+#include "commands/resgroupcmds.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "libpq/libpq-be.h"
@@ -241,11 +242,15 @@ static void parse_runtime_configuration(xmlNode *node) {
 						if (strlen((char *) value) == 0) {
 							plc_elog(ERROR, "SETTING length of element <resource_group_id> is zero");
 						}
-						Oid resgroupOid = (Oid)pg_atoi((char *)value, sizeof(int), 0);
-						if (resgroupOid == InvalidOid) {
-							plc_elog(ERROR, "SETTING element <resource_group_id> must be a resource group id in greenplum. "
-									"Current setting is: %s", (char *) value);
+						Oid resgroupOid = (Oid) pg_atoi((char *) value, sizeof(int), 0);
+						if (resgroupOid == InvalidOid || GetResGroupNameForId(resgroupOid, AccessShareLock) == NULL) {
+							plc_elog(ERROR, "SETTING element <resource_group_id> must be a resource group id in greenplum. " "Current setting is: %s", (char * ) value);
 						}
+						int32 memAuditor = GetResGroupMemAuditorForId(resgroupOid, AccessShareLock);
+						if (memAuditor != RESGROUP_MEMORY_AUDITOR_CGROUP) {
+							plc_elog(ERROR, "SETTING element <resource_group_id> must be a resource group with memory_auditor type cgroup.");
+						}
+
 						conf_entry->resgroupOid = resgroupOid;
 						xmlFree((void *) value);
 						value = NULL;
