@@ -678,7 +678,7 @@ def runtime_show_xml(filename, r_id):
                 sys.stdout.write("\n")
 
         if no_entry:
-            raise Exception("No runtime or no specified runtime was found.")
+            sys.stdout.write("No runtime or no specified runtime was found.\n")
     except Exception, ex:
         logger.error("XML file does not conform XML specification or no related element was found.")
         logger.error(str(ex))
