@@ -259,7 +259,7 @@ pg_sleep
 (1 row)
 -- end_ignore
 
-SELECT verify_cpu_usage('plgroup', 40, 10);
+SELECT verify_cpu_usage('plgroup', 40, 20);
 verify_cpu_usage
 ----------------
 t               

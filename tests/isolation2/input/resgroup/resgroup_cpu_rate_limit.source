@@ -177,7 +177,7 @@ SELECT fetch_sample();
 SELECT pg_sleep(1.7);
 -- end_ignore
 
-SELECT verify_cpu_usage('plgroup', 40, 10);
+SELECT verify_cpu_usage('plgroup', 40, 20);
 
 -- start_ignore
 SELECT * FROM cancel_all;
