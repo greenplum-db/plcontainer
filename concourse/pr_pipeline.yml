@@ -7,6 +7,7 @@ groups:
   jobs:
   - plcontainer_build_centos6
   - plcontainer_build_centos7
+  - set-pr-status
 
 ################################################################################
 ################################## RESOURCES ###################################
@@ -24,12 +25,13 @@ resources:
   type: pull_request
   source:
     repo: greenplum-db/plcontainer
-    access_token: {{gpdb-git-access-token}}
+    access_token: {{pl-access-token}}
+    uri: {{plcontainer-git-remote}}
 
 - name: gpdb_src
   type: git
   source:
-    branch: {{gpdb-git-branch}}
+    branch: master
     uri: {{gpdb-git-remote}}
     ignore_paths:
     - gpdb-doc/*
@@ -155,5 +157,20 @@ jobs:
     - put: plcontainer_gpdb_centos7_build
       params:
         file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
+
+- name: set-pr-status
+  plan:
+  - aggregate:
+    - get: plcontainer_src
+      trigger: true
+      version: every
+      passed:
+      - plcontainer_build_centos6
+      - plcontainer_build_centos7
+  - put: set_pr_success
+    resource: plcontainer_src
+    params:
+      path: plcontainer_src
+      status: success
 
 
