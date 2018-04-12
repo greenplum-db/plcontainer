@@ -110,10 +110,8 @@ Test runtime-add with both shared directories and settings
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 PL/Container Runtime Configuration: 
--XML file does not conform XML specification or no related element was found.
--No runtime or no specified runtime was found.
--plcontainer failed. (Reason='runtime-show error') exiting...
-1
+No runtime or no specified runtime was found.
+0
 PL/Container Runtime Configuration: 
 ---------------------------------------------------------
   Runtime ID: runtime1
@@ -153,9 +151,7 @@ PL/Container Runtime Configuration:
 -Distributing file plcontainer_configuration.xml to all locations...
 -Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 PL/Container Runtime Configuration: 
--XML file does not conform XML specification or no related element was found.
--No runtime or no specified runtime was found.
--plcontainer failed. (Reason='runtime-show error') exiting...
+No runtime or no specified runtime was found.
 
 Test runtime-replace: negative cases
 usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
