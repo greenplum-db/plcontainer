@@ -356,7 +356,7 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
-        instance_type: n1-standard-1
+        instance_type: n1-standard-4
         PLATFORM: centos6
         disk_size: 100
         disk_type: pd-ssd
@@ -409,7 +409,7 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
-        instance_type: n1-standard-1
+        instance_type: n1-standard-4
         PLATFORM: centos7
         disk_size: 100
         disk_type: pd-ssd
@@ -528,8 +528,7 @@ jobs:
       plcontainer_gpdb_build: plcontainer_gpdb_centos6_build
   - put: plcontainer_docker_image_centos_r
     params:
-     file: plcontainer_docker_image/plcontainer*.tar.gz
-      file: plcontainer_docker_image/plcontainer-r-images-devel.tar.gz
+      file: plcontainer_docker_image/plcontainer*.tar.gz
     on_success:
       <<: *ccp_destroy
   ensure:

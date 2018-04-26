@@ -26,11 +26,11 @@ build_plcontainer() {
   # build plcontainer
   pushd plcontainer_src
   if [ "${DEV_RELEASE}" == "release" ]; then
-      if git describe >/dev/null 2>&1 ; then
+      if git describe --tags >/dev/null 2>&1 ; then
           echo "git describe failed" || exit 1
       fi
-      PLCONTAINER_VERSION=$(git describe | awk -F. '{printf("%d.%d", $1, $2)}')
-      PLCONTAINER_RELEASE=$(git describe | awk -F. '{print $3}')
+      PLCONTAINER_VERSION=$(git describe --tags | awk -F. '{printf("%d.%d", $1, $2)}')
+      PLCONTAINER_RELEASE=$(git describe --tags | awk -F. '{print $3}')
   else
       PLCONTAINER_VERSION="0.0"
       PLCONTAINER_RELEASE="0"
