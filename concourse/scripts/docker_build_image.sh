@@ -14,7 +14,7 @@ pushd plcontainer_src
 if [ "$DEV_RELEASE" == "devel" ]; then
 	IMAGE_NAME="plcontainer-$language-images-devel.tar.gz"
 else
-	PLCONTAINER_VERSION=$(git describe)
+	PLCONTAINER_VERSION=$(git describe --tags)
 	IMAGE_NAME="plcontainer-$language-images-${PLCONTAINER_VERSION}.tar.gz"
 fi
 popd
