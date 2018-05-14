@@ -42,5 +42,8 @@ test: memory_consuming_python memory_consuming_r
 test: memory_parallel_python memory_parallel_r
 test: memory_parallel_python_1 memory_parallel_python_2 memory_parallel_python_3 memory_parallel_python_4 memory_parallel_python_5 memory_parallel_r_1 memory_parallel_r_2 memory_parallel_r_3 memory_parallel_r_4 memory_parallel_r_5
 
+# PL/Container import pkg test
+test: python_import_module r_import_library
+
 # Drop the extension - need to be last
 test: drop
