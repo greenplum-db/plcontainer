@@ -180,9 +180,9 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 			         (len > 0) ? errbuf : curl_easy_strerror(res));
 			buffer->status = -2;
 
-			plc_elog(LOG, "Curl Request with type: %d, url: %s", cType, fullurl);
-			plc_elog(LOG, "Curl Request with http body: %s\n", body);
-			plc_elog(LOG, "Curl Request costs "
+			backend_log(LOG, "Curl Request with type: %d, url: %s", cType, fullurl);
+			backend_log(LOG, "Curl Request with http body: %s\n", body);
+			backend_log(LOG, "Curl Request costs "
 				UINT64_FORMAT
 				"ms", elapsed_us / 1000);
 
@@ -192,7 +192,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 
 			curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
 			buffer->status = (int) http_code;
-			plc_elog(DEBUG1, "CURL response code is %ld. CURL response message is %s", http_code, buffer->data);
+			backend_log(DEBUG1, "CURL response code is %ld. CURL response message is %s", http_code, buffer->data);
 		}
 
 cleanup:
@@ -320,7 +320,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	if (res == 201) {
 		res = 0;
 	} else if (res >= 0) {
-		plc_elog(LOG, "Docker fails to create container, response: %s", response->data);
+		backend_log(LOG, "Docker fails to create container, response: %s", response->data);
 		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to create container (return code: %d).", res);
 		res = -1;
@@ -335,7 +335,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	res = docker_inspect_string(response->data, name, PLC_INSPECT_NAME);
 
 	if (res < 0) {
-		plc_elog(DEBUG1, "Error parsing container ID during creating container with errno %d.", res);
+		backend_log(DEBUG1, "Error parsing container ID during creating container with errno %d.", res);
 		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Error parsing container ID during creating container");
 		goto cleanup;
@@ -363,7 +363,7 @@ int plc_docker_start_container(const char *name) {
 	if (res == 204 || res == 304) {
 		res = 0;
 	} else if (res >= 0) {
-		plc_elog(DEBUG1, "start docker container %s failed with errno %d.", name, res);
+		backend_log(DEBUG1, "start docker container %s failed with errno %d.", name, res);
 		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to start container %s (return code: %d)", name, res);
 		res = -1;
@@ -383,7 +383,7 @@ int plc_docker_kill_container(const char *name) {
 	char *url = NULL;
 	int res = 0;
 
-	plc_elog(FATAL, "Not implemented yet. Do not call it.");
+	backend_log(FATAL, "Not implemented yet. Do not call it.");
 
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
@@ -418,7 +418,7 @@ int plc_docker_inspect_container(const char *name, char **element, plcInspection
 	}
 
 	if (res != 200) {
-		plc_elog(LOG, "Docker cannot inspect container, response: %s", response->data);
+		backend_log(LOG, "Docker cannot inspect container, response: %s", response->data);
 		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Docker inspect api returns http code %d on container %s", res, name);
 		res = -1;
@@ -445,7 +445,7 @@ int plc_docker_wait_container(const char *name) {
 	char *url = NULL;
 	int res = 0;
 
-	plc_elog(FATAL, "Not implemented yet. Do not call it.");
+	backend_log(FATAL, "Not implemented yet. Do not call it.");
 
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
@@ -550,14 +550,14 @@ int plc_docker_get_container_state(const char *name, char **result) {
 
 static int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 	int i;
-	plc_elog(DEBUG1, "plcontainer: docker_inspect_string:%s", buf);
+	backend_log(DEBUG1, "plcontainer: docker_inspect_string:%s", buf);
 	struct json_object *response = json_tokener_parse(buf);
 	if (response == NULL)
 		return -1;
 	if (type == PLC_INSPECT_NAME) {
 		struct json_object *nameidObj = NULL;
 		if (!json_object_object_get_ex(response, "Id", &nameidObj)) {
-			plc_elog(WARNING, "failed to get json \"Id\" field.");
+			backend_log(WARNING, "failed to get json \"Id\" field.");
 			return -1;
 		}
 		const char *namestr = json_object_get_string(nameidObj);
@@ -566,21 +566,21 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 	} else if (type == PLC_INSPECT_PORT) {
 		struct json_object *NetworkSettingsObj = NULL;
 		if (!json_object_object_get_ex(response, "NetworkSettings", &NetworkSettingsObj)) {
-			plc_elog(WARNING, "failed to get json \"NetworkSettings\" field.");
+			backend_log(WARNING, "failed to get json \"NetworkSettings\" field.");
 			return -1;
 		}
 		struct json_object *PortsObj = NULL;
 		if (!json_object_object_get_ex(NetworkSettingsObj, "Ports", &PortsObj)) {
-			plc_elog(WARNING, "failed to get json \"Ports\" field.");
+			backend_log(WARNING, "failed to get json \"Ports\" field.");
 			return -1;
 		}
 		struct json_object *HostPortArray = NULL;
 		if (!json_object_object_get_ex(PortsObj, "8080/tcp", &HostPortArray)) {
-			plc_elog(WARNING, "failed to get json \"HostPortArray\" field.");
+			backend_log(WARNING, "failed to get json \"HostPortArray\" field.");
 			return -1;
 		}
 		if (json_object_get_type(HostPortArray) != json_type_array) {
-			plc_elog(WARNING, "no element found in json \"HostPortArray\" field.");
+			backend_log(WARNING, "no element found in json \"HostPortArray\" field.");
 			return -1;
 		}
 		int arraylen = json_object_array_length(HostPortArray);
@@ -588,12 +588,12 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 			struct json_object *PortBindingObj = NULL;
 			PortBindingObj = json_object_array_get_idx(HostPortArray, i);
 			if (PortBindingObj == NULL) {
-				plc_elog(WARNING, "failed to get json \"PortBinding\" field.");
+				backend_log(WARNING, "failed to get json \"PortBinding\" field.");
 				return -1;
 			}
 			struct json_object *HostPortObj = NULL;
 			if (!json_object_object_get_ex(PortBindingObj, "HostPort", &HostPortObj)) {
-				plc_elog(WARNING, "failed to get json \"HostPort\" field.");
+				backend_log(WARNING, "failed to get json \"HostPort\" field.");
 				return -1;
 			}
 			const char *HostPortStr = json_object_get_string(HostPortObj);
@@ -603,13 +603,13 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 	} else if (type == PLC_INSPECT_STATUS) {
 		struct json_object *StateObj = NULL;
 		if (!json_object_object_get_ex(response, "State", &StateObj)) {
-			plc_elog(WARNING, "failed to get json \"State\" field.");
+			backend_log(WARNING, "failed to get json \"State\" field.");
 			return -1;
 		}
 #ifdef DOCKER_API_LOW
 		struct json_object *RunningObj = NULL;
 		if (!json_object_object_get_ex(StateObj, "Running", &RunningObj)) {
-			plc_elog(WARNING, "failed to get json \"Running\" field.");
+			backend_log(WARNING, "failed to get json \"Running\" field.");
 			return -1;
 		}
 		const char *RunningStr = json_object_get_string(RunningObj);
@@ -618,7 +618,7 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 #else
 		struct json_object *StatusObj = NULL;
 		if (!json_object_object_get_ex(StateObj, "Status", &StatusObj)) {
-			plc_elog(WARNING, "failed to get json \"Status\" field.");
+			backend_log(WARNING, "failed to get json \"Status\" field.");
 			return -1;
 		}
 		const char *StatusStr = json_object_get_string(StatusObj);
@@ -628,19 +628,19 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 	} else if (type == PLC_INSPECT_OOM) {
 		struct json_object *StateObj = NULL;
 		if (!json_object_object_get_ex(response, "State", &StateObj)) {
-			plc_elog(WARNING, "failed to get json \"State\" field.");
+			backend_log(WARNING, "failed to get json \"State\" field.");
 			return -1;
 		}
 		struct json_object *OOMKillObj = NULL;
 		if (!json_object_object_get_ex(StateObj, "OOMKilled", &OOMKillObj)) {
-			plc_elog(WARNING, "failed to get json \"OOMKilled\" field.");
+			backend_log(WARNING, "failed to get json \"OOMKilled\" field.");
 			return -1;
 		}
 		const char *OOMKillStr = json_object_get_string(OOMKillObj);
 		*element = pstrdup(OOMKillStr);
 		return 0;
 	} else {
-		plc_elog(LOG, "Error PLC inspection mode, unacceptable inpsection type %d", type);
+		backend_log(LOG, "Error PLC inspection mode, unacceptable inpsection type %d", type);
 		return -1;
 	}
 
