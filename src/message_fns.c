@@ -51,6 +51,11 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "function_cache.h"
 #include "plc_typeio.h"
 
+#ifdef PLC_PG
+  #include "catalog/pg_type.h"
+  #include "access/htup_details.h"
+#endif
+
 static bool plc_procedure_valid(plcProcInfo *proc, HeapTuple procTup);
 
 static bool plc_type_valid(plcTypeInfo *type);

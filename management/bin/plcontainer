@@ -779,6 +779,9 @@ def main():
     options = None
     new_config = False
 
+    global DBHOME
+    global DBTYPE
+
     global GPHOME
 
     options = parseargs()
@@ -786,17 +789,36 @@ def main():
         gplog.enable_verbose_logging()
 
     try:
-        GPHOME = os.environ.get('GPHOME')
-        if not GPHOME:
-            raise Exception('$GPHOME environment variable is not set')
+        DBHOME = os.environ.get('GPHOME')
+        if not DBHOME:
+            DBHOME = os.environ.get('PGHOME')
+            if not DBHOME:
+                raise Exception('$GPHOME or $PGHOME environment variable is not set')
+            else:
+                DBTYPE = "pg"
+        else:
+            DBTYPE = "gp"
 
         logger.debug('Retrieving GPDB configuration from database...')
         url = dbconn.DbURL()
-        array = gparray.GpArray.initFromCatalog(url, True)
-        segs = array.getDbList()
-        hosts = get_all_hosts(array)
+        
+        #for pg
+        hosts = set()
+        gpdb_locations = []
 
-        gpdb_locations = get_segment_locations(segs)
+        if DBTYPE == "gp":
+            array = gparray.GpArray.initFromCatalog(url, True)
+            segs = array.getDbList()
+            hosts = get_all_hosts(array)
+            gpdb_locations = get_segment_locations(segs)
+        else:
+            hosts.add('localhost')   #todo 
+            pgdata_path = os.environ.get('PGDATA')
+            if not pgdata_path:
+                raise Exception('$PGDATA environment variable is not set for postgresql.')
+            gpdb_locations.append( ('localhost', pgdata_path) )
+
+            
         logger.debug('GPDB Configuration is:')
 
         # FIXME: do them for configure commands only.

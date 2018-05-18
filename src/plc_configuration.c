@@ -12,7 +12,14 @@
 #include <sys/stat.h>
 
 #include "postgres.h"
-#include "commands/resgroupcmds.h"
+#ifndef PLC_PG
+  #include "commands/resgroupcmds.h"
+#else
+  #include "catalog/pg_type.h"
+  #include "access/sysattr.h"
+  #include "miscadmin.h"
+  #include "plc_pg.h"
+#endif
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "libpq/libpq-be.h"
@@ -243,6 +250,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 							plc_elog(ERROR, "SETTING length of element <resource_group_id> is zero");
 						}
 						Oid resgroupOid = (Oid) pg_atoi((char *) value, sizeof(int), 0);
+#ifndef	PLC_PG	//todo							
 						if (resgroupOid == InvalidOid || GetResGroupNameForId(resgroupOid) == NULL) {
 							plc_elog(ERROR, "SETTING element <resource_group_id> must be a resource group id in greenplum. " "Current setting is: %s", (char * ) value);
 						}
@@ -250,7 +258,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 						if (memAuditor != RESGROUP_MEMORY_AUDITOR_CGROUP) {
 							plc_elog(ERROR, "SETTING element <resource_group_id> must be a resource group with memory_auditor type cgroup.");
 						}
-
+#endif
 						conf_entry->resgroupOid = resgroupOid;
 						xmlFree((void *) value);
 						value = NULL;
@@ -444,7 +452,10 @@ static void print_runtime_configurations() {
 static int plc_refresh_container_config(bool verbose) {
 	xmlDoc* volatile doc = NULL;
 	char filename[1024];
-
+ #ifdef PLC_PG
+    char data_directory[1024];
+	char *env_str;
+ #endif  
 	init_runtime_configurations();
 	/*
 	 * this initialize the library and check potential ABI mismatches
@@ -453,6 +464,11 @@ static int plc_refresh_container_config(bool verbose) {
 	 */
 	LIBXML_TEST_VERSION
 
+ #ifdef PLC_PG
+    if ((env_str = getenv("PGDATA")) == NULL)
+        plc_elog (ERROR, "PGDATA is not set");
+	snprintf(data_directory, sizeof(data_directory), "%s", env_str );
+ #endif   
 	/* Parse the file and get the DOM */
 	sprintf(filename, "%s/%s", data_directory, PLC_PROPERTIES_FILE);
 
@@ -758,7 +774,11 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				continue;
 			}
 			const char *ownerStr = json_object_get_string(ownerObj);
+#ifdef PLC_PG
+			const char *username = GetUserNameFromId(GetUserId(), false);
+#else			
 			const char *username = GetUserNameFromId(GetUserId());
+#endif
 			if (strcmp(ownerStr, username) != 0 && superuser() == false) {
 				funcctx->call_cntr++;
 				call_cntr++;

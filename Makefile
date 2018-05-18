@@ -16,6 +16,15 @@ RCLIENTDIR = src/rclient/bin
 
 # the DATA is including files for extension use
 DATA = $(MGMTDIR)/sql/plcontainer--1.0.0.sql $(MGMTDIR)/sql/plcontainer--unpackaged--1.0.0.sql plcontainer.control
+
+ifeq ($(PLC_PG),yes)
+  $(shell cd $(MGMTDIR)/sql/ && ln -sf plcontainer_pg--1.0.0.sql plcontainer_install.sql.in )
+  $(shell cd $(MGMTDIR)/sql/ && cp -f plcontainer_pg--1.0.0.sql plcontainer--1.0.0.sql )
+else
+  $(shell cd $(MGMTDIR)/sql/ && ln -sf plcontainer_gp--1.0.0.sql plcontainer_install.sql.in )
+  $(shell cd $(MGMTDIR)/sql/ && cp -f plcontainer_gp--1.0.0.sql plcontainer--1.0.0.sql )
+endif
+
 # DATA_built will built sql from .in file
 DATA_built = $(MGMTDIR)/sql/plcontainer_install.sql $(MGMTDIR)/sql/plcontainer_uninstall.sql
 
@@ -25,6 +34,11 @@ OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
 
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
+
+ifeq ($(PLC_PG),yes)
+   #reset CFLAGS for pg
+   override CFLAGS = -DPLC_PG -Wmissing-prototypes -Wpointer-arith -Wendif-labels -fno-strict-aliasing -fwrapv -g -O2 -DMAP_HUGETLB=0x40000 -fPIC
+endif
 
 # FIXME: We might need a configure script to handle below checks later.
 # See https://github.com/greenplum-db/plcontainer/issues/322
@@ -73,7 +87,11 @@ endif
 
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 
-override CFLAGS += -Werror -Wextra -Wall
+ifeq ($(PLC_PG),yes)
+  override CFLAGS += -Wextra -Wno-unused-but-set-variable
+else
+  override CFLAGS += -Werror -Wextra -Wall
+endif
 
 ifeq ($(ENABLE_COVERAGE),yes)
   override CFLAGS += -coverage

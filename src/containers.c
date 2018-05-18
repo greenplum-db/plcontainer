@@ -14,14 +14,21 @@
 #include <time.h>
 #include <libgen.h>
 #include <sys/wait.h>
-
 #include "postgres.h"
 #include "miscadmin.h"
-#include "cdb/cdbvars.h"
+#include "utils/guc.h"
+#ifndef PLC_PG
+  #include "cdb/cdbvars.h"
+  #include "utils/faultinjector.h"
+#else
+  #include "catalog/pg_type.h"
+  #include "miscadmin.h"
+  #include "utils/guc.h"
+  #include "faultinjector_pg.h"
+  #include<stdarg.h>  
+#endif
 #include "storage/ipc.h"
 #include "libpq/pqsignal.h"
-#include "utils/faultinjector.h"
-#include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "common/comm_utils.h"
 #include "common/comm_channel.h"
@@ -29,8 +36,9 @@
 #include "common/messages/messages.h"
 #include "plc_configuration.h"
 #include "containers.h"
-
 #include "plc_backend_api.h"
+
+
 
 typedef struct {
 	char *runtimeid;
@@ -49,6 +57,22 @@ static char *uds_fn_for_cleanup;
 static void init_containers();
 
 static int check_runtime_id(const char *id);
+
+#ifdef PLC_PG
+void
+write_log(const char *fmt,...) {    
+	char		tempbuf[25];
+	char		msgbuf[2048];	
+
+	va_list		ap;
+	fmt = _(fmt);
+	va_start(ap, fmt);
+	vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap);
+	printf( "%s\n", msgbuf );
+	va_end(ap);
+	return;
+}  
+#endif
 
 #ifndef CONTAINER_DEBUG
 
@@ -174,7 +198,11 @@ static void cleanup(char *dockerid, char *uds_fn) {
 #ifdef HAVE_ATEXIT
 		atexit(cleanup_atexit_callback);
 #else
-		on_exit(cleanup_atexit_callback, NUL);
+   #ifdef PLC_PG
+        on_exit(cleanup_atexit_callback, NULL);   
+   #else
+   		on_exit(cleanup_atexit_callback, NUL);   /* todo: confirm Use ‘NULL' directly ? */
+   #endif
 #endif
 
 		pqsignal(SIGHUP, SIG_IGN);
@@ -504,7 +532,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 					pfree(mresp);
 				if (res == 0) {
 					break;
-				} else {
+				} else {			
 					plc_elog(DEBUG1, "Failed to receive pong from client. Maybe expected. dockerid: %s", dockerid);
 					plcDisconnect(conn);
 				}

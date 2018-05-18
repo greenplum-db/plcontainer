@@ -11,7 +11,11 @@
 #include "storage/ipc.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-#include "utils/faultinjector.h"
+#ifndef PLC_PG
+  #include "utils/faultinjector.h"
+#else
+  #include "faultinjector_pg.h"
+#endif
 #include "utils/memutils.h"
 #include "utils/guc.h"
 /* PLContainer Headers */
@@ -28,6 +32,10 @@
 #ifdef PG_MODULE_MAGIC
 
 PG_MODULE_MAGIC;
+#endif
+
+#ifdef PLC_PG
+    volatile bool QueryFinishPending = false;     //todo
 #endif
 
 PG_FUNCTION_INFO_V1(plcontainer_call_handler);
