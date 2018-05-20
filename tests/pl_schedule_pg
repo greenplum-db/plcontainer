@@ -1,0 +1,47 @@
+# setup - need to be first
+test: schema_pg
+
+# Test plcontainer utility.
+#test: test_utility
+
+# configuration function tests
+#test: test_configuration
+
+# test declaration combinations in function definitions.
+test: runtimeid_declaration_pg
+
+# set R and Python function - need before "test PL/Container normal function"
+#test: function_r function_r_gpdb5 function_python function_python_gpdb5
+test: function_r  function_python 
+
+# test PL/Container normal function
+#test: test_r test_python test_r_gpdb5 test_python_gpdb5 spi_r spi_python subtransaction_python
+test: test_r_pg test_python_pg spi_r_pg spi_python_pg subtransaction_python_pg
+test: test_r_error_pg test_python_error_pg
+test: exception_pg
+
+# test wrong configuration validation in pl/container C code
+#test: test_wrong_config
+
+# PL/Container UDA test
+test: uda_python_pg uda_r_pg
+
+# Out of memory test
+#test: oom_test_prepare_pyhthon
+#test: oom_test_python_killed oom_test_python_killed_1 oom_test_python_normal oom_test_python_normal_1 oom_test_python_normal_2
+
+# Miscellaneous test
+#test: misc
+
+# PL/Container parallel test (io & cpu)
+#test: parallel_prepare
+#test: parallel_1 parallel_2 parallel_3 parallel_4 parallel_5 parallel_6 parallel_7 parallel_8
+
+# PL/Container memory test
+#test: memory_consuming_python memory_consuming_r
+#test: memory_parallel_python memory_parallel_r
+#test: memory_parallel_python_1 memory_parallel_python_2 memory_parallel_python_3 memory_parallel_python_4 memory_parallel_python_5 memory_parallel_r_1 memory_parallel_r_2 memory_parallel_r_3 memory_parallel_r_4 memory_parallel_r_5
+
+# Drop the extension - need to be last
+#test: drop
+

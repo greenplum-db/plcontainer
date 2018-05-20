@@ -24,7 +24,6 @@
   #include "catalog/pg_type.h"
   #include "miscadmin.h"
   #include "utils/guc.h"
-  #include "faultinjector_pg.h"
   #include<stdarg.h>  
 #endif
 #include "storage/ipc.h"
@@ -360,8 +359,9 @@ plcConn *get_container_conn(const char *runtime_id) {
 		init_containers();
 	}
 
+#ifndef PLC_PG
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_connected");
-
+#endif
 	for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
 		if (containers[i].runtimeid != NULL &&
 		    strcmp(containers[i].runtimeid, runtime_id) == 0) {
@@ -502,8 +502,9 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	/* Create a process to clean up the container after it finishes */
 	cleanup(dockerid, uds_fn);
 
+#ifndef PLC_PG
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_started");
-
+#endif
 	/*
 	 * Making a series of connection attempts unless connection timeout of
 	 * CONTAINER_CONNECT_TIMEOUT_MS is reached. Exponential backoff for

@@ -38,7 +38,7 @@ RUNTIME_ID_MAX_LENGTH = 64
 TMP = '/tmp'
 TAR_GZ = '.tar.gz'
 
-global GPHOME
+global DBHOME
 
 def parseargs():
     parser = argparse.ArgumentParser()
@@ -194,7 +194,7 @@ def install_images(options, pool, hosts):
         remote_cmd(pool, check_docker_cmd, hosts)
 
         logger.info('Distributing image file %s to all hosts...' % docker_image)
-        dest = os.path.join(GPHOME, TMP, os.path.basename(docker_image))
+        dest = os.path.join(DBHOME, TMP, os.path.basename(docker_image))
         distribute_docker_file(pool, docker_image, dest, hosts)
 
         logger.info('Loading image on all hosts...')
@@ -231,7 +231,7 @@ def update_xml_check_shared_folders(runtime, elements):
     for shareDir in runtime.findall('shared_directory'):
         runtime.remove(shareDir)
 
-    dest = os.path.join(GPHOME, PLCONTAINER_CLIENT_DIR)
+    dest = os.path.join(DBHOME, PLCONTAINER_CLIENT_DIR)
 
     shareDir = ElementTree.Element("shared_directory",
             host=dest, container="/clientdir",
@@ -424,7 +424,7 @@ def copy_file_to_tmp(host, file):
     """
     tmp_file = tempfile.mktemp()
     if not os.path.exists(file):
-        default_config = os.path.join(GPHOME, PLCONTAINER_GPDB_DIR, PLCONTAINER_CONFIG_FILE)
+        default_config = os.path.join(DBHOME, PLCONTAINER_GPDB_DIR, PLCONTAINER_CONFIG_FILE)
         cmd = Scp('copy conf file from GPDB folder', default_config, file, host)
         cmd.run()
     cmd = Scp('copy conf file', file, tmp_file, host)
@@ -781,8 +781,6 @@ def main():
 
     global DBHOME
     global DBTYPE
-
-    global GPHOME
 
     options = parseargs()
     if options.verbose:

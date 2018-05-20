@@ -9,7 +9,11 @@ include $(PGXS)
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --init-file=./init_file --schedule=pl_schedule
 RESGROUP_OPTS = --dbname=$(PL_TESTDB) --init-file=./init_file --schedule=pl_resgroup_schedule
-PSQLDIR = $(bindir)
+PSQLDIR = --psqldir=$(bindir)
+ifeq ($(PLC_PG),yes)
+    REGRESS_OPTS = --dbname=$(PL_TESTDB)  --schedule=pl_schedule_pg
+    PSQLDIR = --bindir=$(bindir)
+endif
 
 .PHONY: default
 default: all
@@ -36,7 +40,7 @@ resgroup:
 		cp expected/uda_python.out.gp6 expected/uda_python.out;  \
 	fi
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
-				--psqldir=$(PSQLDIR) $(RESGROUP_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
+				$(PSQLDIR) $(RESGROUP_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
 .PHONY: tests
 tests:
 	@echo "Tests require two runtime configurations. Will check the two"
@@ -54,9 +58,10 @@ tests:
 		cp expected/test_python.out.gp6 expected/test_python.out; \
 		cp expected/uda_python.out.gp6 expected/uda_python.out;  \
 	fi
+	
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
-				--psqldir=$(PSQLDIR) $(REGRESS_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
-				
+				$(PSQLDIR) $(REGRESS_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
+
 .PHONY: submake
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)

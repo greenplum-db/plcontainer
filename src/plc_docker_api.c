@@ -243,6 +243,12 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"}\n";
 	bool has_error;
 	char *volumeShare = get_sharing_options(conf, container_id, &has_error, uds_dir);
+
+	int16 dbid = 0;
+#ifndef PLC_PG
+	dbid = GpIdentity.dbid;
+#endif
+
 	/*
 	 *  no shared volumes should not be treated as an error, so we use has_error to
 	 *  identifier whether there is an error when parse sharing options.
@@ -314,11 +320,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			 ((long long) conf->cpuShare),
 	         conf->useContainerLogging ? default_log_dirver : "none",
 	         username,
-#ifdef PLC_PG
-	         0);     //todo
-#else			 
-	         GpIdentity.dbid);
-#endif
+	         dbid);
 
 	/* Make a call */
 	response = plcCurlRESTAPICall(PLC_HTTP_POST, "/containers/create", messageBody);
@@ -505,14 +507,13 @@ int plc_docker_list_container(char **result) {
 	char *method = "/containers/json?all=1&label=\"dbid=%d\"";
 	char *url = NULL;
 	int res = 0;
-	int16 dbid = 0;
-
 	url = (char *) palloc((strlen(method) + 12) * sizeof(char));
-
+	int16 dbid = 0;
 #ifndef PLC_PG
 	dbid = GpIdentity.dbid;
 #endif			 
 
+	sprintf(url, method, dbid); 
 	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, NULL);
 	res = response->status;
 
