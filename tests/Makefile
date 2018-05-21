@@ -31,9 +31,13 @@ resgroup:
 	if [ "`pg_config --version`" == "PostgreSQL 8.3.23" ]; then    \
 		cp expected/test_python.out.gp5 expected/test_python.out; \
 		cp expected/uda_python.out.gp5 expected/uda_python.out;  \
+		cp expected/r_import_library.gp5 expected/r_import_library.out;  \
+		cp expected/python_import_module.gp5 expected/python_import_module.out;  \
 	else                                                         \
 		cp expected/test_python.out.gp6 expected/test_python.out; \
 		cp expected/uda_python.out.gp6 expected/uda_python.out;  \
+		cp expected/r_import_library.gp6 expected/r_import_library.out;  \
+		cp expected/python_import_module.gp6 expected/python_import_module.out;  \
 	fi
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
 				--psqldir=$(PSQLDIR) $(RESGROUP_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
