@@ -58,19 +58,7 @@ static void init_containers();
 static int check_runtime_id(const char *id);
 
 #ifdef PLC_PG
-void
-write_log(const char *fmt,...) {    
-	char		tempbuf[25];
-	char		msgbuf[2048];	
-
-	va_list		ap;
-	fmt = _(fmt);
-	va_start(ap, fmt);
-	vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap);
-	printf( "%s\n", msgbuf );
-	va_end(ap);
-	return;
-}  
+#define write_log printf
 #endif
 
 #ifndef CONTAINER_DEBUG
