@@ -6,10 +6,10 @@
 1. PL/Container requires Docker version 17.05 for CentOS/RHEL 7.x and Docker version 1.7 CentOS/RHEL 6.6+
 1. Postgresql version should be 9.6.0 or later
 
-###Linux System
+### Linux System
 CentOS 7
 
-###Install postgresql
+### Install postgresql
 ```shell
 #install postgresql's dependency
 sudo yum groupinstall 'Development Tools'
