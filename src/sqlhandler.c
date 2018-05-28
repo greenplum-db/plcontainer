@@ -326,8 +326,8 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 						plc_elog(ERROR, "Cannot handle sql ('%s') with fn_readonly (%d) "
 									"and limit ("
 									INT64_FORMAT
-									"). Returns %d", msg->statement,
-								     pinfo->fn_readonly, msg->limit, retval);
+									"). Detail: %s", msg->statement,
+								     pinfo->fn_readonly, msg->limit, SPI_result_code_string(retval));
 						break;
 				}
 				SPI_freetuptable(SPI_tuptable);

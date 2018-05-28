@@ -13,7 +13,7 @@ DROP TRIGGER test_trigger on trigger_tbl;
 DROP TABLE trigger_tbl;
 --  Test <defunct> processes are reaped after a new backend is created.
 select pykillself();
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:255)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)
 SELECT pg_sleep(5);
  pg_sleep 
 ----------
@@ -34,7 +34,7 @@ select pyzero();
 0
 -- Test function ok immediately after container is kill-9-ed.
 select pykillself();
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:255)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)
 select pyzero();
  pyzero 
 --------
@@ -42,7 +42,7 @@ select pyzero();
 (1 row)
 
 select rkillself();
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:255)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)
 select rint(0);
  rint 
 ------
@@ -51,7 +51,7 @@ select rint(0);
 
 -- Test function ok immediately after container captures signal sigsegv.
 select pysegvself();
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:255)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)
 select pyzero();
  pyzero 
 --------
@@ -59,7 +59,7 @@ select pyzero();
 (1 row)
 
 select rsegvself();
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:255)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)
 select rint(0);
  rint 
 ------
@@ -68,7 +68,7 @@ select rint(0);
 
 -- Test function ok immediately after container exits.
 select pyexit();
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:255)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)
 select pyzero();
  pyzero 
 --------
@@ -76,7 +76,7 @@ select pyzero();
 (1 row)
 
 select rexit();
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:255)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)
 select rint(0);
  rint 
 ------

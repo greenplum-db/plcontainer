@@ -107,7 +107,7 @@ INFO:  plcontainer:         access = readonly
 (1 row)
 
 select pyint(0);
-ERROR:  plcontainer: Backend create error: Failed to create container, return code: 404, detail: {"message":"No such image: not_exist_pivotaldata/plcontainer_python:0.1"} (containers.c:400)
+ERROR:  plcontainer: Backend create error: Failed to create container, return code: 404, detail: No such image: not_exist_pivotaldata/plcontainer_python:0.1 (tag: 0.1) (containers.c:400)
 select plcontainer_show_local_config();
 INFO:  plcontainer: Container 'plc_python_shared' configuration
 INFO:  plcontainer:     image = 'not_exist_pivotaldata/plcontainer_python:0.1'

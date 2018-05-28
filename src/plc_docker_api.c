@@ -178,7 +178,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 			snprintf(backend_error_message, sizeof(backend_error_message),
 			         "PL/Container libcurl returns code %d, error '%s'", res,
 			         (len > 0) ? errbuf : curl_easy_strerror(res));
-			buffer->status = -2;
+			buffer->status = -1;
 
 			backend_log(LOG, "Curl Request with type: %d, url: %s", cType, fullurl);
 			backend_log(LOG, "Curl Request with http body: %s\n", body);
@@ -322,11 +322,8 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	} else if (res >= 0) {
 		backend_log(LOG, "Docker fails to create container, response: %s", response->data);
 		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to create container (return code: %d).", res);
+		         "Failed to create container, return code: %d, detail: %s", res, response->data);
 		res = -1;
-	} else {
-		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to create container (return code: %d).", res);
 	}
 
 	if (res < 0) {
@@ -358,20 +355,17 @@ int plc_docker_start_container(const char *name) {
 
 	response = plcCurlRESTAPICall(PLC_HTTP_POST, url, NULL);
 	res = response->status;
-	plcCurlBufferFree(response);
 
 	if (res == 204 || res == 304) {
 		res = 0;
 	} else if (res >= 0) {
 		backend_log(DEBUG1, "start docker container %s failed with errno %d.", name, res);
 		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to start container %s (return code: %d)", name, res);
+		         "Failed to start container %s, return code: %d, detail: %s", name, res, response->data);
 		res = -1;
-	} else {
-		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to start container %s (return code: %d)", name, res);
 	}
 
+	plcCurlBufferFree(response);
 	pfree(url);
 
 	return res;
@@ -420,7 +414,7 @@ int plc_docker_inspect_container(const char *name, char **element, plcInspection
 	if (res != 200) {
 		backend_log(LOG, "Docker cannot inspect container, response: %s", response->data);
 		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Docker inspect api returns http code %d on container %s", res, name);
+		         "Docker inspect api returns http code %d on container %s, detail: %s", res, name, response->data);
 		res = -1;
 		goto cleanup;
 	}
@@ -471,20 +465,17 @@ int plc_docker_delete_container(const char *name) {
 
 	response = plcCurlRESTAPICall(PLC_HTTP_DELETE, url, NULL);
 	res = response->status;
-	plcCurlBufferFree(response);
 
 	/* 204 = deleted success, 404 = container not found, both are OK for delete */
 	if (res == 204 || res == 404) {
 		res = 0;
 	} else if (res >= 0) {
 		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to delete container %s (return code: %d)", name, res);
+		         "Failed to delete container %s, return code: %d, detail: %s", name, res, response->data);
 		res = -1;
-	} else {
-		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to delete container %s (return code: %d)", name, res);
 	}
 
+	plcCurlBufferFree(response);
 	pfree(url);
 
 	return res;
@@ -506,11 +497,8 @@ int plc_docker_list_container(char **result) {
 		res = 0;
 	} else if (res >= 0) {
 		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to list containers (return code: %d), dbid is %d", res, GpIdentity.dbid);
+		         "Failed to list containers, return code: %d, detail: %s, dbid is %d", res, response->data, GpIdentity.dbid);
 		res = -1;
-	} else {
-		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to list containers (return code: %d), dbid is %d", res, GpIdentity.dbid);
 	}
 	*result = pstrdup(response->data);
 
@@ -534,11 +522,8 @@ int plc_docker_get_container_state(const char *name, char **result) {
 		res = 0;
 	} else if (res >= 0) {
 		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to get container %s state (return code: %d)", name, res);
+		         "Failed to get container %s state, return code: %d, detail: %s", name, res, response->data);
 		res = -1;
-	} else {
-		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to get container %s state (return code: %d)", name, res);
 	}
 
 	*result = pstrdup(response->data);

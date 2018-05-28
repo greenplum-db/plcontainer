@@ -188,23 +188,23 @@ plbigmemory
            
 (1 row)
 13<:  <... completed>
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:254)  (seg0 slice1 127.0.0.1:25432 pid=641899) (cdbdisp.c:254)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:254)  (seg0 slice1 127.0.0.1:25432 pid=641899) (cdbdisp.c:254)
 14<:  <... completed>
 plbigmemory
 -----------
            
 (1 row)
 15<:  <... completed>
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:254)  (seg0 slice1 127.0.0.1:25432 pid=641917) (cdbdisp.c:254)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:254)  (seg0 slice1 127.0.0.1:25432 pid=641917) (cdbdisp.c:254)
 16<:  <... completed>
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:254)  (seg0 slice1 127.0.0.1:25432 pid=641926) (cdbdisp.c:254)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:254)  (seg0 slice1 127.0.0.1:25432 pid=641926) (cdbdisp.c:254)
 17<:  <... completed>
 plbigmemory
 -----------
            
 (1 row)
 18<:  <... completed>
-ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later. (plcontainer.c:254)  (seg0 slice1 127.0.0.1:25432 pid=641944) (cdbdisp.c:254)
+ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:254)  (seg0 slice1 127.0.0.1:25432 pid=641944) (cdbdisp.c:254)
 19<:  <... completed>
 plbigmemory
 -----------
