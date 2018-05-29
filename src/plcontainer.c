@@ -221,20 +221,32 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		result = NULL;
 		req = plcontainer_create_call(fcinfo, pinfo);
 		runtime_id = parse_container_meta(req->proc.src);
-		conn = get_container_conn(runtime_id);
-		if (conn == NULL) {
-			runtimeConfEntry *runtime_conf_entry = NULL;
-			runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
-			if (runtime_conf_entry == NULL) {
-				plc_elog(ERROR, "Runtime '%s' is not defined in configuration "
-							"and cannot be used", runtime_id);
-			} else {
-				/* TODO: We could only remove this backend when error occurs. */
-				DeleteBackendsWhenError = true;
-				conn = start_backend(runtime_conf_entry);
-				DeleteBackendsWhenError = false;
+		
+		runtimeConfEntry *runtime_conf_entry = NULL;
+		runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
+
+		if (runtime_conf_entry == NULL) {
+			plc_elog(ERROR, "Runtime '%s' is not defined in configuration "
+						"and cannot be used", runtime_id);
+		} 
+		/*
+		 * We need to check the privilege in each run
+		 */
+
+		if (runtime_conf_entry->useUserControl) {
+			if (!plc_check_user_privilege(runtime_conf_entry->users)){
+				plc_elog(ERROR, "Current user does not have privilege to use runtime %s", runtime_id);
 			}
 		}
+
+		conn = get_container_conn(runtime_id);
+		if (conn == NULL) {
+			/* TODO: We could only remove this backend when error occurs. */
+			DeleteBackendsWhenError = true;
+			conn = start_backend(runtime_conf_entry);
+			DeleteBackendsWhenError = false;
+		}
+
 		pfree(runtime_id);
 
 		DeleteBackendsWhenError = true;

@@ -443,7 +443,7 @@ def validate_xml(filename):
         image_list.append(line)
     correct = True
     try:
-        xmltree = ElementTree.parse(filename);
+        xmltree = ElementTree.parse(filename)
         root = xmltree.getroot()
         for runtime in root.findall('runtime'):
 
@@ -545,6 +545,11 @@ def validate_xml(filename):
                     resource_group_id_str = settings.attrib['resource_group_id']
                     if resource_group_id_str.isdigit() != True:
                         logger.error("'resource_group_id_str' cannot contain non-digit, it should be oid of resource group")
+                        raise Exception("Validation failed")
+                elif 'users' in settings.attrib:
+                    users_str = settings.attrib['users']
+                    if not users_str:
+                        logger.error("'users_str' is empty, please add users (separate with ',') or remove this element")
                         raise Exception("Validation failed")
                 else:
                     logger.error("Found illegal setting in runtime %s: %s", runtime_id, settings.attrib)
@@ -656,8 +661,8 @@ def runtime_show_xml(filename, r_id):
     :return: 
     '''
     try:
-        no_entry = True;
-        xmltree = ElementTree.parse(filename);
+        no_entry = True
+        xmltree = ElementTree.parse(filename)
         root = xmltree.getroot()
         sys.stdout.write("PL/Container Runtime Configuration: \n")
         for runtime in root.findall('runtime'):
@@ -678,6 +683,8 @@ def runtime_show_xml(filename, r_id):
                         sys.stdout.write("  ---- Use Container Logging: %s\n" % settings.attrib['use_container_logging'])
                     elif 'resource_group_id' in settings.attrib:
                         sys.stdout.write("  ---- Resource Group ID: %s\n" % settings.attrib['resource_group_id'])
+                    elif 'users' in settings.attrib:
+                        sys.stdout.write("  ---- Allowed Users: %s\n" % settings.attrib['users'])
                 sys.stdout.write("  Shared Directory: \n")
                 for share_folder in runtime.findall('shared_directory'):
                     sys.stdout.write("  ---- Shared Directory From HOST '%s' to Container '%s', access mode is '%s'\n" % (share_folder.attrib['host'], share_folder.attrib['container'], share_folder.attrib['access']))
@@ -701,7 +708,7 @@ def get_conf_settings(options, elements):
         strList = setting.split("=")
         if len(strList) != 2:
             raise Exception("Bad setting format: %s" % setting)
-        if strList[0] != "memory_mb" and strList[0] != "cpu_share" and strList[0] != "use_container_logging" and strList[0] != "resource_group_id":
+        if strList[0] != "memory_mb" and strList[0] != "cpu_share" and strList[0] != "use_container_logging" and strList[0] != "resource_group_id" and strList[0] != "users":
             raise Exception("Bad setting key: %s" % strList[0])
         elements['setting'][strList[0]] = strList[1]
 
@@ -761,7 +768,7 @@ def checkAllFileMD5(pool, gpdb_locations):
     results = None
     for i in items:
         if i.results.rc or i.results.halt or not i.results.completed:
-            logger.error("error running command: %s" % cmd_str)
+            logger.error("error running command")
             raise Exception("error running command")
         # Put the QD conf file MD5 into resluts and do comparison
         if results is None:

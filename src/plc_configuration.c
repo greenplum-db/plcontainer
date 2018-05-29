@@ -23,6 +23,7 @@
 #include "utils/guc.h"
 #include "libpq/libpq-be.h"
 #include "funcapi.h"
+#include "utils/acl.h"
 
 #include "common/comm_utils.h"
 #include "common/comm_connectivity.h"
@@ -164,6 +165,8 @@ static void parse_runtime_configuration(xmlNode *node) {
 		conf_entry->useContainerLogging = false;
 		conf_entry->useContainerNetwork = false;
 		conf_entry->resgroupOid = InvalidOid;
+		conf_entry->useUserControl = false;
+		conf_entry->users = NULL;
 
 
 		for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
@@ -262,6 +265,19 @@ static void parse_runtime_configuration(xmlNode *node) {
 						xmlFree((void *) value);
 						value = NULL;
 					}
+
+					value = xmlGetProp(cur_node, (const xmlChar *) "users");
+					if (value != NULL) {
+						validSetting = true;
+						if (strlen((char *) value) == 0) {
+							plc_elog(ERROR, "SETTING length of element <users> is zero");
+						}
+						conf_entry->users = plc_top_strdup((char *) value);
+						conf_entry->useUserControl = true;
+						xmlFree((void *) value);
+						value = NULL;
+					}
+
 					if (!validSetting) {
 						plc_elog(ERROR, "Unrecognized setting options, please check the configuration file: %s", conf_entry->runtimeid);
 					}
@@ -430,6 +446,9 @@ static void print_runtime_configurations() {
 			plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
 			plc_elog(INFO, "    cpu_share = '%d'", conf_entry->cpuShare);
 			plc_elog(INFO, "    use container logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
+			if (conf_entry->useUserControl){
+				plc_elog(INFO, "    allowed users list  = '%s'", conf_entry->users);
+			}
 			if (conf_entry->resgroupOid != InvalidOid)
 			{
 				plc_elog(INFO, "    resource group id  = '%u'", conf_entry->resgroupOid);
@@ -844,5 +863,36 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			SRF_RETURN_DONE(funcctx);
 		}
 	}
+
+}
+
+bool plc_check_user_privilege(char *users){
+
+	List *elemlist;
+	ListCell *l;
+	Oid currentUserOid;
+
+	if (!SplitIdentifierString(users, ',', &elemlist))
+	{
+		list_free(elemlist);
+		elog(ERROR, "Could not get user list from %s, please check it again", users);
+	}
+
+	currentUserOid = GetUserId();
+
+	if (currentUserOid == InvalidDbid){
+		elog(ERROR, "Could not get current user Oid");
+	}
+
+	foreach(l, elemlist)
+	{
+		char *user = (char*) lfirst(l);
+		Oid userOid = get_role_oid(user, true);
+		if (userOid == currentUserOid){
+			return true;
+		}
+	}
+
+	return false;
 
 }

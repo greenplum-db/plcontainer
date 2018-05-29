@@ -366,7 +366,7 @@ static char *get_uds_fn(char *uds_dir) {
 
 	/* filename: IPC_GPDB_BASE_DIR + "." + PID + "." + DOMAIN_SOCKET_NO  + "." + container_slot / UDS_SHARED_FILE */
 	sz = strlen(uds_dir) + 1 + MAX_SHARED_FILE_SZ + 1;
-	uds_fn = pmalloc(sz);
+	uds_fn = (char*) pmalloc(sz);
 	snprintf(uds_fn, sz, "%s/%s", uds_dir, UDS_SHARED_FILE);
 
 	return uds_fn;
@@ -498,7 +498,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	 * CONTAINER_CONNECT_TIMEOUT_MS is reached. Exponential backoff for
 	 * reconnecting first attempts: 25ms, 50ms, 100ms, 200ms, 200ms, etc.
 	 */
-	mping = palloc(sizeof(plcMsgPing));
+	mping = (plcMsgPing*) palloc(sizeof(plcMsgPing));
 	mping->msgtype = MT_PING;
 	while (sleepms < CONTAINER_CONNECT_TIMEOUT_MS) {
 		int res = 0;
