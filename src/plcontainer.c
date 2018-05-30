@@ -227,11 +227,12 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 
 	PG_TRY();
 	{
+		runtimeConfEntry *runtime_conf_entry = NULL;
 		result = NULL;
+
 		req = plcontainer_create_call(fcinfo, pinfo);
 		runtime_id = parse_container_meta(req->proc.src);
 		
-		runtimeConfEntry *runtime_conf_entry = NULL;
 		runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
 
 		if (runtime_conf_entry == NULL) {
@@ -241,7 +242,6 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		/*
 		 * We need to check the privilege in each run
 		 */
-
 		if (runtime_conf_entry->useUserControl) {
 			if (!plc_check_user_privilege(runtime_conf_entry->roles)){
 				plc_elog(ERROR, "Current user does not have privilege to use runtime %s", runtime_id);

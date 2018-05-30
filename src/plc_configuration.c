@@ -18,6 +18,8 @@
   #include "catalog/pg_type.h"
   #include "access/sysattr.h"
   #include "miscadmin.h"
+
+  #define InvalidDbid 0
 #endif
 #include "utils/builtins.h"
 #include "utils/guc.h"
