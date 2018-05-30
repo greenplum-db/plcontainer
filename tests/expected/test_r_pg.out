@@ -1,0 +1,662 @@
+set datestyle='ISO,MDY';
+select rshouldnotparse();
+ERROR:  PL/Container client exception occurred: 
+ Parse Error
+rshouldnotparse <- function(args) {
+# container: plc_r_shared
+return 'hello'
+}
+select rlog100();
+ rlog100 
+---------
+ 2
+(1 row)
+
+select rbool('t');
+ rbool 
+-------
+ t
+(1 row)
+
+select rbool('f');
+ rbool 
+-------
+ f
+(1 row)
+
+select rint(NULL::int2);
+ rint 
+------
+    0
+(1 row)
+
+select rint(123::int2);
+ rint 
+------
+  124
+(1 row)
+
+select rint(234::int4);
+ rint 
+------
+  236
+(1 row)
+
+select rint(345::int8);
+ rint 
+------
+  348
+(1 row)
+
+select rfloat(3.1415926535897932384626433832::float4);
+ rfloat  
+---------
+ 4.14159
+(1 row)
+
+select rfloat(3.1415926535897932384626433832::float8);
+      rfloat      
+------------------
+ 5.14159265358979
+(1 row)
+
+select rnumeric(3.1415926535897932384626433832::numeric);
+     rnumeric     
+------------------
+ 6.14159265358979
+(1 row)
+
+select rtimestamp('2012-01-02 12:34:56.789012'::timestamp);
+         rtimestamp         
+----------------------------
+ 2012-01-02 13:34:56.789011
+(1 row)
+
+select rtimestamptz('2012-01-02 12:34:56.789012 UTC+4'::timestamptz);
+         rtimestamptz          
+-------------------------------
+ 2012-01-02 08:34:56.789012-08
+(1 row)
+
+select rtext('123');
+ rtext  
+--------
+ 123foo
+(1 row)
+
+select rbyteain(rbyteaout(array[123,1,7]::int[]));
+ rbyteain  
+-----------
+ {123,1,7}
+(1 row)
+
+select rbyteain(rbyteaout(array[123,null,7]::int[]));
+   rbyteain   
+--------------
+ {123,NULL,7}
+(1 row)
+
+select rtest_mia();
+         rtest_mia          
+----------------------------
+ {{1,2,3,4,5},{6,7,8,9,10}}
+(1 row)
+
+select vec('{1.23, 1.32}'::float8[]);
+     vec     
+-------------
+ {2.23,2.32}
+(1 row)
+
+select vec('{1, 5,10, 100, 7}'::int8[]);
+      vec       
+----------------
+ {2,6,11,101,8}
+(1 row)
+
+select vec('{1.23, 1.32}'::float4[]);
+     vec     
+-------------
+ {2.23,2.32}
+(1 row)
+
+select vec('{1, 5,10, 100, 7}'::int4[]);
+      vec       
+----------------
+ {2,6,11,101,8}
+(1 row)
+
+select vec('{1, 5,10, 100, 7}'::numeric[]);
+      vec       
+----------------
+ {2,6,11,101,8}
+(1 row)
+
+select rintarr('{1,2,3,4}'::int2[]);
+ rintarr 
+---------
+      10
+(1 row)
+
+select rintarr('{1,2,3,null}'::int2[]);
+ rintarr 
+---------
+       6
+(1 row)
+
+select rintarr('{null}'::int2[]);
+ rintarr 
+---------
+       0
+(1 row)
+
+select rintarr('{{1,2,3,4},{5,6,7,8}}'::int2[]);
+ rintarr 
+---------
+      36
+(1 row)
+
+select rdimarr('{{1,2,3,4},{5,6,7,8}}'::int2[]);
+ rdimarr 
+---------
+ {2,4}
+(1 row)
+
+select rintarr('{1,2,3,4,5}'::int4[]);
+ rintarr 
+---------
+      15
+(1 row)
+
+select rintarr('{1,2,3,4,null}'::int4[]);
+ rintarr 
+---------
+      10
+(1 row)
+
+select rintarr('{null}'::int4[]);
+ rintarr 
+---------
+       0
+(1 row)
+
+select rintarr('{{1,2,3,4},{5,6,7,8}}'::int4[]);
+ rintarr 
+---------
+      36
+(1 row)
+
+select rdimarr('{{1,2,3,4},{5,6,7,8}}'::int4[]);
+ rdimarr 
+---------
+ {2,4}
+(1 row)
+
+select rintarr('{1,2,3,4,6}'::int8[]);
+ rintarr 
+---------
+      16
+(1 row)
+
+select rintarr('{1,2,3,6,null}'::int8[]);
+ rintarr 
+---------
+      12
+(1 row)
+
+select rintarr('{null}'::int8[]);
+ rintarr 
+---------
+       0
+(1 row)
+
+select rintarr('{{1,2,3,4},{5,6,7,8}}'::int8[]);
+ rintarr 
+---------
+      36
+(1 row)
+
+select rdimarr('{{1,2,3,4},{5,6,7,8}}'::int8[]);
+ rdimarr 
+---------
+ {2,4}
+(1 row)
+
+select rfloatarr('{1.2,2.3,3.4,5.6}'::float8[]);
+ rfloatarr 
+-----------
+      12.5
+(1 row)
+
+select rfloatarr('{1.2,2.3,3.4,null}'::float8[]);
+ rfloatarr 
+-----------
+       6.9
+(1 row)
+
+select rfloatarr('{null}'::float8[]);
+ rfloatarr 
+-----------
+         0
+(1 row)
+
+select rfloatarr('{{1.2,2.3,3.4,5.6,6.7},{1.2,2.3,3.4,5.6,6.7}}'::float8[]);
+ rfloatarr 
+-----------
+      38.4
+(1 row)
+
+select rdimarr('{{1.2,2.3,3.4,5.6,6.7},{1.2,2.3,3.4,5.6,6.7}}'::float8[]);
+ rdimarr 
+---------
+ {2,5}
+(1 row)
+
+select rfloatarr('{1.2,2.3,3.4,5.6,6.7}'::float4[]);
+ rfloatarr 
+-----------
+      19.2
+(1 row)
+
+select rfloatarr('{1.2,2.3,3.4,5.6,null}'::float4[]);
+ rfloatarr 
+-----------
+      12.5
+(1 row)
+
+select rfloatarr('{null}'::float4[]);
+ rfloatarr 
+-----------
+         0
+(1 row)
+
+select rfloatarr('{{1.2,2.3,3.4,5.6,6.7},{1.2,2.3,3.4,5.6,6.7}}'::float4[]);
+ rfloatarr 
+-----------
+      38.4
+(1 row)
+
+select rdimarr('{{1.2,2.3,3.4,5.6,6.7},{1.2,2.3,3.4,5.6,6.7}}'::float4[]);
+ rdimarr 
+---------
+ {2,5}
+(1 row)
+
+select rfloatarr('{1.2,2.3,3.4,5.6,6.7}'::numeric[]);
+ rfloatarr 
+-----------
+      19.2
+(1 row)
+
+select rfloatarr('{1.2,2.3,3.4,5.6,null}'::numeric[]);
+ rfloatarr 
+-----------
+      12.5
+(1 row)
+
+select rfloatarr('{null}'::numeric[]);
+ rfloatarr 
+-----------
+         0
+(1 row)
+
+select rfloatarr('{{1.2,2.3,3.4,5.6,6.7},{1.2,2.3,3.4,5.6,6.7}}'::numeric[]);
+ rfloatarr 
+-----------
+      38.4
+(1 row)
+
+select rdimarr('{{1.2,2.3,3.4,5.6,6.7},{1.2,2.3,3.4,5.6,6.7}}'::numeric[]);
+ rdimarr 
+---------
+ {2,5}
+(1 row)
+
+select rboolarr('{1,1,0}'::bool[]);
+ rboolarr 
+----------
+        2
+(1 row)
+
+select rboolarr('{1,1,0,NULL}'::bool[]);
+ rboolarr 
+----------
+        2
+(1 row)
+
+select rboolarr('{NULL}'::bool[]);
+ rboolarr 
+----------
+        0
+(1 row)
+
+select rboolarr('{{1,1,0},{1,0,0}}'::bool[]);
+ rboolarr 
+----------
+        3
+(1 row)
+
+select rdimarr('{{1,1,0},{1,0,0}}'::bool[]);
+ rdimarr 
+---------
+ {2,3}
+(1 row)
+
+select rtimestamparr($${'2012-01-02 12:34:56.789012','2012-01-03 12:34:56.789012'}$$::timestamp[]);
+                        rtimestamparr                        
+-------------------------------------------------------------
+ {"2012-01-02 13:34:56.789011","2012-01-03 13:34:56.789011"}
+(1 row)
+
+--select rlog100_shared();
+select rpg_spi_exec('select 1');
+ rpg_spi_exec 
+--------------
+ 1
+(1 row)
+
+select rlogging();
+INFO:  this is the info message
+NOTICE:  this is the notice message
+WARNING:  this is the warning message
+ERROR:  this is the error message
+select rlogging2();
+INFO:  this is the info message
+NOTICE:  this is the notice message
+WARNING:  this is the warning message
+ERROR:  this is the error message
+CONTEXT:  SQL statement "select rlogging()"
+\! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
+FATAL:  this is the fatal message
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+connection to server was lost
+select rsetofint4();
+ rsetofint4 
+------------
+          1
+          2
+          3
+          4
+          5
+          6
+          7
+          8
+          9
+         10
+         11
+         12
+         13
+         14
+         15
+(15 rows)
+
+select rsetofint8();
+ rsetofint8 
+------------
+          2
+          3
+          4
+          5
+          6
+          7
+          8
+          9
+         10
+         11
+         12
+         13
+         14
+         15
+         16
+(15 rows)
+
+select rsetofint2();
+ rsetofint2 
+------------
+          3
+          4
+          5
+          6
+          7
+          8
+          9
+         10
+         11
+         12
+         13
+         14
+         15
+         16
+         17
+(15 rows)
+
+select rsetoffloat4();
+ rsetoffloat4 
+--------------
+          2.5
+          3.5
+          4.5
+          5.5
+          6.5
+          7.5
+          8.5
+          9.5
+         10.5
+         11.5
+         12.5
+         13.5
+         14.5
+          2.5
+          3.5
+(15 rows)
+
+select rsetoffloat8();
+ rsetoffloat8 
+--------------
+          4.5
+          5.5
+          6.5
+          7.5
+          8.5
+          9.5
+         10.5
+         11.5
+         12.5
+         13.5
+         14.5
+          4.5
+          5.5
+          6.5
+          7.5
+(15 rows)
+
+select rsetoftext();
+ rsetoftext 
+------------
+ like
+ dislike
+ hate
+ like
+ don't know
+ like
+ dislike
+(7 rows)
+
+select rsetoffloat8array();
+                 rsetoffloat8array                  
+----------------------------------------------------
+ {5.5,6.5,7.5,8.5,9.5,10.5,11.5,12.5,13.5,14.5,3.5}
+ {4.5,5.5,6.5,7.5,8.5,9.5,10.5,11.5,12.5,13.5,14.5}
+(2 rows)
+
+select rsetofint4array();
+         rsetofint4array         
+---------------------------------
+ {5,6,7,8,9,10,11,12,13,14,15,3}
+ {4,5,6,7,8,9,10,11,12,13,14,15}
+(2 rows)
+
+select rsetofint8array();
+         rsetofint8array         
+---------------------------------
+ {5,6,7,8,9,10,11,12,13,14,15,3}
+ {4,5,6,7,8,9,10,11,12,13,14,15}
+(2 rows)
+
+select rsetoftextarray();
+ rsetoftextarray 
+-----------------
+ {like}
+ {dislike}
+ {hate}
+ {like}
+ {"don't know"}
+ {like}
+ {dislike}
+ {seven}
+(8 rows)
+
+select runargs1('foo');
+ runargs1 
+----------
+ foo
+(1 row)
+
+select runargs2(123, 'foo');
+ runargs2 
+----------
+ 123foo
+(1 row)
+
+select runargs3(123, 'foo', 'bar');
+ runargs3  
+-----------
+ 123foobar
+(1 row)
+
+select runargs4(1,null,null,1);
+ runargs4 
+----------
+        4
+(1 row)
+
+select rnested_call_three('foo');
+ rnested_call_three 
+--------------------
+ foo
+(1 row)
+
+select rnested_call_two('foobar');
+ rnested_call_two 
+------------------
+ foobar
+(1 row)
+
+select rnested_call_one('foo1');
+ rnested_call_one 
+------------------
+ foo1
+(1 row)
+
+select rtestudt1( ('t', 1, 2, 3, 4, 5, 6, 'foobar')::test_type );
+ rtestudt1 
+-----------
+        10
+(1 row)
+
+select rtestudt2( (
+        array[true,false,true]::bool[],
+        array[1,2,3]::smallint[],
+        array[2,3,4]::int[],
+        array[3,4,5]::int8[],
+        array[4.5,5.5,6.5]::float4[],
+        array[5.5,6.5,7.5]::float8[],
+        array[6.5,7.5,8.5]::numeric[],
+        array['a','b','c']::varchar[])::test_type2 );
+ rtestudt2 
+-----------
+        10
+(1 row)
+
+select rtestudt6a();
+     rtestudt6a      
+---------------------
+ (t,1,2,3,4,4,6,foo)
+(1 row)
+
+select rtestudt6b();
+      rtestudt6b      
+----------------------
+ (t,1,5,8,1,4,7,foo)
+ (f,2,6,9,2,5,8,bar)
+ (t,3,7,10,3,6,9,zzz)
+(3 rows)
+
+select rtestudt8();
+ rtestudt8 
+-----------
+ (1,2,foo)
+ (3,4,bar)
+(2 rows)
+
+select rtestudt11();
+        rtestudt11         
+---------------------------
+ (1,"{2,22}","{foo,foo2}")
+ (3,"{4,44}","{bar,bar2}")
+(2 rows)
+
+select * from rtestudt13( (1,2,'a')::test_type3 );
+ a | b | c 
+---+---+---
+ 1 | 2 | a
+(1 row)
+
+--select paster('{hello, happy}','{world, birthday}',' ');
+--select rtest_spi_tup('select fname, lname,username from users order by 1,2,3');
+-- This function is of "return setof record" type which is not supported yet
+-- select rtest_spi_ta('select oid, typname from pg_type where typname = ''oid'' or typname = ''text''');
+select rvectornull_bool();
+                  rvectornull_bool                   
+-----------------------------------------------------
+ {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+(1 row)
+
+select rvectornull_int2();
+                  rvectornull_int2                   
+-----------------------------------------------------
+ {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+(1 row)
+
+select rvectornull_int4();
+                  rvectornull_int4                   
+-----------------------------------------------------
+ {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+(1 row)
+
+select rvectornull_int8();
+                  rvectornull_int8                   
+-----------------------------------------------------
+ {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+(1 row)
+
+select rvectornull_float4();
+                 rvectornull_float4                  
+-----------------------------------------------------
+ {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+(1 row)
+
+select rvectornull_float8();
+                 rvectornull_float8                  
+-----------------------------------------------------
+ {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+(1 row)
+
+select rvectornull_numeric();
+                 rvectornull_numeric                 
+-----------------------------------------------------
+ {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+(1 row)
+

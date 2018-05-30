@@ -1,0 +1,116 @@
+CREATE OR REPLACE FUNCTION runtime_id_cr() RETURNS int8 AS $$
+# container:
+plc_python_shared
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_no_name() RETURNS int8 AS $$
+# container:
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_no_hash() RETURNS int8 AS $$
+container:
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_lots_space() RETURNS int8 AS $$
+	  # container 	:  	 plc_python_shared  
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_too_long() RETURNS int8 AS $$
+          #container: plc_python_shared_toooooooooooooooooooooooooooooooooooooooooooooooooooooooo_long
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_blank_line() RETURNS int8 AS $$
+
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_wrong_start() RETURNS int8 AS $$
+# extra_container: plc_python_shared
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_extra_char() RETURNS int8 AS $$
+# container_extra: plc_python_shared
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_space_inner() RETURNS int8 AS $$
+# container: plc_python_  shared
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_space_in_container() RETURNS int8 AS $$
+# cont  ainer: plc_python_shared
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_wrong_char() RETURNS int8 AS $$
+# container: plc_#python#_shared
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_no_id() RETURNS int8 AS $$
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_no_colon() RETURNS int8 AS $$
+# container plc_python_shared
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_no_space() RETURNS int8 AS $$
+#container:plc_python_shared
+return 1
+$$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_no_cr() RETURNS int8 AS $$
+#container:plc_python_shared $$ LANGUAGE plcontainer;
+CREATE OR REPLACE FUNCTION runtime_id_blank() RETURNS int8 AS $$
+#container:  	$$ LANGUAGE plcontainer;
+SELECT runtime_id_cr();
+ERROR:  plcontainer: Runtime id cannot be empty
+SELECT runtime_id_no_name();
+ERROR:  plcontainer: Runtime id cannot be empty
+SELECT runtime_id_no_hash();
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No '#' is found): 1 21 99
+SELECT runtime_id_lots_space();
+ runtime_id_lots_space 
+-----------------------
+                     1
+(1 row)
+
+SELECT runtime_id_too_long();
+ERROR:  plcontainer: Runtime id should not be longer than 63 bytes.
+SELECT runtime_id_blank_line();
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No '#' is found): 2 11 114
+SELECT runtime_id_wrong_start();
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (Not 'container'): 3 47 101
+SELECT runtime_id_extra_char();
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No ':' is found after 'container'): 12 47 95
+SELECT runtime_id_space_inner();
+ERROR:  plcontainer: Container id 'plc_python_  shared' contains illegal character for container.
+SELECT runtime_id_space_in_container();
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (Not 'container'): 3 43 99
+SELECT runtime_id_wrong_char();
+ERROR:  plcontainer: Container id 'plc_#python#_shared' contains illegal character for container.
+SELECT runtime_id_no_id();
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No '#' is found): 1 10 114
+SELECT runtime_id_no_colon();
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (No ':' is found after 'container'): 13 40 112
+SELECT runtime_id_no_space();
+ runtime_id_no_space 
+---------------------
+                   1
+(1 row)
+
+SELECT runtime_id_no_cr();
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (no carriage return in code)
+SELECT runtime_id_blank();
+ERROR:  plcontainer: Runtime declaration format should be '#container: runtime_id': (runtime id is empty)
+DROP FUNCTION runtime_id_cr();
+DROP FUNCTION runtime_id_no_name();
+DROP FUNCTION runtime_id_no_hash();
+DROP FUNCTION runtime_id_lots_space();
+DROP FUNCTION runtime_id_too_long();
+DROP FUNCTION runtime_id_blank_line();
+DROP FUNCTION runtime_id_wrong_start();
+DROP FUNCTION runtime_id_extra_char();
+DROP FUNCTION runtime_id_space_inner();
+DROP FUNCTION runtime_id_space_in_container();
+DROP FUNCTION runtime_id_wrong_char();
+DROP FUNCTION runtime_id_no_id();
+DROP FUNCTION runtime_id_no_colon();
+DROP FUNCTION runtime_id_no_space();
+DROP FUNCTION runtime_id_no_cr();
+DROP FUNCTION runtime_id_blank();

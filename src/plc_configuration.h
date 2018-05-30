@@ -45,6 +45,7 @@ typedef struct runtimeConfEntry {
 	char runtimeid[RUNTIME_ID_MAX_LENGTH];
 	char *image;
 	char *command;
+	char *roles;
 	Oid resgroupOid;
 	int memoryMb;
 	int cpuShare;
@@ -52,6 +53,7 @@ typedef struct runtimeConfEntry {
 	plcSharedDir *sharedDirs;
 	bool useContainerNetwork;
 	bool useContainerLogging;
+	bool useUserControl;
 } runtimeConfEntry;
 
 /* entrypoint for all plcontainer procedures */
@@ -62,6 +64,8 @@ Datum show_plcontainer_config(PG_FUNCTION_ARGS);
 Datum containers_summary(PG_FUNCTION_ARGS);
 
 runtimeConfEntry *plc_get_runtime_configuration(char *id);
+
+bool plc_check_user_privilege(char *users);
 
 char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_error, char **uds_dir);
 

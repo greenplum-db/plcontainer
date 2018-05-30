@@ -1,0 +1,98 @@
+-- Test trigger (not supported at this moment).
+CREATE TABLE trigger_tbl (a int);
+CREATE OR REPLACE FUNCTION test_trigger_func() RETURNS TRIGGER AS $$
+# container: plc_python_shared
+plpy.notice("trigger not supported");
+$$ LANGUAGE plcontainer;
+CREATE TRIGGER test_trigger AFTER INSERT ON trigger_tbl FOR EACH ROW EXECUTE PROCEDURE test_trigger_func();
+INSERT INTO trigger_tbl values(0);
+ERROR:  plcontainer: PL/Container does not support triggers
+DROP TRIGGER test_trigger on trigger_tbl;
+DROP TABLE trigger_tbl;
+--  Test <defunct> processes are reaped after a new backend is created.
+select pykillself();
+ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later.
+SELECT pg_sleep(5);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+-- Wait for 5 seconds so that cleanup processes exit.
+\!ps -ef |grep [p]ostgres|grep defunct |wc -l
+invalid command \!ps
+-- Then start the backend so that those <defunct> processes could be reaped.
+select pyzero();
+ pyzero 
+--------
+      0
+(1 row)
+
+\!ps -ef |grep [p]ostgres|grep defunct |wc -l
+invalid command \!ps
+-- Test function ok immediately after container is kill-9-ed.
+select pykillself();
+ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later.
+select pyzero();
+ pyzero 
+--------
+      0
+(1 row)
+
+select rkillself();
+ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later.
+select rint(0);
+ rint 
+------
+    2
+(1 row)
+
+-- Test function ok immediately after container captures signal sigsegv.
+select pysegvself();
+ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later.
+select pyzero();
+ pyzero 
+--------
+      0
+(1 row)
+
+select rsegvself();
+ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later.
+select rint(0);
+ rint 
+------
+    2
+(1 row)
+
+-- Test function ok immediately after container exits.
+select pyexit();
+ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later.
+select pyzero();
+ pyzero 
+--------
+      0
+(1 row)
+
+select rexit();
+ERROR:  plcontainer: Error receiving data from the client: -1. Maybe retry later.
+select rint(0);
+ rint 
+------
+    2
+(1 row)
+
+--  Test shared path write permission for unix domain socket connection.
+select py_shared_path_perm();
+ERROR:  PL/Container client exception occurred: 
+ Exception occurred in Python during function execution 
+ Traceback (most recent call last):
+  File "<string>", line 5, in py_shared_path_perm
+OSError: [Errno 13] Permission denied: '/tmp/plcontainer/test_file'
+
+select r_shared_path_perm();
+ r_shared_path_perm 
+--------------------
+ {f}
+ {t}
+(2 rows)
+

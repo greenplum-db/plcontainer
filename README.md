@@ -10,7 +10,7 @@ The architecture of PL/Container is described at [PL/Container-Architecture](htt
 
 1. PL/Container runs on CentOS/RHEL 7.x or CentOS/RHEL 6.6+
 1. PL/Container requires Docker version 17.05 for CentOS/RHEL 7.x and Docker version 1.7 CentOS/RHEL 6.6+
-1. GPDB version should be 5.2.0 or later
+1. GPDB version should be 5.2.0 or later.    [ For PostgreSQL ](README_PG.md)
 
 ### Building PL/Container
 

@@ -11,7 +11,9 @@
 #include "storage/ipc.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-#include "utils/faultinjector.h"
+#ifndef PLC_PG
+  #include "utils/faultinjector.h"
+#endif
 #include "utils/memutils.h"
 #include "utils/guc.h"
 /* PLContainer Headers */
@@ -28,6 +30,10 @@
 #ifdef PG_MODULE_MAGIC
 
 PG_MODULE_MAGIC;
+#endif
+
+#ifdef PLC_PG
+    volatile bool QueryFinishPending = false;     //todo
 #endif
 
 PG_FUNCTION_INFO_V1(plcontainer_call_handler);
@@ -195,8 +201,9 @@ static Datum plcontainer_call_hook(PG_FUNCTION_ARGS) {
 		free_result(presult->resmsg, false);
 		pfree(presult);
 	}
+#ifndef PLC_PG	
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_udf_finish");
-
+#endif
 	return result;
 }
 
@@ -214,20 +221,32 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		result = NULL;
 		req = plcontainer_create_call(fcinfo, pinfo);
 		runtime_id = parse_container_meta(req->proc.src);
-		conn = get_container_conn(runtime_id);
-		if (conn == NULL) {
-			runtimeConfEntry *runtime_conf_entry = NULL;
-			runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
-			if (runtime_conf_entry == NULL) {
-				plc_elog(ERROR, "Runtime '%s' is not defined in configuration "
-							"and cannot be used", runtime_id);
-			} else {
-				/* TODO: We could only remove this backend when error occurs. */
-				DeleteBackendsWhenError = true;
-				conn = start_backend(runtime_conf_entry);
-				DeleteBackendsWhenError = false;
+		
+		runtimeConfEntry *runtime_conf_entry = NULL;
+		runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
+
+		if (runtime_conf_entry == NULL) {
+			plc_elog(ERROR, "Runtime '%s' is not defined in configuration "
+						"and cannot be used", runtime_id);
+		} 
+		/*
+		 * We need to check the privilege in each run
+		 */
+
+		if (runtime_conf_entry->useUserControl) {
+			if (!plc_check_user_privilege(runtime_conf_entry->roles)){
+				plc_elog(ERROR, "Current user does not have privilege to use runtime %s", runtime_id);
 			}
 		}
+
+		conn = get_container_conn(runtime_id);
+		if (conn == NULL) {
+			/* TODO: We could only remove this backend when error occurs. */
+			DeleteBackendsWhenError = true;
+			conn = start_backend(runtime_conf_entry);
+			DeleteBackendsWhenError = false;
+		}
+
 		pfree(runtime_id);
 
 		DeleteBackendsWhenError = true;
@@ -235,7 +254,9 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 			int res;
 
 			res = plcontainer_channel_send(conn, (plcMessage *) req);
+#ifndef PLC_PG				
 			SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_send_request");
+#endif
 
 			if (res < 0) {
 				plc_elog(ERROR, "Error sending data to the client. "
@@ -248,7 +269,9 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 				plcMessage *answer;
 
 				res = plcontainer_channel_receive(conn, &answer, MT_ALL_BITS);
+#ifndef PLC_PG					
 				SIMPLE_FAULT_NAME_INJECTOR("plcontainer_after_recv_request");
+#endif				
 				if (res < 0) {
 					plc_elog(ERROR, "Error receiving data from the client. "
 								"Maybe retry later.");

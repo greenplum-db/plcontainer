@@ -25,6 +25,11 @@
 #include "common/comm_utils.h"
 #include "message_fns.h"
 
+#ifdef PLC_PG
+  #include "catalog/pg_type.h"
+  #include "access/htup_details.h"
+#endif
+
 static void fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type,
                                  bool isArrayElement, bool isUDTElement);
 

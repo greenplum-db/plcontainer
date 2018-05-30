@@ -14,14 +14,20 @@
 #include <time.h>
 #include <libgen.h>
 #include <sys/wait.h>
-
 #include "postgres.h"
 #include "miscadmin.h"
-#include "cdb/cdbvars.h"
+#include "utils/guc.h"
+#ifndef PLC_PG
+  #include "cdb/cdbvars.h"
+  #include "utils/faultinjector.h"
+#else
+  #include "catalog/pg_type.h"
+  #include "miscadmin.h"
+  #include "utils/guc.h"
+  #include<stdarg.h>  
+#endif
 #include "storage/ipc.h"
 #include "libpq/pqsignal.h"
-#include "utils/faultinjector.h"
-#include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "common/comm_utils.h"
 #include "common/comm_channel.h"
@@ -29,8 +35,9 @@
 #include "common/messages/messages.h"
 #include "plc_configuration.h"
 #include "containers.h"
-
 #include "plc_backend_api.h"
+
+
 
 typedef struct {
 	char *runtimeid;
@@ -49,6 +56,10 @@ static char *uds_fn_for_cleanup;
 static void init_containers();
 
 static int check_runtime_id(const char *id);
+
+#ifdef PLC_PG
+#define write_log printf
+#endif
 
 #ifndef CONTAINER_DEBUG
 
@@ -174,7 +185,11 @@ static void cleanup(char *dockerid, char *uds_fn) {
 #ifdef HAVE_ATEXIT
 		atexit(cleanup_atexit_callback);
 #else
-		on_exit(cleanup_atexit_callback, NUL);
+   #ifdef PLC_PG
+        on_exit(cleanup_atexit_callback, NULL);   
+   #else
+   		on_exit(cleanup_atexit_callback, NUL);   /* todo: confirm Use ‘NULL' directly ? */
+   #endif
 #endif
 
 		pqsignal(SIGHUP, SIG_IGN);
@@ -332,8 +347,9 @@ plcConn *get_container_conn(const char *runtime_id) {
 		init_containers();
 	}
 
+#ifndef PLC_PG
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_connected");
-
+#endif
 	for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
 		if (containers[i].runtimeid != NULL &&
 		    strcmp(containers[i].runtimeid, runtime_id) == 0) {
@@ -350,7 +366,7 @@ static char *get_uds_fn(char *uds_dir) {
 
 	/* filename: IPC_GPDB_BASE_DIR + "." + PID + "." + DOMAIN_SOCKET_NO  + "." + container_slot / UDS_SHARED_FILE */
 	sz = strlen(uds_dir) + 1 + MAX_SHARED_FILE_SZ + 1;
-	uds_fn = pmalloc(sz);
+	uds_fn = (char*) pmalloc(sz);
 	snprintf(uds_fn, sz, "%s/%s", uds_dir, UDS_SHARED_FILE);
 
 	return uds_fn;
@@ -474,14 +490,15 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	/* Create a process to clean up the container after it finishes */
 	cleanup(dockerid, uds_fn);
 
+#ifndef PLC_PG
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_started");
-
+#endif
 	/*
 	 * Making a series of connection attempts unless connection timeout of
 	 * CONTAINER_CONNECT_TIMEOUT_MS is reached. Exponential backoff for
 	 * reconnecting first attempts: 25ms, 50ms, 100ms, 200ms, 200ms, etc.
 	 */
-	mping = palloc(sizeof(plcMsgPing));
+	mping = (plcMsgPing*) palloc(sizeof(plcMsgPing));
 	mping->msgtype = MT_PING;
 	while (sleepms < CONTAINER_CONNECT_TIMEOUT_MS) {
 		int res = 0;
@@ -504,7 +521,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 					pfree(mresp);
 				if (res == 0) {
 					break;
-				} else {
+				} else {			
 					plc_elog(DEBUG1, "Failed to receive pong from client. Maybe expected. dockerid: %s", dockerid);
 					plcDisconnect(conn);
 				}

@@ -14,7 +14,9 @@
 #include "common/comm_utils.h"
 #include "plc_docker_api.h"
 #include "plc_backend_api.h"
-#include "cdb/cdbvars.h"
+#ifndef PLC_PG
+  #include "cdb/cdbvars.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -241,6 +243,12 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"}\n";
 	bool has_error;
 	char *volumeShare = get_sharing_options(conf, container_id, &has_error, uds_dir);
+
+	int16 dbid = 0;
+#ifndef PLC_PG
+	dbid = GpIdentity.dbid;
+#endif
+
 	/*
 	 *  no shared volumes should not be treated as an error, so we use has_error to
 	 *  identifier whether there is an error when parse sharing options.
@@ -252,7 +260,11 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	plcCurlBuffer *response = NULL;
 	int res = 0;
 	int createStringSize = 0;
+#ifdef PLC_PG
+	const char *username = GetUserNameFromId(GetUserId(),false);
+#else	
 	const char *username = GetUserNameFromId(GetUserId());
+#endif	
 	const char *dbname = MyProcPort->database_name;
 	struct passwd *pwd;
 
@@ -308,7 +320,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			 ((long long) conf->cpuShare),
 	         conf->useContainerLogging ? default_log_dirver : "none",
 	         username,
-	         GpIdentity.dbid);
+	         dbid);
 
 	/* Make a call */
 	response = plcCurlRESTAPICall(PLC_HTTP_POST, "/containers/create", messageBody);
@@ -486,10 +498,13 @@ int plc_docker_list_container(char **result) {
 	char *method = "/containers/json?all=1&label=\"dbid=%d\"";
 	char *url = NULL;
 	int res = 0;
-
 	url = (char *) palloc((strlen(method) + 12) * sizeof(char));
-	sprintf(url, method, GpIdentity.dbid);
+	int16 dbid = 0;
+#ifndef PLC_PG
+	dbid = GpIdentity.dbid;
+#endif			 
 
+	sprintf(url, method, dbid); 
 	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, NULL);
 	res = response->status;
 
@@ -497,7 +512,7 @@ int plc_docker_list_container(char **result) {
 		res = 0;
 	} else if (res >= 0) {
 		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to list containers, return code: %d, detail: %s, dbid is %d", res, response->data, GpIdentity.dbid);
+		         "Failed to list containers, return code: %d, detail: %s, dbid is %d", res, response->data, dbid);
 		res = -1;
 	}
 	*result = pstrdup(response->data);

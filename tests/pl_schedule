@@ -32,6 +32,7 @@ test: oom_test_python_killed oom_test_python_killed_1 oom_test_python_normal oom
 
 # Miscellaneous test
 test: misc
+test: user_control
 
 # PL/Container parallel test (io & cpu)
 test: parallel_prepare
