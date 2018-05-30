@@ -166,7 +166,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 		conf_entry->useContainerNetwork = false;
 		conf_entry->resgroupOid = InvalidOid;
 		conf_entry->useUserControl = false;
-		conf_entry->users = NULL;
+		conf_entry->roles = NULL;
 
 
 		for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
@@ -266,13 +266,13 @@ static void parse_runtime_configuration(xmlNode *node) {
 						value = NULL;
 					}
 
-					value = xmlGetProp(cur_node, (const xmlChar *) "users");
+					value = xmlGetProp(cur_node, (const xmlChar *) "roles");
 					if (value != NULL) {
 						validSetting = true;
 						if (strlen((char *) value) == 0) {
-							plc_elog(ERROR, "SETTING length of element <users> is zero");
+							plc_elog(ERROR, "SETTING length of element <roles> is zero");
 						}
-						conf_entry->users = plc_top_strdup((char *) value);
+						conf_entry->roles = plc_top_strdup((char *) value);
 						conf_entry->useUserControl = true;
 						xmlFree((void *) value);
 						value = NULL;
@@ -447,7 +447,7 @@ static void print_runtime_configurations() {
 			plc_elog(INFO, "    cpu_share = '%d'", conf_entry->cpuShare);
 			plc_elog(INFO, "    use container logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
 			if (conf_entry->useUserControl){
-				plc_elog(INFO, "    allowed users list  = '%s'", conf_entry->users);
+				plc_elog(INFO, "    allowed roles list  = '%s'", conf_entry->roles);
 			}
 			if (conf_entry->resgroupOid != InvalidOid)
 			{
@@ -866,16 +866,16 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 
 }
 
-bool plc_check_user_privilege(char *users){
+bool plc_check_user_privilege(char *roles){
 
 	List *elemlist;
 	ListCell *l;
 	Oid currentUserOid;
 
-	if (!SplitIdentifierString(users, ',', &elemlist))
+	if (!SplitIdentifierString(roles, ',', &elemlist))
 	{
 		list_free(elemlist);
-		elog(ERROR, "Could not get user list from %s, please check it again", users);
+		elog(ERROR, "Could not get role list from %s, please check it again", roles);
 	}
 
 	currentUserOid = GetUserId();
@@ -886,9 +886,9 @@ bool plc_check_user_privilege(char *users){
 
 	foreach(l, elemlist)
 	{
-		char *user = (char*) lfirst(l);
-		Oid userOid = get_role_oid(user, true);
-		if (userOid == currentUserOid){
+		char *role = (char*) lfirst(l);
+		Oid roleOid = get_role_oid(role, true);
+		if (is_member_of_role(currentUserOid, roleOid)){
 			return true;
 		}
 	}

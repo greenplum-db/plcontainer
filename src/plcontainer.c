@@ -234,7 +234,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		 */
 
 		if (runtime_conf_entry->useUserControl) {
-			if (!plc_check_user_privilege(runtime_conf_entry->users)){
+			if (!plc_check_user_privilege(runtime_conf_entry->roles)){
 				plc_elog(ERROR, "Current user does not have privilege to use runtime %s", runtime_id);
 			}
 		}

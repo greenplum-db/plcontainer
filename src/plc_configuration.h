@@ -45,7 +45,7 @@ typedef struct runtimeConfEntry {
 	char runtimeid[RUNTIME_ID_MAX_LENGTH];
 	char *image;
 	char *command;
-	char *users;
+	char *roles;
 	Oid resgroupOid;
 	int memoryMb;
 	int cpuShare;
