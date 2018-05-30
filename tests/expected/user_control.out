@@ -1,0 +1,117 @@
+CREATE OR REPLACE FUNCTION pylog100() RETURNS double precision AS $$
+# container: plc_python_user
+import math
+return math.log10(100)
+$$ LANGUAGE plcontainer;
+-- start_ignore
+\! plcontainer runtime-add -r plc_python_user -i pivotaldata/plcontainer_python_shared:devel -l python -s use_container_logging=yes -s roles=gpadmin;
+20180529:23:14:55:003322 plcontainer:localhost:gpadmin-[ERROR]:-runtime configuration exists for plc_python_user. You might want the runtime-replace command?
+20180529:23:14:55:003322 plcontainer:localhost:gpadmin-[ERROR]:-Update XML file Error
+20180529:23:14:55:003322 plcontainer:localhost:gpadmin-[ERROR]:-runtime configuration exists
+20180529:23:14:55:003322 plcontainer:localhost:gpadmin-[CRITICAL]:-plcontainer failed. (Reason='Update XML file Error') exiting...
+SELECT plcontainer_refresh_local_config(false);
+ plcontainer_refresh_local_config 
+----------------------------------
+ ok
+(1 row)
+
+-- end_ignore
+-- should success
+SELECT pylog100();
+ pylog100 
+----------
+        2
+(1 row)
+
+-- start_ignore
+\! plcontainer runtime-replace -r plc_python_user -i pivotaldata/plcontainer_python_shared:devel -l python -s use_container_logging=yes -s roles=plc1;
+20180529:23:14:56:003419 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20180529:23:14:57:003419 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+SELECT plcontainer_refresh_local_config(false);
+ plcontainer_refresh_local_config 
+----------------------------------
+ ok
+(1 row)
+
+-- end_ignore
+-- should success, as gpadmin is admin
+SELECT pylog100();
+ pylog100 
+----------
+        2
+(1 row)
+
+-- start_ignore
+\! plcontainer runtime-replace -r plc_python_user -i pivotaldata/plcontainer_python_shared:devel -l python -s use_container_logging=yes -s roles=plc1,gpadmin;
+20180529:23:14:57:003571 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20180529:23:14:58:003571 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+SELECT plcontainer_refresh_local_config(false);
+ plcontainer_refresh_local_config 
+----------------------------------
+ ok
+(1 row)
+
+-- end_ignore
+-- should success
+SELECT pylog100();
+ pylog100 
+----------
+        2
+(1 row)
+
+-- start_ignore
+\! plcontainer runtime-replace -r plc_python_user -i pivotaldata/plcontainer_python_shared:devel -l python -s use_container_logging=yes -s roles=plc1;
+20180529:23:14:58:003757 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20180529:23:14:59:003757 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+SELECT plcontainer_refresh_local_config(false);
+ plcontainer_refresh_local_config 
+----------------------------------
+ ok
+(1 row)
+
+-- end_ignore
+-- start_ignore
+DROP ROLE plc1;
+DROP ROLE plc2;
+ERROR:  role "plc2" does not exist
+-- end_ignore
+CREATE ROLE plc1;
+NOTICE:  resource queue required -- using default resource queue "pg_default"
+CREATE ROLE plc2;
+NOTICE:  resource queue required -- using default resource queue "pg_default"
+SET ROLE plc1;
+-- should success
+SELECT pylog100();
+ pylog100 
+----------
+        2
+(1 row)
+
+SET ROLE plc2;
+-- should fail
+SELECT pylog100();
+ERROR:  plcontainer: Current user does not have privilege to use runtime plc_python_user (plcontainer.c:238)
+SET ROLE gpadmin;
+-- start_ignore
+\! plcontainer runtime-replace -r plc_python_user -i pivotaldata/plcontainer_python_shared:devel -l python -s use_container_logging=yes -s roles=gpadmin;
+20180529:23:14:59:003978 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20180529:23:15:00:003978 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+SELECT plcontainer_refresh_local_config(false);
+ plcontainer_refresh_local_config 
+----------------------------------
+ ok
+(1 row)
+
+-- end_ignore
+SET ROLE plc1;
+-- should fail
+SELECT pylog100();
+ERROR:  plcontainer: Current user does not have privilege to use runtime plc_python_user (plcontainer.c:238)
+SET ROLE gpadmin;
+-- should success
+SELECT pylog100();
+ pylog100 
+----------
+        2
+(1 row)
+
