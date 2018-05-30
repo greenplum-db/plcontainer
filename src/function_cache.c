@@ -6,7 +6,15 @@
  *------------------------------------------------------------------------------
  */
 
+#ifdef PLC_PG
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include "function_cache.h"
+#ifdef PLC_PG
+#pragma GCC diagnostic pop
+#endif
+
 #include "message_fns.h"
 
 static plcProcInfo *plcFunctionCache[PLC_FUNCTION_CACHE_SIZE];

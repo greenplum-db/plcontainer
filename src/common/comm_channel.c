@@ -390,8 +390,9 @@ static int send_udt(plcConn *conn, plcType *type, plcUDT *udt) {
 }
 
 static int receive_message_type(plcConn *conn, char *c) {
+	int res;
 	*c = '@';
-	int res = plcBufferReceive(conn, 1);
+	res = plcBufferReceive(conn, 1);
 	if (res == 0)
 		res = plcBufferRead(conn, c, 1);
 	return res;

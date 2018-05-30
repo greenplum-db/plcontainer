@@ -22,9 +22,16 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "libpq/libpq-be.h"
-#include "funcapi.h"
 #include "utils/acl.h"
 
+#ifdef PLC_PG
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+#include "funcapi.h"
+#ifdef PLC_PG
+#pragma GCC diagnostic pop
+#endif
 #include "common/comm_utils.h"
 #include "common/comm_connectivity.h"
 #include "plcontainer.h"
@@ -56,6 +63,8 @@ static HTAB *rumtime_conf_table;
  * init runtime conf hash table.
  */
 static void init_runtime_configurations() {
+    /* create the runtime conf hash table*/
+	HASHCTL		hash_ctl;
 
 	/* destroy hash table first if exists*/
 	if (rumtime_conf_table != NULL) {
@@ -70,9 +79,7 @@ static void init_runtime_configurations() {
 		}
 		hash_destroy(rumtime_conf_table);
 	}
-	/* create the runtime conf hash table*/
-	HASHCTL		hash_ctl;
-
+	
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = RUNTIME_ID_MAX_LENGTH;
 	hash_ctl.entrysize = sizeof(runtimeConfEntry);
@@ -219,8 +226,9 @@ static void parse_runtime_configuration(xmlNode *node) {
 					}
 					value = xmlGetProp(cur_node, (const xmlChar *) "memory_mb");
 					if (value != NULL) {
-						validSetting = true;
 						long memorySize = pg_atoi((char *) value, sizeof(int), 0);
+						validSetting = true;
+						
 						if (memorySize <= 0) {
 							plc_elog(ERROR, "container memory size couldn't be equal or less than 0, current string is %s", value);
 						} else {
@@ -231,8 +239,9 @@ static void parse_runtime_configuration(xmlNode *node) {
 					}
 					value = xmlGetProp(cur_node, (const xmlChar *) "cpu_share");
 					if (value != NULL) {
-						validSetting = true;
 						long cpuShare = pg_atoi((char *) value, sizeof(int), 0);
+						validSetting = true;
+						
 						if (cpuShare <= 0) {
 							plc_elog(ERROR, "container cpu share couldn't be equal or less than 0, current string is %s", value);
 						} else {
@@ -247,11 +256,12 @@ static void parse_runtime_configuration(xmlNode *node) {
 					conf_entry->useContainerNetwork = false;
 					value = xmlGetProp(cur_node, (const xmlChar *) "resource_group_id");
 					if (value != NULL) {
+						Oid resgroupOid;
 						validSetting = true;
 						if (strlen((char *) value) == 0) {
 							plc_elog(ERROR, "SETTING length of element <resource_group_id> is zero");
 						}
-						Oid resgroupOid = (Oid) pg_atoi((char *) value, sizeof(int), 0);
+						resgroupOid = (Oid) pg_atoi((char *) value, sizeof(int), 0);
 #ifndef	PLC_PG							
 						if (resgroupOid == InvalidOid || GetResGroupNameForId(resgroupOid) == NULL) {
 							plc_elog(ERROR, "SETTING element <resource_group_id> must be a resource group id in greenplum. " "Current setting is: %s", (char * ) value);
@@ -628,11 +638,12 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 		}
 
 		if (!conf->useContainerNetwork) {
-			if (i > 0)
-				comma = ',';
 			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
 			int gpdb_dir_sz;
 
+			if (i > 0)
+				comma = ',';
+			
 			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 16 + 1 + 4 + 1;
 			*uds_dir = pmalloc(gpdb_dir_sz);
 			sprintf(*uds_dir, "%s.%d.%d.%d", IPC_GPDB_BASE_DIR, getpid(), domain_socket_no++, container_slot);
@@ -766,6 +777,19 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			struct json_object *containerStateObj = NULL;
 			int64 containerMemoryUsage = 0;
 
+			struct json_object *statusObj = NULL;
+			const char *statusStr;
+            struct json_object *labelObj = NULL;
+			struct json_object *ownerObj = NULL;
+			const char *ownerStr;
+			const char *username;
+			struct json_object *dbidObj = NULL;
+			const char *dbidStr;
+			struct json_object *idObj = NULL;
+			const char *idStr;
+			struct json_object *memoryObj = NULL;
+			struct json_object *memoryUsageObj = NULL;
+			
 			/*
 			 * Process json object by its key, and then get value
 			 */
@@ -775,27 +799,24 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				plc_elog(ERROR, "Not a valid container.");
 			}
 
-			struct json_object *statusObj = NULL;
 			if (!json_object_object_get_ex(containerObj, "Status", &statusObj)) {
 				plc_elog(ERROR, "failed to get json \"Status\" field.");
 			}
-			const char *statusStr = json_object_get_string(statusObj);
-			struct json_object *labelObj = NULL;
+			statusStr = json_object_get_string(statusObj);
 			if (!json_object_object_get_ex(containerObj, "Labels", &labelObj)) {
 				plc_elog(ERROR, "failed to get json \"Labels\" field.");
 			}
-			struct json_object *ownerObj = NULL;
 			if (!json_object_object_get_ex(labelObj, "owner", &ownerObj)) {
 				funcctx->call_cntr++;
 				call_cntr++;
 				plc_elog(LOG, "failed to get json \"owner\" field. Maybe this container is not started by PL/Container");
 				continue;
 			}
-			const char *ownerStr = json_object_get_string(ownerObj);
+			ownerStr = json_object_get_string(ownerObj);
 #ifdef PLC_PG
-			const char *username = GetUserNameFromId(GetUserId(), false);
+			username = GetUserNameFromId(GetUserId(), false);
 #else			
-			const char *username = GetUserNameFromId(GetUserId());
+			username = GetUserNameFromId(GetUserId());
 #endif
 			if (strcmp(ownerStr, username) != 0 && superuser() == false) {
 				funcctx->call_cntr++;
@@ -805,19 +826,19 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				continue;
 			}
 
-			struct json_object *dbidObj = NULL;
+			
 			if (!json_object_object_get_ex(labelObj, "dbid", &dbidObj)) {
 				funcctx->call_cntr++;
 				call_cntr++;
 				plc_elog(LOG, "failed to get json \"dbid\" field. Maybe this container is not started by PL/Container");
 				continue;
 			}
-			const char *dbidStr = json_object_get_string(dbidObj);
-			struct json_object *idObj = NULL;
+			dbidStr = json_object_get_string(dbidObj);
+			
 			if (!json_object_object_get_ex(containerObj, "Id", &idObj)) {
 				plc_elog(ERROR, "failed to get json \"Id\" field.");
 			}
-			const char *idStr = json_object_get_string(idObj);
+			idStr = json_object_get_string(idObj);
 
 			res = plc_docker_get_container_state(idStr, &containerState);
 			if (res < 0) {
@@ -825,11 +846,9 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			}
 
 			containerStateObj = json_tokener_parse(containerState);
-			struct json_object *memoryObj = NULL;
 			if (!json_object_object_get_ex(containerStateObj, "memory_stats", &memoryObj)) {
 				plc_elog(ERROR, "failed to get json \"memory_stats\" field.");
 			}
-			struct json_object *memoryUsageObj = NULL;
 			if (!json_object_object_get_ex(memoryObj, "usage", &memoryUsageObj)) {
 				plc_elog(LOG, "failed to get json \"usage\" field.");
 			} else {

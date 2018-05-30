@@ -36,7 +36,16 @@ interpreted as representing official policies, either expressed or implied, of t
 
 /* Greenplum headers */
 #include "postgres.h"
+
+#ifdef PLC_PG
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include "executor/spi.h"
+#ifdef PLC_PG
+#pragma GCC diagnostic pop
+#endif
+
 #include "access/transam.h"
 #include "catalog/pg_proc.h"
 #include "utils/syscache.h"

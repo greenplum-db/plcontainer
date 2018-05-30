@@ -122,6 +122,10 @@ int sanity_check_client(void);
 
 #include "postgres.h"
 
+#ifdef PLC_PG
+#define write_log printf
+#endif
+
 /* QE process uses elog, while cleanup process should use write_log*/
 #define backend_log(elevel, ...)  \
 	do { \
@@ -131,8 +135,6 @@ int sanity_check_client(void);
 			write_log(__VA_ARGS__); \
 		} \
 	} while(0)
-
-
 
 #define plc_elog(lvl, fmt, ...) elog(lvl, "plcontainer: " fmt, ##__VA_ARGS__);
 #define pmalloc palloc

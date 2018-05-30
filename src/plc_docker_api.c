@@ -97,6 +97,10 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 	plcCurlBuffer *buffer = plcCurlBufferInit();
 	char errbuf[CURL_ERROR_SIZE];
 
+	/* Calling the API */
+	struct timeval start_time, end_time;
+	uint64_t elapsed_us;
+
 	memset(errbuf, 0, CURL_ERROR_SIZE);
 
 	curl = curl_easy_init();
@@ -162,10 +166,6 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 		/* Setting up response receive callback */
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plcCurlCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) buffer);
-
-		/* Calling the API */
-		struct timeval start_time, end_time;
-		uint64_t elapsed_us;
 
 		gettimeofday(&start_time, NULL);
 		res = curl_easy_perform(curl);
@@ -244,6 +244,16 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	bool has_error;
 	char *volumeShare = get_sharing_options(conf, container_id, &has_error, uds_dir);
 
+	char *messageBody = NULL;
+	plcCurlBuffer *response = NULL;
+	int res = 0;
+	int createStringSize = 0;
+	
+	const char *username;
+	const char *dbname;
+    struct passwd *pwd;
+    char cgroupParent[RES_GROUP_PATH_MAX_LENGTH] = "";
+
 	int16 dbid = 0;
 #ifndef PLC_PG
 	dbid = GpIdentity.dbid;
@@ -256,17 +266,13 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	if (has_error == true) {
 		return -1;
 	}
-	char *messageBody = NULL;
-	plcCurlBuffer *response = NULL;
-	int res = 0;
-	int createStringSize = 0;
+	
 #ifdef PLC_PG
-	const char *username = GetUserNameFromId(GetUserId(),false);
+	username = GetUserNameFromId(GetUserId(),false);
 #else	
-	const char *username = GetUserNameFromId(GetUserId());
+	username = GetUserNameFromId(GetUserId());
 #endif	
-	const char *dbname = MyProcPort->database_name;
-	struct passwd *pwd;
+	dbname = MyProcPort->database_name;
 
 
 	/*
@@ -289,7 +295,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	 * and cgroup parent of containers will be 'docker' as default.
 	 * Note that this feature is only for gpdb with resource group enable.
 	 */
-	char cgroupParent[RES_GROUP_PATH_MAX_LENGTH] = "";
+	
 	if (conf->resgroupOid != InvalidOid) {
 		snprintf(cgroupParent,RES_GROUP_PATH_MAX_LENGTH,"/gpdb/%d",conf->resgroupOid);
 	}
@@ -507,8 +513,9 @@ int plc_docker_list_container(char **result) {
 	char *method = "/containers/json?all=1&label=\"dbid=%d\"";
 	char *url = NULL;
 	int res = 0;
-	url = (char *) palloc((strlen(method) + 12) * sizeof(char));
 	int16 dbid = 0;
+
+	url = (char *) palloc((strlen(method) + 12) * sizeof(char));
 #ifndef PLC_PG
 	dbid = GpIdentity.dbid;
 #endif			 
@@ -565,31 +572,37 @@ int plc_docker_get_container_state(const char *name, char **result) {
 
 static int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 	int i;
+	struct json_object *response = NULL;
+
 	backend_log(DEBUG1, "plcontainer: docker_inspect_string:%s", buf);
-	struct json_object *response = json_tokener_parse(buf);
+	response = json_tokener_parse(buf);
 	if (response == NULL)
 		return -1;
 	if (type == PLC_INSPECT_NAME) {
 		struct json_object *nameidObj = NULL;
+		const char *namestr;
+
 		if (!json_object_object_get_ex(response, "Id", &nameidObj)) {
 			backend_log(WARNING, "failed to get json \"Id\" field.");
 			return -1;
 		}
-		const char *namestr = json_object_get_string(nameidObj);
+		namestr = json_object_get_string(nameidObj);
 		*element = pstrdup(namestr);
 		return 0;
 	} else if (type == PLC_INSPECT_PORT) {
 		struct json_object *NetworkSettingsObj = NULL;
+		struct json_object *PortsObj = NULL;
+		struct json_object *HostPortArray = NULL;
+		int arraylen;
+
 		if (!json_object_object_get_ex(response, "NetworkSettings", &NetworkSettingsObj)) {
 			backend_log(WARNING, "failed to get json \"NetworkSettings\" field.");
 			return -1;
 		}
-		struct json_object *PortsObj = NULL;
 		if (!json_object_object_get_ex(NetworkSettingsObj, "Ports", &PortsObj)) {
 			backend_log(WARNING, "failed to get json \"Ports\" field.");
 			return -1;
 		}
-		struct json_object *HostPortArray = NULL;
 		if (!json_object_object_get_ex(PortsObj, "8080/tcp", &HostPortArray)) {
 			backend_log(WARNING, "failed to get json \"HostPortArray\" field.");
 			return -1;
@@ -598,25 +611,30 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 			backend_log(WARNING, "no element found in json \"HostPortArray\" field.");
 			return -1;
 		}
-		int arraylen = json_object_array_length(HostPortArray);
+		arraylen = json_object_array_length(HostPortArray);
 		for (i = 0; i < arraylen; i++) {
 			struct json_object *PortBindingObj = NULL;
+			struct json_object *HostPortObj = NULL;
+			const char *HostPortStr;
+
 			PortBindingObj = json_object_array_get_idx(HostPortArray, i);
 			if (PortBindingObj == NULL) {
 				backend_log(WARNING, "failed to get json \"PortBinding\" field.");
 				return -1;
 			}
-			struct json_object *HostPortObj = NULL;
 			if (!json_object_object_get_ex(PortBindingObj, "HostPort", &HostPortObj)) {
 				backend_log(WARNING, "failed to get json \"HostPort\" field.");
 				return -1;
 			}
-			const char *HostPortStr = json_object_get_string(HostPortObj);
+			HostPortStr = json_object_get_string(HostPortObj);
 			*element = pstrdup(HostPortStr);
 			return 0;
 		}
 	} else if (type == PLC_INSPECT_STATUS) {
 		struct json_object *StateObj = NULL;
+		struct json_object *StatusObj = NULL;
+		const char *StatusStr;
+
 		if (!json_object_object_get_ex(response, "State", &StateObj)) {
 			backend_log(WARNING, "failed to get json \"State\" field.");
 			return -1;
@@ -631,27 +649,28 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 		*element = pstrdup(RunningStr);
 		return 0;
 #else
-		struct json_object *StatusObj = NULL;
 		if (!json_object_object_get_ex(StateObj, "Status", &StatusObj)) {
 			backend_log(WARNING, "failed to get json \"Status\" field.");
 			return -1;
 		}
-		const char *StatusStr = json_object_get_string(StatusObj);
+		StatusStr = json_object_get_string(StatusObj);
 		*element = pstrdup(StatusStr);
 		return 0;
 #endif
 	} else if (type == PLC_INSPECT_OOM) {
 		struct json_object *StateObj = NULL;
+		struct json_object *OOMKillObj = NULL;
+		const char *OOMKillStr;
 		if (!json_object_object_get_ex(response, "State", &StateObj)) {
 			backend_log(WARNING, "failed to get json \"State\" field.");
 			return -1;
 		}
-		struct json_object *OOMKillObj = NULL;
+		
 		if (!json_object_object_get_ex(StateObj, "OOMKilled", &OOMKillObj)) {
 			backend_log(WARNING, "failed to get json \"OOMKilled\" field.");
 			return -1;
 		}
-		const char *OOMKillStr = json_object_get_string(OOMKillObj);
+		OOMKillStr = json_object_get_string(OOMKillObj);
 		*element = pstrdup(OOMKillStr);
 		return 0;
 	} else {

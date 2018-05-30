@@ -6,8 +6,17 @@
 
 /* Postgres Headers */
 #include "postgres.h"
+
+#ifdef PLC_PG
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include "commands/trigger.h"
 #include "executor/spi.h"
+#ifdef PLC_PG
+#pragma GCC diagnostic pop
+#endif
+
 #include "storage/ipc.h"
 #include "funcapi.h"
 #include "miscadmin.h"

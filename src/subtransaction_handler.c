@@ -8,7 +8,16 @@
  */
 
 #include "postgres.h"
+
+#ifdef PLC_PG
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include "executor/spi.h"
+#ifdef PLC_PG
+#pragma GCC diagnostic pop
+#endif
+
 #include "access/xact.h"
 
 #include "common/comm_channel.h"
@@ -40,9 +49,10 @@ static int16 plcontainer_subtransaction_exit(plcMsgSubtransaction *msg);
  */
 static int16
 plcontainer_subtransaction_enter() {
-	plc_elog(DEBUG1, "subtransaction enter beigin");
-	PLySubtransactionData* volatile subxactdata = NULL;
+	PLySubtransactionData* volatile subxactdata = NULL;	
 	MemoryContext oldcontext;
+	
+	plc_elog(DEBUG1, "subtransaction enter beigin");
 	oldcontext = CurrentMemoryContext;
 
 	PG_TRY();
@@ -81,8 +91,9 @@ plcontainer_subtransaction_enter() {
  *  When exit with exception, we need to rollback.
  */
 static int16 plcontainer_subtransaction_exit(plcMsgSubtransaction *msg) {
-	plc_elog(DEBUG1, "subtransaction exit begin");
 	PLySubtransactionData *subxactdata;
+
+	plc_elog(DEBUG1, "subtransaction exit begin");	
 	if (explicit_subtransactions == NIL) {
 		return NO_SUBTRANSACTION_ERROR;
 	}

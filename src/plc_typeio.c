@@ -12,7 +12,16 @@
 #include "fmgr.h"
 #include "access/transam.h"
 #include "access/tupmacs.h"
+
+#ifdef PLC_PG
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include "executor/spi.h"
+#ifdef PLC_PG
+#pragma GCC diagnostic pop
+#endif
+
 #include "parser/parse_type.h"
 #include "utils/fmgroids.h"
 #include "utils/array.h"
@@ -398,7 +407,7 @@ static char *plc_datum_as_array(Datum input, plcTypeInfo *type) {
 	for (i = 0; i < meta->ndims; i++) {
 		meta->dims[i] = ARR_DIMS(array)[i];
 		meta->size *= ARR_DIMS(array)[i];
-	}
+	}	
 	iter->data = ARR_DATA_PTR(array);
 	iter->next = plc_backend_array_next;
 	iter->cleanup = plc_backend_array_free;

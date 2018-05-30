@@ -57,9 +57,7 @@ static void init_containers();
 
 static int check_runtime_id(const char *id);
 
-#ifdef PLC_PG
-#define write_log printf
-#endif
+
 
 #ifndef CONTAINER_DEBUG
 
@@ -385,13 +383,18 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	int res = 0;
 	int wait_status, _loop_cnt;
 
-	container_slot = find_container_slot();
+	time_t rawtime;
+	struct tm *timeinfo;
+
 
 	/*
 	 * Hardcode as Docker at this moment. In the future the type should
 	 * be set in conf.
 	 */
 	enum PLC_BACKEND_TYPE plc_backend_type = BACKEND_DOCKER;
+
+	container_slot = find_container_slot();
+
 	plc_backend_prepareImplementation(plc_backend_type);
 
 	/*
@@ -453,9 +456,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 		plc_elog(ERROR, "Backend start error: %s", backend_error_message);
 		return NULL;
 	}
-
-	time_t rawtime;
-	struct tm *timeinfo;
+	
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
 	plc_elog(DEBUG1, "container %s has started at %s", dockerid, asctime(timeinfo));
@@ -630,6 +631,7 @@ void delete_containers() {
 char *parse_container_meta(const char *source) {
 	int first, last, len;
 	char *runtime_id = NULL;
+	int regt;
 
 	first = 0;
 	len = strlen(source);
@@ -700,7 +702,7 @@ char *parse_container_meta(const char *source) {
 
 	runtime_id[last - first + 1] = '\0';
 
-	int regt = check_runtime_id(runtime_id);
+	regt = check_runtime_id(runtime_id);
 	if (regt == -1) {
 		plc_elog(ERROR, "Container id '%s' contains illegal character for container.", runtime_id);
 	}

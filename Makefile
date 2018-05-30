@@ -36,8 +36,7 @@ PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 
 ifeq ($(PLC_PG),yes)
-   #reset CFLAGS for pg
-   override CFLAGS = -DPLC_PG -Wmissing-prototypes -Wpointer-arith -Wendif-labels -fno-strict-aliasing -fwrapv -g -O2 -DMAP_HUGETLB=0x40000 -fPIC
+   override CFLAGS += -DPLC_PG  -Wno-sign-compare
 endif
 
 # FIXME: We might need a configure script to handle below checks later.
@@ -87,11 +86,7 @@ endif
 
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 
-ifeq ($(PLC_PG),yes)
-  override CFLAGS += -Wextra -Wno-unused-but-set-variable
-else
-  override CFLAGS += -Werror -Wextra -Wall
-endif
+override CFLAGS += -Werror -Wextra -Wall
 
 ifeq ($(ENABLE_COVERAGE),yes)
   override CFLAGS += -coverage
