@@ -41,6 +41,7 @@ docker_build() {
 	pushd $DockerFolder; \
 	tar -zxvf DataScience*.gppkg; \
 	chmod +x *.sh; \
+	cp /usr/local/greenplum-db/lib/libstdc++.so.6 .
 	docker build -f Dockerfile.$language -t pivotaldata/plcontainer_${language}_shared:devel ./ ; \
 	popd; \
 	docker save pivotaldata/plcontainer_${language}_shared:devel | gzip -c > ~/${IMAGE_NAME}; \

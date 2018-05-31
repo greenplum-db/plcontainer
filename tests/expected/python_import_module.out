@@ -159,8 +159,6 @@ DROP FUNCTION pattern_test();
 --
 -- download spacy
 --
-\! python -m spacy download en
-/usr/local/greenplum-db-devel/ext/python/bin/python: No module named spacy
 create or replace function spacy_test() RETURNS TEXT AS $$
 # container: plc_python_shared
 import sys

@@ -150,7 +150,6 @@ DROP FUNCTION pattern_test();
 --
 -- download spacy
 --
-\! python -m spacy download en
 create or replace function spacy_test() RETURNS TEXT AS $$
 # container: plc_python_shared
 import sys
