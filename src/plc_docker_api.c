@@ -617,8 +617,6 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 		}
 	} else if (type == PLC_INSPECT_STATUS) {
 		struct json_object *StateObj = NULL;
-		struct json_object *StatusObj = NULL;
-		const char *StatusStr;
 
 		if (!json_object_object_get_ex(response, "State", &StateObj)) {
 			backend_log(WARNING, "failed to get json \"State\" field.");
@@ -634,11 +632,12 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 		*element = pstrdup(RunningStr);
 		return 0;
 #else
+		struct json_object *StatusObj = NULL;
 		if (!json_object_object_get_ex(StateObj, "Status", &StatusObj)) {
 			backend_log(WARNING, "failed to get json \"Status\" field.");
 			return -1;
 		}
-		StatusStr = json_object_get_string(StatusObj);
+		const char *StatusStr = json_object_get_string(StatusObj);
 		*element = pstrdup(StatusStr);
 		return 0;
 #endif
