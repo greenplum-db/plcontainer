@@ -59,6 +59,10 @@ To configure PL/Container environment, you need to enable PL/Container for speci
 
 Note that if you just want to test or run your own R or Python code, you do just need to install the image and runtime for that language.
 
+### Unsupported feature
+There some features PLContainer doesn't support. For unsupported feature list and their corresponding issue, 
+please refer to [Unsupported Feature](https://github.com/greenplum-db/plcontainer/wiki/PLContainer-Unsupported-Features)
+
 ### Design
 
 The idea of PL/Container is to use containers to run user defined functions. The current implementation assume the PL function definition to have the following structure:
