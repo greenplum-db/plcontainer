@@ -72,7 +72,7 @@ static bool plc_type_valid(plcTypeInfo *type);
 static void fill_callreq_arguments(FunctionCallInfo fcinfo, plcProcInfo *pinfo, plcMsgCallreq *req);
 
 plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
-	int len;
+	int lenOfArgnames;
 	Datum *argnames = NULL;
 	bool *argnulls = NULL;
 	Datum argnamesArray;
@@ -142,10 +142,14 @@ plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
 				typeTup = (Form_pg_type) GETSTRUCT(textHeapTup);
 				deconstruct_array(DatumGetArrayTypeP(argnamesArray), TEXTOID,
 				                  typeTup->typlen, typeTup->typbyval, typeTup->typalign,
-				                  &argnames, &argnulls, &len);
-				if (len != pinfo->nargs) {
-					plc_elog(FATAL, "something bad happened, nargs (%d) != len (%d)",
-					     pinfo->nargs, len);
+				                  &argnames, &argnulls, &lenOfArgnames);
+				/* UDF may contain OUT parameter, which is not considered as 
+				 * arguement number. So the length of argname list(container both INPUT and OUTPUT) 
+				 * maybe smaller than arguement number. There is no need to pass OUTPUT name to container.
+				 */
+				if (lenOfArgnames < pinfo->nargs) {
+					plc_elog(ERROR, "Length of argname list(%d) should be equal to or larger than \
+							number of args(%d)", lenOfArgnames, pinfo->nargs);
 				}
 			}
 
