@@ -528,3 +528,7 @@ CREATE FUNCTION pythonlogging_fatal() RETURNS void AS $$
 # container: plc_python_shared
 plpy.fatal("test plpy fatal")
 $$ LANGUAGE plcontainer;
+CREATE FUNCTION multiout_simple_setof(n integer = 1, OUT integer) AS $$
+# container: plc_python_shared
+return 1
+$$ language plcontainer;
