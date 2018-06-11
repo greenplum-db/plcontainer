@@ -694,7 +694,7 @@ SELECT py_udt_return_null();
 (1 row)
 
 select multiout_simple_setof();
- multiout_simple_setof
+ multiout_simple_setof 
 -----------------------
                      1
 (1 row)
