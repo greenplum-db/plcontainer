@@ -400,11 +400,11 @@ static void plcontainer_process_exception(plcMsgError *msg) {
 static Datum
 plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 {
-	Datum					datumreturn;
-	plcProcResult *presult = NULL;
-	MemoryContext oldcontext = CurrentMemoryContext;
-	FuncCallContext	*volatile	funcctx		   = NULL;
-	bool						bFirstTimeCall = false;
+	Datum						datumreturn;
+	plcProcResult * volatile 	presult = 		NULL;
+	MemoryContext volatile 		oldcontext = 	CurrentMemoryContext;
+	FuncCallContext	* volatile	funcctx =		NULL;
+	bool	 volatile 				bFirstTimeCall = false;
 
 	PG_TRY();
 	{
