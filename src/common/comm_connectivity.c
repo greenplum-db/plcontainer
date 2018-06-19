@@ -199,7 +199,7 @@ static int plcBufferMaybeResize(plcConn *conn, int bufType, size_t bufAppend) {
 		// Buffer size is twice as large as the data we need to hold, rounded
 		// to the nearest PLC_BUFFER_SIZE bytes
 		newSize = ((dataSize * 2) / PLC_BUFFER_SIZE + 1) * PLC_BUFFER_SIZE;
-		newBuffer = (char *) plc_top_alloc(newSize);
+		newBuffer = (char *) PLy_malloc(newSize);
 		if (newBuffer == NULL) {
 			plc_elog(ERROR, "plcBufferMaybeFlush: Cannot allocate %d bytes "
 				"for output buffer", newSize);
@@ -213,7 +213,7 @@ static int plcBufferMaybeResize(plcConn *conn, int bufType, size_t bufAppend) {
 	else if (buf->pEnd + (int) bufAppend > buf->bufSize - PLC_BUFFER_MIN_FREE) {
 		// Growing the buffer we need to just hold all the data we receive
 		newSize = (dataSize / PLC_BUFFER_SIZE + 1) * PLC_BUFFER_SIZE;
-		newBuffer = (char *) plc_top_alloc(newSize);
+		newBuffer = (char *) PLy_malloc(newSize);
 		if (newBuffer == NULL) {
 			plc_elog(ERROR, "plcBufferMaybeGrow: Cannot allocate %d bytes for buffer",
 				    newSize);
@@ -357,16 +357,16 @@ plcConn *plcConnInit(int sock) {
 	plcConn *conn;
 
 	// Initializing main structures
-	conn = (plcConn *) plc_top_alloc(sizeof(plcConn));
-	conn->buffer[PLC_INPUT_BUFFER] = (plcBuffer *) plc_top_alloc(sizeof(plcBuffer));
-	conn->buffer[PLC_OUTPUT_BUFFER] = (plcBuffer *) plc_top_alloc(sizeof(plcBuffer));
+	conn = (plcConn *) PLy_malloc(sizeof(plcConn));
+	conn->buffer[PLC_INPUT_BUFFER] = (plcBuffer *) PLy_malloc(sizeof(plcBuffer));
+	conn->buffer[PLC_OUTPUT_BUFFER] = (plcBuffer *) PLy_malloc(sizeof(plcBuffer));
 
 	// Initializing buffers
-	conn->buffer[PLC_INPUT_BUFFER]->data = (char *) plc_top_alloc(PLC_BUFFER_SIZE);
+	conn->buffer[PLC_INPUT_BUFFER]->data = (char *) PLy_malloc(PLC_BUFFER_SIZE);
 	conn->buffer[PLC_INPUT_BUFFER]->bufSize = PLC_BUFFER_SIZE;
 	conn->buffer[PLC_INPUT_BUFFER]->pStart = 0;
 	conn->buffer[PLC_INPUT_BUFFER]->pEnd = 0;
-	conn->buffer[PLC_OUTPUT_BUFFER]->data = (char *) plc_top_alloc(PLC_BUFFER_SIZE);
+	conn->buffer[PLC_OUTPUT_BUFFER]->data = (char *) PLy_malloc(PLC_BUFFER_SIZE);
 	conn->buffer[PLC_OUTPUT_BUFFER]->bufSize = PLC_BUFFER_SIZE;
 	conn->buffer[PLC_OUTPUT_BUFFER]->pStart = 0;
 	conn->buffer[PLC_OUTPUT_BUFFER]->pEnd = 0;

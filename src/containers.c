@@ -334,7 +334,7 @@ static void delete_container_slot(int slot) {
 }
 
 static void init_containers() {
-	containers = (container_t *) plc_top_alloc(MAX_CONTAINER_NUMBER * sizeof(container_t));
+	containers = (container_t *) PLy_malloc(MAX_CONTAINER_NUMBER * sizeof(container_t));
 	memset((void *)containers, 0, MAX_CONTAINER_NUMBER * sizeof(container_t));
 	containers_init = 1;
 }

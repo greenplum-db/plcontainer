@@ -57,7 +57,7 @@ plcontainer_subtransaction_enter() {
 
 	PG_TRY();
 	{
-		subxactdata = plc_top_alloc(sizeof(*subxactdata));
+		subxactdata = PLy_malloc(sizeof(*subxactdata));
 		subxactdata->oldcontext = oldcontext;
 		subxactdata->oldowner = CurrentResourceOwner;
 

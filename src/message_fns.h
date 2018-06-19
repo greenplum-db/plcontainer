@@ -40,26 +40,31 @@ typedef struct {
 } plcProcResult;
 
 typedef struct {
-	/* Greenplum Function Information */
-	Oid funcOid;
-	TransactionId fn_xmin; /* Transaction ID that created this function in catalog */
+	/* plpython inherit */
+	char	   *proname;		     /* SQL name of procedure */
+	char	   *pyname;		 	 /* Python name of procedure */
+	TransactionId fn_xmin;   /* Transaction ID that created this function in catalog */
 	ItemPointerData fn_tid;  /* ItemPointer for the function row in catalog */
-	/* Universal Function Information */
-	char *name;
-	char *src;
-	int hasChanged; /* Whether the function has changed since last call */
-	plcTypeInfo rettype;
-	int retset;
-	int nargs;
-	char **argnames;
-	plcTypeInfo *argtypes;
 	bool fn_readonly;
+	plcTypeInfo result;
+
+	char *src;               /* catalog field Anum_pg_proc_prosrc */
+	char **argnames;         /* Argument names */
+	plcTypeInfo *args;
+	int nargs;
+
+	/* PLContainer specific */
+	char *name;              /* catalog field Anum_pg_proc_prosrc */
+	int hasChanged;          /* Whether the function has changed since last call */
+	int retset;
+	Oid funcOid;
+
 } plcProcInfo;
 
-plcProcInfo *get_proc_info(FunctionCallInfo fcinfo);
+plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo);
 
 void free_proc_info(plcProcInfo *proc);
 
-plcMsgCallreq *plcontainer_create_call(FunctionCallInfo fcinfo, plcProcInfo *pinfo);
+plcMsgCallreq *plcontainer_generate_call_request(FunctionCallInfo fcinfo, plcProcInfo *pinfo);
 
 #endif /* PLC_MESSAGE_FNS_H */

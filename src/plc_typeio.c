@@ -194,7 +194,7 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 		type->outfunc = plc_datum_as_array;
 		type->infunc = plc_datum_from_array;
 		type->nSubTypes = 1;
-		type->subTypes = (plcTypeInfo *) plc_top_alloc(sizeof(plcTypeInfo));
+		type->subTypes = (plcTypeInfo *) PLy_malloc(sizeof(plcTypeInfo));
 		fill_type_info_inner(fcinfo, typeStruct->typelem, &type->subTypes[0], true, isUDTElement);
 	}
 
@@ -257,7 +257,7 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 			}
 
 			// Allocate memory for this number of arguments
-			type->subTypes = (plcTypeInfo *) plc_top_alloc(type->nSubTypes * sizeof(plcTypeInfo));
+			type->subTypes = (plcTypeInfo *) PLy_malloc(type->nSubTypes * sizeof(plcTypeInfo));
 			memset(type->subTypes, 0, type->nSubTypes * sizeof(plcTypeInfo));
 
 			// Fill all the subtypes

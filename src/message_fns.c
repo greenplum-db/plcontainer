@@ -69,22 +69,21 @@ static bool plc_procedure_valid(plcProcInfo *proc, HeapTuple procTup);
 
 static bool plc_type_valid(plcTypeInfo *type);
 
-static void fill_callreq_arguments(FunctionCallInfo fcinfo, plcProcInfo *pinfo, plcMsgCallreq *req);
+static void fill_callreq_arguments(FunctionCallInfo fcinfo, plcProcInfo *proc, plcMsgCallreq *req);
 
-plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
+plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 	int lenOfArgnames;
 	Datum *argnames = NULL;
 	bool *argnulls = NULL;
 	Datum argnamesArray;
 	Datum srcdatum, namedatum;
-	bool isnull;
+	// bool isnull;
 	Oid procoid;
-	Form_pg_proc procTup;
 	HeapTuple procHeapTup,
 		textHeapTup = NULL;
 	Form_pg_type typeTup;
-	plcProcInfo *pinfo = NULL;
-	Form_pg_proc procStruct;
+	plcProcInfo * volatile proc = NULL;
+
 
 	procoid = fcinfo->flinfo->fn_oid;
 	procHeapTup = SearchSysCache(PROCOID, procoid, 0, 0, 0);
@@ -92,12 +91,23 @@ plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
 		plc_elog(ERROR, "cannot find proc with oid %u", procoid);
 	}
 
-	pinfo = function_cache_get(procoid);
+	proc = function_cache_get(procoid);
 	/*
 	 * All the catalog operations are done only if the cached function
 	 * information has changed in the catalog
 	 */
-	if (!plc_procedure_valid(pinfo, procHeapTup)) {
+	if (!plc_procedure_valid(proc, procHeapTup)) {
+
+		char procName[NAMEDATALEN + 256];
+		Form_pg_proc procStruct;
+		bool isnull;
+		int rv;
+
+		procStruct = (Form_pg_proc) GETSTRUCT(procHeapTup);
+		rv = snprintf(procName, sizeof(procName), "__plpython_procedure_%s_%u",
+				NameStr(procStruct->proname), procoid/*TODOfn_oid*/);
+		if (rv < 0 || (unsigned int)rv >= sizeof(procName))
+			elog(ERROR, "procedure name would overrun buffer");
 
 		/*
 		 * Here we are using plc_top_alloc as the function structure should be
@@ -105,30 +115,34 @@ plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
 		 *
 		 * Note: we free the procedure from within function_put_cache below
 		 */
-		pinfo = plc_top_alloc(sizeof(plcProcInfo));
-		if (pinfo == NULL) {
+		proc = PLy_malloc(sizeof(plcProcInfo));
+		if (proc == NULL) {
 			plc_elog(FATAL, "Cannot allocate memory for plcProcInfo structure");
 		}
-		/* Remember transactional information to allow caching */
-		pinfo->funcOid = procoid;
-		pinfo->fn_xmin = HeapTupleHeaderGetXmin(procHeapTup->t_data);
-		pinfo->fn_tid = procHeapTup->t_self;
-		pinfo->retset = fcinfo->flinfo->fn_retset;
+
+		proc->proname = PLy_strdup(NameStr(procStruct->proname));
+		proc->pyname = PLy_strdup(procName);
+		proc->funcOid = procoid;
+		proc->fn_xmin = HeapTupleHeaderGetXmin(procHeapTup->t_data);
+		proc->fn_tid = procHeapTup->t_self;
+		/* Remember if function is STABLE/IMMUTABLE */
+		proc->fn_readonly = (procStruct->provolatile != PROVOLATILE_VOLATILE);
+
+		proc->retset = fcinfo->flinfo->fn_retset;
+
+		proc->hasChanged = 1;
+
 		procStruct = (Form_pg_proc) GETSTRUCT(procHeapTup);
-		pinfo->fn_readonly = (procStruct->provolatile != PROVOLATILE_VOLATILE);
-		pinfo->hasChanged = 1;
+		fill_type_info(fcinfo, procStruct->prorettype, &proc->result);
 
-		procTup = (Form_pg_proc) GETSTRUCT(procHeapTup);
-		fill_type_info(fcinfo, procTup->prorettype, &pinfo->rettype);
-
-		pinfo->nargs = procTup->pronargs;
-		if (pinfo->nargs > 0) {
+		proc->nargs = procStruct->pronargs;
+		if (proc->nargs > 0) {
 			// This is required to avoid the cycle from being removed by optimizer
 			int volatile j;
 
-			pinfo->argtypes = plc_top_alloc(pinfo->nargs * sizeof(plcTypeInfo));
-			for (j = 0; j < pinfo->nargs; j++) {
-				fill_type_info(fcinfo, procTup->proargtypes.values[j], &pinfo->argtypes[j]);
+			proc->args = PLy_malloc(proc->nargs * sizeof(plcTypeInfo));
+			for (j = 0; j < proc->nargs; j++) {
+				fill_type_info(fcinfo, procStruct->proargtypes.values[j], &proc->args[j]);
 			}
 
 			argnamesArray = SysCacheGetAttr(PROCOID, procHeapTup,
@@ -147,25 +161,25 @@ plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
 				 * arguement number. So the length of argname list(container both INPUT and OUTPUT) 
 				 * maybe smaller than arguement number. There is no need to pass OUTPUT name to container.
 				 */
-				if (lenOfArgnames < pinfo->nargs) {
+				if (lenOfArgnames < proc->nargs) {
 					plc_elog(ERROR, "Length of argname list(%d) should be equal to or larger than \
-							number of args(%d)", lenOfArgnames, pinfo->nargs);
+							number of args(%d)", lenOfArgnames, proc->nargs);
 				}
 			}
 
-			pinfo->argnames = plc_top_alloc(pinfo->nargs * sizeof(char *));
-			for (j = 0; j < pinfo->nargs; j++) {
+			proc->argnames = PLy_malloc(proc->nargs * sizeof(char *));
+			for (j = 0; j < proc->nargs; j++) {
 				if (!isnull && !argnulls[j]) {
-					pinfo->argnames[j] =
+					proc->argnames[j] =
 						plc_top_strdup(DatumGetCString(
 							DirectFunctionCall1(textout, argnames[j])
 						));
-					if (strlen(pinfo->argnames[j]) == 0) {
-						pfree(pinfo->argnames[j]);
-						pinfo->argnames[j] = NULL;
+					if (strlen(proc->argnames[j]) == 0) {
+						pfree(proc->argnames[j]);
+						proc->argnames[j] = NULL;
 					}
 				} else {
-					pinfo->argnames[j] = NULL;
+					proc->argnames[j] = NULL;
 				}
 			}
 
@@ -173,27 +187,27 @@ plcProcInfo *get_proc_info(FunctionCallInfo fcinfo) {
 				ReleaseSysCache(textHeapTup);
 			}
 		} else {
-			pinfo->argtypes = NULL;
-			pinfo->argnames = NULL;
+			proc->args = NULL;
+			proc->argnames = NULL;
 		}
 
 		/* Get the text and name of the function */
 		srcdatum = SysCacheGetAttr(PROCOID, procHeapTup, Anum_pg_proc_prosrc, &isnull);
 		if (isnull)
 			plc_elog(ERROR, "null prosrc");
-		pinfo->src = plc_top_strdup(DatumGetCString(DirectFunctionCall1(textout, srcdatum)));
+		proc->src = plc_top_strdup(DatumGetCString(DirectFunctionCall1(textout, srcdatum)));
 		namedatum = SysCacheGetAttr(PROCOID, procHeapTup, Anum_pg_proc_proname, &isnull);
 		if (isnull)
 			plc_elog(ERROR, "null proname");
-		pinfo->name = plc_top_strdup(DatumGetCString(DirectFunctionCall1(nameout, namedatum)));
+		proc->name = plc_top_strdup(DatumGetCString(DirectFunctionCall1(nameout, namedatum)));
 
 		/* Cache the function for later use */
-		function_cache_put(pinfo);
+		function_cache_put(proc);
 	} else {
-		pinfo->hasChanged = 0;
+		proc->hasChanged = 0;
 	}
 	ReleaseSysCache(procHeapTup);
-	return pinfo;
+	return proc;
 }
 
 void free_proc_info(plcProcInfo *proc) {
@@ -202,28 +216,28 @@ void free_proc_info(plcProcInfo *proc) {
 		if (proc->argnames[i] != NULL) {
 			pfree(proc->argnames[i]);
 		}
-		free_type_info(&proc->argtypes[i]);
+		free_type_info(&proc->args[i]);
 	}
 	if (proc->nargs > 0) {
 		pfree(proc->argnames);
-		pfree(proc->argtypes);
+		pfree(proc->args);
 	}
 	pfree(proc);
 }
 
-plcMsgCallreq *plcontainer_create_call(FunctionCallInfo fcinfo, plcProcInfo *pinfo) {
+plcMsgCallreq *plcontainer_generate_call_request(FunctionCallInfo fcinfo, plcProcInfo *proc) {
 	plcMsgCallreq *req;
 
 	req = pmalloc(sizeof(plcMsgCallreq));
 	req->msgtype = MT_CALLREQ;
-	req->proc.name = pinfo->name;
-	req->proc.src = pinfo->src;
+	req->proc.name = proc->name;
+	req->proc.src = proc->src;
 	req->logLevel = log_min_messages;
-	req->objectid = pinfo->funcOid;
-	req->hasChanged = pinfo->hasChanged;
-	copy_type_info(&req->retType, &pinfo->rettype);
+	req->objectid = proc->funcOid;
+	req->hasChanged = proc->hasChanged;
+	copy_type_info(&req->retType, &proc->result);
 
-	fill_callreq_arguments(fcinfo, pinfo, req);
+	fill_callreq_arguments(fcinfo, proc, req);
 
 	return req;
 }
@@ -279,35 +293,35 @@ static bool plc_procedure_valid(plcProcInfo *proc, HeapTuple procTup) {
 
 			// If there are composite input arguments, they might have changed
 			for (i = 0; i < proc->nargs && valid; i++) {
-				valid = plc_type_valid(&proc->argtypes[i]);
+				valid = plc_type_valid(&proc->args[i]);
 			}
 
 			// Also check for composite output type
 			if (valid) {
-				valid = plc_type_valid(&proc->rettype);
+				valid = plc_type_valid(&proc->result);
 			}
 		}
 	}
 	return valid;
 }
 
-static void fill_callreq_arguments(FunctionCallInfo fcinfo, plcProcInfo *pinfo, plcMsgCallreq *req) {
+static void fill_callreq_arguments(FunctionCallInfo fcinfo, plcProcInfo *proc, plcMsgCallreq *req) {
 	int i;
 
-	req->nargs = pinfo->nargs;
-	req->retset = pinfo->retset;
-	req->args = pmalloc(sizeof(*req->args) * pinfo->nargs);
+	req->nargs = proc->nargs;
+	req->retset = proc->retset;
+	req->args = pmalloc(sizeof(*req->args) * proc->nargs);
 
-	for (i = 0; i < pinfo->nargs; i++) {
-		req->args[i].name = pinfo->argnames[i];
-		copy_type_info(&req->args[i].type, &pinfo->argtypes[i]);
+	for (i = 0; i < proc->nargs; i++) {
+		req->args[i].name = proc->argnames[i];
+		copy_type_info(&req->args[i].type, &proc->args[i]);
 
 		if (fcinfo->argnull[i]) {
 			req->args[i].data.isnull = 1;
 			req->args[i].data.value = NULL;
 		} else {
 			req->args[i].data.isnull = 0;
-			req->args[i].data.value = pinfo->argtypes[i].outfunc(fcinfo->arg[i], &pinfo->argtypes[i]);
+			req->args[i].data.value = proc->args[i].outfunc(fcinfo->arg[i], &proc->args[i]);
 		}
 	}
 }

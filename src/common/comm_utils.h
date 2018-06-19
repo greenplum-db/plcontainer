@@ -109,7 +109,7 @@ extern int is_write_log(int elevel, int log_min_level);
 
 void *pmalloc(size_t size);
 
-#define plc_top_alloc pmalloc
+#define PLy_malloc pmalloc
 #define pfree free
 #define pstrdup strdup
 #define plc_top_strdup strdup
@@ -140,9 +140,11 @@ int sanity_check_client(void);
 #define pmalloc palloc
 
 /* pfree & pstrdup are already defined by postgres */
-void *plc_top_alloc(size_t bytes);
+void *PLy_malloc(size_t bytes);
 
 char *plc_top_strdup(char *str);
+
+char *PLy_strdup(const char *);
 
 #endif /* PLC_CLIENT */
 

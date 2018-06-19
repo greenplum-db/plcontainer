@@ -342,10 +342,10 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 				SPI_freetuptable(SPI_tuptable);
 				break;
 			case SQL_TYPE_PREPARE:
-				plc_plan = plc_top_alloc(sizeof(plcPlan));
+				plc_plan = PLy_malloc(sizeof(plcPlan));
 
 				if (msg->nargs > 0) {
-					plc_plan->argOids = plc_top_alloc(msg->nargs * sizeof(Oid));
+					plc_plan->argOids = PLy_malloc(msg->nargs * sizeof(Oid));
 					argTypes = pmalloc(msg->nargs * sizeof(plcDatatype));
 				} else {
 					plc_plan->argOids = NULL;
