@@ -77,7 +77,6 @@ plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 	bool *argnulls = NULL;
 	Datum argnamesArray;
 	Datum srcdatum, namedatum;
-	// bool isnull;
 	Oid procoid;
 	HeapTuple procHeapTup,
 		textHeapTup = NULL;
