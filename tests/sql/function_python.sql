@@ -623,3 +623,8 @@ CREATE FUNCTION multiout_simple_setof(n integer = 1, OUT integer) AS $$
 # container: plc_python_shared
 return 1
 $$ language plcontainer;
+
+CREATE FUNCTION unicode_test_return() returns text as $$
+# container: plc_python_shared
+return u'\u0420'
+$$ LANGUAGE plcontainer;

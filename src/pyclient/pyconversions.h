@@ -80,4 +80,6 @@ void plc_free_result_conversions(plcPyResult *res);
 
 plcPyOutputFunc Ply_get_output_function(plcDatatype dt);
 
+const char *serverenc;
+
 #endif /* PLC_PYCONVERSIONS_H */

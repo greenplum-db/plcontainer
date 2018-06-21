@@ -693,6 +693,12 @@ SELECT py_udt_return_null();
  (t,1,2,3,4,5,6,)
 (1 row)
 
+select unicode_test_return();
+ unicode_test_return 
+---------------------
+ Р
+(1 row)
+
 select multiout_simple_setof();
  multiout_simple_setof 
 -----------------------

@@ -14,6 +14,8 @@
 
 #include <Python.h>
 
+static PyObject *PLyUnicode_Bytes(PyObject *unicode);
+
 static PyObject *plc_pyobject_from_int1(char *input, plcPyType *type);
 
 static PyObject *plc_pyobject_from_int2(char *input, plcPyType *type);
@@ -305,17 +307,41 @@ static int plc_pyobject_as_float8(PyObject *input, char **output, plcPyType *typ
 }
 
 static int plc_pyobject_as_text(PyObject *input, char **output, plcPyType *type UNUSED) {
+
+	PyObject *plrv_bo;
 	int res = 0;
-	PyObject *obj;
-	obj = PyObject_Str(input);
-	if (obj != NULL) {
-		*output = strdup(PyString_AsString(obj));
-		Py_DECREF(obj);
+
+	if (PyUnicode_Check(input))
+		plrv_bo = PLyUnicode_Bytes(input);
+	else if (PyFloat_Check(input)) {
+		/* use repr() for floats, str() is lossy */
+#if PY_MAJOR_VERSION >= 3
+		PyObject *s = PyObject_Repr(input);
+
+		plrv_bo = PLyUnicode_Bytes(s);
+		Py_XDECREF(s);
+#else
+		plrv_bo = PyObject_Repr(input);
+#endif
 	} else {
-		*output = NULL;
-		raise_execution_error("Exception occurred transforming result object to text");
-		res = -1;
+#if PY_MAJOR_VERSION >= 3
+		PyObject *s = PyObject_Str(plrv);
+
+		plrv_bo = PLyUnicode_Bytes(s);
+		Py_XDECREF(s);
+#else
+		plrv_bo = PyObject_Str(input);
+#endif
 	}
+	if (!plrv_bo) {
+		*output = NULL;
+				raise_execution_error("Exception occurred transforming result object to text");
+				res = -1;
+	} else {
+		*output = pstrdup(PyBytes_AsString(plrv_bo));
+		Py_XDECREF(plrv_bo);
+	}
+
 	return res;
 }
 
@@ -744,4 +770,21 @@ void plc_py_copy_type(plcType *type, plcPyType *pytype) {
 	} else {
 		type->subTypes = NULL;
 	}
+}
+
+
+
+/*
+ * Convert a Python unicode object to a Python string/bytes object in
+ * PostgreSQL server encoding.	Reference ownership is passed to the
+ * caller.
+ */
+static PyObject *
+PLyUnicode_Bytes(PyObject *unicode)
+{
+	PyObject   *rv;
+	rv = PyUnicode_AsEncodedString(unicode, serverenc, "strict");
+	if (rv == NULL)
+		plc_elog(ERROR, "could not convert Python Unicode object to PostgreSQL server encoding");
+	return rv;
 }

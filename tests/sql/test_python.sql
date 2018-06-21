@@ -117,5 +117,6 @@ select pybadarr2();
 select pyinvalid_function();
 select pysubtransaction('t');
 SELECT py_udt_return_null();
+select unicode_test_return();
 select multiout_simple_setof();
 \! psql -d ${PL_TESTDB} -c "select pythonlogging_fatal();"

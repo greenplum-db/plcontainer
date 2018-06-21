@@ -142,6 +142,7 @@ void handle_call(plcMsgCallreq *req, plcConn *conn) {
 	plc_sending_data = 0;
 	plc_is_execution_terminated = 0;
 
+	serverenc = req->serverenc;
 	client_log_level = req->logLevel;
 
 	plc_elog(DEBUG1, "python client receives a call");

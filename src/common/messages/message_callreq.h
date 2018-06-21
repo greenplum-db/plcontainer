@@ -24,6 +24,7 @@ typedef struct plcMsgCallreq {
 	plcType retType;    // function return type
 	int32 retset;     // whether the function is set-returning
 	int32 nargs;      // number of function arguments
+	char *serverenc; //db_encoding
 	plcArgument *args;       // function arguments
 } plcMsgCallreq;
 
