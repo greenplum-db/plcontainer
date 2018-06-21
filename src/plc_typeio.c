@@ -103,6 +103,9 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 	char dummy_delim;
 	Oid typioparam;
 
+	if (get_typtype(typeOid) == TYPTYPE_DOMAIN) {
+		plc_elog(ERROR, "plcontainer do not support domain type");
+	}
 	typeTup = SearchSysCache(TYPEOID, ObjectIdGetDatum(typeOid), 0, 0, 0);
 	if (!HeapTupleIsValid(typeTup))
 		plc_elog(ERROR, "cache lookup failed for type %u", typeOid);
