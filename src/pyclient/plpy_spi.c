@@ -43,6 +43,8 @@ __attribute__((format(printf, 2, 3)));
 
 static void PLy_add_exceptions(PyObject *plpy);
 
+static PyObject *PLy_exc_error = NULL;
+static PyObject *PLy_exc_fatal = NULL;
 static PyObject *PLy_exc_spi_error = NULL;
 
 static PyMethodDef PLy_exc_methods[] = {
@@ -951,7 +953,7 @@ void Ply_spi_exception_init(PyObject *plpy)
 static void
 PLy_add_exceptions(PyObject *plpy)
 {
-	PyObject   *excmod;
+	PyObject *excmod;
 
 #if PY_MAJOR_VERSION < 3
 	excmod = Py_InitModule("spiexceptions", PLy_exc_methods);
@@ -959,14 +961,25 @@ PLy_add_exceptions(PyObject *plpy)
 	excmod = PyModule_Create(&PLy_exc_module);
 #endif
 	if (PyModule_AddObject(plpy, "spiexceptions", excmod) < 0)
-		raise_execution_error("failed to add the spiexceptions module");
+		plc_elog(ERROR, "could not add the spiexceptions module");
 
 	Py_INCREF(excmod);
 
+	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
+	PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
 	PLy_exc_spi_error = PyErr_NewException("plpy.SPIError", NULL, NULL);
 
+	Py_INCREF(PLy_exc_error);
+	PyModule_AddObject(plpy, "Error", PLy_exc_error);
+	Py_INCREF(PLy_exc_fatal);
+	PyModule_AddObject(plpy, "Fatal", PLy_exc_fatal);
 	Py_INCREF(PLy_exc_spi_error);
 	PyModule_AddObject(plpy, "SPIError", PLy_exc_spi_error);
+
+	/*
+	 * TODO: lack detailed spi exception
+	 * refer to PLy_generate_spi_exceptions in upstream.
+	 */
 
 }
 

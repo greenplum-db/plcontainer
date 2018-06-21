@@ -635,3 +635,35 @@ CREATE FUNCTION nnint_test(x int, y int) RETURNS nnint_container AS $$
 # container: plc_python_shared
 return {'f1': x, 'f2': y}
 $$ LANGUAGE plcontainer;
+
+CREATE FUNCTION nested_error_raise() RETURNS text
+AS $$
+# container: plc_python_shared
+def fun1():
+    raise plpy.Error("boom")
+
+def fun2():
+    fun1()
+
+def fun3():
+    fun2()
+
+fun3()
+return "not reached"
+$$ LANGUAGE plcontainer;
+
+CREATE FUNCTION nested_fatal_raise() RETURNS text
+AS $$
+# container: plc_python_shared
+def fun1():
+    raise plpy.Fatal("boom")
+
+def fun2():
+    fun1()
+
+def fun3():
+    fun2()
+
+fun3()
+return "not reached"
+$$ LANGUAGE plcontainer;
