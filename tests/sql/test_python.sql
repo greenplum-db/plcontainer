@@ -119,4 +119,6 @@ select pysubtransaction('t');
 SELECT py_udt_return_null();
 select unicode_test_return();
 select multiout_simple_setof();
+select nested_error_raise();
+select nested_fatal_raise();
 \! psql -d ${PL_TESTDB} -c "select pythonlogging_fatal();"
