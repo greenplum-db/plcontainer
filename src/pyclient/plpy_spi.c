@@ -954,7 +954,6 @@ static void
 PLy_add_exceptions(PyObject *plpy)
 {
 	PyObject *excmod;
-	HASHCTL hash_ctl;
 
 #if PY_MAJOR_VERSION < 3
 	excmod = Py_InitModule("spiexceptions", PLy_exc_methods);
@@ -962,17 +961,8 @@ PLy_add_exceptions(PyObject *plpy)
 	excmod = PyModule_Create(&PLy_exc_module);
 #endif
 	if (PyModule_AddObject(plpy, "spiexceptions", excmod) < 0)
-		PLy_elog(ERROR, "could not add the spiexceptions module");
+		plc_elog(ERROR, "could not add the spiexceptions module");
 
-	/*
-	 * XXX it appears that in some circumstances the reference count of the
-	 * spiexceptions module drops to zero causing a Python assert failure when
-	 * the garbage collector visits the module. This has been observed on the
-	 * buildfarm. To fix this, add an additional ref for the module here.
-	 *
-	 * This shouldn't cause a memory leak - we don't want this garbage collected,
-	 * and this function shouldn't be called more than once per backend.
-	 */
 	Py_INCREF(excmod);
 
 	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
@@ -986,14 +976,11 @@ PLy_add_exceptions(PyObject *plpy)
 	Py_INCREF(PLy_exc_spi_error);
 	PyModule_AddObject(plpy, "SPIError", PLy_exc_spi_error);
 
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
-	hash_ctl.keysize = sizeof(int);
-	hash_ctl.entrysize = sizeof(PLyExceptionEntry);
-	hash_ctl.hash = tag_hash;
-	PLy_spi_exceptions = hash_create("SPI exceptions", 256, &hash_ctl,
-			HASH_ELEM | HASH_FUNCTION);
+	/*
+	 * TODO: lack detailed spi exception
+	 * refer to PLy_generate_spi_exceptions in upstream.
+	 */
 
-	PLy_generate_spi_exceptions(excmod, PLy_exc_spi_error);
 }
 
 #if PY_MAJOR_VERSION >= 3
