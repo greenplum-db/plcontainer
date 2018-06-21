@@ -705,6 +705,8 @@ select multiout_simple_setof();
                      1
 (1 row)
 
+SELECT nnint_test(null, 3);
+ERROR:  plcontainer: plcontainer do not support domain type (plc_typeio.c:107)
 \! psql -d ${PL_TESTDB} -c "select pythonlogging_fatal();"
 FATAL:  test plpy fatal
 server closed the connection unexpectedly

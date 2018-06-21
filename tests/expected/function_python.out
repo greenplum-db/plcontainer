@@ -536,3 +536,9 @@ CREATE FUNCTION unicode_test_return() returns text as $$
 # container: plc_python_shared
 return u'\u0420'
 $$ LANGUAGE plcontainer;
+CREATE DOMAIN nnint AS int CHECK (VALUE IS NOT NULL);
+CREATE TYPE nnint_container AS (f1 int, f2 nnint);
+CREATE FUNCTION nnint_test(x int, y int) RETURNS nnint_container AS $$
+# container: plc_python_shared
+return {'f1': x, 'f2': y}
+$$ LANGUAGE plcontainer;
