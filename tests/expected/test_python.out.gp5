@@ -706,7 +706,7 @@ select multiout_simple_setof();
 (1 row)
 
 SELECT nnint_test(null, 3);
-ERROR:  plcontainer: plcontainer do not support domain type (plc_typeio.c:107)
+ERROR:  plcontainer: plcontainer does not support domain type (plc_typeio.c:107)
 select nested_error_raise();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  
