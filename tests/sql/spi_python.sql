@@ -518,3 +518,40 @@ select nested_call_one('pass this along');
 select spi_prepared_plan_test_one('doe');
 select spi_prepared_plan_test_one('smith');
 select spi_prepared_plan_test_nested('smith');
+
+CREATE TABLE subtransaction_tbl (
+    i integer
+);
+
+CREATE FUNCTION try_catch_inside_subtransaction() RETURNS void
+AS $$
+# container: plc_python_shared
+with plpy.subtransaction():
+     plpy.execute("INSERT INTO subtransaction_tbl VALUES (1)")
+     try:
+         plpy.execute("INSERT INTO subtransaction_tbl VALUES ('a')")
+     except plpy.SPIError:
+         plpy.notice("caught")
+$$ LANGUAGE plcontainer;
+
+SELECT try_catch_inside_subtransaction();
+SELECT * FROM subtransaction_tbl;
+TRUNCATE subtransaction_tbl;
+
+ALTER TABLE subtransaction_tbl ADD PRIMARY KEY (i);
+
+CREATE FUNCTION pk_violation_inside_subtransaction() RETURNS void
+AS $$
+# container: plc_python_shared
+with plpy.subtransaction():
+     plpy.execute("INSERT INTO subtransaction_tbl VALUES (1)")
+     try:
+         plpy.execute("INSERT INTO subtransaction_tbl VALUES (1)")
+     except plpy.SPIError:
+         plpy.notice("caught")
+$$ LANGUAGE plcontainer;
+
+SELECT pk_violation_inside_subtransaction();
+SELECT * FROM subtransaction_tbl;
+DROP TABLE subtransaction_tbl;
+

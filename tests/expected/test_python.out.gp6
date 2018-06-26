@@ -449,8 +449,7 @@ NOTICE:  this is the notice message
 CONTEXT:  SQL statement "select pylogging()"
 WARNING:  this is the warning message
 CONTEXT:  SQL statement "select pylogging()"
-ERROR:  this is the error message
-CONTEXT:  SQL statement "select pylogging()"
+ERROR:  plcontainer: Handle spi message failed due to error: this is the error message (plcontainer.c:361)
 select pygdset('1','a');
  pygdset 
 ---------
