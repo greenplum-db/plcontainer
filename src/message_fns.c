@@ -132,7 +132,6 @@ plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 
 		proc->hasChanged = 1;
 
-		procStruct = (Form_pg_proc) GETSTRUCT(procHeapTup);
 		fill_type_info(fcinfo, procStruct->prorettype, &proc->result);
 
 		proc->nargs = procStruct->pronargs;
