@@ -727,6 +727,8 @@ DETAIL:
   File "<string>", line 8, in fun2
   File "<string>", line 5, in fun1
 Fatal: boom
+select pseudotype_result(1);
+ERROR:  PLContainer functions cannot return type anyarray
 \! psql -d ${PL_TESTDB} -c "select pythonlogging_fatal();"
 FATAL:  test plpy fatal
 server closed the connection unexpectedly

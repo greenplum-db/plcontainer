@@ -667,3 +667,8 @@ def fun3():
 fun3()
 return "not reached"
 $$ LANGUAGE plcontainer;
+
+create function pseudotype_result(anyelement) returns anyarray as $$
+# container: plc_python_shared
+pass;
+$$ language plcontainer;

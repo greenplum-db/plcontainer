@@ -132,6 +132,29 @@ plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 
 		proc->hasChanged = 1;
 
+		HeapTuple rvTypeTup;
+		Form_pg_type rvTypeStruct;
+
+		rvTypeTup = SearchSysCache1(TYPEOID,
+				ObjectIdGetDatum(procStruct->prorettype));
+		if (!HeapTupleIsValid(rvTypeTup))
+			elog(ERROR, "cache lookup failed for type %u",
+					procStruct->prorettype);
+		rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
+
+		/* Disallow pseudotype result, except for void or record */
+		if (rvTypeStruct->typtype == TYPTYPE_PSEUDO) {
+			if (procStruct->prorettype == TRIGGEROID)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg(
+								"trigger functions can only be called as triggers")));
+			else if (procStruct->prorettype != VOIDOID
+					&& procStruct->prorettype != RECORDOID)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg(
+								"PLContainer functions cannot return type %s",
+								format_type_be(procStruct->prorettype))));
+		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procHeapTup);
 		fill_type_info(fcinfo, procStruct->prorettype, &proc->result);
 
