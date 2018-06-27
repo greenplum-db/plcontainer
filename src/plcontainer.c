@@ -45,6 +45,11 @@ PG_MODULE_MAGIC;
     volatile bool QueryFinishPending = false;
 #endif
 
+/* exported functions */
+Datum plcontainer_validator(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(plcontainer_validator);
+
 PG_FUNCTION_INFO_V1(plcontainer_call_handler);
 
 static Datum plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc);
@@ -89,6 +94,46 @@ _PG_init(void) {
 	on_proc_exit(plcontainer_cleanup, 0);
 	explicit_subtransactions = NIL;
 	inited = true;
+}
+
+static bool
+PLy_procedure_is_trigger(Form_pg_proc procStruct)
+{
+	return (procStruct->prorettype == TRIGGEROID ||
+			(procStruct->prorettype == OPAQUEOID &&
+			 procStruct->pronargs == 0));
+}
+
+Datum
+plcontainer_validator(PG_FUNCTION_ARGS)
+{
+	Oid			funcoid = PG_GETARG_OID(0);
+	HeapTuple	tuple;
+	Form_pg_proc procStruct;
+	bool		is_trigger;
+
+	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
+		PG_RETURN_VOID();
+
+	if (!check_function_bodies)
+	{
+		PG_RETURN_VOID();
+	}
+
+	/* Get the new function's pg_proc entry */
+	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for function %u", funcoid);
+	procStruct = (Form_pg_proc) GETSTRUCT(tuple);
+
+	is_trigger = PLy_procedure_is_trigger(procStruct);
+
+	ReleaseSysCache(tuple);
+
+	/* We can't validate triggers against any particular table ... */
+	plcontainer_procedure_get(fcinfo);
+
+	PG_RETURN_VOID();
 }
 
 Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
