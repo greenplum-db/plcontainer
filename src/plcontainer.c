@@ -194,13 +194,13 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		}
 
 		conn = get_container_conn(runtime_id);
-		int first= 0;
+		bool first_connection= false;
 		if (conn == NULL) {
 			/* TODO: We could only remove this backend when error occurs. */
 			DeleteBackendsWhenError = true;
 			conn = start_backend(runtime_conf_entry);
 			DeleteBackendsWhenError = false;
-			first = 1;
+			first_connection = true;
 		}
 
 		pfree(runtime_id);
@@ -208,23 +208,23 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		DeleteBackendsWhenError = true;
 		if (conn != NULL) {
 			int res;
-			if(first == 0){
-			plcMsgPing *mping = (plcMsgPing*) palloc(sizeof(plcMsgPing));
-			mping->msgtype = MT_PING;
-			res = plcontainer_channel_send(conn, (plcMessage *) mping);
-			if (res == 0) {
-				plcMessage *mresp = NULL;
-				res = plcontainer_channel_receive(conn, &mresp, MT_PING_BIT);
-				if (mresp != NULL)
-					pfree(mresp);
-				if (res != 0) {
+			if (first_connection == false) {
+				plcMsgPing *mping = (plcMsgPing*) palloc(sizeof(plcMsgPing));
+				mping->msgtype = MT_PING;
+				res = plcontainer_channel_send(conn, (plcMessage *) mping);
+				if (res == 0) {
+					plcMessage *mresp = NULL;
+					res = plcontainer_channel_receive(conn, &mresp, MT_PING_BIT);
+					if (mresp != NULL)
+						pfree(mresp);
+					if (res != 0) {
+						delete_containers();
+						conn = start_backend(runtime_conf_entry);
+					}
+				} else {
 					delete_containers();
 					conn = start_backend(runtime_conf_entry);
 				}
-			}else{
-				delete_containers();
-				conn = start_backend(runtime_conf_entry);
-			}
 			}
 
 			res = plcontainer_channel_send(conn, (plcMessage *) req);
