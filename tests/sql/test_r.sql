@@ -71,7 +71,7 @@ select rtimestamparr($${'2012-01-02 12:34:56.789012','2012-01-03 12:34:56.789012
 select rpg_spi_exec('select 1');
 
 select rlogging();
-select rlogging2();
+--select rlogging2();
 \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
 
 select rsetofint4();
@@ -92,8 +92,8 @@ select runargs3(123, 'foo', 'bar');
 select runargs4(1,null,null,1);
 
 select rnested_call_three('foo');
-select rnested_call_two('foobar');
-select rnested_call_one('foo1');
+--select rnested_call_two('foobar');
+--select rnested_call_one('foo1');
 select rtestudt1( ('t', 1, 2, 3, 4, 5, 6, 'foobar')::test_type );
 select rtestudt2( (
         array[true,false,true]::bool[],

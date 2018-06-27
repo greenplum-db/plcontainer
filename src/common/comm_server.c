@@ -320,11 +320,20 @@ void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *), plcConn *conn
 	pfree(msg);
 
 	while (1) {
-		res = plcontainer_channel_receive(conn, &msg, MT_CALLREQ_BIT);
+		res = plcontainer_channel_receive(conn, &msg, MT_CALLREQ_BIT|MT_PING_BIT);
 
 		if (res < 0) {
 				plc_elog(ERROR, "Error receiving data from the peer: %d", res);
 			break;
+		}
+		if (msg->msgtype == MT_PING){
+	           res = plcontainer_channel_send(conn, msg);
+       		   if (res < 0) {
+               		 plc_elog(ERROR, "Cannot send 'ping' message response");
+                		return;
+        	}
+	      	   pfree(msg);
+		continue;
 		}
 		plc_elog(DEBUG1, "Client receive a request: called function oid %u", ((plcMsgCallreq *) msg)->objectid);
 		handle_call((plcMsgCallreq *) msg, conn);
