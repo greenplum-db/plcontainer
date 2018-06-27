@@ -156,6 +156,7 @@ plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 								format_type_be(procStruct->prorettype))));
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procHeapTup);
+
 		fill_type_info(fcinfo, procStruct->prorettype, &proc->result);
 
 		proc->nargs = procStruct->pronargs;
