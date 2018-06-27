@@ -155,6 +155,7 @@ plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 								"PLContainer functions cannot return type %s",
 								format_type_be(procStruct->prorettype))));
 		}
+		ReleaseSysCache(rvTypeTup);
 		procStruct = (Form_pg_proc) GETSTRUCT(procHeapTup);
 
 		fill_type_info(fcinfo, procStruct->prorettype, &proc->result);
