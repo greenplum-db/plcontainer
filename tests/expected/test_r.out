@@ -361,7 +361,14 @@ INFO:  this is the info message
 NOTICE:  this is the notice message
 WARNING:  this is the warning message
 ERROR:  this is the error message
---select rlogging2();
+select rlogging2();
+INFO:  this is the info message
+CONTEXT:  SQL statement "select rlogging()"
+NOTICE:  this is the notice message
+CONTEXT:  SQL statement "select rlogging()"
+WARNING:  this is the warning message
+CONTEXT:  SQL statement "select rlogging()"
+ERROR:  plcontainer: Handle spi message failed due to error: this is the error message (plcontainer.c:390)
 \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
 FATAL:  this is the fatal message
 server closed the connection unexpectedly
@@ -544,8 +551,18 @@ select rnested_call_three('foo');
  foo
 (1 row)
 
---select rnested_call_two('foobar');
---select rnested_call_one('foo1');
+select rnested_call_two('foobar');
+ rnested_call_two 
+------------------
+ foobar
+(1 row)
+
+select rnested_call_one('foo1');
+ rnested_call_one 
+------------------
+ foo1
+(1 row)
+
 select rtestudt1( ('t', 1, 2, 3, 4, 5, 6, 'foobar')::test_type );
  rtestudt1 
 -----------
