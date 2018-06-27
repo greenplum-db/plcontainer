@@ -8,6 +8,8 @@ m/^WARNING:  Docker API.*/
 # ignore due to docker in centos 6 could not detect OOM accurately 
 m/^WARNING:  plcontainer: docker reports container*/
 
+# ignore cache reference leak
+m/^WARNING:  cache reference leak*/
 # for drop extension
 m/^NOTICE:  drop cascades to \d+ other objects*/
 m/^NOTICE:  drop cascades to function*/
