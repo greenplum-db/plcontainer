@@ -103,6 +103,9 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 	char dummy_delim;
 	Oid typioparam;
 
+	/* Since this is recursive, it could theoretically be driven to overflow */
+	check_stack_depth();
+
 	if (get_typtype(typeOid) == TYPTYPE_DOMAIN) {
 		plc_elog(ERROR, "plcontainer does not support domain type");
 	}
