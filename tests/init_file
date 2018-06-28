@@ -29,4 +29,6 @@ m/plc_configuration.c:\d+\)/
 s/plc_configuration.c:\d+\)/plc_configuration.c:xxx/
 m/sqlhandler.c:\d+\)/
 s/sqlhandler.c:\d+\)/sqlhandler.c:xxx/
+m/plc_typeio.c:\d+\)/
+s/plc_typeio.c:\d+\)/plc_typeio.c:xxx/
 -- end_matchsubs
