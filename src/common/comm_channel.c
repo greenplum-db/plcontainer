@@ -76,6 +76,8 @@ static int send_ping(plcConn *conn);
 static int send_call(plcConn *conn, plcMsgCallreq *call);
 static int send_result(plcConn *conn, plcMsgResult *res);
 static int send_log(plcConn *conn, plcMsgLog *mlog);
+static int send_quote(plcConn *conn, plcMsgQuote *mquote);
+static int send_quote_result(plcConn *conn, plcMsgQuoteResult *mQuoteResult);
 static int send_subtransaction(plcConn *conn, plcMsgSubtransaction *mSub);
 static int send_subtransaction_result(plcConn *conn, plcMsgSubtransactionResult *mSubr);
 static int send_exception(plcConn *conn, plcMsgError *err);
@@ -88,6 +90,8 @@ static int send_rawmsg(plcConn *conn, plcMsgRaw *msg);
 static int receive_exception(plcConn *conn, plcMessage **mExc);
 static int receive_result(plcConn *conn, plcMessage **mRes);
 static int receive_log(plcConn *conn, plcMessage **mLog);
+static int receive_quote(plcConn *conn, plcMessage **mQuote);
+static int receive_quote_result(plcConn *conn, plcMessage **mQuoteResult);
 static int receive_sql_statement(plcConn *conn, plcMessage **mStmt);
 static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt);
 static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt);
@@ -119,6 +123,12 @@ int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
 			break;
 		case MT_LOG:
 			res = send_log(conn, (plcMsgLog *) msg);
+			break;
+		case MT_QUOTE:
+			res = send_quote(conn, (plcMsgQuote *) msg);
+			break;
+		case MT_QUOTE_RESULT:
+			res = send_quote_result(conn, (plcMsgQuoteResult *) msg);
 			break;
 		case MT_SQL:
 			res = send_sql(conn, (plcMsgSQL *) msg);
@@ -175,6 +185,16 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask) {
 				if (!(mask & MT_LOG_BIT))
 					goto unexpected_type;
 				res = receive_log(conn, msg);
+				break;
+			case MT_QUOTE:
+				if (!(mask & MT_QUOTE_BIT))
+					goto unexpected_type;
+				res = receive_quote(conn, msg);
+				break;
+			case MT_QUOTE_RESULT:
+				if (!(mask & MT_QUOTE_RESULT_BIT))
+					goto unexpected_type;
+				res = receive_quote_result(conn, msg);
 				break;
 			case MT_SQL:
 				if (!(mask & MT_SQL_BIT))
@@ -764,6 +784,31 @@ static int send_log(plcConn *conn, plcMsgLog *mlog) {
 	return res;
 }
 
+static int send_quote(plcConn *conn, plcMsgQuote *mquote) {
+	int res = 0;
+
+	channel_elog(WARNING, "Sending quote message to backend");
+	res |= message_start(conn, MT_QUOTE);
+	res |= send_int32(conn, mquote->quote_type);
+	res |= send_cstring(conn, mquote->msg);
+
+	res |= message_end(conn);
+	channel_elog(WARNING, "Finished sending quote message");
+	return res;
+}
+
+static int send_quote_result(plcConn *conn, plcMsgQuoteResult *mQuoteResult) {
+	int res = 0;
+
+	channel_elog(WARNING, "Sending quote result message to client");
+	res |= message_start(conn, MT_QUOTE_RESULT);
+	res |= send_int32(conn, mQuoteResult->quote_type);
+	res |= send_cstring(conn, mQuoteResult->result);
+
+	res |= message_end(conn);
+	channel_elog(WARNING, "Finished sending quote result message");
+	return res;
+}
 
 static int send_subtransaction_result(plcConn *conn, plcMsgSubtransactionResult *mSubr) {
 	int res = 0;
@@ -988,6 +1033,30 @@ static int receive_log(plcConn *conn, plcMessage **mLog) {
 	res |= receive_cstring(conn, &ret->message);
 
 	channel_elog(WARNING, "Finished receiving log message");
+	return res;
+}
+
+static int receive_quote(plcConn *conn, plcMessage **mQuote) {
+	int res = 0;
+	plcMsgQuote *ret;
+
+	*mQuote = pmalloc(sizeof(plcMsgQuote));
+	ret = (plcMsgQuote *)*mQuote;
+	ret->msgtype = MT_QUOTE;
+	res |= receive_int32(conn, (int32 *)&ret->quote_type);
+	res |= receive_cstring(conn, &ret->msg);
+	return res;
+}
+
+static int receive_quote_result(plcConn *conn, plcMessage **mQuoteResult) {
+	int res = 0;
+	plcMsgQuoteResult *ret;
+
+	*mQuoteResult = pmalloc(sizeof(plcMsgQuoteResult));
+	ret = (plcMsgQuoteResult *)*mQuoteResult;
+	ret->msgtype = MT_QUOTE_RESULT;
+	res |= receive_int32(conn, (int32 *)&ret->quote_type);
+	res |= receive_cstring(conn, &ret->result);
 	return res;
 }
 

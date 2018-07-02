@@ -11,6 +11,8 @@
 #define MT_CALLREQ        'C'
 #define MT_EXCEPTION      'E'
 #define MT_LOG            'L'
+#define MT_QUOTE          'Q'
+#define MT_QUOTE_RESULT   'O'
 #define MT_PING           'P'
 #define MT_RESULT         'R'
 #define MT_SQL            'S'
@@ -35,6 +37,8 @@
 #define MT_SUBTRANSACTION_BIT 0x400LL
 #define MT_SUBTRAN_RESULT_BIT 0x800LL
 #define MT_EOF_BIT            0x1000LL
+#define MT_QUOTE_BIT          0x2000LL
+#define MT_QUOTE_RESULT_BIT   0x4000LL
 
 #define MT_ALL_BITS        0xFFFFffffFFFFffffLL
 

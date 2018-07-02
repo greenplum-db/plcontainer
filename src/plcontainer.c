@@ -6,7 +6,7 @@
 
 /* Postgres Headers */
 #include "postgres.h"
-
+#include "utils/builtins.h"
 #ifdef PLC_PG
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -66,6 +66,10 @@ static void plcontainer_process_exception(plcMsgError *msg);
 static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *proc);
 
 static void plcontainer_process_log(plcMsgLog *log);
+
+static char * quote_literal_cstr(const char *rawstr);
+
+static void plcontainer_process_quote(plcMsgQuote *quote, plcConn *conn);
 
 static volatile bool DeleteBackendsWhenError;
 
@@ -324,6 +328,9 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 					case MT_LOG:
 						plcontainer_process_log((plcMsgLog *) answer);
 						break;
+					case MT_QUOTE:
+						plcontainer_process_quote((plcMsgQuote *)answer, conn);
+						break;
 					case MT_SUBTRANSACTION:
 						plcontainer_process_subtransaction(
 								(plcMsgSubtransaction *) answer, conn);
@@ -335,7 +342,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 				}
 
 				if (message_type != MT_SQL && message_type != MT_LOG
-				    && message_type != MT_SUBTRANSACTION)
+				    && message_type != MT_SUBTRANSACTION && message_type != MT_QUOTE)
 					break;
 			}
 		} else {
@@ -406,6 +413,51 @@ static void plcontainer_process_log(plcMsgLog *log) {
 	if (log->message != NULL)
 		pfree(log->message);
 }
+/*
+ * quote_literal_cstr -
+ *	  returns a properly quoted literal
+ */
+static char *
+quote_literal_cstr(const char *rawstr)
+{
+	char	   *result;
+	int			len;
+	const char *str;
+
+	len = strlen(rawstr);
+	/* We make a worst-case result area; wasting a little space is OK */
+	result = palloc0(len * 2 + 3);
+
+	str = quote_literal_internal(rawstr);
+	memcpy(result, str, strlen(str));
+
+	return result;
+}
+
+static void plcontainer_process_quote(plcMsgQuote *msg, plcConn *conn) {
+	int16 res = 0;
+	plcMsgQuoteResult *result;
+	result = palloc(sizeof(plcMsgQuoteResult));
+	result->msgtype = MT_QUOTE_RESULT;
+	result->quote_type = msg->quote_type;
+
+	if (msg->quote_type == QUOTE_TYPE_LITERAL || msg->quote_type == QUOTE_TYPE_NULLABLE) {
+		char *str;
+		str = quote_literal_cstr(msg->msg);
+		result->result = PLy_strdup(str);
+		pfree(str);
+	} else if (msg->quote_type == QUOTE_TYPE_IDENT) {
+		result->result = PLy_strdup(quote_identifier(msg->msg));
+	}
+
+	res = plcontainer_channel_send(conn, (plcMessage *) result);
+	if (res < 0) {
+		plc_elog(ERROR, "Error sending data to the client, with errno %d. ", res);
+	}
+	if (msg->msg != NULL)
+		pfree(msg->msg);
+}
+
 
 /*
  * Processing client SQL query message

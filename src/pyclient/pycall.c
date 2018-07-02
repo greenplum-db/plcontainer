@@ -16,6 +16,7 @@
 #include "pyerror.h"
 #include "pyconversions.h"
 #include "pylogging.h"
+#include "pyquote.h"
 #include "plpy_spi.h"
 #include "pycache.h"
 
@@ -53,6 +54,13 @@ static PyMethodDef moddef[] = {
 	 * execute a plan or query
 	 */
 	{"execute",        PLy_spi_execute,    METH_VARARGS, NULL},
+
+	/*
+	 * escaping strings
+	 */
+	{"quote_literal", PLy_quote_literal, METH_VARARGS, NULL },
+	{"quote_nullable", PLy_quote_nullable, METH_VARARGS, NULL },
+	{"quote_ident", PLy_quote_ident, METH_VARARGS, NULL },
 
 	/*
 	 * create the subtransaction context manager

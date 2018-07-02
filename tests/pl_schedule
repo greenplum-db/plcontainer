@@ -16,6 +16,7 @@ test: function_r function_r_gpdb5 function_python function_python_gpdb5
 # test PL/Container normal function
 test: test_r 
 test: test_python
+test: plpython_quote
 test: test_r_gpdb5 test_python_gpdb5 spi_r spi_python subtransaction_python
 test: test_r_error test_python_error 
 test: exception
