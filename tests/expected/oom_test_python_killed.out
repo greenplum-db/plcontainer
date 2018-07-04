@@ -6,7 +6,10 @@ select py_memory_allocate_oom(1);
 (1 row)
 
 select py_memory_allocate_oom(512);
+WARNING:  plcontainer: docker reports container has been terminated due to out of memory. This could be either the container was over memory limit or inside program crashed
+CONTEXT:  PLContainer function "py_memory_allocate_oom"
 ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)
+CONTEXT:  PLContainer function "py_memory_allocate_oom"
 select py_memory_allocate_oom(1);
  py_memory_allocate_oom 
 ------------------------
@@ -20,7 +23,10 @@ select py_memory_allocate_normal(512);
 (1 row)
 
 select py_memory_allocate_oom(512);
+WARNING:  plcontainer: docker reports container has been terminated due to out of memory. This could be either the container was over memory limit or inside program crashed
+CONTEXT:  PLContainer function "py_memory_allocate_oom"
 ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)
+CONTEXT:  PLContainer function "py_memory_allocate_oom"
 select py_memory_allocate_normal(512);
  py_memory_allocate_normal 
 ---------------------------
@@ -35,7 +41,10 @@ select count(py_memory_allocate_oom(num)) from OOM_TEST;
 (1 row)
 
 select count(py_memory_allocate_oom(aux)) from OOM_TEST;
+WARNING:  plcontainer: docker reports container has been terminated due to out of memory. This could be either the container was over memory limit or inside program crashed  (seg1 slice1 192.168.4.25:20001 pid=13585)
+CONTEXT:  PLContainer function "py_memory_allocate_oom"
 ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)  (seg1 slice1 127.0.0.1:25433 pid=26450) (plcontainer.c:255)
+DETAIL:  PLContainer function "py_memory_allocate_oom"
 select count(py_memory_allocate_oom(num)) from OOM_TEST;
  count 
 -------
@@ -49,7 +58,10 @@ select count(py_memory_allocate_normal(aux)) from OOM_TEST;
 (1 row)
 
 select count(py_memory_allocate_oom(aux)) from OOM_TEST;
+WARNING:  plcontainer: docker reports container has been terminated due to out of memory. This could be either the container was over memory limit or inside program crashed  (seg1 slice1 192.168.4.25:20001 pid=13585)
+CONTEXT:  PLContainer function "py_memory_allocate_oom"
 ERROR:  plcontainer: Error receiving data from the client. Maybe retry later. (plcontainer.c:255)  (seg0 slice1 127.0.0.1:25432 pid=26449) (plcontainer.c:255)
+DETAIL:  PLContainer function "py_memory_allocate_oom"
 select count(py_memory_allocate_normal(aux)) from OOM_TEST;
  count 
 -------

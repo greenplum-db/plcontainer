@@ -30,6 +30,7 @@ DETAIL:
  Traceback (most recent call last):
   File "<string>", line 4, in pyint
 TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'
+CONTEXT:  PLContainer function "pyint"
 select pyint(123::int2);
  pyint 
 -------
@@ -439,17 +440,28 @@ select py_plpy_get_record();
 
 select pylogging();
 INFO:  this is the info message
+CONTEXT:  PLContainer function "pylogging"
 NOTICE:  this is the notice message
+CONTEXT:  PLContainer function "pylogging"
 WARNING:  this is the warning message
+CONTEXT:  PLContainer function "pylogging"
 ERROR:  this is the error message
+CONTEXT:  PLContainer function "pylogging"
 select pylogging2();
 INFO:  this is the info message
-CONTEXT:  SQL statement "select pylogging()"
+CONTEXT:  PLContainer function "pylogging"
+SQL statement "select pylogging()"
+PLContainer function "pylogging"
 NOTICE:  this is the notice message
-CONTEXT:  SQL statement "select pylogging()"
+CONTEXT:  PLContainer function "pylogging"
+SQL statement "select pylogging()"
+PLContainer function "pylogging"
 WARNING:  this is the warning message
-CONTEXT:  SQL statement "select pylogging()"
+CONTEXT:  PLContainer function "pylogging"
+SQL statement "select pylogging()"
+PLContainer function "pylogging"
 ERROR:  plcontainer: Handle spi message failed due to error: this is the error message (plcontainer.c:361)
+CONTEXT:  PLContainer function "pylogging2"
 select pygdset('1','a');
  pygdset 
 ---------
@@ -499,7 +511,9 @@ INFO:  SD a -> 000
 
 select pysdset('b','111');
 INFO:  SD a -> 000
+CONTEXT:  PLContainer function "pysdset"
 INFO:  SD b -> 111
+CONTEXT:  PLContainer function "pysdset"
  pysdset 
 ---------
  ok
@@ -507,8 +521,11 @@ INFO:  SD b -> 111
 
 select pysdset('c','222');
 INFO:  SD a -> 000
+CONTEXT:  PLContainer function "pysdset"
 INFO:  SD b -> 111
+CONTEXT:  PLContainer function "pysdset"
 INFO:  SD c -> 222
+CONTEXT:  PLContainer function "pysdset"
  pysdset 
 ---------
  ok
@@ -521,9 +538,13 @@ select pysdgetall();
 
 select pysdset('d','333');
 INFO:  SD a -> 000
+CONTEXT:  PLContainer function "pysdset"
 INFO:  SD b -> 111
+CONTEXT:  PLContainer function "pysdset"
 INFO:  SD c -> 222
+CONTEXT:  PLContainer function "pysdset"
 INFO:  SD d -> 333
+CONTEXT:  PLContainer function "pysdset"
  pysdset 
 ---------
  ok
@@ -631,6 +652,7 @@ select * from pytestudt13( (1,2,'a')::test_type3 );
 select pytestudt16();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Only 'dict' object can be converted to UDT "test_type3"
+CONTEXT:  PLContainer function "pytestudt16"
 select * from pytestudtrecord1() as t(a int, b int, c varchar);
  a | b |  c  
 ---+---+-----
@@ -658,21 +680,27 @@ select pyreturnsetofint8(2), pyreturnsetofint8(3);
 select pybadint();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Exception occurred transforming result object to int4
+CONTEXT:  PLContainer function "pybadint"
 select pybadfloat8();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Exception occurred transforming result object to float4
+CONTEXT:  PLContainer function "pybadfloat8"
 select pybadudt();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Cannot find key 'c' in result dictionary for converting it into UDT
+CONTEXT:  PLContainer function "pybadudt"
 select pybadudt2();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Exception occurred transforming result object to float8
+CONTEXT:  PLContainer function "pybadudt2"
 select pybadarr();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Exception occurred transforming result object to int4
+CONTEXT:  PLContainer function "pybadarr"
 select pybadarr2();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Cannot convert non-sequence object to array
+CONTEXT:  PLContainer function "pybadarr2"
 select pyinvalid_function();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  
@@ -680,6 +708,7 @@ DETAIL:
  Traceback (most recent call last):
   File "<string>", line 5, in pyinvalid_function
 AttributeError: 'module' object has no attribute 'foobar'
+CONTEXT:  PLContainer function "pyinvalid_function"
 select pysubtransaction('t');
  pysubtransaction 
 ------------------
@@ -716,6 +745,7 @@ DETAIL:
   File "<string>", line 8, in fun2
   File "<string>", line 5, in fun1
 Error: boom
+CONTEXT:  PLContainer function "nested_error_raise"
 select nested_fatal_raise();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  
@@ -726,10 +756,12 @@ DETAIL:
   File "<string>", line 8, in fun2
   File "<string>", line 5, in fun1
 Fatal: boom
+CONTEXT:  PLContainer function "nested_fatal_raise"
 select pseudotype_result(1);
 ERROR:  PLContainer functions cannot return type anyarray
 \! psql -d ${PL_TESTDB} -c "select pythonlogging_fatal();"
 FATAL:  test plpy fatal
+CONTEXT:  PLContainer function "pythonlogging_fatal"
 server closed the connection unexpectedly
 	This probably means the server terminated abnormally
 	before or while processing the request.

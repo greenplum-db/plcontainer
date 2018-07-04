@@ -7,6 +7,7 @@ rshouldnotparse <- function(args) {
 # container: plc_r_shared
 return 'hello'
 }
+CONTEXT:  PLContainer function "rshouldnotparse"
 select rlog100();
  rlog100 
 ---------
@@ -358,19 +359,31 @@ select rpg_spi_exec('select 1');
 
 select rlogging();
 INFO:  this is the info message
+CONTEXT:  PLContainer function "rlogging"
 NOTICE:  this is the notice message
+CONTEXT:  PLContainer function "rlogging"
 WARNING:  this is the warning message
+CONTEXT:  PLContainer function "rlogging"
 ERROR:  this is the error message
+CONTEXT:  PLContainer function "rlogging"
 select rlogging2();
 INFO:  this is the info message
-CONTEXT:  SQL statement "select rlogging()"
+CONTEXT:  PLContainer function "rlogging"
+SQL statement "select rlogging()"
+PLContainer function "rlogging"
 NOTICE:  this is the notice message
-CONTEXT:  SQL statement "select rlogging()"
+CONTEXT:  PLContainer function "rlogging"
+SQL statement "select rlogging()"
+PLContainer function "rlogging"
 WARNING:  this is the warning message
-CONTEXT:  SQL statement "select rlogging()"
-ERROR:  plcontainer: Handle spi message failed due to error: this is the error message (plcontainer.c:390)
+CONTEXT:  PLContainer function "rlogging"
+SQL statement "select rlogging()"
+PLContainer function "rlogging"
+ERROR:  plcontainer: Handle spi message failed due to error: this is the error message (plcontainer.c:537)
+CONTEXT:  PLContainer function "rlogging2"
 \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
 FATAL:  this is the fatal message
+CONTEXT:  PLContainer function "rlogging_fatal"
 server closed the connection unexpectedly
 	This probably means the server terminated abnormally
 	before or while processing the request.
