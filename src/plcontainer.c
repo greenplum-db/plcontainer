@@ -71,7 +71,16 @@ static char * quote_literal_cstr(const char *rawstr);
 
 static void plcontainer_process_quote(plcMsgQuote *quote, plcConn *conn);
 
+static void plpython_error_callback(void *arg);
+
+static char * PLy_procedure_name(plcProcInfo *proc);
+
 static volatile bool DeleteBackendsWhenError;
+
+/*
+ * Currently active plpython function
+ */
+static plcProcInfo *PLy_curr_procedure = NULL;
 
 /* this is saved and restored by plcontainer_call_handler */
 MemoryContext pl_container_caller_context = NULL;
@@ -140,9 +149,34 @@ plcontainer_validator(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+/*
+ * Get the name of the last procedure called by the backend (the
+ * innermost, if a plpython procedure call calls the backend and the
+ * backend calls another plpython procedure).
+ *
+ * NB: this returns the SQL name, not the internal Python procedure name
+ */
+static char *
+PLy_procedure_name(plcProcInfo *proc)
+{
+	if (proc == NULL)
+		return "<unknown procedure>";
+	return proc->proname;
+}
+
+static void
+plpython_error_callback(void __attribute__((__unused__)) *arg)
+{
+	if (PLy_curr_procedure)
+		errcontext("PLContainer function \"%s\"",
+				   PLy_procedure_name(PLy_curr_procedure));
+}
+
 Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	Datum datumreturn = (Datum) 0;
 	int ret;
+	plcProcInfo *save_curr_proc;
+	ErrorContextCallback plerrcontext;
 
 	/* TODO: handle trigger requests as well */
 	if (CALLED_AS_TRIGGER(fcinfo)) {
@@ -163,6 +197,13 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 
 	plc_elog(DEBUG1, "Entering call handler with  PLy_curr_procedure");
 
+	save_curr_proc = PLy_curr_procedure;
+	/*
+	 * Setup error traceback support for ereport()
+	 */
+	plerrcontext.callback = plpython_error_callback;
+	plerrcontext.previous = error_context_stack;
+	error_context_stack = &plerrcontext;
 
 	/* We need to cover this in try-catch block to catch the even of user
 	 * requesting the query termination. In this case we should forcefully
@@ -179,6 +220,8 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 		/* Get procedure info from cache or compose it based on catalog */
 		proc = plcontainer_procedure_get(fcinfo);
 
+		PLy_curr_procedure = proc;
+
 		plc_elog(DEBUG1, "Calling python proc @ address: %p", proc);
 
 		datumreturn = plcontainer_function_handler(fcinfo, proc);
@@ -194,6 +237,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 			delete_containers();
 			DeleteBackendsWhenError = false;
 		}
+		PLy_curr_procedure = save_curr_proc;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -206,6 +250,12 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	if (ret != SPI_OK_FINISH)
 		plc_elog(ERROR, "[plcontainer] SPI finish error: %d (%s)", ret,
 		     SPI_result_code_string(ret));
+
+	/* Pop the error context stack */
+	error_context_stack = plerrcontext.previous;
+
+	PLy_curr_procedure = save_curr_proc;
+
 
 	return datumreturn;
 }
