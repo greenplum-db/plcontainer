@@ -63,8 +63,10 @@ DETAIL:
  Error in (rerror_non_exist_function <- function(args) { : 
   could not find function "as.mx"
 select rerror_spi_queryfail(); 
-ERROR:  PL/Container client exception occurred:
-DETAIL:  SPI process_SPI_results failed due to relation "non_exist_table" does not exist
+ERROR:  relation "non_exist_table" does not exist
+LINE 1: select fname from non_exist_table order by 1
+                          ^
+QUERY:  select fname from non_exist_table order by 1
 select rerror_setof();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Error in array(1:3, c(-1, 2)) : negative length vectors are not allowed

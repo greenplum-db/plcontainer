@@ -304,19 +304,17 @@ NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
 (1 row)
 
 select py_spi_illegal_pexecute1();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Exception occurred in Python during function execution 
- Traceback (most recent call last):
-  File "<string>", line 5, in py_spi_illegal_pexecute1
-SPIError: SPI prepare failed due to operator does not exist: bytea = integer
+ERROR:  operator does not exist: bytea = integer
+LINE 1: select * from t4 where name=$1 order by score1
+                                   ^
+HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+QUERY:  select * from t4 where name=$1 order by score1
 select py_spi_illegal_pexecute2();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Exception occurred in Python during function execution 
- Traceback (most recent call last):
-  File "<string>", line 5, in py_spi_illegal_pexecute2
-SPIError: SPI prepare failed due to operator does not exist: real < bytea
+ERROR:  operator does not exist: real < bytea
+LINE 1: select * from t4 where score1<$1 order by score1
+                                     ^
+HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+QUERY:  select * from t4 where score1<$1 order by score1
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 
@@ -396,26 +394,17 @@ NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
 (1 row)
 
 select pyspi_illegal_sql();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Exception occurred in Python during function execution 
- Traceback (most recent call last):
-  File "<string>", line 4, in pyspi_illegal_sql
-SPIError: SPI execute query failed due to relation "pg_database_invalid" does not exist
+ERROR:  relation "pg_database_invalid" does not exist
+LINE 1: select datname from pg_database_invalid
+                            ^
+QUERY:  select datname from pg_database_invalid
 select pyspi_illegal_sql_pexecute();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Exception occurred in Python during function execution 
- Traceback (most recent call last):
-  File "<string>", line 4, in pyspi_illegal_sql_pexecute
-SPIError: SPI prepare failed due to relation "pg_database_invalid" does not exist
+ERROR:  relation "pg_database_invalid" does not exist
+LINE 1: select datname from pg_database_invalid
+                            ^
+QUERY:  select datname from pg_database_invalid
 select pyspi_bad_limit();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Exception occurred in Python during function execution 
- Traceback (most recent call last):
-  File "<string>", line 4, in pyspi_bad_limit
-SPIError: SPI execute query failed due to plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Detail: SPI_ERROR_ARGUMENT
+ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:330)
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 
@@ -431,19 +420,9 @@ DETAIL:
   File "<string>", line 4, in pyspi_bad_limit_pexecute
 TypeError: second argument of plpy.prepare must be a sequence
 select pyspi_bad_limit_immutable();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Exception occurred in Python during function execution 
- Traceback (most recent call last):
-  File "<string>", line 4, in pyspi_bad_limit_immutable
-SPIError: SPI execute query failed due to plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Detail: SPI_ERROR_ARGUMENT
+ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:330)
 select pyspi_bad_limit_stable();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Exception occurred in Python during function execution 
- Traceback (most recent call last):
-  File "<string>", line 4, in pyspi_bad_limit_stable
-SPIError: SPI execute query failed due to plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Detail: SPI_ERROR_ARGUMENT
+ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:330)
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
  py_spi_simple_t4 
@@ -744,21 +723,11 @@ except Exception, ex:
 return None
 $$ LANGUAGE plcontainer;
 SELECT invalid_type_uncaught('rick');
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Exception occurred in Python during function execution 
- Traceback (most recent call last):
-  File "<string>", line 6, in invalid_type_uncaught
-SPIError: SPI prepare failed due to type "test" does not exist
+ERROR:  type "test" does not exist
 SELECT invalid_type_caught('rick');
-NOTICE:  SPI prepare failed due to type "test" does not exist
- invalid_type_caught 
----------------------
- 
-(1 row)
-
+ERROR:  type "test" does not exist
 SELECT invalid_type_reraised('rick');
-ERROR:  SPI prepare failed due to type "test" does not exist
+ERROR:  type "test" does not exist
 SELECT valid_type('rick');
  valid_type 
 ------------
@@ -789,58 +758,3 @@ select spi_prepared_plan_test_nested('smith');
  there are 1 smiths
 (1 row)
 
-CREATE TABLE subtransaction_tbl (
-    i integer
-);
-NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
-HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-CREATE FUNCTION try_catch_inside_subtransaction() RETURNS void
-AS $$
-# container: plc_python_shared
-with plpy.subtransaction():
-     plpy.execute("INSERT INTO subtransaction_tbl VALUES (1)")
-     try:
-         plpy.execute("INSERT INTO subtransaction_tbl VALUES ('a')")
-     except plpy.SPIError:
-         plpy.notice("caught")
-$$ LANGUAGE plcontainer;
-SELECT try_catch_inside_subtransaction();
-NOTICE:  caught
- try_catch_inside_subtransaction 
----------------------------------
- 
-(1 row)
-
-SELECT * FROM subtransaction_tbl;
- i 
----
- 1
-(1 row)
-
-TRUNCATE subtransaction_tbl;
-ALTER TABLE subtransaction_tbl ADD PRIMARY KEY (i);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "subtransaction_tbl_pkey" for table "subtransaction_tbl"
-CREATE FUNCTION pk_violation_inside_subtransaction() RETURNS void
-AS $$
-# container: plc_python_shared
-with plpy.subtransaction():
-     plpy.execute("INSERT INTO subtransaction_tbl VALUES (1)")
-     try:
-         plpy.execute("INSERT INTO subtransaction_tbl VALUES (1)")
-     except plpy.SPIError:
-         plpy.notice("caught")
-$$ LANGUAGE plcontainer;
-SELECT pk_violation_inside_subtransaction();
-NOTICE:  caught
- pk_violation_inside_subtransaction 
-------------------------------------
- 
-(1 row)
-
-SELECT * FROM subtransaction_tbl;
- i 
----
- 1
-(1 row)
-
-DROP TABLE subtransaction_tbl;

@@ -31,6 +31,7 @@ PLy_strdup(const char *str)
 	return result;
 }
 
+
 char *plc_top_strdup(char *str) {
 	int len = strlen(str);
 	char *out = PLy_malloc(len + 1);

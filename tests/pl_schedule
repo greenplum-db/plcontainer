@@ -29,7 +29,7 @@ test: uda_python uda_r
 
 # Out of memory test
 test: oom_test_prepare_pyhthon
-test: oom_test_python_killed oom_test_python_killed_1 oom_test_python_normal oom_test_python_normal_1 oom_test_python_normal_2
+test: oom_test_python_killed oom_test_python_killed_p oom_test_python_normal oom_test_python_normal_1 oom_test_python_normal_2
 
 # Miscellaneous test
 test: misc

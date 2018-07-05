@@ -379,8 +379,10 @@ WARNING:  this is the warning message
 CONTEXT:  PLContainer function "rlogging"
 SQL statement "select rlogging()"
 PLContainer function "rlogging"
-ERROR:  plcontainer: Handle spi message failed due to error: this is the error message (plcontainer.c:537)
-CONTEXT:  PLContainer function "rlogging2"
+ERROR:  this is the error message
+CONTEXT:  PLContainer function "rlogging"
+SQL statement "select rlogging()"
+PLContainer function "rlogging"
 \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
 FATAL:  this is the fatal message
 CONTEXT:  PLContainer function "rlogging_fatal"

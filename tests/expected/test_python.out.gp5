@@ -460,8 +460,10 @@ WARNING:  this is the warning message
 CONTEXT:  PLContainer function "pylogging"
 SQL statement "select pylogging()"
 PLContainer function "pylogging"
-ERROR:  plcontainer: Handle spi message failed due to error: this is the error message (plcontainer.c:537)
-CONTEXT:  PLContainer function "pylogging2"
+ERROR:  this is the error message
+CONTEXT:  PLContainer function "pylogging"
+SQL statement "select pylogging()"
+PLContainer function "pylogging"
 select pygdset('1','a');
  pygdset 
 ---------

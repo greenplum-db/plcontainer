@@ -297,8 +297,11 @@ NOTICE:  bob0
 (1 row)
 
 select r_spi_illegal_pexecute1();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  SPI process_SPI_results failed due to operator does not exist: bytea = integer
+ERROR:  operator does not exist: bytea = integer
+LINE 1: select * from t4r where name=$1 order by score1
+                                    ^
+HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+QUERY:  select * from t4r where name=$1 order by score1
 select r_spi_illegal_pexecute2();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  
@@ -347,11 +350,15 @@ NOTICE:  bob0
 (1 row)
 
 select rspi_illegal_sql();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  SPI process_SPI_results failed due to relation "pg_database_invalid" does not exist
+ERROR:  relation "pg_database_invalid" does not exist
+LINE 1: select datname from pg_database_invalid
+                            ^
+QUERY:  select datname from pg_database_invalid
 select rspi_illegal_sql_pexecute();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  SPI process_SPI_results failed due to relation "pg_database_invalid" does not exist
+ERROR:  relation "pg_database_invalid" does not exist
+LINE 1: select datname from pg_database_invalid
+                            ^
+QUERY:  select datname from pg_database_invalid
 select r_spi_simple_t4();
 NOTICE:  bob0
  r_spi_simple_t4 

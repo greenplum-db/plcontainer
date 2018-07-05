@@ -7,7 +7,6 @@
  */
 #include "plpy_spi.h"
 
-#include <assert.h>
 #include "common/comm_channel.h"
 #include "common/comm_utils.h"
 #include "pycall.h"
@@ -22,7 +21,6 @@ typedef struct PLySubtransactionObject {
 	bool exited;
 } PLySubtransactionObject;
 
-static plcMessage *receive_from_frontend();
 
 static PyObject *PLy_subtransaction_new(void);
 
@@ -246,6 +244,7 @@ PLy_plan_new(void) {
 
 /* SPI_freeplan(ob->pplan) */
 static int PLy_freeplan(PLyPlanObject *ob) {
+	int res;
 	plcMsgSQL msg;
 	plcMessage *resp;
 	plcConn *conn = plcconn_global;
@@ -262,28 +261,15 @@ static int PLy_freeplan(PLyPlanObject *ob) {
 	plcontainer_channel_send(conn, (plcMessage *) &msg);
 	/* No need to free for msg after tx. */
 
-	resp = receive_from_frontend();
-	if (resp == NULL) {
-		raise_execution_error("Error receiving data from frontend");
-		return -1;
+	res = plcontainer_channel_receive(conn, &resp, MT_RAW_BIT);
+	if (res < 0) {
+		raise_execution_error("Error receiving data from the frontend, %d", res);
+		return res;
 	}
-	if (resp->msgtype == MT_EXCEPTION) {
-		plcMsgError* errorResp = (plcMsgError *) resp;
-		if (errorResp->message != NULL) {
-			PLy_exception_set(PLy_exc_spi_error,
-					"SPI free plan failed due to %s", errorResp->message);
-		} else {
-			PLy_exception_set(PLy_exc_spi_error, "SPI free plan failed.");
-		}
-		return -1;
-	}
-
 
 	int32 *prv;
 	prv = (int32 *) (((plcMsgRaw *) resp)->data);
-	if(*prv != 0) {
-		PLy_exception_set(PLy_exc_spi_error, "SPI free plan failed.");
-	}
+	res = *prv;
 
 	free_rawmsg((plcMsgRaw *) resp);
 	return 0;
@@ -323,7 +309,7 @@ static plcMessage *receive_from_frontend() {
 	int res = 0;
 	plcConn *conn = plcconn_global;
 
-	res = plcontainer_channel_receive(conn, &resp, MT_PING_BIT| MT_CALLREQ_BIT | MT_RESULT_BIT | MT_SUBTRAN_RESULT_BIT| MT_EXCEPTION_BIT| MT_RAW_BIT);
+	res = plcontainer_channel_receive(conn, &resp, MT_CALLREQ_BIT | MT_RESULT_BIT | MT_SUBTRAN_RESULT_BIT);
 	if (res < 0) {
 		raise_execution_error("Error receiving data from the frontend, %d", res);
 		return NULL;
@@ -334,16 +320,9 @@ static plcMessage *receive_from_frontend() {
 			handle_call((plcMsgCallreq *) resp, conn);
 			free_callreq((plcMsgCallreq *) resp, false, false);
 			return receive_from_frontend();
-		case MT_PING:
-			plcontainer_channel_send(conn, resp);
-			return receive_from_frontend();			
 		case MT_RESULT:
 			break;
 		case MT_SUBTRAN_RESULT:
-			break;
-		case MT_EXCEPTION:
-			break;
-		case MT_RAW:
 			break;
 		default:
 			raise_execution_error("Client cannot process message type %c.\n"
@@ -386,7 +365,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 	uint32 i, j;
 	int32 nargs;
 	plcMsgSQL msg;
-	plcMessage *baseResp;
+	plcMsgResult *resp;
 	PyObject *pyresult,
 			 *pydict,
 			 *pyval;
@@ -450,24 +429,11 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 	plcontainer_channel_send(conn, (plcMessage *) &msg);
 	free_arguments(args, nargs, false, false);
 
-	baseResp = receive_from_frontend();
-	if (baseResp == NULL) {
-		raise_execution_error("Error receiving data from frontend");
+	resp = (plcMsgResult *) receive_from_frontend();
+	if (resp == NULL) {
+		PLy_exception_set(PLy_exc_spi_error, "Error receiving data from frontend");
 		return NULL;
 	}
-	if (baseResp->msgtype == MT_EXCEPTION) {
-		plcMsgError* resp = (plcMsgError *) baseResp;
-		if (resp->message != NULL) {
-			PLy_exception_set(PLy_exc_spi_error,
-					"SPI execute plan failed due to %s", resp->message);
-		} else {
-			PLy_exception_set(PLy_exc_spi_error, "SPI execute plan failed.");
-		}
-		return NULL;
-	}
-
-	assert(baseResp->msgtype == MT_RESULT);
-	plcMsgResult* resp = (plcMsgResult *) baseResp;
 
 	/*
 	 * For INSERT, UPDATE and DELETE no column will be returned,
@@ -729,7 +695,7 @@ static PyObject *
 PLy_spi_execute_query(char *query, long limit) {
 	uint32 i, j;
 	plcMsgSQL msg;
-	plcMessage *baseResp;
+	plcMsgResult *resp;
 	PyObject *pyresult,
 		*pydict,
 		*pyval;
@@ -743,24 +709,12 @@ PLy_spi_execute_query(char *query, long limit) {
 
 	plcontainer_channel_send(conn, (plcMessage *) &msg);
 
-	baseResp = receive_from_frontend();
-	if (baseResp == NULL) {
+	resp = (plcMsgResult *) receive_from_frontend();
+	if (resp == NULL) {
 		raise_execution_error("Error receiving data from frontend");
 		return NULL;
 	}
-	if(baseResp->msgtype == MT_EXCEPTION) {
-		plcMsgError* resp = (plcMsgError *) baseResp;
-		if (resp->message != NULL) {
-			PLy_exception_set(PLy_exc_spi_error,
-					"SPI execute query failed due to %s", resp->message);
-		} else {
-			PLy_exception_set(PLy_exc_spi_error, "SPI execute query failed.");
-		}
-		return NULL;
-	}
 
-	assert(baseResp->msgtype == MT_RESULT);
-	plcMsgResult* resp = (plcMsgResult *)baseResp;
 	/*
 	 * For INSERT, UPDATE and DELETE no column will be returned,
 	 * so if resp->cols > 0, it must be SELECT statment.
@@ -856,7 +810,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 	plcMessage *resp;
 	plcConn *conn = plcconn_global;
 	char *query;
-	int nargs;
+	int nargs, res;
 	PLyPlanObject *py_plan;
 	PyObject *list = NULL;
 	PyObject *optr = NULL;
@@ -911,19 +865,9 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 	plcontainer_channel_send(conn, (plcMessage *) &msg);
 	free_arguments(msg.args, msg.nargs, false, false);
 
-	resp = receive_from_frontend();
-	if (resp == NULL) {
-		raise_execution_error("Error receiving data from frontend");
-		return NULL;
-	}
-	if (resp->msgtype == MT_EXCEPTION) {
-		plcMsgError* errorResp = (plcMsgError *) resp;
-		if (errorResp->message != NULL) {
-			PLy_exception_set(PLy_exc_spi_error,
-					"SPI prepare failed due to %s", errorResp->message);
-		} else {
-			PLy_exception_set(PLy_exc_spi_error, "SPI prepare failed.");
-		}
+	res = plcontainer_channel_receive(conn, &resp, MT_RAW_BIT);
+	if (res < 0) {
+		PLy_exception_set(PLy_exc_spi_error, "Error receiving data from the frontend, %d", res);
 		return NULL;
 	}
 
@@ -994,6 +938,7 @@ PLy_exception_set(PyObject *exc, const char *fmt, ...) {
 	va_end(ap);
 
 	plc_elog(DEBUG1, "Python caught an exception: %s", buf);
+
 	PyErr_SetString(exc, buf);
 }
 

@@ -17,7 +17,6 @@
 
 #include <Python.h>
 
-#define ERR_MSG_LENGTH 512
 static char *get_python_error();
 
 /* Stack of error messages obtained when no connectivity was available */
@@ -105,7 +104,7 @@ void raise_execution_error(const char *format, ...) {
 		int len, res;
 
 		va_start(args, format);
-		len = ERR_MSG_LENGTH + 2 * strlen(format);
+		len = 100 + 2 * strlen(format);
 		msg = (char *) malloc(len + 1);
 		res = vsnprintf(msg, len, format, args);
 		if (res < 0 || res >= len) {
