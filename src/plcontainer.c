@@ -7,6 +7,8 @@
 /* Postgres Headers */
 #include "postgres.h"
 #include "utils/builtins.h"
+#include "utils/syscache.h"
+#include "catalog/pg_proc.h"
 #ifdef PLC_PG
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -67,7 +69,10 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
 
 static void plcontainer_process_log(plcMsgLog *log);
 
+#if PG_VERSION_NUM <= 80399
 static char * quote_literal_cstr(const char *rawstr);
+#else
+#endif
 
 static void plcontainer_process_quote(plcMsgQuote *quote, plcConn *conn);
 
@@ -463,6 +468,8 @@ static void plcontainer_process_log(plcMsgLog *log) {
 	if (log->message != NULL)
 		pfree(log->message);
 }
+
+#if PG_VERSION_NUM <= 80399
 /*
  * quote_literal_cstr -
  *	  returns a properly quoted literal
@@ -483,6 +490,8 @@ quote_literal_cstr(const char *rawstr)
 
 	return result;
 }
+#else
+#endif
 
 static void plcontainer_process_quote(plcMsgQuote *msg, plcConn *conn) {
 	int16 res = 0;
