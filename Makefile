@@ -135,8 +135,12 @@ install-clients: build-clients
 installcheck:
 	$(MAKE) -C tests tests
 
+spiexceptions.h: errcodes.txt generate-spiexceptions.pl
+	$(PERL) generate-spiexceptions.pl $< > $@
+	cp spiexceptions.h $(COMMONDIR)/
+
 .PHONY: build-clients
-build-clients:
+build-clients: spiexceptions.h
 	CC='$(CC)' CFLAGS='$(CLIENT_CFLAGS)' LDFLAGS='$(CLIENT_LDFLAGS)' $(MAKE) -C $(SRCDIR)/pyclient all
 	CC='$(CC)' CFLAGS='$(CLIENT_CFLAGS)' LDFLAGS='$(CLIENT_LDFLAGS)' $(MAKE) -C $(SRCDIR)/rclient all
 
@@ -144,6 +148,7 @@ build-clients:
 clean-clients:
 	$(MAKE) -C $(SRCDIR)/pyclient clean
 	$(MAKE) -C $(SRCDIR)/rclient clean
+	rm -rf spiexceptions.h $(COMMONDIR)/spiexceptions.h
 
 .PHONY: clean-coverage
 clean-coverage:

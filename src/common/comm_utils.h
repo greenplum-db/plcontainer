@@ -77,7 +77,14 @@ typedef signed char int8;        /* == 8 bits */
 typedef signed short int16;      /* == 16 bits */
 typedef signed int int32;        /* == 32 bits */
 typedef unsigned int uint32;     /* == 32 bits */
-typedef long long int int64;     /* == 64 bits */
+#ifdef int64
+#undef int64
+#endif
+#define int64 long long int      /* == 64 bits */
+
+#ifdef INT64_FORMAT
+#undef INT64_FORMAT
+#endif
 #define INT64_FORMAT "%lld"
 typedef float float4;
 typedef double float8;

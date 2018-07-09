@@ -13,6 +13,9 @@ ifeq ($(PYTHON),)
   PYTHON = python
 endif
 
+PGXS := $(shell pg_config --pgxs)
+include $(PGXS)
+
 # Python build flags
 #CLIENT_CFLAGS = $(shell pkg-config --cflags python-2.7)
 #CLIENT_LDFLAGS = $(shell pkg-config --libs python-2.7)
@@ -20,6 +23,7 @@ CLIENT_CFLAGS = $(shell $(PYTHON) -c "from distutils import sysconfig; import sy
 CLIENT_LDFLAGS = $(shell $(PYTHON) -c "from distutils import sysconfig; import sys; sys.stdout.write(sysconfig.get_config_var('BLDLIBRARY'))")
 
 override CFLAGS += $(CLIENT_CFLAGS) -I$(PLCONTAINER_DIR)/ -DPLC_CLIENT -Wall -Wextra -Werror
+override CFLAGS += -I $(shell pg_config --includedir-server)
 override LDFLAGS += $(CLIENT_LDFLAGS)
 
 CLIENT = pyclient

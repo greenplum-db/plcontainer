@@ -123,4 +123,5 @@ SELECT nnint_test(null, 3);
 select nested_error_raise();
 select nested_fatal_raise();
 select pseudotype_result(1);
+select spi_exceptions();
 \! psql -d ${PL_TESTDB} -c "select pythonlogging_fatal();"

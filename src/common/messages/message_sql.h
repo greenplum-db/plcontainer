@@ -9,6 +9,7 @@
 #define PLC_MESSAGE_SQL_H
 
 #include "message_base.h"
+#include "../comm_utils.h"
 
 typedef enum {
 	SQL_TYPE_INVALID = 0,

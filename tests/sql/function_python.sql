@@ -672,3 +672,11 @@ create function pseudotype_result(anyelement) returns anyarray as $$
 # container: plc_python_shared
 pass;
 $$ language plcontainer;
+
+create function spi_exceptions() returns void as $$
+# container: plc_python_shared
+from plpy import spiexceptions
+content = dir(plpy.spiexceptions)
+plpy.notice(content)
+raise spiexceptions.NotNullViolation
+$$ language plcontainer;
