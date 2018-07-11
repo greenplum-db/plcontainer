@@ -518,3 +518,17 @@ select nested_call_one('pass this along');
 select spi_prepared_plan_test_one('doe');
 select spi_prepared_plan_test_one('smith');
 select spi_prepared_plan_test_nested('smith');
+
+CREATE FUNCTION result_nrows_test() RETURNS int
+AS $$
+# container: plc_python_shared
+plan = plpy.prepare("SELECT 1 UNION SELECT 2")
+plpy.info(plan.status())
+result = plpy.execute(plan)
+if result.status() > 0:
+   return result.nrows()
+else:
+   return None
+$$ LANGUAGE plcontainer;
+
+select result_nrows_test();

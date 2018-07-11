@@ -12,6 +12,7 @@
 
 PyTypeObject PLy_PlanType;
 PyTypeObject PLy_SubtransactionType;
+PyTypeObject PLy_ResultType;
 
 PyObject *PLy_spi_execute(PyObject *self, PyObject *pyquery);
 

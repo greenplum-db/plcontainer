@@ -5,6 +5,7 @@
  *
  *------------------------------------------------------------------------------
  */
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #include "plpy_spi.h"
 
 #include "common/comm_channel.h"
@@ -142,9 +143,184 @@ static PyObject *PLy_spi_execute_query(char *query, long limit);
 
 static PyObject *PLy_spi_execute_plan(PyObject *, PyObject *, long);
 
+static PyObject *PLy_spi_execute_fetch_result(plcMsgResult *resp);
+
 PyObject *PLy_spi_execute(PyObject *self, PyObject *pyquery);
 
 PyObject *PLy_spi_prepare(PyObject *self, PyObject *args);
+
+typedef struct PLyResultObject
+{
+	PyObject_HEAD
+	/* HeapTuple *tuples; */
+	PyObject   *nrows;			/* number of rows returned by query */
+	PyObject   *rows;			/* data rows, or None if no data returned */
+	PyObject   *status;			/* query status, SPI_OK_*, or SPI_ERR_* */
+} PLyResultObject;
+
+static char PLy_result_doc[] = {
+	"Results of a Greenplum query"
+};
+
+static PyObject *PLy_result_new(void);
+static void PLy_result_dealloc(PyObject *);
+static PyObject *PLy_result_nrows(PyObject *, PyObject *);
+static PyObject *PLy_result_status(PyObject *, PyObject *);
+static Py_ssize_t PLy_result_length(PyObject *);
+static PyObject *PLy_result_item(PyObject *, Py_ssize_t);
+static PyObject *PLy_result_slice(PyObject *, Py_ssize_t, Py_ssize_t);
+static int	PLy_result_ass_item(PyObject *, Py_ssize_t, PyObject *);
+static int	PLy_result_ass_slice(PyObject *, Py_ssize_t, Py_ssize_t, PyObject *);
+
+static PySequenceMethods PLy_result_as_sequence = {
+	PLy_result_length,			/* sq_length */
+	NULL,						/* sq_concat */
+	NULL,						/* sq_repeat */
+	PLy_result_item,			/* sq_item */
+	PLy_result_slice,			/* sq_slice */
+	PLy_result_ass_item,		/* sq_ass_item */
+	PLy_result_ass_slice,		/* sq_ass_slice */
+};
+
+static PyMethodDef PLy_result_methods[] = {
+	{"nrows", PLy_result_nrows, METH_VARARGS, NULL},
+	{"status", PLy_result_status, METH_VARARGS, NULL},
+	{NULL, NULL, 0, NULL}
+};
+
+PyTypeObject PLy_ResultType = {
+	PyVarObject_HEAD_INIT(NULL, 0)
+	"PLyResult",				/* tp_name */
+	sizeof(PLyResultObject),	/* tp_size */
+	0,							/* tp_itemsize */
+
+	/*
+	 * methods
+	 */
+	PLy_result_dealloc,			/* tp_dealloc */
+	0,							/* tp_print */
+	0,							/* tp_getattr */
+	0,							/* tp_setattr */
+	0,							/* tp_compare */
+	0,							/* tp_repr */
+	0,							/* tp_as_number */
+	&PLy_result_as_sequence,	/* tp_as_sequence */
+	0,							/* tp_as_mapping */
+	0,							/* tp_hash */
+	0,							/* tp_call */
+	0,							/* tp_str */
+	0,							/* tp_getattro */
+	0,							/* tp_setattro */
+	0,							/* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,	/* tp_flags */
+	PLy_result_doc,				/* tp_doc */
+	0,							/* tp_traverse */
+	0,							/* tp_clear */
+	0,							/* tp_richcompare */
+	0,							/* tp_weaklistoffset */
+	0,							/* tp_iter */
+	0,							/* tp_iternext */
+	PLy_result_methods,			/* tp_tpmethods */
+};
+
+/* result object methods */
+
+static PyObject *
+PLy_result_new(void)
+{
+	PLyResultObject *ob;
+
+	if ((ob = PyObject_New(PLyResultObject, &PLy_ResultType)) == NULL)
+		return NULL;
+
+	/* ob->tuples = NULL; */
+
+	Py_INCREF(Py_None);
+	ob->status = Py_None;
+	ob->nrows = PyInt_FromLong(-1);
+	ob->rows = PyList_New(0);
+
+	return (PyObject *) ob;
+}
+
+static void
+PLy_result_dealloc(PyObject *arg)
+{
+	PLyResultObject *ob = (PLyResultObject *) arg;
+
+	Py_XDECREF(ob->nrows);
+	Py_XDECREF(ob->rows);
+	Py_XDECREF(ob->status);
+
+	arg->ob_type->tp_free(arg);
+}
+
+static PyObject *
+PLy_result_nrows(PyObject *self, PyObject *args UNUSED)
+{
+	PLyResultObject *ob = (PLyResultObject *) self;
+
+	Py_INCREF(ob->nrows);
+	return ob->nrows;
+}
+
+static PyObject *
+PLy_result_status(PyObject *self, PyObject *args UNUSED)
+{
+	PLyResultObject *ob = (PLyResultObject *) self;
+
+	Py_INCREF(ob->status);
+	return ob->status;
+}
+
+static Py_ssize_t
+PLy_result_length(PyObject *arg)
+{
+	PLyResultObject *ob = (PLyResultObject *) arg;
+
+	return PyList_Size(ob->rows);
+}
+
+static PyObject *
+PLy_result_item(PyObject *arg, Py_ssize_t idx)
+{
+	PyObject   *rv;
+	PLyResultObject *ob = (PLyResultObject *) arg;
+
+	rv = PyList_GetItem(ob->rows, idx);
+	if (rv != NULL)
+		Py_INCREF(rv);
+	return rv;
+}
+
+static int
+PLy_result_ass_item(PyObject *arg, Py_ssize_t idx, PyObject *item)
+{
+	int			rv;
+	PLyResultObject *ob = (PLyResultObject *) arg;
+
+	Py_INCREF(item);
+	rv = PyList_SetItem(ob->rows, idx, item);
+	return rv;
+}
+
+static PyObject *
+PLy_result_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx)
+{
+	PLyResultObject *ob = (PLyResultObject *) arg;
+
+	return PyList_GetSlice(ob->rows, lidx, hidx);
+}
+
+static int
+PLy_result_ass_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject *slice)
+{
+	int			rv;
+	PLyResultObject *ob = (PLyResultObject *) arg;
+
+	rv = PyList_SetSlice(ob->rows, lidx, hidx, slice);
+	return rv;
+}
 
 /* Python objects */
 typedef struct PLyPlanObject {
@@ -361,15 +537,92 @@ PLy_spi_execute(PyObject *self UNUSED, PyObject *args) {
 }
 
 static PyObject *
-PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
+PLy_spi_execute_fetch_result(plcMsgResult *resp)
+{
+	plcPyResult *obj;
+	PLyResultObject *result;
+	PyObject *pydict, *pyval;
 	uint32 i, j;
+
+	result = (PLyResultObject *) PLy_result_new();
+	Py_DECREF(result->status);
+	result->status = PyInt_FromLong(1);
+
+	if (resp->cols == 0)
+	{
+		plc_elog(DEBUG1, "the rows is %d", resp->rows);
+		Py_DECREF(result->nrows);
+		result->nrows = PyInt_FromLong((long) resp->rows);
+		free_result(resp, false);
+		return (PyObject *) result;
+	}
+
+	obj = plc_init_result_conversions(resp);
+
+	Py_DECREF(result->nrows);
+	result->nrows = PyInt_FromLong(obj->res->rows);
+
+	for (j = 0; j < obj->res->cols; j++) {
+		if (obj->args[j].conv.inputfunc == NULL) {
+			PLy_exception_set(PyExc_TypeError,
+					"Type %d is not yet supported by Python container",
+					(int) obj->args[j].type);
+			Py_DECREF(result);
+			result = NULL;
+			goto ret;
+		}
+	}
+	for (i = 0; i < obj->res->rows; i++) {
+		if (i == 0) {
+			Py_DECREF(result->rows);
+			result->rows = PyList_New(obj->res->rows);
+		}
+		pydict = PyDict_New();
+
+		if (pydict == NULL) {
+			raise_execution_error("Can not allocate a dict for python spi");
+			Py_DECREF(result);
+			result = NULL;
+			goto ret;
+		}
+
+		for (j = 0; j < obj->res->cols; j++) {
+			if (obj->res->data[i][j].isnull) {
+				/* FIXME: handle the error case. */
+				PyDict_SetItemString(pydict, obj->res->names[j], Py_None);
+			} else {
+				pyval = obj->args[j].conv.inputfunc(obj->res->data[i][j].value,
+						&obj->args[j]);
+
+				if (PyDict_SetItemString(pydict, obj->res->names[j], pyval)
+						!= 0) {
+					raise_execution_error(
+							"Error setting result dictionary element",
+							(int) obj->res->types[j].type);
+					Py_XDECREF(pyval);
+					Py_DECREF(pydict);
+					Py_DECREF(result);
+					result = NULL;
+					goto ret;
+				}
+				Py_XDECREF(pyval);
+			}
+		}
+		PyList_SetItem(result->rows, i, pydict);
+	}
+	ret:
+	free_result(resp, false);
+	plc_free_result_conversions(obj);
+
+	return (PyObject *) result;
+}
+
+static PyObject *
+PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
+	uint32 j;
 	int32 nargs;
 	plcMsgSQL msg;
 	plcMsgResult *resp;
-	PyObject *pyresult,
-			 *pydict,
-			 *pyval;
-	plcPyResult *result;
 	plcConn *conn = plcconn_global;
 	plcArgument *args;
 	PLyPlanObject *py_plan;
@@ -435,92 +688,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit) {
 		return NULL;
 	}
 
-	/*
-	 * For INSERT, UPDATE and DELETE no column will be returned,
-	 * so if resp->cols > 0, it must be SELECT statment.
-	 */
-	if (resp->cols == 0) {
-		plc_elog(DEBUG1, "the rows is %d", resp->rows);
-		PyObject *nrows = PyInt_FromLong((long) resp->rows);
-		/* only need one element for number of rows are processed*/
-		pyresult = PyList_New(1);
-
-		if (PyList_SetItem(pyresult, 0, nrows) == -1) {
-			PLy_exception_set(PLy_exc_spi_error, "Cannot set item for python spi");
-			Py_XDECREF(nrows);
-			Py_XDECREF(pyresult);
-			pyresult = NULL;
-		}
-
-		free_result(resp, false);
-
-		return pyresult;
-	}
-
-	result = plc_init_result_conversions(resp);
-
-	/* convert the result set into list of dictionaries */
-	pyresult = PyList_New(result->res->rows);
-	if (pyresult == NULL) {
-		raise_execution_error("Cannot allocate new list object in Python");
-		goto ret;
-	}
-
-	for (j = 0; j < result->res->cols; j++) {
-		if (result->args[j].conv.inputfunc == NULL) {
-			PLy_exception_set(PyExc_TypeError, "Type %d is not yet supported by Python container",
-						                      (int) result->args[j].type);
-			Py_DECREF(pyresult);
-			pyresult = NULL;
-			goto ret;
-		}
-	}
-
-	for (i = 0; i < result->res->rows; i++) {
-		pydict = PyDict_New();
-
-		if (pydict == NULL) {
-			raise_execution_error("Can not allocate a dict for python spi");
-			Py_DECREF(pyresult);
-			pyresult = NULL;
-			goto ret;
-		}
-
-		for (j = 0; j < result->res->cols; j++) {
-			if (result->res->data[i][j].isnull) {
-				/* FIXME: handle the error case. */
-				PyDict_SetItemString(pydict, result->res->names[j], Py_None);
-			} else {
-				pyval = result->args[j].conv.inputfunc(result->res->data[i][j].value,
-				                                       &result->args[j]);
-
-				if (PyDict_SetItemString(pydict, result->res->names[j], pyval) != 0) {
-					raise_execution_error("Error setting result dictionary element",
-					                      (int) result->res->types[j].type);
-					Py_XDECREF(pyval);
-					Py_DECREF(pydict);
-					Py_DECREF(pyresult);
-					pyresult = NULL;
-					goto ret;
-				}
-				Py_XDECREF(pyval);
-			}
-		}
-
-		if (PyList_SetItem(pyresult, i, pydict) != 0) {
-			raise_execution_error("Error setting result list element for python spi");
-			Py_DECREF(pydict);
-			Py_DECREF(pyresult);
-			pyresult = NULL;
-			goto ret;
-		}
-	}
-
-	ret:
-	free_result(resp, false);
-	plc_free_result_conversions(result);
-
-	return pyresult;
+	return PLy_spi_execute_fetch_result(resp);
 }
 
 PyObject *
@@ -693,13 +861,8 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args) {
 
 static PyObject *
 PLy_spi_execute_query(char *query, long limit) {
-	uint32 i, j;
 	plcMsgSQL msg;
 	plcMsgResult *resp;
-	PyObject *pyresult,
-		*pydict,
-		*pyval;
-	plcPyResult *result;
 	plcConn *conn = plcconn_global;
 
 	msg.msgtype = MT_SQL;
@@ -715,93 +878,7 @@ PLy_spi_execute_query(char *query, long limit) {
 		return NULL;
 	}
 
-	/*
-	 * For INSERT, UPDATE and DELETE no column will be returned,
-	 * so if resp->cols > 0, it must be SELECT statment.
-	 */
-	if (resp->cols == 0) {
-		plc_elog(DEBUG1, "the rows is %d", resp->rows);
-		PyObject *nrows = PyInt_FromLong((long) resp->rows);
-		/* only need one element for number of rows are processed*/
-		pyresult = PyList_New(1);
-
-		if (PyList_SetItem(pyresult, 0, nrows) == -1) {
-			PLy_exception_set(PLy_exc_spi_error, "Cannot set item for python spi");
-			Py_XDECREF(nrows);
-			Py_XDECREF(pyresult);
-			pyresult = NULL;
-		}
-
-		free_result(resp, false);
-
-		return pyresult;
-	}
-
-	result = plc_init_result_conversions(resp);
-
-	/* convert the result set into list of dictionaries */
-	pyresult = PyList_New(result->res->rows);
-	if (pyresult == NULL) {
-		raise_execution_error("Cannot allocate new list object in Python");
-		goto ret;
-	}
-
-	for (j = 0; j < result->res->cols; j++) {
-		if (result->args[j].conv.inputfunc == NULL) {
-			PLy_exception_set(PyExc_TypeError, "Type %d is not yet supported by Python container",
-						                      (int) result->args[j].type);
-			Py_DECREF(pyresult);
-			pyresult = NULL;
-			goto ret;
-		}
-	}
-
-	for (i = 0; i < result->res->rows; i++) {
-		pydict = PyDict_New();
-
-		if (pydict == NULL) {
-			raise_execution_error("Can not allocate a dict for python spi");
-			Py_DECREF(pyresult);
-			pyresult = NULL;
-			goto ret;
-		}
-
-		for (j = 0; j < result->res->cols; j++) {
-			if (result->res->data[i][j].isnull) {
-				/* FIXME: handle the error case. */
-				PyDict_SetItemString(pydict, result->res->names[j], Py_None);
-			} else {
-				pyval = result->args[j].conv.inputfunc(result->res->data[i][j].value,
-				                                       &result->args[j]);
-
-				if (PyDict_SetItemString(pydict, result->res->names[j], pyval) != 0) {
-					PLy_exception_set(PyExc_TypeError, "Error setting result dictionary element for type %d",
-					                      (int) result->res->types[j].type);
-					Py_XDECREF(pyval);
-					Py_DECREF(pydict);
-					Py_DECREF(pyresult);
-					pyresult = NULL;
-					goto ret;
-				}
-
-				Py_XDECREF(pyval);
-			}
-		}
-
-		if (PyList_SetItem(pyresult, i, pydict) != 0) {
-			raise_execution_error("Error setting result list element for python spi");
-			Py_DECREF(pydict);
-			Py_DECREF(pyresult);
-			pyresult = NULL;
-			goto ret;
-		}
-	}
-
-	ret:
-	free_result(resp, false);
-	plc_free_result_conversions(result);
-
-	return pyresult;
+	return PLy_spi_execute_fetch_result(resp);
 }
 
 PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {

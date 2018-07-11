@@ -97,6 +97,8 @@ int python_init() {
 	 */
 	if (PyType_Ready(&PLy_PlanType) < 0)
 			plc_elog (ERROR, "could not initialize PLy_PlanType");
+	if (PyType_Ready(&PLy_ResultType) < 0)
+			plc_elog(ERROR, "could not initialize PLy_ResultType");
 	if (PyType_Ready(&PLy_SubtransactionType) < 0)
 			plc_elog (ERROR, "could not initialize PLy_SubtransactionType");
 
