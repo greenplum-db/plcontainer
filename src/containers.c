@@ -186,7 +186,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
    #ifdef PLC_PG
         on_exit(cleanup_atexit_callback, NULL);   
    #else
-   		on_exit(cleanup_atexit_callback, NUL);   /* todo: confirm Use ‘NULL' directly ? */
+		on_exit(cleanup_atexit_callback, NULL);
    #endif
 #endif
 
