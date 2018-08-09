@@ -11,37 +11,37 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 INSERT INTO tbl SELECT * FROM generate_series(1, 10);
 -- reset the injection points
-SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 2);
+SELECT gp_inject_fault_new('plcontainer_before_container_started', 'reset', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_before_container_connected', 'reset', 2);
+SELECT gp_inject_fault_new('plcontainer_before_container_connected', 'reset', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 2);
+SELECT gp_inject_fault_new('plcontainer_after_send_request', 'reset', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_after_recv_request', 'reset', 2);
+SELECT gp_inject_fault_new('plcontainer_after_recv_request', 'reset', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
+SELECT gp_inject_fault_new('plcontainer_before_udf_finish', 'reset', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
@@ -54,9 +54,9 @@ show optimizer;
  off
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_before_container_started', 'fatal', 2);
+SELECT gp_inject_fault_new('plcontainer_before_container_started', 'fatal', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
@@ -83,9 +83,9 @@ SELECT sum(pyint(i)) from tbl;
 -- start_ignore
 -- Start a container
 -- QE crash when connnecting to an existing container
-SELECT gp_inject_fault('plcontainer_before_container_connected', 'fatal', 2);
+SELECT gp_inject_fault_new('plcontainer_before_container_connected', 'fatal', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
@@ -110,9 +110,9 @@ SELECT sum(pyint(i)) from tbl;
 (1 row)
 
 -- start_ignore
-SELECT gp_inject_fault('plcontainer_after_send_request', 'fatal', 2);
+SELECT gp_inject_fault_new('plcontainer_after_send_request', 'fatal', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
@@ -137,9 +137,9 @@ SELECT sum(pyint(i)) from tbl;
 (1 row)
 
 -- start_ignore
-SELECT gp_inject_fault('plcontainer_after_recv_request', 'fatal', 2);
+SELECT gp_inject_fault_new('plcontainer_after_recv_request', 'fatal', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
@@ -164,9 +164,9 @@ SELECT sum(pyint(i)) from tbl;
 (1 row)
 
 -- start_ignore
-SELECT gp_inject_fault('plcontainer_before_udf_finish', 'fatal', 2);
+SELECT gp_inject_fault_new('plcontainer_before_udf_finish', 'fatal', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
@@ -185,53 +185,53 @@ SELECT pg_sleep(10);
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 -- reset the injection points
-SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 2);
+SELECT gp_inject_fault_new('plcontainer_before_container_started', 'reset', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_before_container_connected', 'reset', 2);
+SELECT gp_inject_fault_new('plcontainer_before_container_connected', 'reset', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 2);
+SELECT gp_inject_fault_new('plcontainer_after_send_request', 'reset', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_after_recv_request', 'reset', 2);
+SELECT gp_inject_fault_new('plcontainer_after_recv_request', 'reset', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
+SELECT gp_inject_fault_new('plcontainer_before_udf_finish', 'reset', 2);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
 DROP TABLE tbl;
 -- reset the injection points
-SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 1);
+SELECT gp_inject_fault_new('plcontainer_before_container_started', 'reset', 1);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 1);
+SELECT gp_inject_fault_new('plcontainer_after_send_request', 'reset', 1);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
@@ -245,9 +245,9 @@ show optimizer;
  off
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
+SELECT gp_inject_fault_new('plcontainer_before_container_started', 'error', 1);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
@@ -272,9 +272,9 @@ SELECT pyint(1);
 (1 row)
 
 -- start_ignore
-SELECT gp_inject_fault('plcontainer_after_send_request', 'error', 1);
+SELECT gp_inject_fault_new('plcontainer_after_send_request', 'error', 1);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
@@ -305,16 +305,16 @@ SELECT pyint(3);
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 1
 -- reset the injection points
-SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 1);
+SELECT gp_inject_fault_new('plcontainer_before_container_started', 'reset', 1);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
 
-SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 1);
+SELECT gp_inject_fault_new('plcontainer_after_send_request', 'reset', 1);
 NOTICE:  Success:
- gp_inject_fault 
+ gp_inject_fault_new 
 -----------------
  t
 (1 row)
