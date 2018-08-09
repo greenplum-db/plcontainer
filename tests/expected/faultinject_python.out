@@ -14,35 +14,35 @@ INSERT INTO tbl SELECT * FROM generate_series(1, 10);
 SELECT gp_inject_fault_new('plcontainer_before_container_started', 'reset', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
 SELECT gp_inject_fault_new('plcontainer_before_container_connected', 'reset', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
 SELECT gp_inject_fault_new('plcontainer_after_send_request', 'reset', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
 SELECT gp_inject_fault_new('plcontainer_after_recv_request', 'reset', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
 SELECT gp_inject_fault_new('plcontainer_before_udf_finish', 'reset', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
@@ -57,7 +57,7 @@ show optimizer;
 SELECT gp_inject_fault_new('plcontainer_before_container_started', 'fatal', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
@@ -86,7 +86,7 @@ SELECT sum(pyint(i)) from tbl;
 SELECT gp_inject_fault_new('plcontainer_before_container_connected', 'fatal', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
@@ -113,7 +113,7 @@ SELECT sum(pyint(i)) from tbl;
 SELECT gp_inject_fault_new('plcontainer_after_send_request', 'fatal', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
@@ -140,7 +140,7 @@ SELECT sum(pyint(i)) from tbl;
 SELECT gp_inject_fault_new('plcontainer_after_recv_request', 'fatal', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
@@ -167,7 +167,7 @@ SELECT sum(pyint(i)) from tbl;
 SELECT gp_inject_fault_new('plcontainer_before_udf_finish', 'fatal', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
@@ -188,35 +188,35 @@ SELECT pg_sleep(10);
 SELECT gp_inject_fault_new('plcontainer_before_container_started', 'reset', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
 SELECT gp_inject_fault_new('plcontainer_before_container_connected', 'reset', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
 SELECT gp_inject_fault_new('plcontainer_after_send_request', 'reset', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
 SELECT gp_inject_fault_new('plcontainer_after_recv_request', 'reset', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
 SELECT gp_inject_fault_new('plcontainer_before_udf_finish', 'reset', 2);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
@@ -225,14 +225,14 @@ DROP TABLE tbl;
 SELECT gp_inject_fault_new('plcontainer_before_container_started', 'reset', 1);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
 SELECT gp_inject_fault_new('plcontainer_after_send_request', 'reset', 1);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
@@ -248,7 +248,7 @@ show optimizer;
 SELECT gp_inject_fault_new('plcontainer_before_container_started', 'error', 1);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
@@ -275,7 +275,7 @@ SELECT pyint(1);
 SELECT gp_inject_fault_new('plcontainer_after_send_request', 'error', 1);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
@@ -308,14 +308,14 @@ SELECT pyint(3);
 SELECT gp_inject_fault_new('plcontainer_before_container_started', 'reset', 1);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
 SELECT gp_inject_fault_new('plcontainer_after_send_request', 'reset', 1);
 NOTICE:  Success:
  gp_inject_fault_new 
------------------
+---------------------
  t
 (1 row)
 
