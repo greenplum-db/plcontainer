@@ -87,7 +87,7 @@ CREATE VIEW busy AS
 CREATE VIEW cancel_all AS
     SELECT pg_cancel_backend(pid)
     FROM pg_stat_activity
-    WHERE current_query LIKE 'SELECT * FROM busy%' or current_query LIKE 'SELECT plbusy%';
+    WHERE query LIKE 'SELECT * FROM busy%' or query LIKE 'SELECT plbusy%';
 
 
 
