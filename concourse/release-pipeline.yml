@@ -227,7 +227,7 @@ resources:
     bucket: {{pl-bucket-name}}
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
-    regexp: release/gpdb5/plcontainer/plcontainer-python-image(.*).tar.gz
+    regexp: release-candidate/gpdb5/plcontainer/plcontainer-python-image(.*).tar.gz
 
 - name: plcontainer_docker_image_centos_r
   type: s3
@@ -236,7 +236,7 @@ resources:
     bucket: {{pl-bucket-name}}
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
-    regexp: release/gpdb5/plcontainer/plcontainer-r-image(.*).tar.gz
+    regexp: release-candidate/gpdb5/plcontainer/plcontainer-r-image(.*).tar.gz
 
 - name: bin_gpdb_centos7
   type: s3
