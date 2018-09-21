@@ -23,6 +23,9 @@
 
 #include "comm_utils.h"
 #include "comm_connectivity.h"
+#ifndef PLC_CLIENT
+  #include "miscadmin.h"
+#endif
 
 static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len);
 
@@ -50,11 +53,12 @@ static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
 	ssize_t sz = 0;
 	int time_count = 0;
 	int intr_count = 0;
-	int retval;
 	struct timeval start_ts, end_ts;
 
 	while((sz=recv(conn->sock, ptr, len, 0))<0) {
+#ifndef PLC_CLIENT
 		CHECK_FOR_INTERRUPTS();
+#endif
 		if (errno == EINTR && intr_count++ < 5)
 			continue;
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -89,7 +93,9 @@ static ssize_t plcSocketSend(plcConn *conn, const void *ptr, size_t len) {
 	ssize_t sz;
 	int n=0;
 	while((sz=send(conn->sock, ptr, len, 0))==-1) {
+#ifndef PLC_CLIENT
 		CHECK_FOR_INTERRUPTS();
+#endif
 		if (errno == EINTR && n++ < 5)
 			continue;
 		plc_elog(ERROR, "Failed to send: %s", strerror(errno));
@@ -390,9 +396,10 @@ plcConn *plcConnect_inet(int port) {
 
 	server = gethostbyname("localhost");
 	if (server == NULL) {
+		close(sock);
 		plc_elog(ERROR, "PLContainer: Failed to call gethostbyname('localhost'):"
 			" %s", hstrerror(h_errno));
-		goto err_out2;
+		return NULL;
 	}
 
 	raddr.sin_family = AF_INET;
@@ -492,12 +499,15 @@ void plcDisconnect(plcConn *conn) {
 			unlink(uds_fn);
 			rmdir(dirname(uds_fn));
 			pfree(uds_fn);
+			conn->uds_fn = NULL;
 		}
 
 		pfree(conn->buffer[PLC_INPUT_BUFFER]->data);
 		pfree(conn->buffer[PLC_OUTPUT_BUFFER]->data);
 		pfree(conn->buffer[PLC_INPUT_BUFFER]);
 		pfree(conn->buffer[PLC_OUTPUT_BUFFER]);
+		conn->buffer[PLC_INPUT_BUFFER] = NULL;
+		conn->buffer[PLC_OUTPUT_BUFFER] = NULL;
 		deinit_pplan_slots(conn);
 		pfree(conn);
 	}
