@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <libgen.h>
 
+#include <miscadmin.h>
 #include "comm_utils.h"
 #include "comm_connectivity.h"
 
