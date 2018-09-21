@@ -103,10 +103,11 @@ void raise_execution_error(const char *format, ...) {
 		va_list args;
 		int len, res;
 
-		va_start(args, format);
 		len = 100 + 2 * strlen(format);
 		msg = (char *) malloc(len + 1);
+		va_start(args, format);
 		res = vsnprintf(msg, len, format, args);
+		va_end(args);
 		if (res < 0 || res >= len) {
 			msg = strdup("Error formatting error message string in raise_execution_error()");
 		}
