@@ -317,22 +317,6 @@ static void insert_container_slot(char *runtime_id, char *dockerid, int slot) {
 	return;
 }
 
-static void delete_container_slot(int slot) {
-	if (containers[slot].runtimeid != NULL) {
-		pfree(containers[slot].runtimeid);
-		containers[slot].runtimeid = NULL;
-	}
-
-	if (containers[slot].dockerid != NULL) {
-		pfree(containers[slot].dockerid);
-		containers[slot].dockerid = NULL;
-	}
-
-	containers[slot].conn = NULL;
-
-	return;
-}
-
 static void init_containers() {
 	containers = (container_t *) PLy_malloc(MAX_CONTAINER_NUMBER * sizeof(container_t));
 	memset((void *)containers, 0, MAX_CONTAINER_NUMBER * sizeof(container_t));
@@ -585,23 +569,31 @@ void delete_containers() {
 				 * have chance to flush the gcda files thus direct kill-9 is not
 				 * proper.
 				 */
-				plcDisconnect(containers[i].conn);
+				plcConn *conn	= containers[i].conn;
+				char *runtimeid = containers[i].runtimeid;
+				char *dockerid	= containers[i].dockerid;
+				containers[i].runtimeid = NULL;
+				containers[i].dockerid  = NULL;
+				containers[i].conn	= NULL;
+				if (conn)
+					plcDisconnect(conn);
+				pfree(runtimeid);
 
 				/* Terminate container process */
-				if (containers[i].dockerid != NULL) {
+				if (dockerid != NULL) {
 					int res;
 					int _loop_cnt;
 
 					/* Check to see whether backend is exited or not. */
 					_loop_cnt = 0;
-					while ((res = delete_backend_if_exited(containers[i].dockerid)) != 0 && _loop_cnt++ < 5) {
+					while ((res = delete_backend_if_exited(dockerid)) != 0 && _loop_cnt++ < 5) {
 						pg_usleep(200 * 1000L);
 					}
 
 					/* Force to delete the backend if needed. */
 					if (res != 0) {
 						_loop_cnt = 0;
-						while ((res = plc_backend_delete(containers[i].dockerid)) < 0 && _loop_cnt++ < 3)
+						while ((res = plc_backend_delete(dockerid)) < 0 && _loop_cnt++ < 3)
 							pg_usleep(1000 * 1000L);
 					}
 
@@ -618,9 +610,8 @@ void delete_containers() {
 					 */
 					if (res < 0)
 						plc_elog(LOG, "Backend delete error: %s", backend_error_message);
+					pfree(dockerid);
 				}
-
-				delete_container_slot(i);
 			}
 		}
 	}
