@@ -317,22 +317,6 @@ static void insert_container_slot(char *runtime_id, char *dockerid, int slot) {
 	return;
 }
 
-static void delete_container_slot(int slot) {
-	if (containers[slot].runtimeid != NULL) {
-		pfree(containers[slot].runtimeid);
-		containers[slot].runtimeid = NULL;
-	}
-
-	if (containers[slot].dockerid != NULL) {
-		pfree(containers[slot].dockerid);
-		containers[slot].dockerid = NULL;
-	}
-
-	containers[slot].conn = NULL;
-
-	return;
-}
-
 static void init_containers() {
 	containers = (container_t *) PLy_malloc(MAX_CONTAINER_NUMBER * sizeof(container_t));
 	memset((void *)containers, 0, MAX_CONTAINER_NUMBER * sizeof(container_t));
