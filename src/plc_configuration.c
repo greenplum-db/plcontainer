@@ -14,6 +14,7 @@
 #include "postgres.h"
 #ifndef PLC_PG
   #include "commands/resgroupcmds.h"
+  #include "catalog/gp_segment_config.h"
 #else
   #include "catalog/pg_type.h"
   #include "access/sysattr.h"
