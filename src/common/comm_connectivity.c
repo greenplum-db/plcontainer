@@ -23,6 +23,9 @@
 
 #include "comm_utils.h"
 #include "comm_connectivity.h"
+#ifndef PLC_CLIENT
+  #include "miscadmin.h"
+#endif
 
 static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len);
 
@@ -30,57 +33,53 @@ static ssize_t plcSocketSend(plcConn *conn, const void *ptr, size_t len);
 
 static int plcBufferMaybeFlush(plcConn *conn, bool isForse);
 
-static int plcBufferMaybeReset(plcConn *conn, int bufType);
+static void plcBufferMaybeReset(plcConn *conn, int bufType);
 
 static int plcBufferMaybeResize(plcConn *conn, int bufType, size_t bufAppend);
+
+static void
+my_gettimeofday(struct timeval *tv)
+{
+	int retval;
+	retval = gettimeofday(tv, NULL);
+	if (retval < 0)
+		plc_elog(ERROR, "Failed to get time: %s", strerror(errno));
+}
 
 /*
  *  Read data from the socket
  */
 static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
 	ssize_t sz = 0;
+	int time_count = 0;
+	int intr_count = 0;
 	struct timeval start_ts, end_ts;
-	int retval;
 
-	/* Better use clock_gettime() however it needs librt. */
-	retval = gettimeofday(&start_ts, NULL);
-	if (retval < 0) {
-		plc_elog(ERROR, "Failed to get time for hang detection: %s", strerror(errno));
-		return retval;
-	}
-
-	while (true) {
-		sz = recv(conn->sock, ptr, len, 0);
-
-		/* Only retry when needed. */
-		if (!(sz == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)))
-			break;
-
-		/* error out if timeout. */
-		retval = gettimeofday(&end_ts, NULL);
-		if (retval < 0) {
-			plc_elog(ERROR, "Failed to get time for hang detection: %s", strerror(errno));
-			return retval;
+	while((sz=recv(conn->sock, ptr, len, 0))<0) {
+#ifndef PLC_CLIENT
+		CHECK_FOR_INTERRUPTS();
+#endif
+		if (errno == EINTR && intr_count++ < 5)
+			continue;
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			if (time_count==0) {
+				my_gettimeofday(&start_ts);
+				time_count++;
+			} else {
+				my_gettimeofday(&end_ts);
+				if ((end_ts.tv_sec - start_ts.tv_sec) > conn->rx_timeout_sec) {
+					plc_elog(ERROR, "rx timeout (%ds > %ds)",
+						(int) (end_ts.tv_sec - start_ts.tv_sec), conn->rx_timeout_sec);
+					return -1;
+				}
+			}
+		} else {
+			plc_elog(ERROR, "Failed to recv data: %s", strerror(errno));
 		}
-
-		if ((end_ts.tv_sec - start_ts.tv_sec) > conn->rx_timeout_sec) {
-			plc_elog(ERROR, "rx timeout (%ds > %ds)",
-				    (int) (end_ts.tv_sec - start_ts.tv_sec), conn->rx_timeout_sec);
-			return -1;
-		}
-	}
-
-	/* If receive command is terminated by SIGINT/SIGTERM, etc. */
-	if (sz == -1 && errno == EINTR) {
-		plc_elog(ERROR, "Query and PL/Container connections are terminated "
-		"by user request: %s", strerror(errno));
 	}
 
 	/* Log info if needed. */
-	if (sz < 0) {
-		plc_elog(LOG, "Query and PL/Container connections are terminated "
-		"due to: %s", strerror(errno));
-	} else if (sz == 0) {
+	if (sz == 0) {
 		plc_elog(LOG, "The peer has shut down the connection.");
 	}
 
@@ -91,14 +90,17 @@ static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
  *  Write data to the socket
  */
 static ssize_t plcSocketSend(plcConn *conn, const void *ptr, size_t len) {
-	ssize_t sz = send(conn->sock, ptr, len, 0);
-
-	/* If receive command is terminated by SIGINT */
-	if (sz < 0 && errno == EINTR) {
-		plc_elog(ERROR, "Query and PL/Container connections are terminated by "
-		"user request: %s", strerror(errno));
+	ssize_t sz;
+	int n=0;
+	while((sz=send(conn->sock, ptr, len, 0))==-1) {
+#ifndef PLC_CLIENT
+		CHECK_FOR_INTERRUPTS();
+#endif
+		if (errno == EINTR && n++ < 5)
+			continue;
+		plc_elog(ERROR, "Failed to send: %s", strerror(errno));
+		break;
 	}
-
 	return sz;
 }
 
@@ -109,7 +111,6 @@ static ssize_t plcSocketSend(plcConn *conn, const void *ptr, size_t len) {
  * Returns 0 on success, -1 on failure
  */
 static int plcBufferMaybeFlush(plcConn *conn, bool isForse) {
-	int res = 0;
 	plcBuffer *buf = conn->buffer[PLC_OUTPUT_BUFFER];
 
 	/*
@@ -127,7 +128,7 @@ static int plcBufferMaybeFlush(plcConn *conn, bool isForse) {
 			sent = plcSocketSend(conn,
 			                     buf->data + buf->pStart,
 			                     buf->pEnd - buf->pStart);
-			if (sent <= 0) {
+			if (sent < 0) {
 				plc_elog(LOG, "plcBufferMaybeFlush: Socket write failed, send "
 					"return code is %d, error message is '%s'",
 					sent, strerror(errno));
@@ -137,9 +138,7 @@ static int plcBufferMaybeFlush(plcConn *conn, bool isForse) {
 		}
 
 		// After the flush we should consider resetting the buffer
-		res = plcBufferMaybeReset(conn, PLC_OUTPUT_BUFFER);
-		if (res < 0)
-			return res;
+		plcBufferMaybeReset(conn, PLC_OUTPUT_BUFFER);
 	}
 
 	return 0;
@@ -150,9 +149,8 @@ static int plcBufferMaybeFlush(plcConn *conn, bool isForse) {
  * the buffer array if it has reached the middle of the buffer or the buffer
  * is empty
  *
- * Returns 0 on success, -1 on failure
  */
-static int plcBufferMaybeReset(plcConn *conn, int bufType) {
+static void plcBufferMaybeReset(plcConn *conn, int bufType) {
 	plcBuffer *buf = conn->buffer[bufType];
 
 	// If the buffer has no data we can reset both pointers to 0
@@ -165,13 +163,12 @@ static int plcBufferMaybeReset(plcConn *conn, int bufType) {
 	 * If our start point in a buffer has passed half of its size, we need
 	 * to move the data to the start of the buffer
 	 */
-	if (buf->pStart > buf->bufSize / 2) {
+	else if (buf->pStart > buf->bufSize / 2) {
+	// memmove is more meaningful, but here memcpy is safe
 		memcpy(buf->data, buf->data + buf->pStart, buf->pEnd - buf->pStart);
 		buf->pEnd = buf->pEnd - buf->pStart;
 		buf->pStart = 0;
 	}
-
-	return 0;
 }
 
 /*
@@ -201,9 +198,10 @@ static int plcBufferMaybeResize(plcConn *conn, int bufType, size_t bufAppend) {
 		newSize = ((dataSize * 2) / PLC_BUFFER_SIZE + 1) * PLC_BUFFER_SIZE;
 		newBuffer = (char *) PLy_malloc(newSize);
 		if (newBuffer == NULL) {
-			plc_elog(ERROR, "plcBufferMaybeFlush: Cannot allocate %d bytes "
+			// shrink failed, should not be an error
+			plc_elog(WARNING, "plcBufferMaybeFlush: Cannot allocate %d bytes "
 				"for output buffer", newSize);
-			return -1;
+			return 0;
 		}
 		isReallocated = 1;
 	}
@@ -253,9 +251,7 @@ int plcBufferAppend(plcConn *conn, char *srcBuffer, size_t nBytes) {
 
 		// First thing to check - whether we can reset the data to the beginning
 		// of the buffer, freeing up some space in the end of it
-		res = plcBufferMaybeReset(conn, PLC_OUTPUT_BUFFER);
-		if (res < 0)
-			return res;
+		plcBufferMaybeReset(conn, PLC_OUTPUT_BUFFER);
 
 		// Second check - whether we need to flush the buffer as it holds much data
 		res = plcBufferMaybeFlush(conn, false);
@@ -313,9 +309,7 @@ int plcBufferReceive(plcConn *conn, size_t nBytes) {
 
 		// First thing to consider - resetting the data in buffer to the beginning
 		// freeing up the space in the end to receive the data
-		res = plcBufferMaybeReset(conn, PLC_INPUT_BUFFER);
-		if (res < 0)
-			return res;
+		plcBufferMaybeReset(conn, PLC_INPUT_BUFFER);
 
 		// Second step - check whether we really need to resize the buffer after this
 		res = plcBufferMaybeResize(conn, PLC_INPUT_BUFFER, nBytes);
@@ -397,14 +391,14 @@ plcConn *plcConnect_inet(int port) {
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock < 0) {
 		plc_elog(ERROR, "PLContainer: Cannot create socket: %s", strerror(errno));
-		return result;
+		goto err_out1;
 	}
 
 	server = gethostbyname("localhost");
 	if (server == NULL) {
 		plc_elog(ERROR, "PLContainer: Failed to call gethostbyname('localhost'):"
 			" %s", hstrerror(h_errno));
-		return result;
+		goto err_out2;
 	}
 
 	raddr.sin_family = AF_INET;
@@ -418,7 +412,7 @@ plcConn *plcConnect_inet(int port) {
 		inet_ntop(AF_INET, &(raddr.sin_addr), ipAddr, INET_ADDRSTRLEN);
 		plc_elog(DEBUG1, "PLContainer: Failed to connect to %s: %s", ipAddr,
 			    strerror(errno));
-		return result;
+		goto err_out2;
 	}
 
 	/* FIXME: Do we need them? */
@@ -432,6 +426,11 @@ plcConn *plcConnect_inet(int port) {
 	result->uds_fn = NULL;
 
 	return result;
+
+err_out2:
+	close(sock);
+err_out1:
+	return NULL;
 }
 
 /*
@@ -466,7 +465,7 @@ plcConn *plcConnect_ipc(char *uds_fn) {
 	            sizeof(raddr)) < 0) {
 		plc_elog(DEBUG1, "PLContainer: Failed to connect to %s: %s",
 			    uds_fn, strerror(errno));
-		return NULL;
+		goto err_out;
 	}
 
 	/* Set socket receive timeout to 500ms */
@@ -479,6 +478,10 @@ plcConn *plcConnect_ipc(char *uds_fn) {
 	result->uds_fn = plc_top_strdup(uds_fn);
 
 	return result;
+
+err_out:
+	close(sock);
+	return NULL;
 }
 
 /*
@@ -495,12 +498,15 @@ void plcDisconnect(plcConn *conn) {
 			unlink(uds_fn);
 			rmdir(dirname(uds_fn));
 			pfree(uds_fn);
+			conn->uds_fn = NULL;
 		}
 
 		pfree(conn->buffer[PLC_INPUT_BUFFER]->data);
 		pfree(conn->buffer[PLC_OUTPUT_BUFFER]->data);
 		pfree(conn->buffer[PLC_INPUT_BUFFER]);
 		pfree(conn->buffer[PLC_OUTPUT_BUFFER]);
+		conn->buffer[PLC_INPUT_BUFFER] = NULL;
+		conn->buffer[PLC_OUTPUT_BUFFER] = NULL;
 		deinit_pplan_slots(conn);
 		pfree(conn);
 	}
