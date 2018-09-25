@@ -588,7 +588,7 @@ void delete_containers() {
 				plcConn *conn	= containers[i].conn;
 				char *runtimeid = containers[i].runtimeid;
 				char *dockerid	= containers[i].dockerid;
-				memset(&containers[i], 0, sizeof(containers[i]));
+				memset((void*)&containers[i], 0, sizeof(containers[i]));
 				plcDisconnect(conn);
 				pfree(runtimeid);
 
