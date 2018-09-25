@@ -23,6 +23,9 @@
 
 #include "comm_utils.h"
 #include "comm_connectivity.h"
+#ifndef PLC_CLIENT
+  #include "miscadmin.h"
+#endif
 
 static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len);
 
@@ -53,7 +56,9 @@ static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
 	struct timeval start_ts, end_ts;
 
 	while((sz=recv(conn->sock, ptr, len, 0))<0) {
+#ifndef PLC_CLIENT
 		CHECK_FOR_INTERRUPTS();
+#endif
 		if (errno == EINTR && intr_count++ < 5)
 			continue;
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -88,7 +93,9 @@ static ssize_t plcSocketSend(plcConn *conn, const void *ptr, size_t len) {
 	ssize_t sz;
 	int n=0;
 	while((sz=send(conn->sock, ptr, len, 0))==-1) {
+#ifndef PLC_CLIENT
 		CHECK_FOR_INTERRUPTS();
+#endif
 		if (errno == EINTR && n++ < 5)
 			continue;
 		plc_elog(ERROR, "Failed to send: %s", strerror(errno));
