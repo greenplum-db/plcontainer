@@ -498,12 +498,15 @@ void plcDisconnect(plcConn *conn) {
 			unlink(uds_fn);
 			rmdir(dirname(uds_fn));
 			pfree(uds_fn);
+			conn->uds_fn = NULL;
 		}
 
 		pfree(conn->buffer[PLC_INPUT_BUFFER]->data);
 		pfree(conn->buffer[PLC_OUTPUT_BUFFER]->data);
 		pfree(conn->buffer[PLC_INPUT_BUFFER]);
 		pfree(conn->buffer[PLC_OUTPUT_BUFFER]);
+		conn->buffer[PLC_INPUT_BUFFER] = NULL;
+		conn->buffer[PLC_OUTPUT_BUFFER] = NULL;
 		deinit_pplan_slots(conn);
 		pfree(conn);
 	}
