@@ -38,7 +38,7 @@ static void plcBufferMaybeReset(plcConn *conn, int bufType);
 static int plcBufferMaybeResize(plcConn *conn, int bufType, size_t bufAppend);
 
 static void
-my_gettimeofday(struct timeval *tv)
+plc_gettimeofday(struct timeval *tv)
 {
 	int retval;
 	retval = gettimeofday(tv, NULL);
@@ -63,10 +63,10 @@ static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
 			continue;
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
 			if (time_count==0) {
-				my_gettimeofday(&start_ts);
+				plc_gettimeofday(&start_ts);
 				time_count++;
 			} else {
-				my_gettimeofday(&end_ts);
+				plc_gettimeofday(&end_ts);
 				if ((end_ts.tv_sec - start_ts.tv_sec) > conn->rx_timeout_sec) {
 					plc_elog(ERROR, "rx timeout (%ds > %ds)",
 						(int) (end_ts.tv_sec - start_ts.tv_sec), conn->rx_timeout_sec);
