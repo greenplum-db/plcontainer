@@ -415,17 +415,14 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	 */
 	insert_container_slot(conf->runtimeid, dockerid, container_slot);
 
-	/*
-	 * Unblock signals after we insert the container identifier into the 
-	 * container slot for later cleanup.
-	 */
-	PG_SETMASK(&UnBlockSig);
-
 	pfree(dockerid);
 	dockerid = containers[container_slot].dockerid;
 
 	if (!conf->useContainerNetwork)
 		uds_fn = get_uds_fn(uds_dir);
+
+	/* Create a process to clean up the container after it finishes */
+	cleanup(dockerid, uds_fn);
 
 	_loop_cnt = 0;
 	while ((res = plc_backend_start(dockerid)) < 0) {
@@ -434,6 +431,12 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 		pg_usleep(2000 * 1000L);
 		plc_elog(LOG, "plc_backend_start() fails. Retrying [%d]", _loop_cnt);
 	}
+	/*
+	 * Unblock signals after we insert the container identifier into the 
+	 * container slot for later cleanup.
+	 */
+	PG_SETMASK(&UnBlockSig);
+
 	if (res < 0) {
 		if (!conf->useContainerNetwork)
 			cleanup_uds(uds_fn);
@@ -471,9 +474,6 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 #else
 	while (wait3(&wait_status, WNOHANG, NULL) > 0);
 #endif
-
-	/* Create a process to clean up the container after it finishes */
-	cleanup(dockerid, uds_fn);
 
 #ifndef PLC_PG
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_started");
