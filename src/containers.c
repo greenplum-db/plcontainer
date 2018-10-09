@@ -415,12 +415,6 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	 */
 	insert_container_slot(conf->runtimeid, dockerid, container_slot);
 
-	/*
-	 * Unblock signals after we insert the container identifier into the 
-	 * container slot for later cleanup.
-	 */
-	PG_SETMASK(&UnBlockSig);
-
 	pfree(dockerid);
 	dockerid = containers[container_slot].dockerid;
 
@@ -452,6 +446,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 		if (res < 0) {
 			if (!conf->useContainerNetwork)
 				cleanup_uds(uds_fn);
+			PG_SETMASK(&UnBlockSig);
 			plc_elog(ERROR, "Backend inspect error: %s", backend_error_message);
 			return NULL;
 		}
@@ -474,6 +469,12 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 
 	/* Create a process to clean up the container after it finishes */
 	cleanup(dockerid, uds_fn);
+	/*
+	 * Unblock signals after we insert the container identifier into the 
+	 * container slot for later cleanup.
+	 */
+	PG_SETMASK(&UnBlockSig);
+
 
 #ifndef PLC_PG
 	SIMPLE_FAULT_NAME_INJECTOR("plcontainer_before_container_started");
