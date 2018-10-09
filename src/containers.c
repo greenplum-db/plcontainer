@@ -584,9 +584,18 @@ void delete_containers() {
 					int res;
 					int _loop_cnt;
 
+					/* Check to see whether backend is exited or not. */
 					_loop_cnt = 0;
-					while ((res = plc_backend_delete(dockerid)) < 0 && _loop_cnt++ < 3)
-						pg_usleep(1000 * 1000L);
+					while ((res = delete_backend_if_exited(dockerid)) != 0 && _loop_cnt++ < 5) {
+						pg_usleep(200 * 1000L);
+					}
+
+					/* Force to delete the backend if needed. */
+					if (res != 0) {
+						_loop_cnt = 0;
+						while ((res = plc_backend_delete(dockerid)) < 0 && _loop_cnt++ < 3)
+							pg_usleep(1000 * 1000L);
+					}
 
 					/*
 					 * On rhel6/centos6 there is chance that delete api could fail here
