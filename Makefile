@@ -35,9 +35,7 @@ OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 
-ifeq ($(PLC_PG),yes)
-   override CFLAGS += -DPLC_PG  -Wno-sign-compare
-endif
+override CFLAGS += -DPLC_PG  -Wno-sign-compare
 
 # FIXME: We might need a configure script to handle below checks later.
 # See https://github.com/greenplum-db/plcontainer/issues/322
