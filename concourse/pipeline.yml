@@ -118,7 +118,7 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: {{plcontainer-git-branch}}
+    branch: 5X_STABLE
     uri: {{plcontainer-git-remote}}
 
 - name: gpdb_src
@@ -206,7 +206,7 @@ resources:
     bucket: {{pl-bucket-name}}
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: build/gpdb5/data-science/DataSciencePython-dev-gp5-rhel7-x86_64.gppkg
+    versioned_file: release/gpdb5/data-science/DataSciencePython-1.1.1-gp5-rhel7-x86_64.gppkg
 
 - name: r-gp5
   type: s3
@@ -224,7 +224,7 @@ resources:
     bucket: {{pl-bucket-name}}
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: build/gpdb5/data-science/DataScienceR-dev-gp5-rhel7-x86_64.gppkg
+    versioned_file: release/gpdb5/data-science/DataScienceR-1.0.1-gp5-rhel7-x86_64.gppkg
 
 - name: plcontainer_docker_image_centos_python
   type: s3
