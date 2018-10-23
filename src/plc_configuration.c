@@ -816,11 +816,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				continue;
 			}
 			ownerStr = json_object_get_string(ownerObj);
-#ifdef PLC_PG
-			username = GetUserNameFromId(GetUserId(), false);
-#else			
 			username = GetUserNameFromId(GetUserId());
-#endif
 			if (strcmp(ownerStr, username) != 0 && superuser() == false) {
 				funcctx->call_cntr++;
 				call_cntr++;

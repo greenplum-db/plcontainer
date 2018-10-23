@@ -267,11 +267,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 		return -1;
 	}
 	
-#ifdef PLC_PG
-	username = GetUserNameFromId(GetUserId(),false);
-#else	
 	username = GetUserNameFromId(GetUserId());
-#endif	
 	dbname = MyProcPort->database_name;
 
 
