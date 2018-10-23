@@ -35,7 +35,10 @@ OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 
-override CFLAGS += -DPLC_PG  -Wno-sign-compare
+ifeq ($(PLC_PG),yes)
+	override CFLAGS += -DPLC_PG
+#	override CFLAGS += -DPLC_PG  -Wno-sign-compare
+endif
 
 # FIXME: We might need a configure script to handle below checks later.
 # See https://github.com/greenplum-db/plcontainer/issues/322
@@ -84,7 +87,7 @@ endif
 
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 
-override CFLAGS += -Werror -Wextra -Wall
+override CFLAGS += -Werror -Wextra -Wall  -Wno-sign-compare
 
 ifeq ($(ENABLE_COVERAGE),yes)
   override CFLAGS += -coverage
