@@ -242,6 +242,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 			delete_containers();
 			DeleteBackendsWhenError = false;
 		}
+		error_context_stack = plerrcontext.previous;
 		PLy_curr_procedure = save_curr_proc;
 		PG_RE_THROW();
 	}
