@@ -19,11 +19,11 @@ MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | 
 ARCH=$(shell uname -p)
 
 #json-c
-JSON_VER = 0.12 
+JSON_VER=0.12
 ifeq ($(JSON_VER),)
 	  $(error can not determine the libjson-c version)
 endif
-JSON_REL = 1
+JSON_REL=1
 JSON_RPM_FLAGS="--define 'json_ver $(JSON_VER)' --define 'json_rel $(JSON_REL)'"
 JSON_RPM=json-c-$(JSON_VER)-$(JSON_REL).$(ARCH).rpm
 
