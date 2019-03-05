@@ -13,7 +13,18 @@ TOP_DIR=${CWDIR}/../../../
 source "${TOP_DIR}/gpdb_src/concourse/scripts/common.bash"
 
 function _main() {
-  
+
+  # install json-c
+  pushd ${TOP_DIR}
+    git clone https://github.com/json-c/json-c.git
+	cd json-c
+	git checkout json-c-0.12.1-20160607
+	./autogen.sh
+	./configure
+	make -j 4
+	make install
+  popd
+
   # setup gpdb environment
   install_gpdb
   ${TOP_DIR}/gpdb_src/concourse/scripts/setup_gpadmin_user.bash "centos"
