@@ -30,7 +30,7 @@ docker_build() {
 		scp -r python/python*.targz $node:~/artifacts_python
 		scp -r openssl/openssl*.targz $node:~/artifacts_python
 	elif [[ $language = "r" ]]; then
-		scp -r r/bin_r_*.tar.gz $node:~/artifacts_r
+		echo "language R in pipeline." 
 	else
 		echo "Wrong language in pipeline." || exit 1
 	fi

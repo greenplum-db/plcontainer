@@ -187,15 +187,6 @@ resources:
     json_key: {{concourse-gcs-resources-service-account-key}}
     versioned_file: data-science/published/gpdb6/DataSciencePython-dev-gp6-rhel7-x86_64.gppkg
 
-- name: r-gp5
-  type: s3
-  source:
-    access_key_id: {{bucket-access-key-id}}
-    bucket: {{pl-bucket-name}}
-    region_name: {{aws-region}}
-    secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: build/gpdb5/r/bin_r_centos7.tar.gz
-
 - name: datascience-r-gp6
   type: gcs
   source:
@@ -429,9 +420,6 @@ jobs:
     - get: ccp_src
     - get: centos-gpdb-dev-7
     - get: data-science-bundle
-    - get: r
-      trigger: true
-      resource: r-gp5
     - get: datascience
       trigger: true
       resource: datascience-r-gp6

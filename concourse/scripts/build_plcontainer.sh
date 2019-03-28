@@ -12,8 +12,8 @@ CWDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TOP_DIR=${CWDIR}/../../../
 
 build_plcontainer() {
+  # source R
   source /usr/local/greenplum-db/greenplum_path.sh
-  
   source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
   
   #install plr
@@ -22,6 +22,7 @@ build_plcontainer() {
   popd
   source /usr/local/greenplum-db/greenplum_path.sh
   source /opt/gcc_env.sh
+  export R_HOME=/usr/lib64/R
  
   # build plcontainer
   pushd plcontainer_src
