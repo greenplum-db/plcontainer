@@ -111,7 +111,6 @@ DROP FUNCTION xgboost_test();
 create or replace function sklearn_test() RETURNS TEXT AS $$
 # container: plc_python_shared
 from sklearn import datasets
-from sklearn.cross_validation import cross_val_predict
 from sklearn import linear_model
 lr = linear_model.LinearRegression()
 return "Success!"

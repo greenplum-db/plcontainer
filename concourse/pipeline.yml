@@ -99,7 +99,7 @@ resources:
 - name: data-science-bundle
   type: git
   source:
-    branch: master
+    branch: gpdb6
     private_key: {{plpkg-git-key}}
     uri: git@github.com:greenplum-db/data-science-bundle.git
 
@@ -115,7 +115,7 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: {{plcontainer-git-branch}}
+    branch: 6X_STABLE
     uri: {{plcontainer-git-remote}}
 
 - name: gpdb_src
