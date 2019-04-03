@@ -213,7 +213,7 @@ resources:
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: gpdb_master/bin_gpdb_centos7/bin_gpdb.tar.gz
+    versioned_file: 6X_STABLE/bin_gpdb_centos7/bin_gpdb.tar.gz
 
 
 - name: plcontainer_gpdb_centos7_build
