@@ -99,7 +99,7 @@ resources:
 - name: data-science-bundle
   type: git
   source:
-    branch: gpdb6
+    branch: master
     private_key: {{plpkg-git-key}}
     uri: git@github.com:greenplum-db/data-science-bundle.git
 
@@ -115,7 +115,7 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: 6X_STABLE
+    branch: master
     uri: {{plcontainer-git-remote}}
 
 - name: gpdb_src
@@ -185,28 +185,28 @@ resources:
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: data-science/published/gpdb6/DataSciencePython-dev-gp6-rhel7-x86_64.gppkg
+    versioned_file: data-science/published/gpdb_master/DataSciencePython-dev-gp6-rhel7-x86_64.gppkg
 
 - name: datascience-r-gp6
   type: gcs
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: data-science/published/gpdb6/DataScienceR-dev-gp6-rhel7-x86_64.gppkg
+    versioned_file: data-science/published/gpdb_master/DataScienceR-dev-gp6-rhel7-x86_64.gppkg
 
 - name: plcontainer_docker_image_centos_python
   type: gcs
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: plcontainer/published/gpdb6/plcontainer-python-images-devel.tar.gz
+    versioned_file: plcontainer/published/gpdb_master/plcontainer-python-images-devel.tar.gz
 
 - name: plcontainer_docker_image_centos_r
   type: gcs
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: plcontainer/published/gpdb6/plcontainer-r-images-devel.tar.gz
+    versioned_file: plcontainer/published/gpdb_master/plcontainer-r-images-devel.tar.gz
 
 - name: bin_gpdb_centos7
   type: gcs
@@ -221,7 +221,7 @@ resources:
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-centos7.gppkg
+    versioned_file: plcontainer/published/gpdb_master/plcontainer-concourse-centos7.gppkg
 
 
 ##################################### JOBS #####################################
