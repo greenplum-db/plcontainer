@@ -266,12 +266,9 @@ jobs:
     - get: centos-gpdb-dev-7
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_centos_python
-      trigger: true
     - get: plcontainer_rclient_docker_image
       resource: plcontainer_docker_image_centos_r
-      trigger: true
     - get: plcontainer_gpdb_centos7_build
-      trigger: true
   - put: terraform
     params:
       <<: *ccp_default_params
@@ -313,12 +310,9 @@ jobs:
     - get: centos-gpdb-dev-7
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_centos_python
-      trigger: true
     - get: plcontainer_rclient_docker_image
       resource: plcontainer_docker_image_centos_r
-      trigger: true
     - get: plcontainer_gpdb_centos7_build
-      trigger: true
   - put: terraform
     params:
       <<: *ccp_default_params
@@ -364,12 +358,10 @@ jobs:
     - get: centos-gpdb-dev-7
     - get: data-science-bundle
     - get: python
-      trigger: true
       resource: python-gp5
     - get: datascience
       resource: datascience-python-gp6
     - get: openssl
-      trigger: true
   - put: terraform
     params:
       <<: *ccp_default_params
@@ -416,7 +408,6 @@ jobs:
     - get: centos-gpdb-dev-7
     - get: data-science-bundle
     - get: datascience
-      trigger: true
       resource: datascience-r-gp6
   - put: terraform
     params:
