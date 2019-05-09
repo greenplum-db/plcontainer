@@ -17,6 +17,8 @@ function _main() {
   # install R
   apt update
   apt install -y r-base pkg-config
+  apt install -y curl
+  apt install -y libjson-c-dev
 
   # setup gpdb environment
   install_gpdb

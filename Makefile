@@ -53,7 +53,7 @@ else
 endif
 
 # Curl
-CURL_CONFIG = $(shell type -p curl-config || echo no)
+CURL_CONFIG = $(shell which curl-config || echo no)
 ifneq ($(CURL_CONFIG),no)
   CURL_VERSION  = $(shell $(CURL_CONFIG) --version | cut -d" " -f2)
   VERSION_CHECK = $(shell expr $(CURL_VERSION) \>\= 7.40.0)
