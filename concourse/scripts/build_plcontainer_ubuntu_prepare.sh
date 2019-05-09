@@ -28,6 +28,9 @@ function _main() {
   ln -s /usr/local/greenplum-db-devel /usr/local/greenplum-db
   chown -h gpadmin:gpadmin /usr/local/greenplum-db
 
+  chown -R gpadmin:gpadmin  $(pwd)
+  chown -R gpadmin:supergroup /opt
+
   # gpadmin need have write permission on TOP_DIR. 
   # we use chmod instead of chown -R, due to concourse known issue.
   chmod a+w ${TOP_DIR}
