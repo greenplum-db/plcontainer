@@ -15,14 +15,14 @@ endif
 ifndef PLCONTAINER_RELEASE
   PLCONTAINER_RELEASE="0"
 endif
-MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
+MAJOR_OS=ubuntu18
 ARCH=$(shell uname -p)
 
 PLC_DIR=`cd .. && pwd`
 PLC_GPPKG_VER=$(PLCONTAINER_VERSION).$(PLCONTAINER_RELEASE)
-PLC_RPM_FLAGS="--define 'plc_dir $(PLC_DIR)' --define 'plc_ver $(PLCONTAINER_VERSION)' --define 'plc_rel $(PLCONTAINER_RELEASE)'"
-PLC_RPM=plcontainer-$(PLCONTAINER_VERSION)-$(PLCONTAINER_RELEASE).$(ARCH).rpm
-PLC_GPPKG=plcontainer-$(PLC_GPPKG_VER)-GP_VERSION-rhel$(MAJOR_OS)-$(ARCH).gppkg
+PLC_DEB=plcontainer-$(PLCONTAINER_VERSION)-$(PLCONTAINER_RELEASE).$(ARCH).deb
+PLC_GPPKG=plcontainer-$(PLC_GPPKG_VER)-GP_VERSION-$(MAJOR_OS)-$(ARCH).gppkg
+ARCH=amd64
 
 TARGET_GPPKG=$(PLC_GPPKG)
 EXTRA_CLEAN+=$(R_RPM) $(PLR_RPM) $(PLR_GPPKG)
@@ -30,17 +30,16 @@ EXTRA_CLEAN+=$(R_RPM) $(PLR_RPM) $(PLR_GPPKG)
 #
 # Generic rules to build gppkgs included here
 #
-include gppkg.mk
+include gppkg-deb.mk
 
 .PHONY: gppkg
 gppkg:
-	$(MAKE) $(PLC_RPM) RPM_FLAGS=$(PLC_RPM_FLAGS)
-	$(MAKE) $(PLC_GPPKG) MAIN_RPM=$(PLC_RPM)
+	cat plcontainer.control.in | sed "s|#version|$(PLC_GPPKG_VER)|" | sed "s|#arch|$(ARCH)|" > plcontainer.control
+	SHELL=/bin/bash $(MAKE) $(PLC_DEB) CONTROL_FILE=plcontainer.control TARGZ=$(GPDB_DIR)/customr.tar.gz PKG_PREFIX=share/postgresql/extension
+	SHELL=/bin/bash $(MAKE) $(PLC_GPPKG) MAIN_PKG=$(PLC_DEB)
 
 .PHONY: cleanall
 cleanall: clean
-	rm -rf BUILDROOT
-	rm -rf SOURCES
-	rm -rf SRPMS
-	rm -rf $(PLC_RPM)
+	rm -rf UBUNTU
+	rm -rf $(PLC_DEB)
 	rm -rf $(PLC_GPPKG)

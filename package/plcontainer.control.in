@@ -1,0 +1,8 @@
+Package: plcontainer
+Version: #version
+Section: base
+Priority: optional
+Architecture: #arch
+Maintainer: GPDB Extension <gpdb-extension@pivotal.io>
+Description: plcontainer
+  Provides PL/Container procedural language implementation for the Greenplum Database.
