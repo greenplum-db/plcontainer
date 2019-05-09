@@ -6,6 +6,7 @@ groups:
 - name: plcontainer
   jobs:
   - plcontainer_build_centos7
+  - plcontainer_build_ubuntu18
   - plcontainer_build_python_image
   - plcontainer_build_r_image
   - plcontainer_function_test_centos7
@@ -155,6 +156,13 @@ resources:
 
 # S3 Input and intermediate binaries
 
+- name: plr_gpdb6_ubuntu18_build
+  type: gcs
+  source:
+    bucket: {{gcs-bucket-intermediates}}
+    json_key: {{concourse-gcs-resources-service-account-key}}
+    regexp: plr/plr-ubuntu18/gpdb6/plr-(.*).gppkg
+
 - name: plr_gpdb6_centos7_build
   type: gcs
   source:
@@ -216,6 +224,13 @@ resources:
     versioned_file: 6X_STABLE/bin_gpdb_centos7/bin_gpdb.tar.gz
 
 
+- name: plcontainer_gpdb_ubuntu18_build
+  type: gcs
+  source:
+    bucket: {{gcs-bucket-intermediates}}
+    json_key: {{concourse-gcs-resources-service-account-key}}
+    versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-ubuntu18.gppkg
+
 - name: plcontainer_gpdb_centos7_build
   type: gcs
   source:
@@ -223,6 +238,20 @@ resources:
     json_key: {{concourse-gcs-resources-service-account-key}}
     versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-centos7.gppkg
 
+- name: bin_gpdb_ubuntu18
+  type: s3
+  source:
+    access_key_id: {{bucket-access-key-id}}
+    bucket: procedural-languages-concourse-gpdb-5x-stable
+    region_name: {{aws-region}}
+    secret_access_key: {{bucket-secret-access-key}}
+    versioned_file: build/gpdb_6x/bin_gpdb_ubuntu16/bin_gpdb.tar.gz
+
+- name: ubuntu18-image
+  type: docker-image
+  source:
+    repository: pivotaldata/ubuntu-gpdb-dev
+    tag: '16.04'
 
 ##################################### JOBS #####################################
 ################################################################################
@@ -230,6 +259,27 @@ resources:
 jobs:
 
 # Build PL/Container GP Package
+- name: plcontainer_build_ubuntu18
+  max_in_flight: 4
+  plan:
+  - aggregate:
+    - get: bin_gpdb_ubuntu18
+    - get: gpdb_src
+    - get: plcontainer_src
+      trigger: true
+    - get: ubuntu18-image
+    - get: plr
+      resource: plr_gpdb6_ubuntu18_build
+  - task: plcontainer_gpdb_build
+    file: plcontainer_src/concourse/tasks/plcontainer_build_ubuntu18.yml
+    image: ubuntu18-image
+    input_mapping:
+      bin_gpdb: bin_gpdb_ubuntu18
+  - aggregate:
+    - put: plcontainer_gpdb_ubuntu18_build
+      params:
+        file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
+
 - name: plcontainer_build_centos7
   max_in_flight: 4
   plan:
