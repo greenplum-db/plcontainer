@@ -22,7 +22,6 @@ build_plcontainer() {
   popd
   source /usr/local/greenplum-db/greenplum_path.sh
   [ -f 'opt/gcc_env.sh' ] && source /opt/gcc_env.sh
-  export R_HOME=/usr/lib64/R
  
   # build plcontainer
   pushd plcontainer_src
