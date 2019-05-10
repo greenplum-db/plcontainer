@@ -16,13 +16,12 @@ ifndef PLCONTAINER_RELEASE
   PLCONTAINER_RELEASE="0"
 endif
 MAJOR_OS=ubuntu18
-ARCH=$(shell uname -p)
 
+ARCH=amd64
 PLC_DIR=`cd .. && pwd`
 PLC_GPPKG_VER=$(PLCONTAINER_VERSION).$(PLCONTAINER_RELEASE)
 PLC_DEB=plcontainer-$(PLCONTAINER_VERSION)-$(PLCONTAINER_RELEASE).$(ARCH).deb
 PLC_GPPKG=plcontainer-$(PLC_GPPKG_VER)-GP_VERSION-$(MAJOR_OS)-$(ARCH).gppkg
-ARCH=amd64
 
 TARGET_GPPKG=$(PLC_GPPKG)
 EXTRA_CLEAN+=$(R_RPM) $(PLR_RPM) $(PLR_GPPKG)
@@ -31,6 +30,10 @@ EXTRA_CLEAN+=$(R_RPM) $(PLR_RPM) $(PLR_GPPKG)
 # Generic rules to build gppkgs included here
 #
 include gppkg-deb.mk
+
+ifeq($(ARCH), x86_64)
+ARCH=amd64
+endif
 
 .PHONY: gppkg
 gppkg:

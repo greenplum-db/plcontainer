@@ -6,21 +6,22 @@ GP_VERSION_NUM := $(GP_MAJORVERSION)
 MAJOR_OS=ubuntu18
 ARCH=$(shell uname -p)
 
+ifeq($(ARCH),x86_64)
+ARCH=amd64
+endif
+
 DEB_ARGS=$(subst -, ,$*)
 DEB_NAME=$(word 1,$(RPM_ARGS))
 PWD=$(shell pwd)
+CONTROL_NAME=plcontainer.control.in
 %.deb: 
 	rm -rf UBUNTU
 	mkdir UBUNTU/DEBIAN -p
-	mkdir UBUNTU/$(PKG_PREFIX) -p
-	cp "$(CONTROL_FILE)" UBUNTU/DEBIAN/control"
-	tar xzf "$(TARGZ) -C UBUNTU/$(PKG_PREFIX)
+	cat $(PWD)/$(CONTROL_NAME) | sed -r "s|#version|$(PLC_GPPKG_VER)|" | sed -r "s|#arch|$(ARCH)|" > $(PWD)/UBUNTU/DEBIAN/control
+	$(MAKE) -C $(PLC_DIR) install DESTDIR=$(PWD)/UBUNTU bindir=/bin libdir=/lib/postgresql pkglibdi=/lib/postgresql datadir=/share/postgresql
 	dpkg-deb --build UBUNTU $@
 
-gppkg_spec.yml: gppkg_spec.yml.in
-	cat $< | sed "s/#arch/$(ARCH)/g" | sed "s/#os/rhel$(MAJOR_OS)/g" | sed 's/#gpver/$(GP_VERSION_NUM)/g' | sed "s/#plcver/$(PLC_GPPKG_VER)/g"> $@
-
-%.gppkg: gppkg_spec.yml $(MAIN_PKG) $(DEPENDENT_PKGS)
+%.gppkg: $(MAIN_PKG) $(DEPENDENT_PKGS)
 	echo "SHELL $(SHELL), pwd=`pwd`, ls=`ls`"
 	mkdir -p gppkg/deps 
 	cp gppkg_spec.yml gppkg/
