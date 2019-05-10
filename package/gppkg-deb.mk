@@ -6,7 +6,7 @@ GP_VERSION_NUM := $(GP_MAJORVERSION)
 MAJOR_OS=ubuntu18
 ARCH=$(shell uname -p)
 
-ifeq($(ARCH),x86_64)
+ifeq ($(ARCH), x86_64)
 ARCH=amd64
 endif
 

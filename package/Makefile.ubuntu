@@ -31,7 +31,7 @@ EXTRA_CLEAN+=$(R_RPM) $(PLR_RPM) $(PLR_GPPKG)
 #
 include gppkg-deb.mk
 
-ifeq($(ARCH), x86_64)
+ifeq ($(ARCH), x86_64)
 ARCH=amd64
 endif
 
