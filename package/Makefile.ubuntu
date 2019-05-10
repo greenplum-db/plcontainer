@@ -35,11 +35,9 @@ ifeq ($(ARCH), x86_64)
 ARCH=amd64
 endif
 
-.PHONY: gppkg
-gppkg:
+.PHONY: gppkg pkg
+gppkg: plcontainer.control.in gppkg_spec.yml.in pkg
 	cat plcontainer.control.in | sed "s|#version|$(PLC_GPPKG_VER)|" | sed "s|#arch|$(ARCH)|" > plcontainer.control
-	SHELL=/bin/bash $(MAKE) $(PLC_DEB) CONTROL_FILE=plcontainer.control TARGZ=$(GPDB_DIR)/customr.tar.gz PKG_PREFIX=share/postgresql/extension
-	#SHELL=/bin/bash $(MAKE) $(PLC_GPPKG) MAIN_PKG=$(PLC_DEB)
 
 .PHONY: cleanall
 cleanall: clean
