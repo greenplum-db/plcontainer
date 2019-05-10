@@ -16,8 +16,8 @@ ifndef PLCONTAINER_RELEASE
   PLCONTAINER_RELEASE="0"
 endif
 MAJOR_OS=ubuntu18
+ARCH=$(shell uname -p)
 
-ARCH=amd64
 PLC_DIR=`cd .. && pwd`
 PLC_GPPKG_VER=$(PLCONTAINER_VERSION).$(PLCONTAINER_RELEASE)
 PLC_DEB=plcontainer-$(PLCONTAINER_VERSION)-$(PLCONTAINER_RELEASE).$(ARCH).deb
@@ -39,7 +39,7 @@ endif
 gppkg:
 	cat plcontainer.control.in | sed "s|#version|$(PLC_GPPKG_VER)|" | sed "s|#arch|$(ARCH)|" > plcontainer.control
 	SHELL=/bin/bash $(MAKE) $(PLC_DEB) CONTROL_FILE=plcontainer.control TARGZ=$(GPDB_DIR)/customr.tar.gz PKG_PREFIX=share/postgresql/extension
-	SHELL=/bin/bash $(MAKE) $(PLC_GPPKG) MAIN_PKG=$(PLC_DEB)
+	#SHELL=/bin/bash $(MAKE) $(PLC_GPPKG) MAIN_PKG=$(PLC_DEB)
 
 .PHONY: cleanall
 cleanall: clean
