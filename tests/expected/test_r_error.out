@@ -47,7 +47,7 @@ select rerror_invalid_program();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  
  Parse Error
-rerror_invalid_program <- function(args) {
+gpdb.rerror_invalid_program <- function(args) {
 # container: plc_r_shared
 this is invalid r program
 }
@@ -58,7 +58,9 @@ DETAIL:  Error in library(invalid_lib) : there is no package called 'invalid_lib
 CONTEXT:  PLContainer function "rerror_invalid_import"
 select rerror_timestamp('2017-09-10 12:10:09');
 ERROR:  PL/Container client exception occurred:
-DETAIL:  Error in (rerror_timestamp <- function(args, t) { : object 'i' not found
+DETAIL:  
+ Error in (gpdb.rerror_timestamp <- function(args, t) { : 
+  object 'i' not found
 CONTEXT:  PLContainer function "rerror_timestamp"
 select rerror_non_exist_function();
 ERROR:  PL/Container client exception occurred:
