@@ -83,18 +83,3 @@ select rint(0);
     2
 (1 row)
 
---  Test shared path write permission for unix domain socket connection.
-select py_shared_path_perm();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Exception occurred in Python during function execution 
- Traceback (most recent call last):
-  File "<string>", line 5, in py_shared_path_perm
-OSError: [Errno 13] Permission denied: '/tmp/plcontainer/test_file'
-select r_shared_path_perm();
- r_shared_path_perm 
---------------------
- {f}
- {t}
-(2 rows)
-

@@ -103,7 +103,7 @@ RHEL_MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*
 ifeq ($(RHEL_MAJOR_OS), 6)
   override CFLAGS +=  -DDOCKER_API_LOW
 endif
-all: all-lib build-clients
+all: all-lib
 	@echo "Build PL/Container Done."
 
 install: all installdirs install-lib install-extra install-clients
@@ -127,7 +127,7 @@ install-extra: installdirs
 	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_uninstall.sql'           '$(PLCONTAINERDIR)/'
 
 .PHONY: install-clients
-install-clients: build-clients
+install-clients:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)/plcontainer_clients'
 	cp $(PYCLIENTDIR)/* $(DESTDIR)$(bindir)/plcontainer_clients/
 	cp $(RCLIENTDIR)/*  $(DESTDIR)$(bindir)/plcontainer_clients/

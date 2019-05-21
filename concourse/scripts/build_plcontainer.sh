@@ -15,15 +15,14 @@ build_plcontainer() {
   # source R
   source /usr/local/greenplum-db/greenplum_path.sh
   source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
-  
+
   #install plr
   pushd plr
   gppkg -i plr*.gppkg
   popd
   source /usr/local/greenplum-db/greenplum_path.sh
   source /opt/gcc_env.sh
-  export R_HOME=/usr/lib64/R
- 
+
   # build plcontainer
   pushd plcontainer_src
   if [ "${DEV_RELEASE}" == "release" ]; then
@@ -36,10 +35,17 @@ build_plcontainer() {
       PLCONTAINER_VERSION="0.0"
       PLCONTAINER_RELEASE="0"
   fi
-  PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make clean
+
+  # copy clients into folder
+  pushd ../plcontainer_client
+  tar zxf plcontainer_client.tar.gz
+  popd
+  tar zxvf ../plcontainer_client/pyclient.tar.gz -C src/pyclient/bin/
+  tar zxvf ../plcontainer_client/rclient.tar.gz -C src/rclient/bin/
+
   pushd package
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make cleanall;
-  PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make
+  PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make;
   popd
   popd
   
@@ -48,6 +54,6 @@ build_plcontainer() {
   else
       cp plcontainer_src/package/plcontainer-*.gppkg $OUTPUT/
   fi
-}  
+}
 
 build_plcontainer

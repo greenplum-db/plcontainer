@@ -29,7 +29,7 @@ resgroup:
 	@echo "as example to learn how to set up those configurations"
 	plcontainer runtime-show -r plc_python_shared
 	plcontainer runtime-show -r plc_r_shared
-	
+
 	# Might use branch to handle the difference later.
 	pg_config --version
 	if [ "`pg_config --version`" == "PostgreSQL 8.3.23" ]; then    \

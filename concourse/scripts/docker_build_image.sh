@@ -23,7 +23,6 @@ docker_build() {
 	local node=$1
 	ssh $node "bash -c \" mkdir -p ~/artifacts_$language\" "
 
-	scp -r datascience/Data*.gppkg $node:~/artifacts_$language
 	scp -r plcontainer_src $node:~/
 	scp -r data-science-bundle $node:~/
 	if [[ $language = "python" ]]; then
@@ -37,12 +36,11 @@ docker_build() {
 
 	ssh $node "bash -c \" \
 	set -eox pipefail; \
-	cp ~/artifacts_$language/* $DockerFolder; \
 	pushd $DockerFolder; \
-	tar -zxvf DataScience*.gppkg; \
+	mv ../../concourse/scripts/rlibs ./ ;\
+	mv ../../concourse/scripts/rlibs.higher_gcc ./ ;\
 	chmod +x *.sh; \
-	cp /usr/local/greenplum-db-devel/lib/libstdc++.so.6 .
-	ls -lh
+	ls -lh; \
 	docker build -f Dockerfile.$language -t pivotaldata/plcontainer_${language}_shared:devel ./ ; \
 	popd; \
 	docker save pivotaldata/plcontainer_${language}_shared:devel | gzip -c > ~/${IMAGE_NAME}; \
@@ -53,7 +51,6 @@ docker_build_ubuntu() {
 	local node=$1
 	ssh $node "bash -c \" mkdir -p ~/artifacts_$language\" "
 
-	scp -r datascience/Data*.gppkg $node:~/artifacts_$language
 	scp -r plcontainer_src $node:~/
 	scp -r data-science-bundle $node:~/
 	if [[ $language = "python" ]]; then
@@ -69,9 +66,7 @@ docker_build_ubuntu() {
 	set -eox pipefail; \
 	cp ~/artifacts_$language/* $DockerFolder; \
 	pushd $DockerFolder; \
-	tar -zxvf DataScience*.gppkg; \
 	chmod +x *.sh; \
-	cp /usr/local/greenplum-db-devel/lib/libstdc++.so.6 .
 	ls -lh
 	docker build -f Dockerfile.$language.ubuntu -t pivotaldata/plcontainer_${language}_shared:devel ./ ; \
 	popd; \

@@ -1,0 +1,13 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+
+inputs:
+  - name: plcontainer_src
+
+outputs:
+  - name: plcontainer_client
+
+run:
+  path: plcontainer_src/concourse/scripts/build_plcontainer_client.sh

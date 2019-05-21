@@ -35,7 +35,14 @@ build_plcontainer() {
       PLCONTAINER_VERSION="0.0"
       PLCONTAINER_RELEASE="0"
   fi
-  PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make clean
+
+  # copy clients into folder
+  pushd ../plcontainer_client
+  tar zxf plcontainer_client.tar.gz
+  popd
+  tar zxvf ../plcontainer_client/pyclient.tar.gz -C src/pyclient/bin/
+  tar zxvf ../plcontainer_client/rclient.tar.gz -C src/rclient/bin/
+
   pushd package
   cp Makefile.ubuntu Makefile
 

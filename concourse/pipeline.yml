@@ -5,8 +5,8 @@
 groups:
 - name: plcontainer
   jobs:
+  - plcontainer_client_build
   - plcontainer_build_centos7
-  - plcontainer_build_ubuntu18_python_image
   - plcontainer_build_ubuntu18
   - plcontainer_build_python_image
   - plcontainer_build_r_image
@@ -103,7 +103,7 @@ resources:
 - name: data-science-bundle
   type: git
   source:
-    branch: gpdb6
+    branch: ((dcs-git-branch))
     private_key: {{plpkg-git-key}}
     uri: git@github.com:greenplum-db/data-science-bundle.git
 
@@ -119,8 +119,8 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: 6X_STABLE
-    uri: {{plcontainer-git-remote}}
+    branch: ((plcontainer-git-branch))
+    uri: https://github.com/greenplum-db/plcontainer.git
 
 - name: gpdb_src
   type: git
@@ -191,27 +191,6 @@ resources:
     secret_access_key: {{artifact-bucket-secret-access-key}}
     versioned_file: gpdb-ext-release-local/Python/python-gpdb5/2.7.12/targzs/python-rhel7_x86_64-2.7.12.targz
 
-- name: datascience-python-ubuntu18-gp6
-  type: gcs
-  source:
-    bucket: {{gcs-bucket-intermediates}}
-    json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: data-science/published/gpdb6/DataSciencePython-dev-gp6-ubuntu18-amd64.gppkg
-
-- name: datascience-python-gp6
-  type: gcs
-  source:
-    bucket: {{gcs-bucket-intermediates}}
-    json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: data-science/published/gpdb6/DataSciencePython-dev-gp6-rhel7-x86_64.gppkg
-
-- name: datascience-r-gp6
-  type: gcs
-  source:
-    bucket: {{gcs-bucket-intermediates}}
-    json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: data-science/published/gpdb6/DataScienceR-dev-gp6-rhel7-x86_64.gppkg
-
 - name: plcontainer_docker_image_centos_python
   type: gcs
   source:
@@ -241,6 +220,13 @@ resources:
     json_key: {{concourse-gcs-resources-service-account-key}}
     versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-ubuntu18.gppkg
 
+- name: plcontainer_client_ubuntu18_build
+  type: gcs
+  source:
+    bucket: {{gcs-bucket-intermediates}}
+    json_key: {{concourse-gcs-resources-service-account-key}}
+    versioned_file: plcontainer/published/gpdb6/plcontainer_client.tar.gz
+
 - name: plcontainer_gpdb_centos7_build
   type: gcs
   source:
@@ -268,6 +254,21 @@ resources:
 
 jobs:
 
+- name: plcontainer_client_build
+  max_in_flight: 4
+  plan:
+  - aggregate:
+    - get: plcontainer_src
+      trigger: true
+    - get: ubuntu18-image
+  - task: plcontainer_client_build
+    file: plcontainer_src/concourse/tasks/plcontainer_client_build.yml
+    image: ubuntu18-image
+  - aggregate:
+    - put: plcontainer_client_ubuntu18_build
+      params:
+        file: plcontainer_client/plcontainer_client.tar.gz
+
 # Build PL/Container GP Package
 - name: plcontainer_build_ubuntu18
   max_in_flight: 4
@@ -276,6 +277,8 @@ jobs:
     - get: bin_gpdb_ubuntu18
     - get: gpdb_src
     - get: plcontainer_src
+    - get: plcontainer_client_ubuntu18_build
+      passed: [plcontainer_client_build]
       trigger: true
     - get: ubuntu18-image
     - get: plr
@@ -285,6 +288,7 @@ jobs:
     image: ubuntu18-image
     input_mapping:
       bin_gpdb: bin_gpdb_ubuntu18
+      plcontainer_client: plcontainer_client_ubuntu18_build
   - aggregate:
     - put: plcontainer_gpdb_ubuntu18_build
       params:
@@ -297,6 +301,8 @@ jobs:
     - get: bin_gpdb_centos7
     - get: gpdb_src
     - get: plcontainer_src
+    - get: plcontainer_client_ubuntu18_build
+      passed: [plcontainer_client_build]
       trigger: true
     - get: centos-gpdb-dev-7
     - get: plr
@@ -306,6 +312,7 @@ jobs:
     image: centos-gpdb-dev-7
     input_mapping:
       bin_gpdb: bin_gpdb_centos7
+      plcontainer_client: plcontainer_client_ubuntu18_build
   - aggregate:
     - put: plcontainer_gpdb_centos7_build
       params:
@@ -538,9 +545,6 @@ jobs:
     - get: python
       trigger: true
       resource: python-gp5
-    - get: datascience
-      trigger: true
-      resource: datascience-python-gp6
     - get: openssl
       trigger: true
   - put: terraform
@@ -576,57 +580,6 @@ jobs:
   ensure:
     <<: *set_failed
 
-- name: plcontainer_build_ubuntu18_python_image
-  plan:
-  - aggregate:
-    - get: plcontainer_src
-    - get: gpdb_src
-    - get: gpdb_binary
-      resource: bin_gpdb_centos7
-    - get: ccp_src
-    - get: ubuntu18-image
-    - get: data-science-bundle
-    - get: python
-      trigger: true
-      resource: python-gp5
-    - get: datascience
-      trigger: true
-      resource: datascience-python-ubuntu18-gp6 
-    - get: openssl
-      trigger: true
-  - put: terraform
-    params:
-      <<: *ccp_default_params
-      vars:
-        instance_type: n1-standard-2
-        PLATFORM: centos7
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
-  - task: gen_cluster
-    file: ccp_src/ci/tasks/gen_cluster.yml
-    params:
-      <<: *ccp_gen_cluster_default_params
-      PLATFORM: centos7
-  - task: gpinitsystem
-    file: ccp_src/ci/tasks/gpinitsystem.yml
-  - task: docker_build
-    file: plcontainer_src/concourse/tasks/docker_build_python.yml
-    params:
-      platform: ubuntu18
-      language: python
-    image: ubuntu18-image
-    input_mapping:
-      plcontainer_gpdb_build: plcontainer_gpdb_ubuntu18_build
-  - put: plcontainer_docker_image_centos_python
-    params:
-      file: plcontainer_docker_image/plcontainer-python-ubuntu18-images-devel.tar.gz
-    on_success:
-      <<: *ccp_destroy
-  ensure:
-    <<: *set_failed
-  
 - name: plcontainer_build_r_image
   plan:
   - aggregate:
@@ -637,9 +590,6 @@ jobs:
     - get: ccp_src
     - get: centos-gpdb-dev-7
     - get: data-science-bundle
-    - get: datascience
-      trigger: true
-      resource: datascience-r-gp6
   - put: terraform
     params:
       <<: *ccp_default_params

@@ -65,8 +65,8 @@ static int start_listener_ipc() {
 	char *uds_fn;
 	int sz;
 	char *env_str, *endptr;
-	uid_t qe_uid, clt_uid;
-	gid_t qe_gid, clt_gid;
+	uid_t qe_uid;
+	gid_t qe_gid;
 	long val;
 
 	/* filename: IPC_CLIENT_DIR + '/' + UDS_SHARED_FILE */
@@ -142,50 +142,10 @@ static int start_listener_ipc() {
 		plc_elog(ERROR, "Cannot listen the socket: %s", strerror(errno));
 	}
 
-	/* Get the uid that the client will run with */
-	if ((env_str = getenv("CLIENT_UID")) == NULL)
-		plc_elog (ERROR, "CLIENT_UID is not set, something wrong on QE side");
-	errno = 0;
-	val = strtol(env_str, &endptr, 10);
-	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-	    (errno != 0 && val == 0) ||
-	    endptr == env_str ||
-	    *endptr != '\0') {
-		plc_elog(ERROR, "CLIENT_UID is wrong:'%s'", env_str);
-	}
-	clt_uid = val;
-
-	/* Get the gid that the client will run with */
-	if ((env_str = getenv("CLIENT_GID")) == NULL)
-		plc_elog (ERROR, "CLIENT_GID is not set, something wrong on QE side");
-	errno = 0;
-	val = strtol(env_str, &endptr, 10);
-	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-	    (errno != 0 && val == 0) ||
-	    endptr == env_str ||
-	    *endptr != '\0') {
-		plc_elog(ERROR, "CLIENT_GID is wrong:'%s'", env_str);
-	}
-	clt_gid = val;
-
-	setuid(clt_uid);
-	setgid(clt_gid);
-
 	/*
-	 * Note: 
-	 * 1) clt_uid should not be same as qe_uid.
-	 * 2) It is said on some platforms that if it is a setuid program,
-	 *    it could setuid back to root if the real uid is root although this
-	 *    is not the case on Linux. So we check here.
-	 */
-	clt_uid = getuid();
-	if (clt_uid == qe_uid || clt_uid == 0 || clt_uid != geteuid()) {
-		close(sock);
-		unlink(uds_fn);
-		plc_elog(ERROR, "New uid (%d) is wrong. (qe_uid: %d, euid: %d): %s\n",
-			        clt_uid, qe_uid, geteuid(), strerror(errno));
-		return -1;
-	}
+	 * Set passed UID from OS is currently disabled due to the container OS may different with host OS.
+	 * Hence use passed CLIENT_UID may has some risks.
+	 * */
 
 	plc_elog(DEBUG1, "Listening via unix domain socket with file: %s", uds_fn);
 

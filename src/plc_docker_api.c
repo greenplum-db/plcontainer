@@ -220,8 +220,6 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"    \"Cmd\": [\"%s\"],\n"
 			"    \"Env\": [\"EXECUTOR_UID=%d\",\n"
 			"              \"EXECUTOR_GID=%d\",\n"
-			"              \"CLIENT_UID=%d\",\n"
-			"              \"CLIENT_GID=%d\",\n"
 			"              \"DB_USER_NAME=%s\",\n"
 			"              \"DB_NAME=%s\",\n"
 			"              \"DB_QE_PID=%d\",\n"
@@ -251,8 +249,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	
 	const char *username;
 	const char *dbname;
-    struct passwd *pwd;
-    char cgroupParent[RES_GROUP_PATH_MAX_LENGTH] = "";
+	char cgroupParent[RES_GROUP_PATH_MAX_LENGTH] = "";
 
 	int16 dbid = 0;
 #ifndef PLC_PG
@@ -276,14 +273,10 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	 * We might want to allow to use uid/gid set in runtimeConfEntry but since
 	 * this is important (security concern) we simply use "nobody" by now.
 	 * Note this is used for IPC only at this momement.
+	 * Note: We stop to use user "nobody" currently due to different os has
+	 * different user id for "nobody". Hence simpliy pass the host OS "nobody" 
+	 * user id will have some risks.
 	 */
-	errno = 0;
-	pwd = getpwnam("nobody");
-	if (pwd == NULL) {
-		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to get passwd info for user 'nobody': %d", errno);
-		return -1;
-	}
 
 	/*
 	 * generate cgroup parent path when using resource group feature
@@ -308,8 +301,6 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         conf->command,
 	         getuid(),
 	         getgid(),
-	         pwd->pw_uid,
-	         pwd->pw_gid,
 	         username,
 	         dbname,
 	         MyProcPid,

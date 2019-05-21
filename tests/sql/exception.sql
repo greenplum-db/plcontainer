@@ -39,7 +39,3 @@ select pyexit();
 select pyzero();
 select rexit();
 select rint(0);
-
---  Test shared path write permission for unix domain socket connection.
-select py_shared_path_perm();
-select r_shared_path_perm();
