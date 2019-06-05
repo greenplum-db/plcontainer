@@ -1,3 +1,4 @@
+#!/bin/bash
 set -eox pipefail; \
 export MASTER_DATA_DIRECTORY=/data/gpdata/master/gpseg-1;
 source /usr/local/greenplum-db-devel/greenplum_path.sh;

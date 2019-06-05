@@ -16,9 +16,7 @@ function _main() {
  
   # install R
   apt update
-  apt install -y r-base pkg-config
-  apt install -y curl
-  apt install -y libjson-c-dev
+  DEBIAN_FRONTEND=noninteractive apt install -y r-base pkg-config libcurl4-openssl-dev libjson-c-dev libssl-dev
 
   # setup gpdb environment
   install_gpdb

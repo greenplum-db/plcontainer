@@ -49,23 +49,24 @@ install_docker() {
         \""
         ;;
       ubuntu18)
-        ssh centos@$node "sudo bash -c \" \
-           yum install -y yum-utils device-mapper-persistent-data lvm2; \
-           yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo; \
-           yum makecache fast; \
-           yum install -y docker-ce; \
-           yum install -y cpan; \
-           yum install -y perl-Module-CoreList; \
-           systemctl start docker; \
-           groupadd docker; \
-           chown root:docker /var/run/docker.sock; \
+        ssh ubuntu@$node "sudo bash -c \" \
+           sudo apt-get update; \
+	   sudo apt-get -y install wget apt-transport-https ca-certificates curl gnupg-agent software-properties-common; \
+           wget https://download.docker.com/linux/ubuntu/gpg -O /tmp/docker.key ; \ 
+	   sudo apt-key add /tmp/docker.key ; \
+           sudo add-apt-repository -y 'deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable' ; \
+           sudo apt-get update; \
+	   sudo apt-get -y install docker-ce docker-ce-cli containerd.io; \
+           sudo systemctl start docker; \
+           sudo groupadd docker; \
+           sudo chown root:docker /var/run/docker.sock; \
            usermod -a -G docker gpadmin; \
-           service docker stop; \
+           sudo service docker stop; \
            sleep 5; \
            set -exo pipefail; \
-           mv /var/lib/docker /data/gpdata/docker; \
-           ln -s /data/gpdata/docker /var/lib/docker; \
-           service docker start; \
+           sudo mv /var/lib/docker /data/gpdata/docker; \
+           sudo ln -s /data/gpdata/docker /var/lib/docker; \
+           sudo service docker start; \
         \""
         ;;
     esac 

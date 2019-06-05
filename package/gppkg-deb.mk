@@ -25,7 +25,7 @@ pkg: $(TARGET_GPPKG)
 	mkdir UBUNTU/share/postgresql/extension/ -p
 	cat gppkg_spec.yml.in | sed "s/#arch/$(ARCH)/g" | sed "s/#os/$(MAJOR_OS)/g" | sed "s/#gpver/$(GP_VERSION_NUM)/g" | sed "s/#plcver/$(PLC_GPPKG_VER)/g" > gppkg_spec.yml
 	cat $(PWD)/$(CONTROL_NAME) | sed -r "s|#version|$(PLC_GPPKG_VER)|" | sed -r "s|#arch|$(ARCH)|" > $(PWD)/UBUNTU/DEBIAN/control
-	$(MAKE) -C $(PLC_DIR) install DESTDIR=$(PWD)/UBUNTU bindir=/bin libdir=/lib/postgresql pkglibdi=/lib/postgresql datadir=/share/postgresql
+	$(MAKE) -C $(PLC_DIR) install DESTDIR=$(PWD)/UBUNTU bindir=/bin libdir=/lib/postgresql pkglibdir=/lib/postgresql datadir=/share/postgresql
 	dpkg-deb --build UBUNTU $@
 
 %.gppkg: $(PLC_DEB) $(DEPENDENT_DEBS)

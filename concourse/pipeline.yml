@@ -96,6 +96,7 @@ resource_types:
   type: docker-image
   source:
     repository: ljfranklin/terraform-resource
+    tag: 0.11.14
 
 resources:
 
@@ -119,7 +120,7 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: ((plcontainer-git-branch))
+    branch: 6X_STALE
     uri: https://github.com/greenplum-db/plcontainer.git
 
 - name: gpdb_src
@@ -157,39 +158,19 @@ resources:
     repository: pivotaldata/centos-gpdb-dev
     tag: 7-gcc6.2-llvm3.7
 
-# S3 Input and intermediate binaries
-
-- name: plr_gpdb6_ubuntu18_build
-  type: gcs
+- name: ubuntu18-image
+  type: docker-image
   source:
-    bucket: {{gcs-bucket-intermediates}}
-    json_key: {{concourse-gcs-resources-service-account-key}}
-    regexp: plr/plr-ubuntu18/gpdb6/plr-(.*).gppkg
+    repository: pivotaldata/gpdb6-ubuntu18.04-build
+    tag: latest
 
-- name: plr_gpdb6_centos7_build
-  type: gcs
+- name: ubuntu18-image-test
+  type: docker-image
   source:
-    bucket: {{gcs-bucket}}
-    json_key: {{concourse-gcs-resources-service-account-key}}
-    regexp: plr/released/gpdb6/plr-(.*)-rhel7-x86_64.gppkg
+    repository: pivotaldata/gpdb6-ubuntu18.04-test
+    tag: latest
 
-- name: openssl
-  type: s3
-  source:
-    access_key_id: {{artifact-bucket-access-key-id}}
-    bucket: toolsmiths-concourse-artifacts
-    region_name: {{aws-region}}
-    secret_access_key: {{artifact-bucket-secret-access-key}}
-    versioned_file: gpdb-ext-release-local/OpenSSL/openssl/1.0.2l/targzs/openssl-rhel7_x86_64-1.0.2l.targz
-
-- name: python-gp5
-  type: s3
-  source:
-    access_key_id: {{artifact-bucket-access-key-id}}
-    bucket: toolsmiths-concourse-artifacts
-    region_name: {{aws-region}}
-    secret_access_key: {{artifact-bucket-secret-access-key}}
-    versioned_file: gpdb-ext-release-local/Python/python-gpdb5/2.7.12/targzs/python-rhel7_x86_64-2.7.12.targz
+# GCS Input and intermediate binaries
 
 - name: plcontainer_docker_image_centos_python
   type: gcs
@@ -212,6 +193,12 @@ resources:
     json_key: {{concourse-gcs-resources-service-account-key}}
     versioned_file: 6X_STABLE/bin_gpdb_centos7/bin_gpdb.tar.gz
 
+- name: bin_gpdb_ubuntu18
+  type: gcs
+  source:
+    bucket: {{gcs-bucket-intermediates}}
+    json_key: {{concourse-gcs-resources-service-account-key}}
+    versioned_file: 6X_STABLE/bin_gpdb_ubuntu18.04/bin_gpdb.tar.gz
 
 - name: plcontainer_gpdb_ubuntu18_build
   type: gcs
@@ -233,21 +220,6 @@ resources:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
     versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-centos7.gppkg
-
-- name: bin_gpdb_ubuntu18
-  type: s3
-  source:
-    access_key_id: {{bucket-access-key-id}}
-    bucket: procedural-languages-concourse-gpdb-5x-stable
-    region_name: {{aws-region}}
-    secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: build/gpdb_6x/bin_gpdb_ubuntu16/bin_gpdb.tar.gz
-
-- name: ubuntu18-image
-  type: docker-image
-  source:
-    repository: pivotaldata/ubuntu-gpdb-dev
-    tag: '16.04'
 
 ##################################### JOBS #####################################
 ################################################################################
@@ -280,12 +252,10 @@ jobs:
     - get: plcontainer_client_ubuntu18_build
       passed: [plcontainer_client_build]
       trigger: true
-    - get: ubuntu18-image
-    - get: plr
-      resource: plr_gpdb6_ubuntu18_build
+    - get: ubuntu18-image-test
   - task: plcontainer_gpdb_build
     file: plcontainer_src/concourse/tasks/plcontainer_build_ubuntu18.yml
-    image: ubuntu18-image
+    image: ubuntu18-image-test
     input_mapping:
       bin_gpdb: bin_gpdb_ubuntu18
       plcontainer_client: plcontainer_client_ubuntu18_build
@@ -305,8 +275,6 @@ jobs:
       passed: [plcontainer_client_build]
       trigger: true
     - get: centos-gpdb-dev-7
-    - get: plr
-      resource: plr_gpdb6_centos7_build
   - task: plcontainer_gpdb_build
     file: plcontainer_src/concourse/tasks/plcontainer_build.yml
     image: centos-gpdb-dev-7
@@ -328,7 +296,6 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_ubuntu18
     - get: ccp_src
-      passed: [plcontainer_build_python_image, plcontainer_build_r_image]
     - get: ubuntu18-image
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_centos_python
@@ -346,7 +313,7 @@ jobs:
       <<: *ccp_default_params
       vars:
         instance_type: n1-standard-4
-        PLATFORM: centos7
+        PLATFORM: ubuntu18.04
         disk_size: 100
         disk_type: pd-ssd
         zone: {{google-zone}}
@@ -355,7 +322,7 @@ jobs:
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
       <<: *ccp_gen_cluster_default_params
-      PLATFORM: centos7
+      PLATFORM: ubuntu18.04
   - task: gpinitsystem
     file: ccp_src/ci/tasks/gpinitsystem.yml
   - task: plcontainer
@@ -381,7 +348,6 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos7
     - get: ccp_src
-      passed: [plcontainer_build_python_image, plcontainer_build_r_image]
     - get: centos-gpdb-dev-7
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_centos_python
@@ -433,7 +399,6 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos7
     - get: ccp_src
-      passed: [plcontainer_build_python_image, plcontainer_build_r_image]
     - get: centos-gpdb-dev-7
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_centos_python
@@ -486,7 +451,6 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_ubuntu18
     - get: ccp_src
-      passed: [plcontainer_build_python_image, plcontainer_build_r_image]
     - get: ubuntu18-image
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_centos_python
@@ -504,7 +468,7 @@ jobs:
       <<: *ccp_default_params
       vars:
         instance_type: n1-standard-4
-        PLATFORM: centos7
+        PLATFORM: ubuntu18.04
         disk_size: 100
         disk_type: pd-ssd
         zone: {{google-zone}}
@@ -513,7 +477,7 @@ jobs:
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
       <<: *ccp_gen_cluster_default_params
-      PLATFORM: ubuntu18
+      PLATFORM: ubuntu18.04
   - task: gpinitsystem
     file: ccp_src/ci/tasks/gpinitsystem.yml
   - task: plcontainer_resgroup
@@ -542,11 +506,6 @@ jobs:
     - get: ccp_src
     - get: centos-gpdb-dev-7
     - get: data-science-bundle
-    - get: python
-      trigger: true
-      resource: python-gp5
-    - get: openssl
-      trigger: true
   - put: terraform
     params:
       <<: *ccp_default_params

@@ -7,6 +7,8 @@
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 
+SHELL:=/bin/bash
+
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --init-file=./init_file --schedule=pl_schedule
 RESGROUP_OPTS = --dbname=$(PL_TESTDB) --init-file=./init_file --schedule=pl_resgroup_schedule
 PSQLDIR = --psqldir=$(bindir)

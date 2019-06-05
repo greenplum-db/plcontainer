@@ -15,7 +15,7 @@ function _main() {
 
   # install R
   apt update
-  apt install -y r-base pkg-config
+  DEBIAN_FRONTEND=noninteractive apt install -y r-base pkg-config libpython2.7-dev python2.7
 
   # build client only
   pushd plcontainer_src

@@ -7,7 +7,6 @@ inputs:
   - name: bin_gpdb
   - name: gpdb_src
   - name: plcontainer_src
-  - name: plr
   - name: plcontainer_client
 
 outputs:

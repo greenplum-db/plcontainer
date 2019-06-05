@@ -26,8 +26,7 @@ docker_build() {
 	scp -r plcontainer_src $node:~/
 	scp -r data-science-bundle $node:~/
 	if [[ $language = "python" ]]; then
-		scp -r python/python*.targz $node:~/artifacts_python
-		scp -r openssl/openssl*.targz $node:~/artifacts_python
+		echo "language python in pipeline." 
 	elif [[ $language = "r" ]]; then
 		echo "language R in pipeline." 
 	else
@@ -54,8 +53,7 @@ docker_build_ubuntu() {
 	scp -r plcontainer_src $node:~/
 	scp -r data-science-bundle $node:~/
 	if [[ $language = "python" ]]; then
-		scp -r python/python*.targz $node:~/artifacts_python
-		scp -r openssl/openssl*.targz $node:~/artifacts_python
+		echo "language python in pipeline." 
 	elif [[ $language = "r" ]]; then
 		echo "language R in pipeline." 
 	else
