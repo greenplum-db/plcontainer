@@ -1,0 +1,18 @@
+platform: linux
+image_resource:
+  type: docker-image
+inputs:
+  - name: plcontainer_src
+  - name: plcontainer_gpdb_ubuntu18_build  
+  - name: plcontainer_gpdb_centos7_build
+  - name: plcontainer_docker_image_build_python
+  - name: plcontainer_docker_image_build_r
+
+outputs:
+  - name: release_bin_centos7
+  - name: release_bin_ubuntu18
+  - name: release_image_r
+  - name: release_image_python  
+  
+run:
+  path: plcontainer_src/concourse/scripts/plcontainer_release.sh
