@@ -1,7 +1,9 @@
-do language plr '
+do language plcontainer $$
+# container: plc_r_shared
 pg.throwlog("Hello, world!")
-';
+$$;
 
-do language plr '
+do language plcontainer $$
+# container: plc_r_shared
 pg.thrownotice("Hello, world!")
-';
+$$;
