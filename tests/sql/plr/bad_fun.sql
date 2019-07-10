@@ -8,3 +8,4 @@ $$
   42
 $$
 LANGUAGE plcontainer;
+select r_bad_fun();
