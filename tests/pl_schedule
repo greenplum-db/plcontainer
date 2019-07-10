@@ -49,8 +49,8 @@ test: schema
 
 # Postgres PL/R tests
 test: plr/out_args
-#test: plr/bad_fun
-#test: plr/plr
+test: plr/bad_fun
+test: plr/plr
 #test: plr/opt_window
 #test: plr/do
 

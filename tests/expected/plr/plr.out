@@ -30,7 +30,7 @@ select reload_plr_modules();
 --
 -- plr_modules test
 --
-create or replace function pg_test_module_load(text) returns text $$
+create or replace function pg_test_module_load(text) returns text as $$
 # container: plc_r_shared
 pg.test.module.load(arg1)
 $$ language plcontainer;
@@ -49,7 +49,7 @@ select install_rcmd('pg.test.install <-function(msg) {print(msg)}');
  OK
 (1 row)
 
-create or replace function pg_test_install(text) returns text $$
+create or replace function pg_test_install(text) returns text as $$
 # container: plc_r_shared
 pg.test.install(arg1)
 $$ language plcontainer;
@@ -187,7 +187,7 @@ select rfloat(1); -- numeric
 --
 -- a variety of plr functions
 --
-create or replace function throw_notice(text) returns text $$
+create or replace function throw_notice(text) returns text as $$
 # container: plc_r_shared
 pg.thrownotice(arg1)
 $$ language plcontainer;
@@ -198,7 +198,7 @@ NOTICE:  hello
  
 (1 row)
 
-create or replace function paste(_text,_text,text) returns text[] $$
+create or replace function paste(_text,_text,text) returns text[] as $$
 # container: plc_r_shared
 paste(arg1,arg2, sep = arg3)
 $$ language plcontainer;
@@ -228,7 +228,7 @@ select vec(1.23, 1.32);
  {1.23,1.32}
 (1 row)
 
-create or replace function echo(text) returns text $$
+create or replace function echo(text) returns text as $$
 # container: plc_r_shared
 print(arg1)
 $$ language plcontainer;
@@ -238,7 +238,7 @@ select echo('hello');
  hello
 (1 row)
 
-create or replace function reval(text) returns text $$
+create or replace function reval(text) returns text as $$
 # container: plc_r_shared
 eval(parse(text = arg1))
 $$ language plcontainer;
@@ -248,7 +248,7 @@ select reval('a <- sd(c(1,2,3)); b <- mean(c(1,2,3)); a + b');
  3
 (1 row)
 
-create or replace function "commandArgs"() returns text[] $$
+create or replace function "commandArgs"() returns text[] as $$
 # container: plc_r_shared
 
 $$ language plcontainer;
@@ -258,7 +258,7 @@ select "commandArgs"();
  {PL/R,--slave,--silent,--no-save,--no-restore}
 (1 row)
 
-create or replace function vec(float) returns text $$
+create or replace function vec(float) returns text as $$
 # container: plc_r_shared
 c(arg1)
 $$ language plcontainer;
@@ -268,7 +268,7 @@ select vec(1.23);
  1.23
 (1 row)
 
-create or replace function reval(_text) returns text $$
+create or replace function reval(_text) returns text as $$
 # container: plc_r_shared
 eval(parse(text = arg1))
 $$ language plcontainer;
@@ -278,7 +278,7 @@ select round(reval('{"sd(c(1.12,1.23,1.18,1.34))"}'::text[])::numeric,8);
  0.09322911
 (1 row)
 
-create or replace function print(text) returns text $$
+create or replace function print(text) returns text as $$
 # container: plc_r_shared
 
 $$ language plcontainer;
@@ -328,7 +328,7 @@ select mean('{1.23,1.31,1.42,1.27}'::_float8);
  1.3075
 (1 row)
 
-create or replace function sprintf(text,text,text) returns text $$
+create or replace function sprintf(text,text,text) returns text as $$
 # container: plc_r_shared
 sprintf(arg1,arg2,arg3)
 $$ language plcontainer;
@@ -402,7 +402,7 @@ select f1, round(gamma(f2)::numeric,8) from foo group by f1 order by f1;
 -- test returning vectors, arrays, matricies, and dataframes
 -- as scalars, arrays, and records
 --
-create or replace function test_vt() returns text $$
+create or replace function test_vt() returns text as $$
 # container: plc_r_shared
 array(1:10,c(2,5))
 $$ language plcontainer;
@@ -412,7 +412,7 @@ select test_vt();
  1
 (1 row)
 
-create or replace function test_vi() returns int $$
+create or replace function test_vi() returns int as $$
 # container: plc_r_shared
 array(1:10,c(2,5))
 $$ language plcontainer;
@@ -422,7 +422,7 @@ select test_vi();
        1
 (1 row)
 
-create or replace function test_mt() returns text $$
+create or replace function test_mt() returns text as $$
 # container: plc_r_shared
 as.matrix(array(1:10,c(2,5)))
 $$ language plcontainer;
@@ -432,7 +432,7 @@ select test_mt();
  1
 (1 row)
 
-create or replace function test_mi() returns int $$
+create or replace function test_mi() returns int as $$
 # container: plc_r_shared
 as.matrix(array(1:10,c(2,5)))
 $$ language plcontainer;
@@ -442,7 +442,7 @@ select test_mi();
        1
 (1 row)
 
-create or replace function test_dt() returns text $$
+create or replace function test_dt() returns text as $$
 # container: plc_r_shared
 as.data.frame(array(1:10,c(2,5)))[[1]]
 $$ language plcontainer;
@@ -452,7 +452,7 @@ select test_dt();
  1
 (1 row)
 
-create or replace function test_di() returns int $$
+create or replace function test_di() returns int as $$
 # container: plc_r_shared
 as.data.frame(array(1:10,c(2,5)))[[1]]
 $$ language plcontainer;
@@ -462,7 +462,7 @@ select test_di() as error;
      1
 (1 row)
 
-create or replace function test_vta() returns text[] $$
+create or replace function test_vta() returns text[] as $$
 # container: plc_r_shared
 array(1:10,c(2,5))
 $$ language plcontainer;
@@ -472,7 +472,7 @@ select test_vta();
  {{1,3,5,7,9},{2,4,6,8,10}}
 (1 row)
 
-create or replace function test_via() returns int[] $$
+create or replace function test_via() returns int[] as $$
 # container: plc_r_shared
 array(1:10,c(2,5))
 $$ language plcontainer;
@@ -482,7 +482,7 @@ select test_via();
  {{1,3,5,7,9},{2,4,6,8,10}}
 (1 row)
 
-create or replace function test_mta() returns text[] $$
+create or replace function test_mta() returns text[] as $$
 # container: plc_r_shared
 as.matrix(array(1:10,c(2,5)))
 $$ language plcontainer;
@@ -492,7 +492,7 @@ select test_mta();
  {{1,3,5,7,9},{2,4,6,8,10}}
 (1 row)
 
-create or replace function test_mia() returns int[] $$
+create or replace function test_mia() returns int[] as $$
 # container: plc_r_shared
 as.matrix(array(1:10,c(2,5)))
 $$ language plcontainer;
@@ -502,7 +502,7 @@ select test_mia();
  {{1,3,5,7,9},{2,4,6,8,10}}
 (1 row)
 
-create or replace function test_dia() returns int[] $$
+create or replace function test_dia() returns int[] as $$
 # container: plc_r_shared
 as.data.frame(array(1:10,c(2,5)))
 $$ language plcontainer;
@@ -512,7 +512,7 @@ select test_dia();
  {{1,3,5,7,9},{2,4,6,8,10}}
 (1 row)
 
-create or replace function test_dta() returns text[] $$
+create or replace function test_dta() returns text[] as $$
 # container: plc_r_shared
 as.data.frame(array(1:10,c(2,5)))
 $$ language plcontainer;
@@ -522,7 +522,7 @@ select test_dta();
  {{1,3,5,7,9},{2,4,6,8,10}}
 (1 row)
 
-create or replace function test_dta1() returns text[] $$
+create or replace function test_dta1() returns text[] as $$
 # container: plc_r_shared
 as.data.frame(array(letters[1:10], c(2,5)))
 $$ language plcontainer;
@@ -532,7 +532,7 @@ select test_dta1();
  {{a,c,e,g,i},{b,d,f,h,j}}
 (1 row)
 
-create or replace function test_dta2() returns text[] $$
+create or replace function test_dta2() returns text[] as $$
 # container: plc_r_shared
 as.data.frame(data.frame(letters[1:10],1:10))
 $$ language plcontainer;
@@ -543,7 +543,7 @@ select test_dta2();
 (1 row)
 
 -- generates expected error
-create or replace function test_dia1() returns int[] $$
+create or replace function test_dia1() returns int[] as $$
 # container: plc_r_shared
 as.data.frame(array(letters[1:10], c(2,5)))
 $$ language plcontainer;
@@ -728,7 +728,7 @@ select * from test_vtup1();
 --
 -- test pg R support functions (e.g. SPI_exec)
 --
-create or replace function pg_quote_ident(text) returns text $$
+create or replace function pg_quote_ident(text) returns text as $$
 # container: plc_r_shared
 pg.quoteident(arg1)
 $$ language plcontainer;
@@ -738,7 +738,7 @@ select pg_quote_ident('Hello World');
  "Hello World"
 (1 row)
 
-create or replace function pg_quote_literal(text) returns text $$
+create or replace function pg_quote_literal(text) returns text as $$
 # container: plc_r_shared
 pg.quoteliteral(arg1)
 $$ language plcontainer;
@@ -748,7 +748,7 @@ select pg_quote_literal('Hello''World');
  'Hello''World'
 (1 row)
 
-create or replace function test_spi_t(text) returns text $$
+create or replace function test_spi_t(text) returns text as $$
 # container: plc_r_shared
 (pg.spi.exec(arg1))[[1]]
 $$ language plcontainer;
@@ -758,7 +758,7 @@ select test_spi_t('select oid, typname from pg_type where typname = ''oid'' or t
  25
 (1 row)
 
-create or replace function test_spi_ta(text) returns text[] $$
+create or replace function test_spi_ta(text) returns text[] as $$
 # container: plc_r_shared
 pg.spi.exec(arg1)
 $$ language plcontainer;
@@ -779,7 +779,7 @@ select * from test_spi_tup('select oid, typname from pg_type where typname = ''o
      26 | oid
 (2 rows)
 
-create or replace function fetch_pgoid(text) returns int $$
+create or replace function fetch_pgoid(text) returns int as $$
 # container: plc_r_shared
 pg.reval(arg1)
 $$ language plcontainer;
@@ -789,7 +789,7 @@ select fetch_pgoid('BYTEAOID');
           17
 (1 row)
 
-create or replace function test_spi_prep(text) returns text $$
+create or replace function test_spi_prep(text) returns text as $$
 # container: plc_r_shared
 sp <<- pg.spi.prepare(arg1, c(NAMEOID, NAMEOID)); print("OK")
 $$ language plcontainer;
@@ -835,7 +835,7 @@ select r_test(null) is null as "NULL";
  t
 (1 row)
 
-CREATE OR REPLACE FUNCTION r_max (integer, integer) RETURNS integer $$
+CREATE OR REPLACE FUNCTION r_max (integer, integer) returns integer as $$
 # container: plc_r_shared
 if (is.null(arg1) && is.null(arg2)) return(NA);if (is.null(arg1)) return(arg2);if (is.null(arg2)) return(arg1);if (arg1 > arg2) return(arg1);arg2
 $$ language plcontainer;
@@ -867,7 +867,7 @@ select r_max(null,null) is null as "NULL";
 -- test tuple arguments
 --
 create or replace function get_foo(int) returns foo as 'select * from foo where f0 = $1' language 'sql';
-create or replace function test_foo(foo) returns foo $$
+create or replace function test_foo(foo) returns foo as $$
 # container: plc_r_shared
 return(arg1)
 $$ language plcontainer;
@@ -943,7 +943,7 @@ select f1[0][1][1] is null as "NULL" from (select '{{{111,112},{121,122},{131,13
 --
 -- test 3D array return value
 --
-create or replace function arr3d(_int4) returns int4[] $$
+create or replace function arr3d(_int4) returns int4[] as $$
 # container: plc_r_shared
 return(arg1)
 $$ language plcontainer STRICT;
@@ -959,7 +959,7 @@ select arr3d('{{{111,112},{121,122},{131,132}},{{211,212},{221,222},{231,232}}}'
 --
 -- test that NULL return value suppresses the change
 --
-create or replace function rejectfoo() returns trigger $$ 
+create or replace function rejectfoo() returns trigger as $$ 
 # container: plc_r_shared
 return(NULL)
 $$ language plcontainer;
