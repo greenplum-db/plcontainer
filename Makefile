@@ -57,12 +57,8 @@ CURL_CONFIG = $(shell which curl-config || echo no)
 ifneq ($(CURL_CONFIG),no)
   CURL_VERSION  = $(shell $(CURL_CONFIG) --version | cut -d" " -f2)
   VERSION_CHECK = $(shell expr $(CURL_VERSION) \>\= 7.40.0)
-ifeq ($(VERSION_CHECK),1)
   override CFLAGS += $(shell $(CURL_CONFIG) --cflags)
   SHLIB_LINK = $(shell $(CURL_CONFIG) --libs)
-else
-  $(error curl version is < 7.40, please update your libcurl installation.)
-endif
 else
   $(error curl-config is not found, please check libcurl installation.)
 endif
