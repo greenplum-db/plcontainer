@@ -164,12 +164,12 @@ void free_error(plcMsgError *msg) {
 
 plcArray *plc_alloc_array(int ndims) {
 	plcArray *arr;
-	arr = (plcArray *) pmalloc(sizeof(plcArray));
-	arr->meta = (plcArrayMeta *) pmalloc(sizeof(plcArrayMeta));
+	arr = (plcArray *) palloc(sizeof(plcArray));
+	arr->meta = (plcArrayMeta *) palloc(sizeof(plcArrayMeta));
 	arr->meta->ndims = ndims;
 	arr->meta->dims = NULL;
 	if (ndims > 0)
-		arr->meta->dims = (int *) pmalloc(ndims * sizeof(int));
+		arr->meta->dims = (int *) palloc(ndims * sizeof(int));
 	arr->meta->size = 0;
 	return arr;
 }
@@ -207,8 +207,8 @@ void plc_free_array(plcArray *arr, plcType *type, bool isSender) {
 plcUDT *plc_alloc_udt(int nargs) {
 	plcUDT *res;
 
-	res = pmalloc(sizeof(plcUDT));
-	res->data = pmalloc(nargs * sizeof(rawdata));
+	res = palloc(sizeof(plcUDT));
+	res->data = palloc(nargs * sizeof(rawdata));
 
 	return res;
 }

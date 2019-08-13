@@ -23,6 +23,7 @@
 
 #include "comm_utils.h"
 #include "comm_connectivity.h"
+#include "../sqlhandler.h"
 #ifndef PLC_CLIENT
   #include "miscadmin.h"
 #endif
@@ -37,6 +38,8 @@ static void plcBufferMaybeReset(plcConn *conn, int bufType);
 
 static int plcBufferMaybeResize(plcConn *conn, int bufType, size_t bufAppend);
 
+static char *split_address(const char *address, char *node_service);
+
 static void
 plc_gettimeofday(struct timeval *tv)
 {
@@ -44,6 +47,26 @@ plc_gettimeofday(struct timeval *tv)
 	retval = gettimeofday(tv, NULL);
 	if (retval < 0)
 		plc_elog(ERROR, "Failed to get time: %s", strerror(errno));
+}
+
+int plcBufferInit(plcBuffer *buffer)
+{
+	buffer->data = (char *)palloc(PLC_BUFFER_SIZE);
+	buffer->pStart = 0;
+	buffer->pEnd = 0;
+	buffer->bufSize = PLC_BUFFER_SIZE;
+	return 0;
+}
+
+void plcBufferRelease(plcBuffer *buffer)
+{
+	if (buffer->data) {
+		pfree(buffer->data);
+	}
+	buffer->data = NULL;
+	buffer->pStart = 0;
+	buffer->pEnd = 0;
+	buffer->bufSize = 0;
 }
 
 /*
@@ -345,15 +368,8 @@ int plcBufferFlush(plcConn *conn) {
 	return plcBufferMaybeFlush(conn, true);
 }
 
-// assume buffer is all zero
-static void plcBufferInit(plcBuffer *buffer)
-{
-	buffer->data = palloc(PLC_BUFFER_SIZE);
-	buffer->bufSize = PLC_BUFFER_SIZE;
-}
 /*
  *  Initialize plcConn data structure and input/output buffers.
- *  For network connection, uds_fn means nothing.
  */
 void plcConnInit(plcConn *conn) {
 	memset(conn, 0, sizeof(*conn));
@@ -363,14 +379,32 @@ void plcConnInit(plcConn *conn) {
 	// Initializing control parameters
 	conn->sock = -1;
 }
+
 void plcContextInit(plcContext *ctx)
 {
 	// TODO: init
-	plcConnInit((plcConn*)ctx);
+	plcConnInit(&ctx->conn);
 	init_pplan_slots(ctx);
-	ctx->uds_fn = NULL;
+	ctx->service_address = NULL;
 }
-static int ListenTCP(const char *network, const char *address)
+
+static char *split_address(const char *address, char *node_service)
+{
+    char *p;
+    int n = strlen(address);
+    if (n>=600 || n<5)
+        return NULL;
+    strcpy(node_service, address);
+    p = node_service + n-1;
+    while (*p != ':' && p>node_service)
+        --p;
+    if (*p != ':')
+        return NULL;
+    *p = '\0';
+    return p+1;
+}
+
+int ListenTCP(const char *network, const char *address)
 {
     if (!network || !address) {
         plc_elog(ERROR, "invalid parameters: network(%s), address(%s)",
@@ -423,6 +457,7 @@ static int ListenTCP(const char *network, const char *address)
     freeaddrinfo(result);           /* No longer needed */
     return fd;
 }
+
 int ListenUnix(const char *network, const char *address)
 {
     int fd, sotype;
@@ -442,7 +477,7 @@ int ListenUnix(const char *network, const char *address)
         return -1;
     }
     if (strlen(address) >= sizeof(sockaddr.sun_path)) {
-        plc_elog(ERROR, "address is too long(%d)", strlen(address));
+        plc_elog(ERROR, "address is too long(%d)", (int)strlen(address));
         return -1;
     }
     fd = socket(AF_UNIX, sotype, 0);
@@ -467,6 +502,7 @@ out:
     close(fd);
     return -1;
 }
+
 int plcListenServer(const char *network, const char *address)
 {
 	if (!network) {
@@ -481,6 +517,7 @@ int plcListenServer(const char *network, const char *address)
     }
     return -1;
 }
+
 static int DialTCP(const char *network, const char *address)
 {
     char node_service[600], *node, *service;
@@ -554,7 +591,7 @@ static int DialUnix(const char *network, const char *address)
         return -1;
     }
     if (strlen(address) >= sizeof(sockaddr.sun_path)) {
-        plc_elog(ERROR, "address(%s) is too long(%d)", address, strlen(address));
+        plc_elog(ERROR, "address(%s) is too long(%d)", address, (int)strlen(address));
         return -1;
     }
     fd = socket(AF_UNIX, sotype, 0);
@@ -593,25 +630,44 @@ int plcDialToServer(const char *network, const char *address)
     return -1;
 }
 
+static void plcDisconnect_(plcConn *conn);
+
 /*
  *  Close the plcConn connection and deallocate the buffers
  */
-void plcDisconnect(plcContext *ctx) {
-	char *uds_fn;
+void plcDisconnect(plcConn *conn) {
+    plcDisconnect_(conn);
+    pfree(conn);
+}
+static void plcDisconnect_(plcConn *conn) {
+	close(conn->sock);
+	pfree(conn->buffer[PLC_INPUT_BUFFER].data);
+	pfree(conn->buffer[PLC_OUTPUT_BUFFER].data);
+}
 
-	if (!ctx) 
-		return;
-		
-	close(ctx->sock);
-
-	uds_fn = ctx->uds_fn;
-	if (uds_fn != NULL) {
-		pfree(uds_fn);
-		ctx->uds_fn = NULL;
-	}
-
-	pfree(ctx->buffer[PLC_INPUT_BUFFER].data);
-	pfree(ctx->buffer[PLC_OUTPUT_BUFFER].data);
+// This function only release buffers and reset plan array.
+// NOTE: socket fd keeps open and service address is still valid.
+//      We INTEND to reuse connection to the container.
+void plcReleaseContext(plcContext *ctx)
+{
+	int n = 2;
+	while (--n>=0)
+		plcBufferRelease(&ctx->conn.buffer[n]);
 	deinit_pplan_slots(ctx);
+}
+
+/*
+ * clearup the container connection context
+ */
+void plcFreeContext(plcContext *ctx)
+{
+	char *service_address;
+	close(ctx->conn.sock);
+	plcReleaseContext(ctx);
+	service_address = ctx->service_address;
+	if (service_address != NULL) {
+		pfree(service_address);
+		ctx->service_address = NULL;
+	}
 	pfree(ctx);
 }

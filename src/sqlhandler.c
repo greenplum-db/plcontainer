@@ -34,9 +34,6 @@ static plcMsgResult *create_sql_result(bool isSelect);
 
 static plcMsgRaw *create_prepare_result(int64 pplan, plcDatatype *type, int nargs);
 
-void deinit_pplan_slots(plcContext *conn);
-
-void init_pplan_slots(plcContext *conn);
 
 static plcMsgResult *create_sql_result(bool isSelect) {
 	plcMsgResult *result;
@@ -110,7 +107,7 @@ static plcMsgRaw *create_prepare_result(int64 pplan, plcDatatype *type, int narg
 	result = palloc(sizeof(plcMsgRaw));
 	result->msgtype = MT_RAW;
 	result->size = sizeof(int32) + sizeof(int64) + sizeof(int32) + nargs * sizeof(plcDatatype);
-	result->data = pmalloc(result->size);
+	result->data = palloc(result->size);
 
 	offset = 0;
 	/* We need to transfer the state of plan (i.e. valid or not). */
@@ -132,21 +129,21 @@ static plcMsgRaw *create_unprepare_result(int32 retval) {
 	result = palloc(sizeof(plcMsgRaw));
 	result->msgtype = MT_RAW;
 	result->size = sizeof(int32);
-	result->data = pmalloc(result->size);
+	result->data = palloc(result->size);
 
 	*((int32 *) result->data) = retval;
 
 	return result;
 }
 
-static int search_pplan(plcContext *conn, int64 pplan) {
+static int search_pplan(plcContext *ctx, int64 pplan) {
 	int i;
 	struct pplan_slots *pplans;
 
 	if (pplan == 0)
 		return -1;
 
-	pplans = conn->pplans;
+	pplans = ctx->pplans;
 
 	for (i = 0; i < MAX_PPLAN; i++) {
 		if (pplans[i].pplan == pplan)
@@ -156,49 +153,49 @@ static int search_pplan(plcContext *conn, int64 pplan) {
 	return -1;
 }
 
-static int insert_pplan(plcContext *conn, int64 pplan) {
+static int insert_pplan(plcContext *ctx, int64 pplan) {
 	int slot;
 	struct pplan_slots *pplans;
 
 	if (pplan == 0)
 		return -1;
 
-	pplans = conn->pplans;
+	pplans = ctx->pplans;
 
-	slot = conn->head_free_pplan_slot;
+	slot = ctx->head_free_pplan_slot;
 	if (slot >= 0) {
-			plc_elog(DEBUG1, "Inserting pplan 0x%llx at slot %d for container %d",
-			        (long long) pplan, slot, conn->container_slot);
+			plc_elog(DEBUG1, "Inserting pplan 0x%llx at slot %d",
+			        (long long) pplan, slot);
 		pplans[slot].pplan = pplan;
-		conn->head_free_pplan_slot = pplans[slot].next;
+		ctx->head_free_pplan_slot = pplans[slot].next;
 	}
 
 	return slot;
 }
 
-static int delete_pplan(plcContext *conn, int64 pplan) {
+static int delete_pplan(plcContext *ctx, int64 pplan) {
 	int slot;
 	struct pplan_slots *pplans;
 
-	slot = search_pplan(conn, pplan);
+	slot = search_pplan(ctx, pplan);
 
 	if (slot >= 0) {
-		pplans = conn->pplans;
-			plc_elog(DEBUG1, "Removing pplan 0x%llx at slot %d, for container %d",
-			        (long long) pplan, slot, conn->container_slot);
+		pplans = ctx->pplans;
+			plc_elog(DEBUG1, "Removing pplan 0x%llx at slot %d",
+			        (long long) pplan, slot);
 		pplans[slot].pplan = 0;
-		pplans[slot].next = conn->head_free_pplan_slot;
-		conn->head_free_pplan_slot = slot;
+		pplans[slot].next = ctx->head_free_pplan_slot;
+		ctx->head_free_pplan_slot = slot;
 	}
 
 	return slot;
 }
 
-static int free_plc_plan(plcContext *conn, int64 pplan) {
+static int free_plc_plan(plcContext *ctx, int64 pplan) {
 	plcPlan *plc_plan;
 	int retval;
 
-	retval = delete_pplan(conn, pplan);
+	retval = delete_pplan(ctx, pplan);
 	if (retval < 0)
 		return retval;
 
@@ -212,20 +209,20 @@ static int free_plc_plan(plcContext *conn, int64 pplan) {
 	return retval;
 }
 
-void deinit_pplan_slots(plcContext *conn) {
+void deinit_pplan_slots(plcContext *ctx) {
 	int i;
-	struct pplan_slots *pplans = conn->pplans;
+	struct pplan_slots *pplans = ctx->pplans;
 	int64 pplan;
 
 	for (i = 0; i < MAX_PPLAN; i++) {
 		pplan = pplans[i].pplan;
-		free_plc_plan(conn, pplan);
+		free_plc_plan(ctx, pplan);
 	}
 }
 
-void init_pplan_slots(plcContext *conn) {
+void init_pplan_slots(plcContext *ctx) {
 	int i;
-	struct pplan_slots *pplans = conn->pplans;
+	struct pplan_slots *pplans = ctx->pplans;
 
 	for (i = 0; i < MAX_PPLAN - 1; i++) {
 		pplans[i].pplan = 0;
@@ -236,11 +233,11 @@ void init_pplan_slots(plcContext *conn) {
 	pplans[i].pplan = 0;
 	pplans[i].next = -1;
 
-	conn->head_free_pplan_slot = 0;
+	ctx->head_free_pplan_slot = 0;
 }
 
 
-plcMessage *handle_sql_message(plcMsgSQL *msg, plcContext *conn, plcProcInfo *pinfo) {
+plcMessage *handle_sql_message(plcMsgSQL *msg, plcContext *ctx, plcProcInfo *pinfo) {
 	int i, retval;
 	plcMessage *result = NULL;
 	SPIPlanPtr tmpplan;
@@ -275,7 +272,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcContext *conn, plcProcInfo *pi
 					Datum *values;
 					plcTypeInfo *pexecType;
 
-					if (search_pplan(conn, (int64) msg->pplan) < 0)
+					if (search_pplan(ctx, (int64) msg->pplan) < 0)
 						plc_elog(ERROR, "There is no such prepared plan: %p", msg->pplan);
 					plc_plan = (plcPlan *) ((char *) msg->pplan - offsetof(plcPlan, plan));
 					if (plc_plan->nargs != msg->nargs) {
@@ -285,8 +282,8 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcContext *conn, plcProcInfo *pi
 					}
 
 					if (msg->nargs > 0) {
-						nulls = pmalloc(msg->nargs * sizeof(char));
-						values = pmalloc(msg->nargs * sizeof(Datum));
+						nulls = palloc(msg->nargs * sizeof(char));
+						values = palloc(msg->nargs * sizeof(Datum));
 					} else {
 						nulls = NULL;
 						values = NULL;
@@ -342,11 +339,11 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcContext *conn, plcProcInfo *pi
 				SPI_freetuptable(SPI_tuptable);
 				break;
 			case SQL_TYPE_PREPARE:
-				plc_plan = PLy_malloc(sizeof(plcPlan));
+				plc_plan = palloc(sizeof(plcPlan));
 
 				if (msg->nargs > 0) {
-					plc_plan->argOids = PLy_malloc(msg->nargs * sizeof(Oid));
-					argTypes = pmalloc(msg->nargs * sizeof(plcDatatype));
+					plc_plan->argOids = palloc(msg->nargs * sizeof(Oid));
+					argTypes = palloc(msg->nargs * sizeof(plcDatatype));
 				} else {
 					plc_plan->argOids = NULL;
 					argTypes = NULL;
@@ -375,7 +372,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcContext *conn, plcProcInfo *pi
 					plc_plan->plan = SPI_saveplan(tmpplan);
 					SPI_freeplan(tmpplan);
 
-					if (insert_pplan(conn, (int64) &plc_plan->plan) < 0) {
+					if (insert_pplan(ctx, (int64) &plc_plan->plan) < 0) {
 						SPI_freeplan(plc_plan->plan);
 						plc_elog(ERROR, "Can not insert new prepared plan.");
 					}
@@ -388,7 +385,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcContext *conn, plcProcInfo *pi
 				                                              plc_plan->nargs);
 				break;
 			case SQL_TYPE_UNPREPARE:
-				retval = free_plc_plan(conn, (int64) msg->pplan);
+				retval = free_plc_plan(ctx, (int64) msg->pplan);
 				result = (plcMessage *) create_unprepare_result(retval);
 				break;
 			default:

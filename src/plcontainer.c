@@ -38,14 +38,7 @@
 #include "sqlhandler.h"
 #include "subtransaction_handler.h"
 
-#ifdef PG_MODULE_MAGIC
-
 PG_MODULE_MAGIC;
-#endif
-
-#ifdef PLC_PG
-    volatile bool QueryFinishPending = false;
-#endif
 
 /* exported functions */
 Datum plcontainer_validator(PG_FUNCTION_ARGS);
@@ -65,22 +58,15 @@ static Datum plcontainer_process_result(FunctionCallInfo fcinfo,
 
 static void plcontainer_process_exception(plcMsgError *msg);
 
-static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *proc);
+static void plcontainer_process_sql(plcMsgSQL *msg, plcContext *ctx, plcProcInfo *proc);
 
 static void plcontainer_process_log(plcMsgLog *log);
-
-#if PG_VERSION_NUM <= 80399
-static char * quote_literal_cstr(const char *rawstr);
-#else
-#endif
 
 static void plcontainer_process_quote(plcMsgQuote *quote, plcConn *conn);
 
 static void plpython_error_callback(void *arg);
 
 static char * PLy_procedure_name(plcProcInfo *proc);
-
-static volatile bool DeleteBackendsWhenError;
 
 /*
  * Currently active plpython function
@@ -91,11 +77,6 @@ static plcProcInfo *PLy_curr_procedure = NULL;
 MemoryContext pl_container_caller_context = NULL;
 
 void _PG_init(void);
-
-static void
-plcontainer_cleanup(pg_attribute_unused() int code, pg_attribute_unused() Datum arg) {
-	delete_containers();
-}
 
 /*
  * _PG_init() - library load-time initialization
@@ -109,7 +90,6 @@ _PG_init(void) {
 	if (inited)
 		return;
 
-	on_proc_exit(plcontainer_cleanup, 0);
 	explicit_subtransactions = NIL;
 	inited = true;
 }
@@ -233,14 +213,12 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	}
 	PG_CATCH();
 	{
+		reset_containers();
 		/* If the reason is Cancel or Termination or Backend error. */
-		if (InterruptPending || QueryCancelPending || QueryFinishPending ||
-		    DeleteBackendsWhenError) {
+		if (InterruptPending || QueryCancelPending || QueryFinishPending) {
 			plc_elog(DEBUG1, "Terminating containers due to user request reason("
-				"Flags for debugging: %d %d %d %d", InterruptPending,
-			     QueryCancelPending, QueryFinishPending, DeleteBackendsWhenError);
-			delete_containers();
-			DeleteBackendsWhenError = false;
+				"Flags for debugging: %d %d %d", InterruptPending,
+			     QueryCancelPending, QueryFinishPending);
 		}
 		error_context_stack = plerrcontext.previous;
 		PLy_curr_procedure = save_curr_proc;
@@ -266,9 +244,12 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	return datumreturn;
 }
 
+// This function is only called by plcontainer, not by server
+// TODO: post handler of plcContext: free buffer? close socket?
 static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
                                              plcProcInfo *proc) {
 	char *runtime_id;
+	plcContext *ctx;
 	plcConn *conn;
 	int message_type;
 	plcMsgCallreq *req = NULL;
@@ -277,104 +258,77 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 
 	PG_TRY();
 	{
-		runtimeConfEntry *runtime_conf_entry = NULL;
+		int res;
 		result = NULL;
 
 		req = plcontainer_generate_call_request(fcinfo, proc);
 		runtime_id = parse_container_meta(req->proc.src);
 		
-		runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
-
-		if (runtime_conf_entry == NULL) {
-			plc_elog(ERROR, "Runtime '%s' is not defined in configuration "
-						"and cannot be used", runtime_id);
-		} 
-		/*
-		 * We need to check the privilege in each run
-		 */
-		if (runtime_conf_entry->useUserControl) {
-			if (!plc_check_user_privilege(runtime_conf_entry->roles)){
-				plc_elog(ERROR, "Current user does not have privilege to use runtime %s", runtime_id);
-			}
-		}
-
-		conn = get_container_conn(runtime_id);
-		if (conn == NULL) {
-			/* TODO: We could only remove this backend when error occurs. */
-			DeleteBackendsWhenError = true;
-			conn = start_backend(runtime_conf_entry);
-			DeleteBackendsWhenError = false;
-		}
-
+		ctx = get_container_context(runtime_id);
+		conn = (plcConn *)ctx;
 		pfree(runtime_id);
 
-		DeleteBackendsWhenError = true;
-		if (conn != NULL) {
-			int res;
-
-			res = plcontainer_channel_send(conn, (plcMessage *) req);
+		if (conn == NULL) {
+			plc_elog(ERROR, "Could not create or connect to container.");
+		}
+		res = plcontainer_channel_send(conn, (plcMessage *) req);
 #ifndef PLC_PG				
-			SIMPLE_FAULT_INJECTOR("plcontainer_after_send_request");
+		SIMPLE_FAULT_INJECTOR("plcontainer_after_send_request");
 #endif
 
-			if (res < 0) {
-				plc_elog(ERROR, "Error sending data to the client. "
-							"Maybe retry later.");
-				return NULL;
-			}
-			free_callreq(req, true, true);
+		if (res < 0) {
+			plc_elog(ERROR, "Error sending data to the client. "
+						"Maybe retry later.");
+			return NULL;
+		}
+		free_callreq(req, true, true);
 
-			while (1) {
-				plcMessage *answer;
+		while (1) {
+			plcMessage *answer;
 
-				res = plcontainer_channel_receive(conn, &answer, MT_ALL_BITS);
+			res = plcontainer_channel_receive(conn, &answer, MT_ALL_BITS);
 #ifndef PLC_PG					
-				SIMPLE_FAULT_INJECTOR("plcontainer_after_recv_request");
+			SIMPLE_FAULT_INJECTOR("plcontainer_after_recv_request");
 #endif				
-				if (res < 0) {
-					plc_elog(ERROR, "Error receiving data from the client. "
-								"Maybe retry later.");
+			if (res < 0) {
+				plc_elog(ERROR, "Error receiving data from the client. "
+							"Maybe retry later.");
+				break;
+			}
+
+			message_type = answer->msgtype;
+			switch (message_type) {
+				case MT_RESULT:
+					result = (plcProcResult *) palloc(sizeof(plcProcResult));
+					result->resmsg = (plcMsgResult *) answer;
+					result->resrow = 0;
 					break;
-				}
-
-				message_type = answer->msgtype;
-				switch (message_type) {
-					case MT_RESULT:
-						result = (plcProcResult *) pmalloc(sizeof(plcProcResult));
-						result->resmsg = (plcMsgResult *) answer;
-						result->resrow = 0;
-						break;
-					case MT_EXCEPTION:
-						/* For exception, no need to delete containers. */
-						DeleteBackendsWhenError = false;
-						plcontainer_process_exception((plcMsgError *) answer);
-						break;
-					case MT_SQL:
-						plcontainer_process_sql((plcMsgSQL *) answer, conn, proc);
-						break;
-					case MT_LOG:
-						plcontainer_process_log((plcMsgLog *) answer);
-						break;
-					case MT_QUOTE:
-						plcontainer_process_quote((plcMsgQuote *)answer, conn);
-						break;
-					case MT_SUBTRANSACTION:
-						plcontainer_process_subtransaction(
-								(plcMsgSubtransaction *) answer, conn);
-						break;
-					default:
-						plc_elog(ERROR, "Received unhandled message with type id %d "
-								"from client", message_type);
-						break;
-				}
-
-				if (message_type != MT_SQL && message_type != MT_LOG
-				    && message_type != MT_SUBTRANSACTION && message_type != MT_QUOTE)
+				case MT_EXCEPTION:
+					/* For exception, no need to delete containers. */
+					plcontainer_process_exception((plcMsgError *) answer);
+					break;
+				case MT_SQL:
+					plcontainer_process_sql((plcMsgSQL *) answer, ctx, proc);
+					break;
+				case MT_LOG:
+					plcontainer_process_log((plcMsgLog *) answer);
+					break;
+				case MT_QUOTE:
+					plcontainer_process_quote((plcMsgQuote *)answer, conn);
+					break;
+				case MT_SUBTRANSACTION:
+					plcontainer_process_subtransaction(
+							(plcMsgSubtransaction *) answer, conn);
+					break;
+				default:
+					plc_elog(ERROR, "Received unhandled message with type id %d "
+							"from client", message_type);
 					break;
 			}
-		} else {
-			/* If conn == NULL, it should have longjump-ed earlier. */
-			plc_elog(ERROR, "Could not create or connect to container.");
+
+			if (message_type != MT_SQL && message_type != MT_LOG
+				&& message_type != MT_SUBTRANSACTION && message_type != MT_QUOTE)
+				break;
 		}
 		/*
 		 * Since plpy will only let you close subtransactions that you
@@ -392,7 +346,6 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 
 	plcontainer_abort_open_subtransactions(save_subxact_level);
 
-	DeleteBackendsWhenError = false;
 	return result;
 }
 
@@ -441,30 +394,6 @@ static void plcontainer_process_log(plcMsgLog *log) {
 		pfree(log->message);
 }
 
-#if PG_VERSION_NUM <= 80399
-/*
- * quote_literal_cstr -
- *	  returns a properly quoted literal
- */
-static char *
-quote_literal_cstr(const char *rawstr)
-{
-	char	   *result;
-	int			len;
-	const char *str;
-
-	len = strlen(rawstr);
-	/* We make a worst-case result area; wasting a little space is OK */
-	result = palloc0(len * 2 + 3);
-
-	str = quote_literal_internal(rawstr);
-	memcpy(result, str, strlen(str));
-
-	return result;
-}
-#else
-#endif
-
 static void plcontainer_process_quote(plcMsgQuote *msg, plcConn *conn) {
 	int16 res = 0;
 	plcMsgQuoteResult *result;
@@ -475,10 +404,10 @@ static void plcontainer_process_quote(plcMsgQuote *msg, plcConn *conn) {
 	if (msg->quote_type == QUOTE_TYPE_LITERAL || msg->quote_type == QUOTE_TYPE_NULLABLE) {
 		char *str;
 		str = quote_literal_cstr(msg->msg);
-		result->result = PLy_strdup(str);
+		result->result = plc_top_strdup(str);
 		pfree(str);
 	} else if (msg->quote_type == QUOTE_TYPE_IDENT) {
-		result->result = PLy_strdup(quote_identifier(msg->msg));
+		result->result = plc_top_strdup(quote_identifier(msg->msg));
 	}
 
 	res = plcontainer_channel_send(conn, (plcMessage *) result);
@@ -493,7 +422,7 @@ static void plcontainer_process_quote(plcMsgQuote *msg, plcConn *conn) {
 /*
  * Processing client SQL query message
  */
-static void plcontainer_process_sql(plcMsgSQL *msg, plcContext *conn, plcProcInfo *proc) {
+static void plcontainer_process_sql(plcMsgSQL *msg, plcContext *ctx, plcProcInfo *proc) {
 	plcMessage *res;
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
@@ -502,9 +431,9 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcContext *conn, plcProcInf
 	oldcontext = CurrentMemoryContext;
 	oldowner = CurrentResourceOwner;
 
-	res = handle_sql_message(msg, conn, proc);
+	res = handle_sql_message(msg, ctx, proc);
 	if (res != NULL) {
-		retval = plcontainer_channel_send(conn, res);
+		retval = plcontainer_channel_send((plcConn *)ctx, res);
 		if (retval < 0) {
 			plc_elog(ERROR, "Error sending data to the client. "
 				"Maybe retry later.");
@@ -693,7 +622,3 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 
 	return datumreturn;
 }
-
-
-
-

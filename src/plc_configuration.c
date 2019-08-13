@@ -332,7 +332,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 			int j = 0;
 
 			/* Allocate in top context as it should live between function calls */
-			conf_entry->sharedDirs = PLy_malloc(num_shared_dirs * sizeof(plcSharedDir));
+			conf_entry->sharedDirs = palloc(num_shared_dirs * sizeof(plcSharedDir));
 			for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 				if (cur_node->type == XML_ELEMENT_NODE &&
 					xmlStrcmp(cur_node->name, (const xmlChar *) "shared_directory") == 0) {
@@ -648,9 +648,9 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 				comma = ',';
 			
 			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 16 + 1 + 4 + 1;
-			*uds_dir = pmalloc(gpdb_dir_sz);
+			*uds_dir = palloc(gpdb_dir_sz);
 			sprintf(*uds_dir, "%s.%d.%d.%d", IPC_GPDB_BASE_DIR, getpid(), domain_socket_no++, container_slot);
-			volumes[i] = pmalloc(10 + gpdb_dir_sz + strlen(IPC_CLIENT_DIR));
+			volumes[i] = palloc(10 + gpdb_dir_sz + strlen(IPC_CLIENT_DIR));
 			sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, *uds_dir, IPC_CLIENT_DIR);
 			totallen += strlen(volumes[i]);
 

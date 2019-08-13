@@ -79,7 +79,7 @@ plc_coordinator_main(Datum datum)
 static int
 unix_listen(char *socket_address)
 {
-    int server_sock, len;
+    int server_sock, rc, len;
     struct sockaddr_un server_sockaddr;
 
 	// TODO: socktype, is SOCK_SEQPACKET ok?
@@ -111,9 +111,10 @@ err_out:
     return -1;
 }
 static void
-handle_read
+handle_read()
 {
 }
+
 void
 _PG_init(void)
 {

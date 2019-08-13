@@ -45,11 +45,11 @@ typedef struct plcConn {
 typedef struct plcContext
 {
 	plcConn conn;
-	char *uds_fn; /* File for unix domain socket connection only. */
+	char *service_address; /* File for unix domain socket connection only. */
 	// int container_slot;
 	int head_free_pplan_slot;  /* free list of spi pplan slot */
 	struct pplan_slots pplans[MAX_PPLAN]; /* for spi plannning */
-}plcContext;
+} plcContext;
 
 
 #define UDS_SHARED_FILE "unix.domain.socket.shared.file"
@@ -75,7 +75,9 @@ int plcDialToServer(const char *network, const char *server_address);
 // separator initialization of plcConn/plcContext with socket fd
 void plcContextInit(plcContext *ctx);
 void plcConnInit(plcConn *conn);
-void plcDisconnect(plcContext *ctx);
+void plcDisconnect(plcConn *conn);
+void plcFreeContext(plcContext *ctx);
+void plcReleaseContext(plcContext *ctx);
 
 // plcConn *plcConnInit(int sock);
 
@@ -86,5 +88,20 @@ int plcBufferRead(plcConn *conn, char *resBuffer, size_t len);
 int plcBufferReceive(plcConn *conn, size_t nBytes);
 
 int plcBufferFlush(plcConn *conn);
+
+// init plcBuffer to retain a default buffer.
+int plcBufferInit(plcBuffer *buffer);
+
+// free the internal buffer in plcBuffer, not plcBuffer itself
+// i.e. to make the buffer empty
+void plcBufferRelease(plcBuffer *buffer);
+// return the available data size.
+static inline int plcBufferAvailableSize(const plcBuffer *buffer)
+{
+	return buffer->pEnd - buffer->pStart;
+}
+
+int ListenUnix(const char *network, const char *address);
+int ListenTCP(const char *network, const char *address);
 
 #endif /* PLC_COMM_CONNECTIVITY_H */

@@ -200,7 +200,7 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 		type->outfunc = plc_datum_as_array;
 		type->infunc = plc_datum_from_array;
 		type->nSubTypes = 1;
-		type->subTypes = (plcTypeInfo *) PLy_malloc(sizeof(plcTypeInfo));
+		type->subTypes = (plcTypeInfo *) palloc(sizeof(plcTypeInfo));
 		fill_type_info_inner(fcinfo, typeStruct->typelem, &type->subTypes[0], true, isUDTElement);
 	}
 
@@ -263,7 +263,7 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 			}
 
 			// Allocate memory for this number of arguments
-			type->subTypes = (plcTypeInfo *) PLy_malloc(type->nSubTypes * sizeof(plcTypeInfo));
+			type->subTypes = (plcTypeInfo *) palloc(type->nSubTypes * sizeof(plcTypeInfo));
 			memset(type->subTypes, 0, type->nSubTypes * sizeof(plcTypeInfo));
 
 			// Fill all the subtypes
@@ -302,7 +302,7 @@ void copy_type_info(plcType *type, plcTypeInfo *ptype) {
 			}
 		}
 
-		type->subTypes = (plcType *) pmalloc(type->nSubTypes * sizeof(plcType));
+		type->subTypes = (plcType *) palloc(type->nSubTypes * sizeof(plcType));
 		for (i = 0, j = 0; i < ptype->nSubTypes; i++) {
 			if (!ptype->subTypes[i].attisdropped) {
 				copy_type_info(&type->subTypes[j], &ptype->subTypes[i]);
@@ -331,43 +331,43 @@ void free_type_info(plcTypeInfo *type) {
 }
 
 static char *plc_datum_as_int1(Datum input, pg_attribute_unused() plcTypeInfo *type) {
-	char *out = (char *) pmalloc(1);
+	char *out = (char *) palloc(1);
 	*((char *) out) = DatumGetBool(input);
 	return out;
 }
 
 static char *plc_datum_as_int2(Datum input, pg_attribute_unused() plcTypeInfo *type) {
-	char *out = (char *) pmalloc(2);
+	char *out = (char *) palloc(2);
 	*((int16 *) out) = DatumGetInt16(input);
 	return out;
 }
 
 static char *plc_datum_as_int4(Datum input, pg_attribute_unused() plcTypeInfo *type) {
-	char *out = (char *) pmalloc(4);
+	char *out = (char *) palloc(4);
 	*((int32 *) out) = DatumGetInt32(input);
 	return out;
 }
 
 static char *plc_datum_as_int8(Datum input, pg_attribute_unused() plcTypeInfo *type) {
-	char *out = (char *) pmalloc(8);
+	char *out = (char *) palloc(8);
 	*((int64 *) out) = DatumGetInt64(input);
 	return out;
 }
 
 static char *plc_datum_as_float4(Datum input, pg_attribute_unused() plcTypeInfo *type) {
-	char *out = (char *) pmalloc(4);
+	char *out = (char *) palloc(4);
 	*((float4 *) out) = DatumGetFloat4(input);
 	return out;
 }
 
 static char *plc_datum_as_float8(Datum input, pg_attribute_unused() plcTypeInfo *type) {
-	char *out = (char *) pmalloc(8);
+	char *out = (char *) palloc(8);
 	*((float8 *) out) = DatumGetFloat8(input);
 	return out;
 }
 
 static char *plc_datum_as_float8_numeric(Datum input, pg_attribute_unused() plcTypeInfo *type) {
-	char *out = (char *) pmalloc(8);
+	char *out = (char *) palloc(8);
 	/* Numeric is casted to float8 which causes precision lost */
 	Datum fdatum = DirectFunctionCall1(numeric_float8, input);
 	*((float8 *) out) = DatumGetFloat8(fdatum);
@@ -384,7 +384,7 @@ static char *plc_datum_as_text(Datum input, plcTypeInfo *type) {
 static char *plc_datum_as_bytea(Datum input, pg_attribute_unused() plcTypeInfo *type) {
 	text *txt = DatumGetByteaP(input);
 	int len = VARSIZE(txt) - VARHDRSZ;
-	char *out = (char *) pmalloc(len + 4);
+	char *out = (char *) palloc(len + 4);
 	*((int *) out) = len;
 	memcpy(out + 4, VARDATA(txt), len);
 	return out;

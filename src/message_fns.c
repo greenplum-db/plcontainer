@@ -115,13 +115,13 @@ plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 		 *
 		 * Note: we free the procedure from within function_put_cache below
 		 */
-		proc = PLy_malloc(sizeof(plcProcInfo));
+		proc = top_palloc(sizeof(plcProcInfo));
 		if (proc == NULL) {
 			plc_elog(FATAL, "Cannot allocate memory for plcProcInfo structure");
 		}
 
-		proc->proname = PLy_strdup(NameStr(procStruct->proname));
-		proc->pyname = PLy_strdup(procName);
+		proc->proname = plc_top_strdup(NameStr(procStruct->proname));
+		proc->pyname = plc_top_strdup(procName);
 		proc->funcOid = procoid;
 		proc->fn_xmin = HeapTupleHeaderGetXmin(procHeapTup->t_data);
 		proc->fn_tid = procHeapTup->t_self;
@@ -165,7 +165,7 @@ plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 			// This is required to avoid the cycle from being removed by optimizer
 			int volatile j;
 
-			proc->args = PLy_malloc(proc->nargs * sizeof(plcTypeInfo));
+			proc->args = top_palloc(proc->nargs * sizeof(plcTypeInfo));
 			for (j = 0; j < proc->nargs; j++) {
 				fill_type_info(fcinfo, procStruct->proargtypes.values[j], &proc->args[j]);
 			}
@@ -192,7 +192,7 @@ plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 				}
 			}
 
-			proc->argnames = PLy_malloc(proc->nargs * sizeof(char *));
+			proc->argnames = top_palloc(proc->nargs * sizeof(char *));
 			for (j = 0; j < proc->nargs; j++) {
 				if (!isnull && !argnulls[j]) {
 					proc->argnames[j] =
@@ -253,7 +253,7 @@ void free_proc_info(plcProcInfo *proc) {
 plcMsgCallreq *plcontainer_generate_call_request(FunctionCallInfo fcinfo, plcProcInfo *proc) {
 	plcMsgCallreq *req;
 
-	req = pmalloc(sizeof(plcMsgCallreq));
+	req = palloc(sizeof(plcMsgCallreq));
 	req->msgtype = MT_CALLREQ;
 	req->proc.name = proc->name;
 	req->proc.src = proc->src;
@@ -344,7 +344,7 @@ static void fill_callreq_arguments(FunctionCallInfo fcinfo, plcProcInfo *proc, p
 
 	req->nargs = proc->nargs;
 	req->retset = proc->retset;
-	req->args = pmalloc(sizeof(*req->args) * proc->nargs);
+	req->args = palloc(sizeof(*req->args) * proc->nargs);
 
 	for (i = 0; i < proc->nargs; i++) {
 		req->args[i].name = proc->argnames[i];

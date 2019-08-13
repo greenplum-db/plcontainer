@@ -37,7 +37,7 @@ interpreted as representing official policies, either expressed or implied, of t
   PLC_CLIENT should be defined for standalone interpreters
   running inside containers, since they don't have access to postgres
   symbols. If it was defined, plc_elog will print the logs to stdout or
-  in case of an error to stderr. pmalloc, pfree & pstrdup will use the
+  in case of an error to stderr. palloc, pfree & pstrdup will use the
   std library.
 */
 #ifdef PLC_CLIENT
@@ -109,7 +109,7 @@ extern int is_write_log(int elevel, int log_min_level);
 
 void *palloc(size_t size);
 
-#define PLy_malloc pmalloc
+#define PLy_malloc palloc
 #define pfree free
 #define pstrdup strdup
 #define plc_top_strdup strdup
@@ -126,11 +126,9 @@ int sanity_check_client(void);
 #define plc_elog(lvl, fmt, ...) elog(lvl, "plcontainer: " fmt, ##__VA_ARGS__);
 
 /* pfree & pstrdup are already defined by postgres */
-void *PLy_malloc(size_t bytes);
+void *top_palloc(size_t bytes);
 
-char *plc_top_strdup(char *str);
-
-char *PLy_strdup(const char *);
+char *plc_top_strdup(const char *str);
 
 #endif /* PLC_CLIENT */
 

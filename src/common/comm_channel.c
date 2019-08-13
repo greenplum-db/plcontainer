@@ -33,7 +33,6 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "comm_channel.h"
 #include "comm_utils.h"
 #include "comm_connectivity.h"
-#include "comm_server.h"
 #include "config.h"
 
 #include <stdio.h>
@@ -157,7 +156,7 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask) {
 
 	conn->rx_timeout_sec = 0x7fffFFFF; /* Wait for ever at this moment */
 	res = receive_message_type(conn, &cType);
-	conn->rx_timeout_sec = TIMEOUT_SEC;
+	conn->rx_timeout_sec = 10;
 	plc_elog(DEBUG1, "start to receive data, type is %c", cType);
 	if (res >= 0) {
 		switch (cType) {
@@ -480,7 +479,7 @@ static int receive_cstring(plcConn *conn, char **s) {
 		plc_elog(LOG, "receive_cstring() returns a negative length: %d", cnt);
 		return -1;
 	} else {
-		*s = pmalloc(cnt + 1);
+		*s = palloc(cnt + 1);
 		if (cnt > 0) {
 			res = plcBufferRead(conn, *s, cnt);
 		}
@@ -499,7 +498,7 @@ static int receive_bytea(plcConn *conn, char **s) {
 		return -1;
 	}
 
-	*s = pmalloc(len + 4);
+	*s = palloc(len + 4);
 	channel_elog(WARNING, "    ===> receiving bytea of size '%d' at %p for %p", len, *s, s);
 
 	*((int *) *s) = len;
@@ -527,27 +526,27 @@ static int receive_raw_object(plcConn *conn, plcType *type, rawdata *obj) {
 		channel_elog(WARNING, "Object value is:");
 		switch (type->type) {
 			case PLC_DATA_INT1:
-				obj->value = (char *) pmalloc(1);
+				obj->value = (char *) palloc(1);
 				res |= receive_char(conn, (char *) obj->value);
 				break;
 			case PLC_DATA_INT2:
-				obj->value = (char *) pmalloc(2);
+				obj->value = (char *) palloc(2);
 				res |= receive_int16(conn, (int16 *) obj->value);
 				break;
 			case PLC_DATA_INT4:
-				obj->value = (char *) pmalloc(4);
+				obj->value = (char *) palloc(4);
 				res |= receive_int32(conn, (int32 *) obj->value);
 				break;
 			case PLC_DATA_INT8:
-				obj->value = (char *) pmalloc(8);
+				obj->value = (char *) palloc(8);
 				res |= receive_int64(conn, (int64 *) obj->value);
 				break;
 			case PLC_DATA_FLOAT4:
-				obj->value = (char *) pmalloc(4);
+				obj->value = (char *) palloc(4);
 				res |= receive_float4(conn, (float4 *) obj->value);
 				break;
 			case PLC_DATA_FLOAT8:
-				obj->value = (char *) pmalloc(8);
+				obj->value = (char *) palloc(8);
 				res |= receive_float8(conn, (float8 *) obj->value);
 				break;
 			case PLC_DATA_TEXT:
@@ -590,8 +589,8 @@ static int receive_array(plcConn *conn, plcType *type, rawdata *obj) {
 	}
 	if (arr->meta->size > 0) {
 		entrylen = plc_get_type_length(arr->meta->type);
-		arr->nulls = (char *) pmalloc(arr->meta->size * 1);
-		arr->data = (char *) pmalloc(arr->meta->size * entrylen);
+		arr->nulls = (char *) palloc(arr->meta->size * 1);
+		arr->data = (char *) palloc(arr->meta->size * entrylen);
 		memset(arr->data, 0, arr->meta->size * entrylen);
 
 		for (i = 0; i < arr->meta->size && res == 0; i++) {
@@ -643,7 +642,7 @@ static int receive_type(plcConn *conn, plcType *type) {
 	if (type->type == PLC_DATA_ARRAY || type->type == PLC_DATA_UDT) {
 		res |= receive_int16(conn, &type->nSubTypes);
 		if (type->nSubTypes > 0) {
-			type->subTypes = (plcType *) pmalloc(type->nSubTypes * sizeof(plcType));
+			type->subTypes = (plcType *) palloc(type->nSubTypes * sizeof(plcType));
 			for (i = 0; i < type->nSubTypes && res == 0; i++)
 				res |= receive_type(conn, &type->subTypes[i]);
 		}
@@ -948,7 +947,7 @@ static int receive_exception(plcConn *conn, plcMessage **mExc) {
 	int res = 0;
 	plcMsgError *ret;
 
-	*mExc = pmalloc(sizeof(plcMsgError));
+	*mExc = palloc(sizeof(plcMsgError));
 	ret = (plcMsgError *) *mExc;
 	ret->msgtype = MT_EXCEPTION;
 	res |= receive_cstring(conn, &ret->message);
@@ -963,7 +962,7 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
 	char exc;
 	plcMsgResult *ret;
 
-	*mRes = pmalloc(sizeof(plcMsgResult));
+	*mRes = palloc(sizeof(plcMsgResult));
 	ret = (plcMsgResult *) *mRes;
 	ret->msgtype = MT_RESULT;
 	res |= receive_uint32(conn, &ret->rows);
@@ -980,8 +979,8 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
 		channel_elog(WARNING, "Receiving types and names of %d rows * %d columns", ret->rows, ret->cols);
 		/* receive columns types and names */
 		if (ret->cols > 0) {
-			ret->types = pmalloc(ret->cols * sizeof(plcType));
-			ret->names = pmalloc(ret->cols * sizeof(*ret->names));
+			ret->types = palloc(ret->cols * sizeof(plcType));
+			ret->names = palloc(ret->cols * sizeof(*ret->names));
 
 			for (i = 0; i < ret->cols && res == 0; i++) {
 				res |= receive_type(conn, &ret->types[i]);
@@ -996,10 +995,10 @@ static int receive_result(plcConn *conn, plcMessage **mRes) {
 
 			/* receive rows */
 			if (ret->rows > 0) {
-				ret->data = pmalloc(ret->rows * sizeof(rawdata *));
+				ret->data = palloc(ret->rows * sizeof(rawdata *));
 
 				for (i = 0; i < ret->rows && res == 0; i++) {
-					ret->data[i] = pmalloc(ret->cols * sizeof(*ret->data[i]));
+					ret->data[i] = palloc(ret->cols * sizeof(*ret->data[i]));
 					for (j = 0; j < ret->cols; j++) {
 						channel_elog(WARNING, "Receiving row %d column %d", i, j);
 						res |= receive_raw_object(conn, &ret->types[j], &ret->data[i][j]);
@@ -1026,7 +1025,7 @@ static int receive_log(plcConn *conn, plcMessage **mLog) {
 	plcMsgLog *ret;
 
 	channel_elog(WARNING, "Receiving log message from client");
-	*mLog = pmalloc(sizeof(plcMsgLog));
+	*mLog = palloc(sizeof(plcMsgLog));
 	ret = (plcMsgLog *) *mLog;
 	ret->msgtype = MT_LOG;
 	res |= receive_int32(conn, &ret->level);
@@ -1040,7 +1039,7 @@ static int receive_quote(plcConn *conn, plcMessage **mQuote) {
 	int res = 0;
 	plcMsgQuote *ret;
 
-	*mQuote = pmalloc(sizeof(plcMsgQuote));
+	*mQuote = palloc(sizeof(plcMsgQuote));
 	ret = (plcMsgQuote *)*mQuote;
 	ret->msgtype = MT_QUOTE;
 	res |= receive_int32(conn, (int32 *)&ret->quote_type);
@@ -1052,7 +1051,7 @@ static int receive_quote_result(plcConn *conn, plcMessage **mQuoteResult) {
 	int res = 0;
 	plcMsgQuoteResult *ret;
 
-	*mQuoteResult = pmalloc(sizeof(plcMsgQuoteResult));
+	*mQuoteResult = palloc(sizeof(plcMsgQuoteResult));
 	ret = (plcMsgQuoteResult *)*mQuoteResult;
 	ret->msgtype = MT_QUOTE_RESULT;
 	res |= receive_int32(conn, (int32 *)&ret->quote_type);
@@ -1064,7 +1063,7 @@ static int receive_sql_statement(plcConn *conn, plcMessage **mStmt) {
 	int res = 0;
 	plcMsgSQL *ret;
 
-	*mStmt = pmalloc(sizeof(plcMsgSQL));
+	*mStmt = palloc(sizeof(plcMsgSQL));
 	ret = (plcMsgSQL *) *mStmt;
 	ret->msgtype = MT_SQL;
 	ret->sqltype = SQL_TYPE_STATEMENT;
@@ -1077,7 +1076,7 @@ static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
 	int i, res = 0;
 	plcMsgSQL *ret;
 
-	*mStmt = pmalloc(sizeof(plcMsgSQL));
+	*mStmt = palloc(sizeof(plcMsgSQL));
 	ret = (plcMsgSQL *) *mStmt;
 	ret->msgtype = MT_SQL;
 	ret->sqltype = SQL_TYPE_PREPARE;
@@ -1088,7 +1087,7 @@ static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
 		plc_elog(LOG, "spi prepare request with nargs (%d) < 0", ret->nargs);
 		return -1;
 	} else if (ret->nargs > 0) {
-		ret->args = pmalloc(ret->nargs * sizeof(*ret->args));
+		ret->args = palloc(ret->nargs * sizeof(*ret->args));
 		for (i = 0; i < ret->nargs; i++)
 			res |= receive_argument(conn, &ret->args[i]);
 	}
@@ -1104,7 +1103,7 @@ static int receive_sql_unprepare(plcConn *conn, plcMessage **mStmt) {
 	int64 pplan;
 	plcMsgSQL *ret;
 
-	*mStmt = pmalloc(sizeof(plcMsgSQL));
+	*mStmt = palloc(sizeof(plcMsgSQL));
 	ret = (plcMsgSQL *) *mStmt;
 	ret->msgtype = MT_SQL;
 	ret->sqltype = SQL_TYPE_UNPREPARE;
@@ -1120,7 +1119,7 @@ static int receive_sql_unprepare(plcConn *conn, plcMessage **mStmt) {
 static int receive_subtransaction(plcConn *conn, plcMessage **mSub) {
 	int res = 0;
 	plcMsgSubtransaction *ret;
-	*mSub = pmalloc(sizeof(plcMsgSubtransaction));
+	*mSub = palloc(sizeof(plcMsgSubtransaction));
 	ret = (plcMsgSubtransaction *) *mSub;
 	ret->msgtype = MT_SUBTRANSACTION;
 
@@ -1135,7 +1134,7 @@ static int receive_subtransaction(plcConn *conn, plcMessage **mSub) {
 static int receive_subtransaction_result(plcConn *conn, plcMessage **mSubr) {
 	int res = 0;
 	plcMsgSubtransactionResult *ret;
-	*mSubr = pmalloc(sizeof(plcMsgSubtransactionResult));
+	*mSubr = palloc(sizeof(plcMsgSubtransactionResult));
 	ret = (plcMsgSubtransactionResult *) *mSubr;
 	ret->msgtype = MT_SUBTRAN_RESULT;
 
@@ -1152,7 +1151,7 @@ static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 	plcMsgSQL *ret;
 	int i;
 
-	*mStmt = pmalloc(sizeof(plcMsgSQL));
+	*mStmt = palloc(sizeof(plcMsgSQL));
 	ret = (plcMsgSQL *) *mStmt;
 	ret->msgtype = MT_SQL;
 	ret->sqltype = SQL_TYPE_PEXECUTE;
@@ -1163,7 +1162,7 @@ static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 		plc_elog(LOG, "spi pexecute request with nargs (%d) < 0", ret->nargs);
 		return -1;
 	} else if (ret->nargs > 0) {
-		ret->args = pmalloc(ret->nargs * sizeof(*ret->args));
+		ret->args = palloc(ret->nargs * sizeof(*ret->args));
 		for (i = 0; i < ret->nargs; i++)
 			res |= receive_argument(conn, &ret->args[i]);
 	}
@@ -1189,7 +1188,7 @@ static int receive_ping(plcConn *conn, plcMessage **mPing) {
 	int res = 0;
 	char *version;
 
-	*mPing = (plcMessage *) pmalloc(sizeof(plcMsgPing));
+	*mPing = (plcMessage *) palloc(sizeof(plcMsgPing));
 	((plcMsgPing *) *mPing)->msgtype = MT_PING;
 
 	channel_elog(WARNING, "Receiving ping message");
@@ -1211,7 +1210,7 @@ static int receive_call(plcConn *conn, plcMessage **mCall) {
 	int i;
 	plcMsgCallreq *req;
 
-	*mCall = pmalloc(sizeof(plcMsgCallreq));
+	*mCall = palloc(sizeof(plcMsgCallreq));
 	req = (plcMsgCallreq *) *mCall;
 	req->msgtype = MT_CALLREQ;
 	res |= receive_cstring(conn, &req->proc.name);
@@ -1236,7 +1235,7 @@ static int receive_call(plcConn *conn, plcMessage **mCall) {
 	if (res == 0) {
 		req->args = NULL;
 		if (req->nargs > 0) {
-			req->args = pmalloc(sizeof(*req->args) * req->nargs);
+			req->args = palloc(sizeof(*req->args) * req->nargs);
 			for (i = 0; i < req->nargs && res == 0; i++)
 				res |= receive_argument(conn, &req->args[i]);
 		} else if (req->nargs < 0) {
@@ -1280,7 +1279,7 @@ static int receive_rawmsg(plcConn *conn, plcMessage **mRaw) {
 	int res = 0;
 	plcMsgRaw *ret;
 
-	*mRaw = (plcMessage *) pmalloc(sizeof(plcMsgRaw));
+	*mRaw = (plcMessage *) palloc(sizeof(plcMsgRaw));
 	ret = (plcMsgRaw *) *mRaw;
 	ret->msgtype = MT_RAW;
 
@@ -1288,7 +1287,7 @@ static int receive_rawmsg(plcConn *conn, plcMessage **mRaw) {
 	if (ret->size < 0) {
 		return -1;
 	} else {
-		ret->data = (char *) pmalloc(ret->size);
+		ret->data = (char *) palloc(ret->size);
 		res |= receive_raw(conn, ret->data, ret->size);
 	}
 

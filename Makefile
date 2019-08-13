@@ -29,7 +29,9 @@ endif
 DATA_built = $(MGMTDIR)/sql/plcontainer_install.sql $(MGMTDIR)/sql/plcontainer_uninstall.sql
 
 # Files to build
-FILES = $(shell find $(SRCDIR) -not -path "*client*" -type f -name "*.c")
+FILES = src/function_cache.c src/plc_backend_api.c src/plcontainer.c src/sqlhandler.c \
+        src/containers.c src/message_fns.c src/plc_configuration.c src/plc_docker_api.c src/plc_typeio.c src/subtransaction_handler.c \
+        src/common/comm_channel.c src/common/comm_connectivity.c src/common/comm_messages.c src/common/comm_utils.c
 OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
 
 PGXS := $(shell pg_config --pgxs)
@@ -94,11 +96,6 @@ else
   override CLIENT_CFLAGS += -O3 -g
 endif
 
-# detected the docker API version, only for centos 6
-RHEL_MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
-ifeq ($(RHEL_MAJOR_OS), 6)
-  override CFLAGS +=  -DDOCKER_API_LOW
-endif
 all: all-lib
 	@echo "Build PL/Container Done."
 

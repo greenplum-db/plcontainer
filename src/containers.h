@@ -19,12 +19,9 @@
 char *parse_container_meta(const char *source);
 
 /* return the port of a started container, -1 if the container isn't started */
-plcConn *get_container_conn(const char *id);
-
-/* start a new docker container using the given configuration */
-plcConn *start_backend(runtimeConfEntry *conf);
+plcContext *get_container_context(const char *runtime_id);
 
 /* Function deletes all the containers */
-void delete_containers(void);
+void reset_containers(void);
 
 #endif /* PLC_CONTAINERS_H */
