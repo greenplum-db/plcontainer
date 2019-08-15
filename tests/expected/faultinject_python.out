@@ -12,35 +12,30 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
 INSERT INTO tbl SELECT * FROM generate_series(1, 10);
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_before_container_connected', 'reset', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_after_recv_request', 'reset', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
@@ -55,7 +50,6 @@ show optimizer;
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_before_container_started', 'fatal', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
@@ -84,7 +78,6 @@ SELECT sum(pyint(i)) from tbl;
 -- Start a container
 -- QE crash when connnecting to an existing container
 SELECT gp_inject_fault('plcontainer_before_container_connected', 'fatal', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
@@ -111,7 +104,6 @@ SELECT sum(pyint(i)) from tbl;
 
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_send_request', 'fatal', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
@@ -138,7 +130,6 @@ SELECT sum(pyint(i)) from tbl;
 
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_recv_request', 'fatal', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
@@ -165,7 +156,6 @@ SELECT sum(pyint(i)) from tbl;
 
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_before_udf_finish', 'fatal', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
@@ -186,35 +176,30 @@ SELECT pg_sleep(10);
 0
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_before_container_connected', 'reset', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_after_recv_request', 'reset', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
@@ -223,14 +208,12 @@ NOTICE:  Success:
 DROP TABLE tbl;
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 1);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 1);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
@@ -246,7 +229,6 @@ show optimizer;
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
@@ -273,7 +255,6 @@ SELECT pyint(1);
 
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_send_request', 'error', 1);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
@@ -306,14 +287,12 @@ SELECT pyint(3);
 1
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 1);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 1);
-NOTICE:  Success:
  gp_inject_fault 
 -----------------
  Success:
