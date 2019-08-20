@@ -1,0 +1,7 @@
+# plc_coordinator extension
+comment = 'GPDB PL/container coordinator'
+# this is the install/uninstall script version
+default_version = '1.0.0'
+module_pathname = '$libdir/plc_coordinator'
+relocatable = true
+superuser = true

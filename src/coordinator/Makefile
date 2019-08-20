@@ -1,11 +1,12 @@
 # plcontainer/src/Makefile
 
 MODULE_big = plc_coordinator
+DATA = plc_coordinator-1.0.0.sql
 
-EXTENSION = plcontainer
+EXTENSION = plc_coordinator
 SRCDIR = ./
-FILES = co_coordinator.c
-OBJS = co_coordinator.o
+FILES = plc_coordinator.c
+OBJS = plc_coordinator.o
 SHLIB_LINK = $(libpq)
 
 PGXS := $(shell pg_config --pgxs)
