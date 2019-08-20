@@ -31,7 +31,11 @@ interpreted as representing official policies, either expressed or implied, of t
  */
 
 #include "comm_channel.h"
-#include "comm_utils.h"
+#ifdef PLC_CLIENT
+	#include "../server/server_misc.h"
+#else
+	#include "comm_misc.h"
+#endif
 #include "comm_connectivity.h"
 #include "config.h"
 
@@ -43,12 +47,12 @@ interpreted as representing official policies, either expressed or implied, of t
 static int message_start(plcConn *conn, char msgType);
 static int message_end(plcConn *conn);
 static int send_char(plcConn *conn, char c);
-static int send_int16(plcConn *conn, int16 i);
-static int send_int32(plcConn *conn, int32 i);
-static int send_uint32(plcConn *conn, uint32 i);
-static int send_int64(plcConn *conn, int64 i);
-static int send_float4(plcConn *conn, float4 f);
-static int send_float8(plcConn *conn, float8 f);
+static int send_int16(plcConn *conn, int16_t i);
+static int send_int32(plcConn *conn, int32_t i);
+static int send_uint32(plcConn *conn, uint32_t i);
+static int send_int64(plcConn *conn, int64_t i);
+static int send_float4(plcConn *conn, float f);
+static int send_float8(plcConn *conn, double f);
 static int send_cstring(plcConn *conn, char *s);
 static int send_bytea(plcConn *conn, char *s);
 static int send_raw_object(plcConn *conn, plcType *type, rawdata *obj);
@@ -57,12 +61,12 @@ static int send_type(plcConn *conn, plcType *type);
 static int send_udt(plcConn *conn, plcType *type, plcUDT *udt);
 static int receive_message_type(plcConn *conn, char *c);
 static int receive_char(plcConn *conn, char *c);
-static int receive_int16(plcConn *conn, int16 *i);
-static int receive_int32(plcConn *conn, int32 *i);
-static int receive_uint32(plcConn *conn, uint32 *i);
-static int receive_int64(plcConn *conn, int64 *i);
-static int receive_float4(plcConn *conn, float4 *f);
-static int receive_float8(plcConn *conn, float8 *f);
+static int receive_int16(plcConn *conn, int16_t *i);
+static int receive_int32(plcConn *conn, int32_t *i);
+static int receive_uint32(plcConn *conn, uint32_t *i);
+static int receive_int64(plcConn *conn, int64_t *i);
+static int receive_float4(plcConn *conn, float *f);
+static int receive_float8(plcConn *conn, double *f);
 static int receive_raw(plcConn *conn, char *s, size_t len);
 static int receive_cstring(plcConn *conn, char **s);
 static int receive_bytea(plcConn *conn, char **s);
@@ -150,7 +154,7 @@ int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
 }
 
 /* Only receive for expected types. This helps memory recycling. */
-int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64 mask) {
+int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64_t mask) {
 	int res;
 	char cType;
 
@@ -246,33 +250,33 @@ static int send_char(plcConn *conn, char c) {
 	return plcBufferAppend(conn, &c, 1);
 }
 
-static int send_int16(plcConn *conn, int16 i) {
-	channel_elog(WARNING, "    ===> sending int16 '%d'", (int) i);
+static int send_int16(plcConn *conn, int16_t i) {
+	channel_elog(WARNING, "    ===> sending int16_t '%d'", (int) i);
 	return plcBufferAppend(conn, (char *) &i, 2);
 }
 
-static int send_int32(plcConn *conn, int32 i) {
-	channel_elog(WARNING, "    ===> sending int32 '%d'", i);
+static int send_int32(plcConn *conn, int32_t i) {
+	channel_elog(WARNING, "    ===> sending int32_t '%d'", i);
 	return plcBufferAppend(conn, (char *) &i, 4);
 }
 
-static int send_uint32(plcConn *conn, uint32 i) {
-	channel_elog(WARNING, "    ===> sending uint32 '%u'", i);
+static int send_uint32(plcConn *conn, uint32_t i) {
+	channel_elog(WARNING, "    ===> sending uint32_t '%u'", i);
 	return plcBufferAppend(conn, (char *) &i, 4);
 }
 
-static int send_int64(plcConn *conn, int64 i) {
-	channel_elog(WARNING, "    ===> sending int64 '" INT64_FORMAT "'", i);
+static int send_int64(plcConn *conn, int64_t i) {
+	channel_elog(WARNING, "    ===> sending int64_t '" INT64_FORMAT "'", i);
 	return plcBufferAppend(conn, (char *) &i, 8);
 }
 
-static int send_float4(plcConn *conn, float4 f) {
-	channel_elog(WARNING, "    ===> sending float4 '%f'", f);
+static int send_float4(plcConn *conn, float f) {
+	channel_elog(WARNING, "    ===> sending float '%f'", f);
 	return plcBufferAppend(conn, (char *) &f, 4);
 }
 
-static int send_float8(plcConn *conn, float8 f) {
-	channel_elog(WARNING, "    ===> sending float8 '%f'", f);
+static int send_float8(plcConn *conn, double f) {
+	channel_elog(WARNING, "    ===> sending double '%f'", f);
 	return plcBufferAppend(conn, (char *) &f, 8);
 }
 
@@ -316,19 +320,19 @@ static int send_raw_object(plcConn *conn, plcType *type, rawdata *obj) {
 				res |= send_char(conn, *((char *) obj->value));
 				break;
 			case PLC_DATA_INT2:
-				res |= send_int16(conn, *((int16 *) obj->value));
+				res |= send_int16(conn, *((int16_t *) obj->value));
 				break;
 			case PLC_DATA_INT4:
-				res |= send_int32(conn, *((int32 *) obj->value));
+				res |= send_int32(conn, *((int32_t *) obj->value));
 				break;
 			case PLC_DATA_INT8:
-				res |= send_int64(conn, *((int64 *) obj->value));
+				res |= send_int64(conn, *((int64_t *) obj->value));
 				break;
 			case PLC_DATA_FLOAT4:
-				res |= send_float4(conn, *((float4 *) obj->value));
+				res |= send_float4(conn, *((float *) obj->value));
 				break;
 			case PLC_DATA_FLOAT8:
-				res |= send_float8(conn, *((float8 *) obj->value));
+				res |= send_float8(conn, *((double *) obj->value));
 				break;
 			case PLC_DATA_TEXT:
 				res |= send_cstring(conn, obj->value);
@@ -423,39 +427,39 @@ static int receive_char(plcConn *conn, char *c) {
 	return res;
 }
 
-static int receive_int16(plcConn *conn, int16 *i) {
+static int receive_int16(plcConn *conn, int16_t *i) {
 	int res = plcBufferRead(conn, (char *) i, 2);
-	channel_elog(WARNING, "    <=== receiving int16 '%d'", (int) *i);
+	channel_elog(WARNING, "    <=== receiving int16_t '%d'", (int) *i);
 	return res;
 }
 
-static int receive_int32(plcConn *conn, int32 *i) {
+static int receive_int32(plcConn *conn, int32_t *i) {
 	int res = plcBufferRead(conn, (char *) i, 4);
-	channel_elog(WARNING, "    <=== receiving int32 '%d'", *i);
+	channel_elog(WARNING, "    <=== receiving int32_t '%d'", *i);
 	return res;
 }
 
-static int receive_uint32(plcConn *conn, uint32 *i) {
+static int receive_uint32(plcConn *conn, uint32_t *i) {
 	int res = plcBufferRead(conn, (char *) i, 4);
-	channel_elog(WARNING, "    <=== receiving uint32 '%u'", *i);
+	channel_elog(WARNING, "    <=== receiving uint32_t '%u'", *i);
 	return res;
 }
 
-static int receive_int64(plcConn *conn, int64 *i) {
+static int receive_int64(plcConn *conn, int64_t *i) {
 	int res = plcBufferRead(conn, (char *) i, 8);
-	channel_elog(WARNING, "    <=== receiving int64 '" INT64_FORMAT "'", *i);
+	channel_elog(WARNING, "    <=== receiving int64_t '" INT64_FORMAT "'", *i);
 	return res;
 }
 
-static int receive_float4(plcConn *conn, float4 *f) {
+static int receive_float4(plcConn *conn, float *f) {
 	int res = plcBufferRead(conn, (char *) f, 4);
-	channel_elog(WARNING, "    <=== receiving float4 '%f'", *f);
+	channel_elog(WARNING, "    <=== receiving float '%f'", *f);
 	return res;
 }
 
-static int receive_float8(plcConn *conn, float8 *f) {
+static int receive_float8(plcConn *conn, double *f) {
 	int res = plcBufferRead(conn, (char *) f, 8);
-	channel_elog(WARNING, "    <=== receiving float8 '%f'", *f);
+	channel_elog(WARNING, "    <=== receiving double '%f'", *f);
 	return res;
 }
 
@@ -467,7 +471,7 @@ static int receive_raw(plcConn *conn, char *s, size_t len) {
 
 static int receive_cstring(plcConn *conn, char **s) {
 	int res = 0;
-	int32 cnt;
+	int32_t cnt;
 
 	if (receive_int32(conn, &cnt) < 0) {
 		return -1;
@@ -531,23 +535,23 @@ static int receive_raw_object(plcConn *conn, plcType *type, rawdata *obj) {
 				break;
 			case PLC_DATA_INT2:
 				obj->value = (char *) palloc(2);
-				res |= receive_int16(conn, (int16 *) obj->value);
+				res |= receive_int16(conn, (int16_t *) obj->value);
 				break;
 			case PLC_DATA_INT4:
 				obj->value = (char *) palloc(4);
-				res |= receive_int32(conn, (int32 *) obj->value);
+				res |= receive_int32(conn, (int32_t *) obj->value);
 				break;
 			case PLC_DATA_INT8:
 				obj->value = (char *) palloc(8);
-				res |= receive_int64(conn, (int64 *) obj->value);
+				res |= receive_int64(conn, (int64_t *) obj->value);
 				break;
 			case PLC_DATA_FLOAT4:
 				obj->value = (char *) palloc(4);
-				res |= receive_float4(conn, (float4 *) obj->value);
+				res |= receive_float4(conn, (float *) obj->value);
 				break;
 			case PLC_DATA_FLOAT8:
 				obj->value = (char *) palloc(8);
-				res |= receive_float8(conn, (float8 *) obj->value);
+				res |= receive_float8(conn, (double *) obj->value);
 				break;
 			case PLC_DATA_TEXT:
 				res |= receive_cstring(conn, &obj->value);
@@ -729,7 +733,7 @@ static int send_call(plcConn *conn, plcMsgCallreq *call) {
 
 static int send_result(plcConn *conn, plcMsgResult *ret) {
 	int res = 0;
-	uint32 i, j;
+	uint32_t i, j;
 	plcMsgError *msg = NULL;
 
 	res |= message_start(conn, MT_RESULT);
@@ -904,7 +908,7 @@ static int send_sql_unprepare(plcConn *conn, plcMsgSQL *msg) {
 
 	res |= message_start(conn, MT_SQL);
 	res |= send_int32(conn, msg->sqltype);
-	res |= send_int64(conn, (int64) msg->pplan);
+	res |= send_int64(conn, (int64_t) msg->pplan);
 	res |= message_end(conn);
 
 	return res;
@@ -922,7 +926,7 @@ static int send_sql_pexecute(plcConn *conn, plcMsgSQL *msg) {
 		res |= send_argument(conn, &msg->args[i]);
 	res |= send_int64(conn, msg->limit);
 
-	res |= send_int64(conn, (int64) msg->pplan);
+	res |= send_int64(conn, (int64_t) msg->pplan);
 	res |= message_end(conn);
 
 	return res;
@@ -957,7 +961,7 @@ static int receive_exception(plcConn *conn, plcMessage **mExc) {
 }
 
 static int receive_result(plcConn *conn, plcMessage **mRes) {
-	uint32 i, j;
+	uint32_t i, j;
 	int res = 0;
 	char exc;
 	plcMsgResult *ret;
@@ -1042,7 +1046,7 @@ static int receive_quote(plcConn *conn, plcMessage **mQuote) {
 	*mQuote = palloc(sizeof(plcMsgQuote));
 	ret = (plcMsgQuote *)*mQuote;
 	ret->msgtype = MT_QUOTE;
-	res |= receive_int32(conn, (int32 *)&ret->quote_type);
+	res |= receive_int32(conn, (int32_t *)&ret->quote_type);
 	res |= receive_cstring(conn, &ret->msg);
 	return res;
 }
@@ -1054,7 +1058,7 @@ static int receive_quote_result(plcConn *conn, plcMessage **mQuoteResult) {
 	*mQuoteResult = palloc(sizeof(plcMsgQuoteResult));
 	ret = (plcMsgQuoteResult *)*mQuoteResult;
 	ret->msgtype = MT_QUOTE_RESULT;
-	res |= receive_int32(conn, (int32 *)&ret->quote_type);
+	res |= receive_int32(conn, (int32_t *)&ret->quote_type);
 	res |= receive_cstring(conn, &ret->result);
 	return res;
 }
@@ -1100,7 +1104,7 @@ static int receive_sql_prepare(plcConn *conn, plcMessage **mStmt) {
 
 static int receive_sql_unprepare(plcConn *conn, plcMessage **mStmt) {
 	int res = 0;
-	int64 pplan;
+	int64_t pplan;
 	plcMsgSQL *ret;
 
 	*mStmt = palloc(sizeof(plcMsgSQL));
@@ -1147,7 +1151,7 @@ static int receive_subtransaction_result(plcConn *conn, plcMessage **mSubr) {
 
 static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 	int res = 0;
-	int64 pplan;
+	int64_t pplan;
 	plcMsgSQL *ret;
 	int i;
 

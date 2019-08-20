@@ -14,9 +14,9 @@ typedef struct plcIterator plcIterator;
 
 typedef struct plcArrayMeta {
 	plcDatatype type;  // deprecated - should be moved to payload if required
-	int32 ndims;
-	int32 *dims;
-	int32 size;  // deprecated - should be moved to payload if required
+	int32_t ndims;
+	int32_t *dims;
+	int32_t size;  // deprecated - should be moved to payload if required
 } plcArrayMeta;
 
 typedef struct plcArray {

@@ -32,7 +32,12 @@ interpreted as representing official policies, either expressed or implied, of t
 
 #include <stdlib.h>
 
-#include "comm_utils.h"
+#ifdef PLC_CLIENT
+	#include "../server/server_misc.h"
+#else
+	#include "comm_misc.h"
+#endif
+
 #include "messages/messages.h"
 
 /* Recursive function to free up the type structure */
@@ -93,7 +98,7 @@ void free_callreq(plcMsgCallreq *req, bool isShared, bool isSender) {
 }
 
 void free_result(plcMsgResult *res, bool isSender) {
-	uint32 i, j;
+	uint32_t i, j;
 
 	/* free the data array */
 	if (res->data != NULL) {

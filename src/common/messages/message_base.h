@@ -8,7 +8,13 @@
 #ifndef PLC_MESSAGE_BASE_H
 #define PLC_MESSAGE_BASE_H
 
-#include "../comm_utils.h"
+#include <stdint.h>
+
+#ifdef PLC_CLIENT
+	#include <stdbool.h>
+#else
+	#include "../comm_misc.h"
+#endif
 
 // TODO: change message type to one byte
 #define base_message_content unsigned short msgtype;
@@ -18,7 +24,7 @@ typedef struct plcMessage {
 } plcMessage;
 
 typedef struct {
-	int32 isnull;
+	int32_t isnull;
 	char *value;
 } rawdata;
 
@@ -47,7 +53,7 @@ typedef struct plcType plcType;
 
 struct plcType {
 	plcDatatype type;
-	int16 nSubTypes;
+	int16_t nSubTypes;
 	char *typeName;
 	plcType *subTypes;
 };

@@ -23,7 +23,7 @@
 #include "parser/parse_type.h"
 #include "access/xact.h"
 
-#include "common/comm_utils.h"
+#include "common/comm_misc.h"
 #include "common/comm_channel.h"
 #include "common/comm_connectivity.h"
 #include "plc_typeio.h"

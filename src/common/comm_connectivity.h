@@ -10,7 +10,14 @@
 
 #include <stddef.h>
 
-#include "comm_utils.h"
+#ifdef PLC_CLIENT
+	#include "../server/server_misc.h"
+	#include <stdbool.h>
+	#include <stdint.h>
+#else
+	#include "comm_misc.h"
+	#include "miscadmin.h"
+#endif
 
 #define PLC_BUFFER_SIZE 8192
 #define PLC_BUFFER_MIN_FREE 200
@@ -26,7 +33,7 @@ typedef struct plcBuffer {
 
 #define MAX_PPLAN 32 /* Max number of pplan saved in one connection. */
 struct pplan_slots {
-	int64 pplan;
+	int64_t pplan;
 	int next;
 };
 

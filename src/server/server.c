@@ -16,11 +16,9 @@
 #include <unistd.h>
 #include <limits.h>
 
-#include "comm_channel.h"
-#include "comm_utils.h"
-#include "comm_connectivity.h"
-#include "comm_log.h"
-#include "messages/messages.h"
+#include "../common/comm_channel.h"
+#include "../common/comm_connectivity.h"
+#include "../common/messages/messages.h"
 #include "server.h"
 
 /*
@@ -28,7 +26,7 @@
  */
 static int start_listener_inet() {
 	char address[32];
-	snprintf(addr, sizeof(address), ":%u", SERVER_PORT);
+	snprintf(address, sizeof(address), ":%u", SERVER_PORT);
 	return plcListenServer("tcp", address);
 }
 
@@ -101,44 +99,13 @@ static int start_listener_ipc() {
 
 	return sock;
 }
-// TODO: clean code
+
+/*
+ * Start listener based on network environment setting
+ */
 int start_listener() {
-	int sock;
+	int sock = -1;
 	char *use_container_network;
-	char *env_str, *endptr;
-	long val;
-
-	/* Get current db user name and database name and QE PID*/
-	if ((env_str = getenv("DB_USER_NAME")) == NULL) {
-		dbUsername = "unknown";
-	} else {
-		dbUsername = strdup(env_str);
-	}
-
-	if ((env_str = getenv("DB_NAME")) == NULL) {
-		dbName = "unknown";
-	} else {
-		dbName = strdup(env_str);
-	}
-
-	if ((env_str = getenv("DB_QE_PID")) == NULL) {
-		dbQePid = -1;
-	} else {
-		val = strtol(env_str, &endptr, 10);
-		if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-		    (errno != 0 && val == 0) ||
-		    endptr == env_str ||
-		    *endptr != '\0') {
-			plc_elog(ERROR, "DB_QE_PID is wrong:'%s'", env_str);
-		}
-		dbQePid = (int) val;
-	}
-
-	if ((env_str = getenv("CLIENT_LANGUAGE")) == NULL) {
-		clientLanguage = "unknown";
-	} else {
-		clientLanguage = strdup(env_str);
-	}
 
 	use_container_network = getenv("USE_CONTAINER_NETWORK");
 	if (use_container_network == NULL) {
@@ -151,11 +118,9 @@ int start_listener() {
 	} else if (strcasecmp("false", use_container_network) == 0){
 		if (geteuid() != 0 || getuid() != 0) {
 			plc_elog(ERROR, "Must run as root and then downgrade to usual user.");
-			return -1;
 		}
 		sock = start_listener_ipc();
 	} else {
-		sock = -1;
 		plc_elog(ERROR, "USE_CONTAINER_NETWORK is set to wrong value '%s'", use_container_network);
 	}
 
@@ -194,6 +159,7 @@ plcConn *connection_init(int sock) {
 	struct sockaddr_in raddr;
 	struct timeval tv;
 	int connection;
+	plcConn *plcconn;
 
 	raddr_len = sizeof(raddr);
 	connection = accept(sock, (struct sockaddr *) &raddr, &raddr_len);
@@ -206,39 +172,25 @@ plcConn *connection_init(int sock) {
 	tv.tv_usec = 500000;
 	setsockopt(connection, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval));
 
-	return plcConnInit(connection);
+	plcconn = (plcConn*) palloc(sizeof(plcConn));
+
+	plcConnInit(plcconn);
+
+	plcconn->sock = connection;
+
+	return plcconn;
 }
 
 /*
- * The loop of receiving commands from the Greenplum process and processing them
+ * Start computing unit server
  */
-void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *), plcConn *conn) {
-	plcMessage *msg;
-	int res = 0;
-
-	res = plcontainer_channel_receive(conn, &msg, MT_PING_BIT);
-	if (res < 0) {
-		plc_elog(ERROR, "Error receiving data from the backend, %d", res);
-		return;
+plcConn *start_server() {
+	int sock;
+	sock = start_listener();
+	if (sock == -1) {
+		plc_elog(ERROR, "Cannot start listener %s", strerror(errno));
 	}
-
-	res = plcontainer_channel_send(conn, msg);
-	if (res < 0) {
-		plc_elog(ERROR, "Cannot send 'ping' message response");
-		return;
-	}
-	pfree(msg);
-
-	while (1) {
-		res = plcontainer_channel_receive(conn, &msg, MT_CALLREQ_BIT);
-
-		if (res < 0) {
-				plc_elog(ERROR, "Error receiving data from the peer: %d", res);
-			break;
-		}
-		plc_elog(DEBUG1, "Client receive a request: called function oid %u", ((plcMsgCallreq *) msg)->objectid);
-		handle_call((plcMsgCallreq *) msg, conn);
-		free_callreq((plcMsgCallreq *) msg, false, false);
-	}
+	connection_wait(sock);
+	return connection_init(sock);
 }
 

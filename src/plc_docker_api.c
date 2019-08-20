@@ -11,7 +11,7 @@
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "libpq/libpq-be.h"
-#include "common/comm_utils.h"
+#include "common/comm_misc.h"
 #include "plc_docker_api.h"
 #include "plc_backend_api.h"
 #ifndef PLC_PG

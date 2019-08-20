@@ -35,7 +35,7 @@
 #ifdef PLC_PG
 #pragma GCC diagnostic pop
 #endif
-#include "common/comm_utils.h"
+#include "common/comm_misc.h"
 #include "common/comm_connectivity.h"
 #include "plcontainer.h"
 #include "plc_backend_api.h"

@@ -30,7 +30,7 @@ typedef struct plcMsgSubtransaction {
 
 typedef struct plcMsgSubtransactionResult {
 	base_message_content;
-	int16 result;    /* subtransaction execute result on QE side*/
+	int16_t result;    /* subtransaction execute result on QE side*/
 } plcMsgSubtransactionResult;
 
 #endif /* PLC_MESSAGE_SUBTRANSACTION_H_ */

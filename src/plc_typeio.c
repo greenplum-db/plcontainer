@@ -31,7 +31,7 @@
 #include "utils/builtins.h"
 
 #include "plc_typeio.h"
-#include "common/comm_utils.h"
+#include "common/comm_misc.h"
 #include "message_fns.h"
 
 #ifdef PLC_PG

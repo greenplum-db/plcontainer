@@ -21,12 +21,14 @@
 #include <sys/socket.h>
 #include <libgen.h>
 
-#include "comm_utils.h"
+
 #include "comm_connectivity.h"
-#include "../sqlhandler.h"
+
+// TODO: decouple the sqlhandler
 #ifndef PLC_CLIENT
-  #include "miscadmin.h"
+	#include "../sqlhandler.h"
 #endif
+
 
 static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len);
 
@@ -380,14 +382,6 @@ void plcConnInit(plcConn *conn) {
 	conn->sock = -1;
 }
 
-void plcContextInit(plcContext *ctx)
-{
-	// TODO: init
-	plcConnInit(&ctx->conn);
-	init_pplan_slots(ctx);
-	ctx->service_address = NULL;
-}
-
 static char *split_address(const char *address, char *node_service)
 {
     char *p;
@@ -645,6 +639,17 @@ static void plcDisconnect_(plcConn *conn) {
 	pfree(conn->buffer[PLC_OUTPUT_BUFFER].data);
 }
 
+// TODO remove ifndef
+#ifndef PLC_CLIENT
+
+void plcContextInit(plcContext *ctx)
+{
+	// TODO: init
+	plcConnInit(&ctx->conn);
+	init_pplan_slots(ctx);
+	ctx->service_address = NULL;
+}
+
 // This function only release buffers and reset plan array.
 // NOTE: socket fd keeps open and service address is still valid.
 //      We INTEND to reuse connection to the container.
@@ -671,3 +676,5 @@ void plcFreeContext(plcContext *ctx)
 	}
 	pfree(ctx);
 }
+
+#endif

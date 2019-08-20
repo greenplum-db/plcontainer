@@ -21,27 +21,26 @@ interpreted as representing official policies, either expressed or implied, of t
 */
 
 /**
- * file name:			plcontainer_channel.h
- * description:			Channel API.
- * author:			Laszlo Hornyak Kocka
+ * file:            comm_logging.h.
+ * author:            PostgreSQL developement group.
+ * author:            Laszlo Hornyak
  */
 
 /*
  * Portions Copyright © 2016-Present Pivotal Software, Inc.
  */
 
-#ifndef PLC_COMM_CHANNEL_H
-#define PLC_COMM_CHANNEL_H
+#ifndef PLC_COMM_MISC_H
+#define PLC_COMM_MISC_H
 
-#include "comm_connectivity.h"
-#include "messages/messages.h"
+#include "postgres.h"
 
-#define channel_elog(...)  do{}while(0)
 
-int plcontainer_channel_send(plcConn *conn, plcMessage *msg);
+#define plc_elog(lvl, fmt, ...) elog(lvl, "plcontainer: " fmt, ##__VA_ARGS__);
 
-int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64_t mask);
+/* pfree & pstrdup are already defined by postgres */
+void *top_palloc(size_t bytes);
 
-void fill_prepare_argument(plcArgument *arg, char *str, plcDatatype plcData);
+char *plc_top_strdup(const char *str);
 
-#endif /* PLC_COMM_CHANNEL_H */
+#endif /* PLC_COMM_MISC_H */

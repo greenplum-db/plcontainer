@@ -12,7 +12,7 @@
 
 typedef struct plcMsgRaw {
 	base_message_content;
-	int32 size;
+	int32_t size;
 	char *data;
 } plcMsgRaw;
 
