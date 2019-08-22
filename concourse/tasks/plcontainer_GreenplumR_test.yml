@@ -1,0 +1,16 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+
+inputs:
+  - name: bin_gpdb
+  - name: gpdb_src
+  - name: greenplum-r
+  - name: plcontainer_src  
+
+run:
+  path: plcontainer_src/concourse/scripts/greenplumr_test.sh
+
+params:
+  OSVER:

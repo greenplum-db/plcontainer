@@ -14,6 +14,8 @@ groups:
   - plcontainer_resgroup_test_centos7
   - plcontainer_resgroup_test_ubuntu18
   - plcontainer_function_test_ubuntu18
+  - plcontainer_GreenplumR_test_ubuntu18
+  - plcontainer_GreenplumR_test_centos7
 
 ################################################################################
 ################################## RESOURCES ###################################
@@ -120,7 +122,7 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: 6X_STABLE
+    branch: master
     uri: https://github.com/greenplum-db/plcontainer.git
 
 - name: gpdb_src
@@ -131,6 +133,12 @@ resources:
     ignore_paths:
     - gpdb-doc/*
     - README*
+
+- name: greenplum-r
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/greenplum-db/GreenplumR.git
 
 - name: terraform
   type: terraform
@@ -240,6 +248,44 @@ jobs:
     - put: plcontainer_client_ubuntu18_build
       params:
         file: plcontainer_client/plcontainer_client.tar.gz
+
+- name: plcontainer_GreenplumR_test_ubuntu18
+  max_in_flight: 4
+  plan:
+  - aggregate:
+    - get: greenplum-r 
+      trigger: true
+    - get: ubuntu18-image-test
+    - get: bin_gpdb_ubuntu18
+    - get: gpdb_src
+    - get: plcontainer_src
+      trigger: true
+  - task: plcontainer_GreenplumR_test
+    file: plcontainer_src/concourse/tasks/plcontainer_GreenplumR_test.yml
+    image: ubuntu18-image-test
+    input_mapping:
+      bin_gpdb: bin_gpdb_ubuntu18
+    params:
+      OSVER: ubuntu18
+
+- name: plcontainer_GreenplumR_test_centos7
+  max_in_flight: 4
+  plan:
+  - aggregate:
+    - get: greenplum-r 
+      trigger: true
+    - get: centos-gpdb-dev-7
+    - get: bin_gpdb_centos7
+    - get: gpdb_src
+    - get: plcontainer_src
+      trigger: true
+  - task: plcontainer_GreenplumR_test
+    file: plcontainer_src/concourse/tasks/plcontainer_GreenplumR_test.yml
+    image: centos-gpdb-dev-7
+    input_mapping:
+      bin_gpdb: bin_gpdb_centos7
+    params:
+      OSVER: centos7
 
 # Build PL/Container GP Package
 - name: plcontainer_build_ubuntu18
