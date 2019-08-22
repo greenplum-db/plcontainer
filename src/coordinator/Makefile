@@ -5,7 +5,7 @@ DATA = plc_coordinator--1.0.0.sql
 
 EXTENSION = plc_coordinator
 SRCDIR = ./
-FILES = plc_coordinator.c ../common/base_network.c \
+FILES = plc_coordinator.c plc_configuration.c ../common/base_network.c \
 	../common/comm_dummy_plc.c 
 OBJS = $(foreach src,$(FILES),$(subst .c,.o,$(src)))
 SHLIB_LINK = $(libpq) $(shell pkg-config --libs json-c) \

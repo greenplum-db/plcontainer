@@ -42,6 +42,7 @@
 
 #include "common/base_network.h"
 #include "plc_coordinator.h"
+#include "plc_configuration.h"
 
 PG_MODULE_MAGIC;
 // PROTOTYPE:
@@ -117,6 +118,15 @@ plc_initialize_coordinator()
     int sock;
 
     sock = plc_listen_socket();
+
+    if (plc_refresh_container_config(false) != 0) {
+        if (runtime_conf_table == NULL) {
+            /* can't load runtime configuration */
+            elog(ERROR, "PL/container: can't load runtime configuration");
+        } else {
+            elog(WARNING, "PL/container: there is no runtime configuration");
+        }
+    }
 
     memset(&auxWorker, 0, sizeof(auxWorker));
     auxWorker.bgw_flags = BGWORKER_SHMEM_ACCESS;

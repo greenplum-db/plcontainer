@@ -48,11 +48,17 @@ static int domain_socket_no = 0;
 
 static void init_runtime_configurations();
 
-static void parse_runtime_configuration(xmlNode *node);
+static runtimeConfEntry *parse_runtime_configuration(HTAB *table, xmlNode *node);
 
-static void get_runtime_configurations(xmlNode *node);
+static void parse_root_runtime_configurations(HTAB *table, xmlNode *node);
+
+static int validate_runtime_entry(const runtimeConfEntry *conf);
 
 static void free_runtime_conf_entry(runtimeConfEntry *conf);
+
+static HTAB *new_runtime_configuration_table();
+
+static void release_runtime_configuration_table(HTAB *table);
 
 static void print_runtime_configurations();
 
@@ -60,55 +66,25 @@ PG_FUNCTION_INFO_V1(refresh_plcontainer_config);
 
 PG_FUNCTION_INFO_V1(show_plcontainer_config);
 
-static HTAB *rumtime_conf_table;
+HTAB *runtime_conf_table = NULL;
 
-/*
- * init runtime conf hash table.
- */
-static void init_runtime_configurations() {
-    /* create the runtime conf hash table*/
-	HASHCTL		hash_ctl;
+/* TODO: REMOVE ME */
+void *top_palloc(size_t bytes) {
+	/* We need our allocations to be long-lived, so use TopMemoryContext */
+	return MemoryContextAlloc(TopMemoryContext, bytes);
+}
 
-	/* destroy hash table first if exists*/
-	if (rumtime_conf_table != NULL) {
-		HASH_SEQ_STATUS hash_status;
-		runtimeConfEntry *entry;
-
-		hash_seq_init(&hash_status, rumtime_conf_table);
-
-		while ((entry = (runtimeConfEntry *) hash_seq_search(&hash_status)) != NULL)
-		{
-			free_runtime_conf_entry(entry);
-		}
-		hash_destroy(rumtime_conf_table);
-	}
-	
-	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
-	hash_ctl.keysize = RUNTIME_ID_MAX_LENGTH;
-	hash_ctl.entrysize = sizeof(runtimeConfEntry);
-	hash_ctl.hash = string_hash;
-	/*
-	 * Key and value of hash table share the same storage of entry.
-	 * the first keysize bytes of the entry is the hash key, and the
-	 * value if the entry itself.
-	 * For string key, we use string_hash to caculate hash key and
-	 * use strlcpy to copy key(when string_hash is set as hash function).
-	 */
-	rumtime_conf_table = hash_create("runtime configuration hash",
-								MAX_EXPECTED_RUNTIME_NUM,
-								&hash_ctl,
-								HASH_ELEM | HASH_FUNCTION);
-
-	if (rumtime_conf_table == NULL) {
-		plc_elog(ERROR, "Error: could not create runtime conf hash table. Check your memory usage.");
-	}
-
-	return ;
+char *plc_top_strdup(const char *str) {
+	int len = strlen(str);
+	char *out = top_palloc(len + 1);
+	memcpy(out, str, len);
+	out[len] = '\0';
+	return out;
 }
 
 /* Function parses the container XML definition and fills the passed
  * plcContainerConf structure that should be already allocated */
-static void parse_runtime_configuration(xmlNode *node) {
+static runtimeConfEntry *parse_runtime_configuration(HTAB *table, xmlNode *node) {
 	xmlNode *cur_node = NULL;
 	/* we add some cleanups after longjmp. longjmp may clobber the registers, 
 	 * so we need to add volatile qualifier to pointer. If the pointee is read
@@ -124,10 +100,6 @@ static void parse_runtime_configuration(xmlNode *node) {
 
 	runtimeConfEntry *conf_entry = NULL;
 	bool		foundPtr;
-
-	if (rumtime_conf_table == NULL) {
-		plc_elog(ERROR, "Runtime configuration table is not initialized.");
-	}
 
 	PG_TRY();
 	{
@@ -159,7 +131,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 			plc_elog(ERROR, "runtime id should not be longer than 63 bytes.");
 		}
 		/* find the corresponding runtime config*/
-		conf_entry = (runtimeConfEntry *) hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_ENTER, &foundPtr);
+		conf_entry = (runtimeConfEntry *) hash_search(table,  (const void *) runtime_id, HASH_ENTER, &foundPtr);
 
 		/*check if runtime id already exists in hash table.*/
 		if (foundPtr) {
@@ -385,23 +357,23 @@ static void parse_runtime_configuration(xmlNode *node) {
 			value = NULL;
 		}
 
-		if (rumtime_conf_table != NULL && runtime_id != NULL) {
+		if (runtime_id != NULL) {
 			/* remove the broken runtime config entry in hash table*/
-			hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_REMOVE, NULL);
-
+			hash_search(table,  (const void *) runtime_id, HASH_REMOVE, NULL);
 		}
 
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	return ;
+	return conf_entry;
 }
 
 /* Function returns an array of plcContainerConf structures based on the contents
  * of passed XML document tree. Returns NULL on failure */
-static void get_runtime_configurations(xmlNode *node) {
+static void parse_root_runtime_configurations(HTAB *table, xmlNode *node) {
 	xmlNode *cur_node = NULL;
+	runtimeConfEntry *conf;
 
 	/* Validation that the root node matches the expected specification */
 	if (xmlStrcmp(node->name, (const xmlChar *) "configuration") != 0) {
@@ -413,18 +385,34 @@ static void get_runtime_configurations(xmlNode *node) {
 	for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 		if (cur_node->type == XML_ELEMENT_NODE &&
 		    xmlStrcmp(cur_node->name, (const xmlChar *) "runtime") == 0) {
-			parse_runtime_configuration(cur_node);
+			conf = parse_runtime_configuration(table, cur_node);
+			if (validate_runtime_entry(conf) != 0) {
+				hash_search(table, conf->runtimeid, HASH_REMOVE, NULL);
+			}
 		}
-	}
-
-	/* If no container definitions found - error */
-	if (hash_get_num_entries(rumtime_conf_table) == 0) {
-		plc_elog(ERROR, "Did not find a single 'runtime' declaration in configuration");
 	}
 
 	return ;
 }
 
+/**
+ * 0 if successful
+ * -1 invalid runtimeConfEntry
+ */
+static int validate_runtime_entry(const runtimeConfEntry *conf) {
+	int i;
+	if (conf->nSharedDirs < 1)
+		return 0;
+
+	/* check access mode. Need more verification? */
+	for (i = 0; i < conf->nSharedDirs; i++) {
+		if (conf->sharedDirs[i].mode != PLC_ACCESS_READONLY && conf->sharedDirs[i].mode != PLC_ACCESS_READWRITE) {
+			elog(WARNING, "Cannot determine directory sharing mode: %d", conf->sharedDirs[i].mode);
+			return -1;
+		}
+	}
+	return 0;
+}
 /* Safe way to deallocate container configuration list structure */
 static void free_runtime_conf_entry(runtimeConfEntry *entry) {
 	int i;
@@ -446,11 +434,11 @@ static void free_runtime_conf_entry(runtimeConfEntry *entry) {
 
 static void print_runtime_configurations() {
 	int j = 0;
-	if (rumtime_conf_table != NULL) {
+	if (runtime_conf_table != NULL) {
 		HASH_SEQ_STATUS hash_status;
 		runtimeConfEntry *conf_entry;
 
-		hash_seq_init(&hash_status, rumtime_conf_table);
+		hash_seq_init(&hash_status, runtime_conf_table);
 
 		while ((conf_entry = (runtimeConfEntry *) hash_seq_search(&hash_status)) != NULL)
 		{
@@ -480,14 +468,54 @@ static void print_runtime_configurations() {
 	}
 }
 
-int plc_refresh_container_config(bool verbose) {
+static HTAB *new_runtime_configuration_table() {
+	HASHCTL hash_ctl;
+	HTAB *tab;
+	memset(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = RUNTIME_ID_MAX_LENGTH;
+	hash_ctl.entrysize = sizeof(runtimeConfEntry);
+	hash_ctl.hash = string_hash;
+	/*
+	 * Key and value of hash table share the same storage of entry.
+	 * the first keysize bytes of the entry is the hash key, and the
+	 * value if the entry itself.
+	 * For string key, we use string_hash to caculate hash key and
+	 * use strlcpy to copy key(when string_hash is set as hash function).
+	 */
+	tab = hash_create("runtime configuration hash",
+								MAX_EXPECTED_RUNTIME_NUM,
+								&hash_ctl,
+								HASH_ELEM | HASH_FUNCTION);
+
+	return tab;
+}
+
+static void release_runtime_configuration_table(HTAB *table) {
+	HASH_SEQ_STATUS hash_status;
+	runtimeConfEntry *entry;
+
+	hash_seq_init(&hash_status, table);
+
+	while ((entry = (runtimeConfEntry *) hash_seq_search(&hash_status)) != NULL)
+	{
+		free_runtime_conf_entry(entry);
+	}
+	hash_destroy(table);
+}
+
+HTAB *load_runtime_configuration() {
 	xmlDoc* volatile doc = NULL;
+	HTAB *table;
 	char filename[1024];
  #ifdef PLC_PG
     char data_directory[1024];
 	char *env_str;
  #endif  
-	init_runtime_configurations();
+	table = new_runtime_configuration_table();
+	if (!table) {
+		plc_elog(WARNING, "can't alloc HTAB for runtime_configuration");
+		return NULL;
+	}
 	/*
 	 * this initialize the library and check potential ABI mismatches
 	 * between the version it was compiled for and the actual shared
@@ -511,14 +539,14 @@ int plc_refresh_container_config(bool verbose) {
 			return -1;
 		}
 
-		get_runtime_configurations(xmlDocGetRootElement(doc));
+		parse_root_runtime_configurations(table, xmlDocGetRootElement(doc));
 	}
 	PG_CATCH();
 	{
 		if (doc != NULL) {
 			xmlFreeDoc(doc);
 		}
-
+		hash_destroy(table);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -530,9 +558,24 @@ int plc_refresh_container_config(bool verbose) {
 	/* Free the global variables that may have been allocated by the parser */
 	xmlCleanupParser();
 
-	if (hash_get_num_entries(rumtime_conf_table) == 0) {
+	return table;
+}
+
+int plc_refresh_container_config(bool verbose) {
+	HTAB *table = load_runtime_configuration();
+	HTAB *tmp;
+
+	if (!table)
 		return -1;
+	/* TODO: check to see if it needs a lock */
+	tmp = runtime_conf_table;
+	runtime_conf_table = table;
+	if (tmp) {
+		release_runtime_configuration_table(tmp);
 	}
+
+	if (hash_get_num_entries(runtime_conf_table) == 0)
+		return -1;
 
 	if (verbose) {
 		print_runtime_configurations();
@@ -544,13 +587,13 @@ int plc_refresh_container_config(bool verbose) {
 static int plc_show_container_config() {
 	int res = 0;
 
-	if (rumtime_conf_table == NULL) {
+	if (runtime_conf_table == NULL) {
 		res = plc_refresh_container_config(false);
 		if (res != 0)
 			return -1;
 	}
 
-	if (rumtime_conf_table == NULL || hash_get_num_entries(rumtime_conf_table) == 0) {
+	if (runtime_conf_table == NULL || hash_get_num_entries(runtime_conf_table) == 0) {
 		return -1;
 	}
 
@@ -588,7 +631,7 @@ runtimeConfEntry *plc_get_runtime_configuration(char *runtime_id) {
 	int res = 0;
 	runtimeConfEntry *entry = NULL;
 
-	if (rumtime_conf_table == NULL || hash_get_num_entries(rumtime_conf_table) == 0) {
+	if (runtime_conf_table == NULL || hash_get_num_entries(runtime_conf_table) == 0) {
 		res = plc_refresh_container_config(0);
 		if (res < 0) {
 			return NULL;
@@ -596,7 +639,7 @@ runtimeConfEntry *plc_get_runtime_configuration(char *runtime_id) {
 	}
 
 	/* find the corresponding runtime config*/
-	entry = (runtimeConfEntry *) hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_FIND, NULL);
+	entry = (runtimeConfEntry *) hash_search(runtime_conf_table,  (const void *) runtime_id, HASH_FIND, NULL);
 
 	return entry;
 }
@@ -627,8 +670,7 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 				sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, conf->sharedDirs[i].host,
 				        conf->sharedDirs[i].container);
 			} else {
-				plc_elog(WARNING, "Cannot determine directory sharing mode: %d",
-				         conf->sharedDirs[i].mode);
+				plc_elog(WARNING, "PL/container: BUG, if runtimeConfEntry is verified, it can't be here");
 				*has_error = true;
 				for (j = 0; j <= i ;j++) {
 					pfree(volumes[i]);
@@ -655,8 +697,7 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 
 			/* Create the directory. */
 			if (mkdir(*uds_dir, S_IRWXU) < 0 && errno != EEXIST) {
-				plc_elog(WARNING, "Cannot create directory %s: %s",
-				         *uds_dir, strerror(errno));
+				plc_elog(WARNING, "Cannot create directory %s: %s", *uds_dir, strerror(errno));
 				*has_error = true;
 				for (j = 0; j <= i ;j++) {
 					pfree(volumes[i]);
