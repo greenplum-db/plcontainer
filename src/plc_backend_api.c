@@ -7,7 +7,7 @@
 
 #include "plc_backend_api.h"
 #include "plc_docker_api.h"
-#include "common/comm_misc.h"
+#include "misc.h"
 
 static PLC_FunctionEntriesData *CurrentBackend;
 

@@ -10,7 +10,14 @@
 
 #include <stddef.h>
 #include <stdio.h>
-
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <signal.h>
+#include <errno.h>
+#include <execinfo.h>
 /* Compatibility with R that defines WARNING and ERROR by itself */
 #undef WARNING
 #undef ERROR

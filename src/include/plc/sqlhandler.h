@@ -10,7 +10,7 @@
 #ifndef PLC_SQLHANDLER_H
 #define PLC_SQLHANDLER_H
 
-#include "common/messages/messages.h"
+#include "messages/messages.h"
 #include "message_fns.h"
 #include "executor/spi.h"
 

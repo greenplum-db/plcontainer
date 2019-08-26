@@ -5,12 +5,6 @@
  *------------------------------------------------------------------------------
  */
 
-
-#include <libxml/tree.h>
-#include <libxml/parser.h>
-#include <unistd.h>
-#include <sys/stat.h>
-
 #include "postgres.h"
 #ifndef PLC_PG
   #include "commands/resgroupcmds.h"
@@ -35,8 +29,14 @@
 #ifdef PLC_PG
 #pragma GCC diagnostic pop
 #endif
-#include "common/comm_misc.h"
-#include "common/comm_connectivity.h"
+
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+#include <unistd.h>
+#include <sys/stat.h>
+
+#include "misc.h"
+#include "comm_connectivity.h"
 #include "plcontainer.h"
 #include "plc_backend_api.h"
 #include "plc_docker_api.h"

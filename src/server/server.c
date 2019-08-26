@@ -6,19 +6,15 @@
  *------------------------------------------------------------------------------
  */
 
-#include <errno.h>
 #include <netinet/ip.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <limits.h>
 
-#include "../common/comm_channel.h"
-#include "../common/comm_connectivity.h"
-#include "../common/messages/messages.h"
+#include "comm_channel.h"
+#include "comm_connectivity.h"
+#include "messages/messages.h"
 #include "server.h"
 
 /*

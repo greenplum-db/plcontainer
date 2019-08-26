@@ -8,7 +8,7 @@
 #ifndef PLC_SUBTRANSACTION_HANDLER_H_
 #define PLC_SUBTRANSACTION_HANDLER_H_
 
-#include "common/messages/messages.h"
+#include "messages/messages.h"
 #include "message_fns.h"
 
 extern List *explicit_subtransactions;

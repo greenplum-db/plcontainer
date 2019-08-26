@@ -8,7 +8,7 @@
 #ifndef PLC_COMM_SERVER_H
 #define PLC_COMM_SERVER_H
 
-#include "../common/comm_connectivity.h"
+#include "comm_connectivity.h"
 
 /*
   SERVER should be defined for standalone interpreters

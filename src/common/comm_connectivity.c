@@ -25,9 +25,8 @@
 #include "comm_connectivity.h"
 
 // TODO: decouple the sqlhandler
-#ifndef PLC_CLIENT
-	#include "../sqlhandler.h"
-#endif
+#include "sqlhandler.h"
+
 
 
 static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len);
@@ -639,9 +638,6 @@ static void plcDisconnect_(plcConn *conn) {
 	pfree(conn->buffer[PLC_OUTPUT_BUFFER].data);
 }
 
-// TODO remove ifndef
-#ifndef PLC_CLIENT
-
 void plcContextInit(plcContext *ctx)
 {
 	// TODO: init
@@ -676,5 +672,3 @@ void plcFreeContext(plcContext *ctx)
 	}
 	pfree(ctx);
 }
-
-#endif

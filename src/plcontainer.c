@@ -28,8 +28,8 @@
 #include "utils/memutils.h"
 #include "utils/guc.h"
 /* PLContainer Headers */
-#include "common/comm_channel.h"
-#include "common/messages/messages.h"
+#include "comm_channel.h"
+#include "messages/messages.h"
 #include "containers.h"
 #include "message_fns.h"
 #include "plcontainer.h"

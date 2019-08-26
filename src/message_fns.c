@@ -55,8 +55,8 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "utils/guc.h"
 
 /* message and function definitions */
-#include "common/comm_misc.h"
-#include "common/messages/messages.h"
+#include "misc.h"
+#include "messages/messages.h"
 #include "message_fns.h"
 #include "function_cache.h"
 #include "plc_typeio.h"

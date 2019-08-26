@@ -6,9 +6,8 @@
  *
  *------------------------------------------------------------------------------
  */
-#include "comm_misc.h"
 
-
+#include "misc.h"
 #include "utils/memutils.h"
 #include "utils/palloc.h"
 

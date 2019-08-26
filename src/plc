@@ -34,7 +34,13 @@ interpreted as representing official policies, either expressed or implied, of t
 #define PLC_COMM_MISC_H
 
 #include "postgres.h"
-
+#include "miscadmin.h"
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <string.h>
 
 #define plc_elog(lvl, fmt, ...) elog(lvl, "plcontainer: " fmt, ##__VA_ARGS__);
 

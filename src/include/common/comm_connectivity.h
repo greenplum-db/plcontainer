@@ -8,16 +8,8 @@
 #ifndef PLC_COMM_CONNECTIVITY_H
 #define PLC_COMM_CONNECTIVITY_H
 
-#include <stddef.h>
 
-#ifdef PLC_CLIENT
-	#include "../server/server_misc.h"
-	#include <stdbool.h>
-	#include <stdint.h>
-#else
-	#include "comm_misc.h"
-	#include "miscadmin.h"
-#endif
+#include "misc.h"
 
 #define PLC_BUFFER_SIZE 8192
 #define PLC_BUFFER_MIN_FREE 200

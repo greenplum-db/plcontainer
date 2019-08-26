@@ -30,13 +30,8 @@ interpreted as representing official policies, either expressed or implied, of t
  * Portions Copyright © 2016-Present Pivotal Software, Inc.
  */
 
-#include <stdlib.h>
+#include "misc.h"
 
-#ifdef PLC_CLIENT
-	#include "../server/server_misc.h"
-#else
-	#include "comm_misc.h"
-#endif
 
 #include "messages/messages.h"
 

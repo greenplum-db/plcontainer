@@ -10,7 +10,7 @@
 
 #include <regex.h>
 
-#include "common/comm_connectivity.h"
+#include "comm_connectivity.h"
 #include "plc_configuration.h"
 
 #define CONTAINER_CONNECT_TIMEOUT_MS 10000

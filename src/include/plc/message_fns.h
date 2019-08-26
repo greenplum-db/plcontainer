@@ -30,7 +30,7 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "postgres.h"
 #include "fmgr.h"
 
-#include "common/messages/messages.h"
+#include "messages/messages.h"
 #include "plc_typeio.h"
 
 /* Structure representing function result data */

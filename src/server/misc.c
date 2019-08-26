@@ -6,15 +6,9 @@
  *------------------------------------------------------------------------------
  */
 
-#include <stdlib.h>
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <execinfo.h>
-#include <unistd.h>
 
-#include "server_misc.h"
+
+#include "misc.h"
 
 /*
  * This function is copied from is_log_level_output in elog.c

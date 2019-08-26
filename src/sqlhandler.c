@@ -23,9 +23,9 @@
 #include "parser/parse_type.h"
 #include "access/xact.h"
 
-#include "common/comm_misc.h"
-#include "common/comm_channel.h"
-#include "common/comm_connectivity.h"
+#include "misc.h"
+#include "comm_channel.h"
+#include "comm_connectivity.h"
 #include "plc_typeio.h"
 #include "sqlhandler.h"
 #include "subtransaction_handler.h"

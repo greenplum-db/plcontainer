@@ -11,18 +11,14 @@
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "libpq/libpq-be.h"
-#include "common/comm_misc.h"
+#include "misc.h"
 #include "plc_docker_api.h"
 #include "plc_backend_api.h"
 #ifndef PLC_PG
   #include "cdb/cdbvars.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <pwd.h>
-#include <unistd.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
 

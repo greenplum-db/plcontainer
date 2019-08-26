@@ -31,18 +31,10 @@ interpreted as representing official policies, either expressed or implied, of t
  */
 
 #include "comm_channel.h"
-#ifdef PLC_CLIENT
-	#include "../server/server_misc.h"
-#else
-	#include "comm_misc.h"
-#endif
+#include "misc.h"
 #include "comm_connectivity.h"
 #include "config.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
 
 static int message_start(plcConn *conn, char msgType);
 static int message_end(plcConn *conn);

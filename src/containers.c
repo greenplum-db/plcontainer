@@ -4,16 +4,7 @@
  *
  *------------------------------------------------------------------------------
  */
-#include <ctype.h>
-#include <errno.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <libgen.h>
-#include <sys/wait.h>
+
 #include "postgres.h"
 #include "miscadmin.h"
 #include "utils/guc.h"
@@ -24,15 +15,21 @@
   #include "catalog/pg_type.h"
   #include "miscadmin.h"
   #include "utils/guc.h"
-  #include<stdarg.h>  
+  #include <stdarg.h>  
 #endif
 #include "storage/ipc.h"
 #include "libpq/pqsignal.h"
 #include "utils/ps_status.h"
-#include "common/comm_misc.h"
-#include "common/comm_channel.h"
-#include "common/comm_connectivity.h"
-#include "common/messages/messages.h"
+
+#include <ctype.h>
+#include <time.h>
+#include <libgen.h>
+#include <sys/wait.h>
+
+#include "misc.h"
+#include "comm_channel.h"
+#include "comm_connectivity.h"
+#include "messages/messages.h"
 #include "plc_configuration.h"
 #include "containers.h"
 #include "plc_backend_api.h"
