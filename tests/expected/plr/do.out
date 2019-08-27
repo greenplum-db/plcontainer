@@ -1,0 +1,7 @@
+do language plcontainer '
+pg.throwlog("Hello, world!")
+';
+do language plcontainer '
+pg.thrownotice("Hello, world!")
+';
+NOTICE:  Hello, world!
