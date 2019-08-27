@@ -12,5 +12,3 @@ inputs:
 run:
   path: plcontainer_src/concourse/scripts/greenplumr_test.sh
 
-params:
-  OSVER:

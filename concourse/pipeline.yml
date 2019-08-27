@@ -265,8 +265,6 @@ jobs:
     image: ubuntu18-image-test
     input_mapping:
       bin_gpdb: bin_gpdb_ubuntu18
-    params:
-      OSVER: ubuntu18
 
 - name: plcontainer_GreenplumR_test_centos7
   max_in_flight: 4
@@ -284,8 +282,6 @@ jobs:
     image: centos-gpdb-dev-7
     input_mapping:
       bin_gpdb: bin_gpdb_centos7
-    params:
-      OSVER: centos7
 
 # Build PL/Container GP Package
 - name: plcontainer_build_ubuntu18
