@@ -6,7 +6,6 @@ CWDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TOP_DIR=${CWDIR}/../../../
 GPDB_CONCOURSE_DIR=${TOP_DIR}/gpdb_src/concourse/scripts
 
-source "${GPDB_CONCOURSE_DIR}/setup_gpadmin_user.bash"
 source "${GPDB_CONCOURSE_DIR}/common.bash"
 function test(){
 
@@ -30,6 +29,23 @@ function test(){
     chown gpadmin:gpadmin /home/gpadmin/test.sh
     chmod a+x /home/gpadmin/test.sh
     su gpadmin -c "/bin/bash /home/gpadmin/test.sh"
+}
+
+function determine_os() {
+    if [ -f /etc/redhat-release ] ; then
+      echo "centos"
+      return
+    fi
+    if grep -q ID=ubuntu /etc/os-release ; then
+      echo "ubuntu"
+      return
+    fi
+    echo "Could not determine operating system type" >/dev/stderr
+    exit 1
+}
+
+function setup_gpadmin_user() {
+    ${GPDB_CONCOURSE_DIR}/setup_gpadmin_user.bash
 }
 
 function prepare_lib() {
