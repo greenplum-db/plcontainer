@@ -6,6 +6,7 @@ CWDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TOP_DIR=${CWDIR}/../../../
 GPDB_CONCOURSE_DIR=${TOP_DIR}/gpdb_src/concourse/scripts
 
+source "${GPDB_CONCOURSE_DIR}/setup_gpadmin_user.bash"
 source "${GPDB_CONCOURSE_DIR}/common.bash"
 function test(){
 
@@ -28,7 +29,7 @@ function test(){
     chown -R gpadmin:gpadmin $(pwd)
     chown gpadmin:gpadmin /home/gpadmin/test.sh
     chmod a+x /home/gpadmin/test.sh
-    su gpadmin -c "/bin/bash /home/gpadmin/test.sh $(pwd)"
+    su gpadmin -c "/bin/bash /home/gpadmin/test.sh"
 }
 
 function prepare_lib() {
@@ -38,29 +39,26 @@ function prepare_lib() {
     ${CWDIR}/install_r_package.R RPostgreSQL
 }
 
-function setup_gpadmin_user() {
-   ${GPDB_CONCOURSE_DIR}/setup_gpadmin_user.bash
-}
-
 function install_pkg()
 {
-case $OSVER in
-centos*)
+  case $TEST_OS in
+  centos)
     yum install -y epel-release
     yum install -y R
     ;;
-ubuntu*)
+  ubuntu)
     apt update
     DEBIAN_FRONTEND=noninteractive apt install -y r-base pkg-config texlive-latex-base texinfo texlive-fonts-extra
     ;;
-*)
-    echo "unknown OSVER = $OSVER"
+  *)
+    echo "unknown OSVER = $TEST_OS"
     exit 1
     ;;
-esac
+  esac
 }
 
 function _main() {
+    TEST_OS=$(determine_os)
     time install_pkg
     time install_gpdb
     time setup_gpadmin_user
