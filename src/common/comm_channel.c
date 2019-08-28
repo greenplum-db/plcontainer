@@ -30,10 +30,11 @@ interpreted as representing official policies, either expressed or implied, of t
  * Portions Copyright © 2016-Present Pivotal Software, Inc.
  */
 
-#include "comm_channel.h"
-#include "misc.h"
-#include "comm_connectivity.h"
+#include "common/comm_channel.h"
+#include "common/comm_connectivity.h"
+#include "common/comm_dummy.h"
 #include "config.h"
+#include <string.h>
 
 
 static int message_start(plcConn *conn, char msgType);

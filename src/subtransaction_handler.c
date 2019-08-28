@@ -20,8 +20,9 @@
 
 #include "access/xact.h"
 
-#include "comm_channel.h"
-#include "subtransaction_handler.h"
+#include "common/comm_channel.h"
+#include "common/comm_dummy.h"
+#include "plc/subtransaction_handler.h"
 
 /* list of explicit subtransaction data */
 List *explicit_subtransactions;

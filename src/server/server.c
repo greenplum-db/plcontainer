@@ -6,16 +6,22 @@
  *------------------------------------------------------------------------------
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <netinet/ip.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <limits.h>
+#include <unistd.h>
 
-#include "comm_channel.h"
-#include "comm_connectivity.h"
-#include "messages/messages.h"
-#include "server.h"
+#include "common/comm_channel.h"
+#include "common/comm_connectivity.h"
+#include "common/comm_dummy.h"
+#include "common/messages/messages.h"
+#include "server/server.h"
 
 /*
  * Function binds the socket and starts listening on it: tcp

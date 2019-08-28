@@ -10,8 +10,8 @@
 
 #include <regex.h>
 
-#include "comm_connectivity.h"
-#include "plc_configuration.h"
+#include "common/comm_connectivity.h"
+#include "plc/plc_configuration.h"
 
 #define CONTAINER_CONNECT_TIMEOUT_MS 10000
 #define CONTAINER_ID_MAX_LENGTH 128

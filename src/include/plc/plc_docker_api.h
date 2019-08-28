@@ -9,7 +9,7 @@
 #ifndef PLC_DOCKER_API_H
 #define PLC_DOCKER_API_H
 
-#include "plc_configuration.h"
+#include "plc/plc_configuration.h"
 
 #define CURL_BUFFER_SIZE 8192
 

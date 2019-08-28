@@ -11,7 +11,7 @@
 
 #include "fmgr.h"
 #include <json-c/json.h>
-#include "plcontainer.h"
+#include "plc/plcontainer.h"
 
 #define PLC_PROPERTIES_FILE "plcontainer_configuration.xml"
 #define RUNTIME_ID_MAX_LENGTH 64

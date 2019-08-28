@@ -25,14 +25,15 @@
 #include <time.h>
 #include <libgen.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
-#include "misc.h"
-#include "comm_channel.h"
-#include "comm_connectivity.h"
-#include "messages/messages.h"
-#include "plc_configuration.h"
-#include "containers.h"
-#include "plc_backend_api.h"
+#include "common/comm_channel.h"
+#include "common/comm_connectivity.h"
+#include "common/comm_dummy.h"
+#include "common/messages/messages.h"
+#include "plc/plc_configuration.h"
+#include "plc/containers.h"
+#include "plc/plc_backend_api.h"
 
 
 

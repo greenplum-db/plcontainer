@@ -35,12 +35,12 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "misc.h"
-#include "comm_connectivity.h"
-#include "plcontainer.h"
-#include "plc_backend_api.h"
-#include "plc_docker_api.h"
-#include "plc_configuration.h"
+#include "common/comm_connectivity.h"
+#include "common/comm_dummy.h"
+#include "plc/plcontainer.h"
+#include "plc/plc_backend_api.h"
+#include "plc/plc_docker_api.h"
+#include "plc/plc_configuration.h"
 
 // we just want to avoid cleanup process to remove previous domain
 // socket file, so int32 is sufficient

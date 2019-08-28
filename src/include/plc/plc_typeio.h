@@ -13,8 +13,8 @@
 #include "postgres.h"
 #include "funcapi.h"
 
-#include "messages/messages.h"
-#include "plcontainer.h"
+#include "common/messages/messages.h"
+#include "plc/plcontainer.h"
 
 typedef struct plcTypeInfo plcTypeInfo;
 

@@ -10,7 +10,7 @@
 
 #include "postgres.h"
 
-#include "plc_configuration.h"
+#include "plc/plc_configuration.h"
 
 extern char backend_error_message[256];
 

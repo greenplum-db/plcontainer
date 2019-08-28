@@ -8,7 +8,7 @@
 #ifndef PLC_COMM_SERVER_H
 #define PLC_COMM_SERVER_H
 
-#include "comm_connectivity.h"
+#include "common/comm_connectivity.h"
 
 /*
   SERVER should be defined for standalone interpreters
@@ -26,9 +26,6 @@
 // Timeout in seconds for server to wait for client connection
 #define TIMEOUT_SEC 20
 
-
-
-
 void set_signal_handlers(void);
 
 int sanity_check_client(void);
@@ -40,5 +37,8 @@ void connection_wait(int sock);
 plcConn *connection_init(int sock);
 
 plcConn *start_server();
+
+// Global log level for server
+extern int server_log_level;
 
 #endif /* PLC_COMM_SERVER_H */

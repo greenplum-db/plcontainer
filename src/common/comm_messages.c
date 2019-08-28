@@ -30,10 +30,9 @@ interpreted as representing official policies, either expressed or implied, of t
  * Portions Copyright © 2016-Present Pivotal Software, Inc.
  */
 
-#include "misc.h"
-
-
-#include "messages/messages.h"
+#include <stddef.h>
+#include "common/comm_dummy.h"
+#include "common/messages/messages.h"
 
 /* Recursive function to free up the type structure */
 static void free_type(plcType *typArr) {

@@ -5,9 +5,9 @@
  *------------------------------------------------------------------------------
  */
 
-#include "plc_backend_api.h"
-#include "plc_docker_api.h"
-#include "misc.h"
+#include "common/comm_dummy.h"
+#include "plc/plc_backend_api.h"
+#include "plc/plc_docker_api.h"
 
 static PLC_FunctionEntriesData *CurrentBackend;
 

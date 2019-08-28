@@ -23,12 +23,10 @@
 #include "parser/parse_type.h"
 #include "access/xact.h"
 
-#include "misc.h"
-#include "comm_channel.h"
-#include "comm_connectivity.h"
-#include "plc_typeio.h"
-#include "sqlhandler.h"
-#include "subtransaction_handler.h"
+#include "common/comm_dummy.h"
+#include "plc/plc_typeio.h"
+#include "plc/sqlhandler.h"
+#include "plc/subtransaction_handler.h"
 
 static plcMsgResult *create_sql_result(bool isSelect);
 
@@ -411,5 +409,4 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcContext *ctx, plcProcInfo *pin
 
 	return result;
 }
-
 

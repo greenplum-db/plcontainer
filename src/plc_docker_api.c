@@ -11,9 +11,6 @@
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "libpq/libpq-be.h"
-#include "misc.h"
-#include "plc_docker_api.h"
-#include "plc_backend_api.h"
 #ifndef PLC_PG
   #include "cdb/cdbvars.h"
 #endif
@@ -21,6 +18,11 @@
 #include <pwd.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
+#include <unistd.h>
+
+#include "common/comm_dummy.h"
+#include "plc/plc_docker_api.h"
+#include "plc/plc_backend_api.h"
 
 // Default location of the Docker API unix socket
 static char *plc_docker_socket = "/var/run/docker.sock";

@@ -6,40 +6,14 @@
  *------------------------------------------------------------------------------
  */
 
-
-
-#include "misc.h"
-
-/*
- * This function is copied from is_log_level_output in elog.c
- */
-int
-is_write_log(int elevel, int log_min_level)
-{
-	if (elevel == LOG || elevel == COMMERROR)
-	{
-		if (log_min_level == LOG || log_min_level <= ERROR)
-			return 1;
-	}
-	else if (log_min_level == LOG)
-	{
-		/* elevel != LOG */
-		if (elevel >= FATAL)
-			return 1;
-	}
-	/* Neither is LOG */
-	else if (elevel >= log_min_level)
-		return 1;
-
-	return 0;
-}
-
-void *palloc(size_t size) {
-	void *addr = malloc(size);
-	if (addr == NULL)
-		plc_elog(ERROR, "Fail to allocate %ld bytes", (unsigned long) size);
-	return addr;
-}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <unistd.h>
+#include "common/comm_dummy.h"
 
 typedef void (*signal_handler)(int);
 

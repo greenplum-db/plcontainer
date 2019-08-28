@@ -33,8 +33,8 @@ interpreted as representing official policies, either expressed or implied, of t
 #ifndef PLC_COMM_CHANNEL_H
 #define PLC_COMM_CHANNEL_H
 
-#include "comm_connectivity.h"
-#include "messages/messages.h"
+#include "common/comm_connectivity.h"
+#include "common/messages/messages.h"
 
 #define channel_elog(...)  do{}while(0)
 

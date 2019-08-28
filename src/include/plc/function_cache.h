@@ -9,7 +9,7 @@
 #ifndef PLC_FUNCTION_CACHE_H
 #define PLC_FUNCTION_CACHE_H
 
-#include "message_fns.h"
+#include "plc/message_fns.h"
 
 #define PLC_FUNCTION_CACHE_SIZE 5
 

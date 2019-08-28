@@ -8,9 +8,19 @@
 #ifndef PLC_MESSAGE_BASE_H
 #define PLC_MESSAGE_BASE_H
 
-#include "misc.h"
+#ifndef bool
+typedef char bool;
+#endif
 
+#ifndef true
+#define true ((bool)1)
+#endif
 
+#ifndef false
+#define false ((bool)0)
+#endif
+
+#include <stdint.h>
 // TODO: change message type to one byte
 #define base_message_content unsigned short msgtype;
 

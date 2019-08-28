@@ -30,8 +30,8 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "postgres.h"
 #include "fmgr.h"
 
-#include "messages/messages.h"
-#include "plc_typeio.h"
+#include "common/messages/messages.h"
+#include "plc/plc_typeio.h"
 
 /* Structure representing function result data */
 typedef struct {

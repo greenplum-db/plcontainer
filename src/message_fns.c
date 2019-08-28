@@ -55,11 +55,11 @@ interpreted as representing official policies, either expressed or implied, of t
 #include "utils/guc.h"
 
 /* message and function definitions */
-#include "misc.h"
-#include "messages/messages.h"
-#include "message_fns.h"
-#include "function_cache.h"
-#include "plc_typeio.h"
+#include "common/comm_dummy.h"
+#include "common/messages/messages.h"
+#include "plc/message_fns.h"
+#include "plc/function_cache.h"
+#include "plc/plc_typeio.h"
 
 #ifdef PLC_PG
   #include "catalog/pg_type.h"
@@ -71,6 +71,19 @@ static bool plc_procedure_valid(plcProcInfo *proc, HeapTuple procTup);
 static bool plc_type_valid(plcTypeInfo *type);
 
 static void fill_callreq_arguments(FunctionCallInfo fcinfo, plcProcInfo *proc, plcMsgCallreq *req);
+
+void *top_palloc(size_t bytes) {
+	/* We need our allocations to be long-lived, so use TopMemoryContext */
+	return MemoryContextAlloc(TopMemoryContext, bytes);
+}
+
+char *plc_top_strdup(const char *str) {
+	int len = strlen(str);
+	char *out = top_palloc(len + 1);
+	memcpy(out, str, len);
+	out[len] = '\0';
+	return out;
+}
 
 plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 	int lenOfArgnames;
