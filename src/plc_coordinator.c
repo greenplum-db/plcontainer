@@ -7,7 +7,6 @@
 
 #include "postgres.h"
 #include <unistd.h>
-#include <utils/timeout.h>
 
 #include "access/tupdesc.h"
 #include "access/xact.h"
@@ -17,7 +16,6 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_type.h"
-#include "cdb/cdbvars.h"
 #include "commands/dbcommands.h"
 #include "commands/extension.h"
 #include "executor/spi.h"
@@ -41,8 +39,8 @@
 #include "utils/syscache.h"
 
 #include "common/base_network.h"
-#include "plc_coordinator.h"
-#include "plc_configuration.h"
+#include "plc/plc_configuration.h"
+#include "plc/plc_coordinator.h"
 
 PG_MODULE_MAGIC;
 // PROTOTYPE:
