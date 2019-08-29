@@ -37,6 +37,7 @@
 
 #include "common/comm_connectivity.h"
 #include "common/comm_dummy.h"
+#include "plc/message_fns.h"
 #include "plc/plcontainer.h"
 #include "plc/plc_backend_api.h"
 #include "plc/plc_docker_api.h"
@@ -65,20 +66,6 @@ PG_FUNCTION_INFO_V1(refresh_plcontainer_config);
 PG_FUNCTION_INFO_V1(show_plcontainer_config);
 
 HTAB *runtime_conf_table = NULL;
-
-/* TODO: REMOVE ME */
-void *top_palloc(size_t bytes) {
-	/* We need our allocations to be long-lived, so use TopMemoryContext */
-	return MemoryContextAlloc(TopMemoryContext, bytes);
-}
-
-char *plc_top_strdup(const char *str) {
-	int len = strlen(str);
-	char *out = top_palloc(len + 1);
-	memcpy(out, str, len);
-	out[len] = '\0';
-	return out;
-}
 
 /* Function parses the container XML definition and fills the passed
  * plcContainerConf structure that should be already allocated */
