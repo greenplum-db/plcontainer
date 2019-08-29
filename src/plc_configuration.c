@@ -46,8 +46,6 @@
 // socket file, so int32 is sufficient
 static int domain_socket_no = 0;
 
-static void init_runtime_configurations();
-
 static runtimeConfEntry *parse_runtime_configuration(HTAB *table, xmlNode *node);
 
 static void parse_root_runtime_configurations(HTAB *table, xmlNode *node);
@@ -536,7 +534,7 @@ HTAB *load_runtime_configuration() {
 		doc = xmlReadFile(filename, NULL, 0);
 		if (doc == NULL) {
 			plc_elog(ERROR, "Error: could not parse file %s, wrongly formatted XML or missing configuration file\n", filename);
-			return -1;
+			return NULL;
 		}
 
 		parse_root_runtime_configurations(table, xmlDocGetRootElement(doc));
