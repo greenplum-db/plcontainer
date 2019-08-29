@@ -21,6 +21,11 @@
 #include "libpq/libpq-be.h"
 #include "utils/acl.h"
 
+#include "funcapi.h"
+#include <json-c/json.h>
+#include "common/comm_dummy.h"
+#include "plc/plc_docker_api.h"
+
 PG_FUNCTION_INFO_V1(containers_summary);
 
 Datum
