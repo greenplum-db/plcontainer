@@ -66,6 +66,8 @@ Datum containers_summary(PG_FUNCTION_ARGS);
 runtimeConfEntry *plc_get_runtime_configuration(char *id);
 
 bool plc_check_user_privilege(char *users);
+int plc_refresh_container_config(bool verbose);
+
 
 char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_error, char **uds_dir);
 

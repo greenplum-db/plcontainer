@@ -40,6 +40,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
+#include "common/base_network.h"
 #include "plc_coordinator.h"
 
 PG_MODULE_MAGIC;
@@ -47,14 +48,13 @@ PG_MODULE_MAGIC;
 extern void _PG_init(void);
 extern void plc_coordinator_main(Datum datum);
 extern void plc_coordinator_aux_main(Datum datum);
-extern int plcListenServer(const char *network, const char *address);
 
 // END OF PROTOTYPES.
 
 static volatile sig_atomic_t got_sigterm = false;
 static volatile sig_atomic_t got_sighup = false;
 static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
-static MemoryContext *mCtx = NULL;
+
 CoordinatorStruct *coordinator_shm;
 
 static void
@@ -78,13 +78,13 @@ request_shmem_(void)
     shmem_startup_hook = plc_coordinator_shmem_startup;
 }
 static void
-plc_coordinator_sigterm(SIGNAL_ARGS)
+plc_coordinator_sigterm(pg_attribute_unused() SIGNAL_ARGS)
 {
     got_sigterm = true;
 }
 
 static void
-plc_coordinator_sighup(SIGNAL_ARGS)
+plc_coordinator_sighup(pg_attribute_unused() SIGNAL_ARGS)
 {
     got_sighup = true;
 }
@@ -126,7 +126,7 @@ plc_initialize_coordinator()
 
     auxWorker.bgw_notify_pid = 0;
     snprintf(auxWorker.bgw_name, sizeof(auxWorker.bgw_name), "plcoordinator_aux");
-    RegisterBackgroundWorker(&auxWorker);
+    RegisterDynamicBackgroundWorker(&auxWorker, NULL);
 
     return sock;
 }
@@ -134,6 +134,7 @@ void
 plc_coordinator_main(Datum datum)
 {
     int sock, rc;
+    (void)datum;
     pqsignal(SIGTERM, plc_coordinator_sigterm);
     pqsignal(SIGHUP, plc_coordinator_sighup);
     sock = plc_initialize_coordinator();
@@ -149,7 +150,7 @@ plc_coordinator_main(Datum datum)
             break;
         ResetLatch(&MyProc->procLatch);
         if (got_sighup) {
-            plc_refresh_container_config(false);
+            got_sighup = false;
         }
         /* TODO: Replace with coordinator logic here */
         sleep(2);
@@ -164,6 +165,7 @@ void
 plc_coordinator_aux_main(Datum datum)
 {
     int rc;
+    (void)datum;
     pqsignal(SIGTERM, plc_coordinator_sigterm);
     pqsignal(SIGHUP, SIG_IGN);
     BackgroundWorkerUnblockSignals();

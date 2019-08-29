@@ -9,7 +9,6 @@ EXTENSION = plcontainer
 
 # Directories
 SRCDIR = ./src
-COMMONDIR = ./src/common
 MGMTDIR = ./management
 PYCLIENTDIR = src/pyclient/bin
 RCLIENTDIR = src/rclient/bin
@@ -29,9 +28,11 @@ endif
 DATA_built = $(MGMTDIR)/sql/plcontainer_install.sql $(MGMTDIR)/sql/plcontainer_uninstall.sql
 
 # Files to build
+# TODO: clean docker out from plcontainer
 FILES = src/function_cache.c src/plc_backend_api.c src/plcontainer.c src/sqlhandler.c \
-        src/containers.c src/message_fns.c src/plc_configuration.c src/plc_docker_api.c src/plc_typeio.c src/subtransaction_handler.c \
-        src/common/comm_channel.c src/common/comm_connectivity.c src/common/comm_messages.c src/common/comm_dummy_plc.c
+        src/containers.c src/message_fns.c src/plc_configuration.c src/plc_docker_api.c \
+        src/plc_typeio.c src/subtransaction_handler.c \
+        src/common/base_network.c src/common/comm_channel.c src/common/comm_connectivity.c src/common/comm_messages.c src/common/comm_dummy_plc.c
 OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
 
 PGXS := $(shell pg_config --pgxs)
@@ -52,35 +53,6 @@ ifeq ($(PLCONTAINER_VERSION),)
 else
   ver = \#define PLCONTAINER_VERSION \"$(PLCONTAINER_VERSION)\"
   $(shell if [ ! -f src/common/config.h ] || [ "$(ver)" != "`cat src/common/config.h`" ]; then echo "$(ver)" > src/common/config.h; fi)
-endif
-
-# Curl
-CURL_CONFIG = $(shell which curl-config || echo no)
-ifneq ($(CURL_CONFIG),no)
-  CURL_VERSION  = $(shell $(CURL_CONFIG) --version | cut -d" " -f2)
-  VERSION_CHECK = $(shell expr $(CURL_VERSION) \>\= 7.40.0)
-  override CFLAGS += $(shell $(CURL_CONFIG) --cflags)
-  SHLIB_LINK = $(shell $(CURL_CONFIG) --libs)
-else
-  $(error curl-config is not found, please check libcurl installation.)
-endif
-
-#libxml
-LIBXML_CONFIG = $(shell which xml2-config || echo no)
-ifneq ($(LIBXML_CONFIG),no)
-  override CFLAGS += $(shell xml2-config --cflags)
-  override SHLIB_LINK += $(shell xml2-config --libs)
-else
-  $(error xml2-config is missing. Have you installed libxml? On RHEL/CENTOS you could install by runnning "yum install libxml2-devel" )
-endif
-
-#json-c
-LIBJSON = $(shell pkg-config --libs json-c || echo no)
-ifneq ($(LIBJSON),no)
-  override SHLIB_LINK += $(shell pkg-config --libs json-c)
-  override CFLAGS += $(shell pkg-config --cflags json-c)
-else
-  $(error libjson-c.so is missing. Have you installed json-c? On RHEL/CENTOS you could install by running "yum install json-c-devel" )
 endif
 
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
