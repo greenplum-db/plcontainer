@@ -60,6 +60,10 @@ INCLUDE_DIR = $(SRCDIR)/include
 
 override CFLAGS += -Werror -Wextra -Wall -Wno-sign-compare -I$(INCLUDE_DIR)
 
+override SHLIB_LINK += $(shell pkg-config --libs json-c)
+override SHLIB_LINK += $(shell xml2-config --libs)
+override SHLIB_LINK += $(shell curl-config --libs)
+
 ifeq ($(ENABLE_COVERAGE),yes)
   override CFLAGS += -coverage
   override SHLIB_LINK += -lgcov --coverage
