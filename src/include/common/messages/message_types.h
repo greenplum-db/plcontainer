@@ -10,6 +10,7 @@
 
 #define MT_CALLREQ        'C'
 #define MT_EXCEPTION      'E'
+#define MT_PLCID          'I'
 #define MT_LOG            'L'
 #define MT_QUOTE          'Q'
 #define MT_QUOTE_RESULT   'O'

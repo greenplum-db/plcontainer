@@ -41,6 +41,7 @@
 #include "common/base_network.h"
 #include "plc/plc_configuration.h"
 #include "plc/plc_coordinator.h"
+#include "common/comm_shm.h"
 
 PG_MODULE_MAGIC;
 // PROTOTYPE:

@@ -70,6 +70,7 @@ static int receive_udt(plcConn *conn, plcType *type, char **resdata);
 static int send_argument(plcConn *conn, plcArgument *arg);
 static int send_ping(plcConn *conn);
 static int send_call(plcConn *conn, plcMsgCallreq *call);
+static int send_plcid(plcConn *conn, plcMsgPLCId *id);
 static int send_result(plcConn *conn, plcMsgResult *res);
 static int send_log(plcConn *conn, plcMsgLog *mlog);
 static int send_quote(plcConn *conn, plcMsgQuote *mquote);
@@ -137,6 +138,9 @@ int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
 			break;
 		case MT_SUBTRANSACTION:
 			res = send_subtransaction(conn, (plcMsgSubtransaction *) msg);
+			break;
+		case MT_PLCID:
+			res = send_plcid(conn, (plcMsgPLCId *)msg);
 			break;
 		default:
 			plc_elog(ERROR, "UNHANDLED MESSAGE: '%c'", msg->msgtype);
@@ -935,6 +939,20 @@ static int send_rawmsg(plcConn *conn, plcMsgRaw *msg) {
 		res |= send_char(conn, msg->data[i]);
 	res |= message_end(conn);
 
+	return res;
+}
+
+static int send_plcid(plcConn *conn, plcMsgPLCId *mid) {
+	int res = 0;
+
+	channel_elog(WARNING, "Sending plc id to backend");
+	res |= message_start(conn, MT_PLCID);
+	res |= send_int32(conn, mid->sessionid);
+	res |= send_int32(conn, mid->pid);
+	res |= send_cstring(conn, mid->runtimeid);
+
+	res |= message_end(conn);
+	channel_elog(WARNING, "Finished sending plc id message");
 	return res;
 }
 

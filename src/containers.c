@@ -30,6 +30,7 @@
 #include "common/comm_channel.h"
 #include "common/comm_connectivity.h"
 #include "common/comm_dummy.h"
+#include "common/comm_shm.h"
 #include "common/messages/messages.h"
 #include "plc/plc_configuration.h"
 #include "plc/containers.h"
@@ -46,7 +47,7 @@ typedef struct {
 
 static container_t containers[MAX_CONTAINER_NUMBER];
 static int containers_size = 0;
-
+static CoordinatorStruct *coordinator_shm;
 static int check_runtime_id(const char *id);
 static char *get_coordinator_address(void);
 static int get_new_container_from_coordinator(const char *runtime_id, plcContext *ctx);
@@ -119,15 +120,27 @@ static int get_new_container_from_coordinator(const char *runtime_id, plcContext
 {
 	plcConn *conn; // a connection used to connect to coordinator
 	int ret = 0;
-	(void)runtime_id;
+	int res = 0;
 	(void)ctx;
-	conn = (plcConn*) palloc0(sizeof(plcConn));
+	plcMsgPLCId* mplc_id = palloc(sizeof(plcMsgPLCId));
+	mplc_id->msgtype = MT_PLCID;
+	mplc_id->sessionid = gp_session_id;
+	mplc_id->pid = getpid();
+	mplc_id->runtimeid = runtime_id;
 
+	conn = (plcConn*) palloc0(sizeof(plcConn));
+	plcConnInit(conn);
 	/* current only uds is supported */
 	conn->sock = plcDialToServer("unix", get_coordinator_address());
 
 	/* send message to coordinator */
-
+	res = plcontainer_channel_send(conn, (plcMessage *) mplc_id);
+	// TODO: response
+	if (res < 0) {
+		plc_elog(ERROR, "Error sending plc id to coordinator");
+		return -1;
+	}
+	pfree(mplc_id);
 	/* release the connection */
 	plcDisconnect(conn);
 
@@ -201,7 +214,11 @@ static int init_container_connection(plcContext *ctx)
 
 // TODO: read shm to get the address of coordinator
 static char *get_coordinator_address(void) {
-	return NULL;
+	bool found;
+	coordinator_shm = ShmemInitStruct(CO_SHM_KEY, MAXALIGN(sizeof(CoordinatorStruct)), &found);
+	Assert(found);
+	plc_elog(DEBUG1, "address of coordinator:%s\n", coordinator_shm->address);
+	return coordinator_shm->address;
 }
 
 void reset_containers() {

@@ -20,5 +20,6 @@
 #include "message_ping.h"
 #include "message_subtransaction.h"
 #include "message_quote.h"
+#include "message_plcid.h"
 
 #endif /* PLC_MESSAGES_H */
