@@ -1,5 +1,3 @@
-select count(*) from plcontainer_containers_summary();
-
 CREATE ROLE pluser;
 
 SET ROLE pluser;
@@ -12,11 +10,6 @@ $$ LANGUAGE plcontainer;
 SET ROLE gpadmin;
 
 SELECT pyconf();
-select count(*) from plcontainer_containers_summary();
-
-SET ROLE pluser;
-
-select count(*) from plcontainer_containers_summary();
 
 SET ROLE gpadmin;
 

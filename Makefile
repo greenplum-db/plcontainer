@@ -66,6 +66,7 @@ ifeq ($(ENABLE_COVERAGE),yes)
   override CLIENT_CFLAGS += -coverage -O0 -g
   override CLIENT_LDFLAGS += -lgcov --coverage
 else
+  override SHLIB_LINK += $(libpq) $(shell pkg-config --libs json-c)
   override CLIENT_CFLAGS += -O3 -g
 endif
 

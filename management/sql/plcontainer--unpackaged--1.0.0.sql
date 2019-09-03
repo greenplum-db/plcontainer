@@ -5,7 +5,6 @@ DROP VIEW IF EXISTS plcontainer_show_config;
 
 DROP FUNCTION IF EXISTS plcontainer_refresh_local_config(verbose bool);
 DROP FUNCTION IF EXISTS plcontainer_show_local_config();
-DROP FUNCTION IF EXISTS plcontainer_containers_summary();
 
 DROP TYPE IF EXISTS container_summary_type;
 
