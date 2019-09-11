@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package plcontainer;
+
+service PLContainer {
+    rpc FunctionCall(CallRequest) returns (CallResponse) {}
+}
+
+enum PlcRuntimeType {
+    PYTHON = 0;
+    R = 1;
+}
+
+message ProcSrc {
+    string src = 1;
+    string name = 2;
+}
+
+
+enum PlcDataType {
+    LOGICAL = 0;
+	INT = 1;
+	REAL = 2;
+	TEXT = 3;
+	BYTEA = 4;
+    COMPOSITE = 5;
+    ARRAY = 6;
+    SETOF = 7;    
+}
+
+message ScalarData {
+    PlcDataType     type = 1;
+    string      name = 2;
+    bool        isnull = 3;
+	bool        logicalValue = 4;
+	int32       intValue = 5;
+    double      realValue = 6;
+    string      stringValue = 7;
+	bytes       byteaValue = 8;
+}
+
+// udt/row
+message CompositeData {
+    string      name = 1;
+    repeated    ScalarData  values = 2;
+}
+
+message ArrayData {
+    string      name = 1;
+    PlcDataType     elementType = 2; 
+    repeated    ScalarData  values = 3;
+}
+
+message SetOfData {
+    string      name = 1;
+    repeated    string  columnNames = 2; 
+    repeated    PlcDataType columnTypes = 3;
+    repeated    CompositeData rowValues = 4;
+}
+
+message PlcValue {
+    PlcDataType         type = 1;
+	string          name = 2;
+    ScalarData      scalarValue = 3;
+    CompositeData   compositeValue = 4;
+    ArrayData       arrayValue = 5;
+    SetOfData       setofValue = 6;
+}
+
+message Error {
+    string message = 1;
+    string stacktrace = 2;
+}
+
+message CallRequest {
+    PlcRuntimeType  runtimeType= 1;
+    uint32      objectid = 2; 
+    int32       hasChanged = 3;
+    ProcSrc     proc = 4;
+    int32       logLevel = 5;
+    PlcDataType     retType = 6;
+    string      serverenc = 7;
+    repeated    PlcValue    args = 8;
+}
+
+message CallResponse {
+    PlcRuntimeType  runtimeType= 1;
+    repeated    PlcValue    results = 2;
+    Error       exception = 3;
+}

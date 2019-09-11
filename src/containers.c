@@ -112,6 +112,9 @@ static plcContext *get_new_container_ctx(const char *runtime_id)
 
 	res = init_container_connection(ctx);
 
+    // TODO
+    return ctx;
+
 	if (res != 0)
 	{
 		/* TODO: Using errors instead of elog */

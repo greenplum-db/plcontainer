@@ -34,6 +34,17 @@ FILES = src/function_cache.c src/plc_backend_api.c src/plcontainer.c src/sqlhand
         src/plc_typeio.c src/subtransaction_handler.c \
         src/common/base_network.c src/common/comm_channel.c src/common/comm_connectivity.c src/common/comm_messages.c src/common/comm_dummy_plc.c
 OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
+		
+CXX_FILES=src/proto/client.cc src/proto/plcontainer.pb.cc src/proto/plcontainer.grpc.pb.cc
+OBJS += $(foreach FILE,$(CXX_FILES),$(subst .cc,.o,$(FILE)))
+
+PROTO_PREFIX=plcontainer
+PROTO_FILE=$(PROTO_PREFIX).proto
+PROTO_CXX_FILES=src/proto/$(PROTO_PREFIX).pb.cc src/proto/$(PROTO_PREFIX).grpc.pb.cc
+
+PROTOC=protoc
+GRPC_CPP_PLUGIN=grpc_cpp_plugin
+GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
@@ -58,11 +69,32 @@ endif
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 INCLUDE_DIR = $(SRCDIR)/include
 
-override CFLAGS += -Werror -Wextra -Wall -Wno-sign-compare -I$(INCLUDE_DIR)
+override CFLAGS += -Werror -Wextra -Wall -Wno-sign-compare -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/proto
+override CFLAGS += $(shell xml2-config --cflags)
+
+CXXFLAGS += $(subst -fexcess-precision=standard,,$(subst -Wmissing-prototypes,,$(subst -std=gnu99,,$(CFLAGS)))) -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/proto
 
 override SHLIB_LINK += $(shell pkg-config --libs json-c)
 override SHLIB_LINK += $(shell xml2-config --libs)
 override SHLIB_LINK += $(shell curl-config --libs)
+
+HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
+SYSTEM ?= $(HOST_SYSTEM)
+CXX = g++
+#CPPFLAGS += `pkg-config --cflags protobuf grpc`
+CXXFLAGS += -std=c++11
+ifeq ($(SYSTEM),Darwin)
+#LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++`
+override SHLIB_LINK += -L/usr/local/lib -lprotobuf -lgrpc++\
+           -lgrpc++_reflection\
+           -ldl
+else
+#LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++`
+override SHLIB_LINK += -L/usr/local/lib -lprotobuf -lgrpc++\
+           -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
+           -ldl
+endif
+
 
 ifeq ($(ENABLE_COVERAGE),yes)
   override CFLAGS += -coverage
@@ -74,12 +106,13 @@ else
   override CLIENT_CFLAGS += -O3 -g
 endif
 
-all: all-lib
+all: proto all-lib
 	@echo "Build PL/Container Done."
+
 
 install: all installdirs install-lib install-extra install-clients
 
-clean: clean-clients clean-coverage
+clean: clean-clients clean-coverage clean-proto
 distclean: distclean-config
 
 installdirs: installdirs-lib
@@ -89,6 +122,21 @@ installdirs: installdirs-lib
 uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(bindir)/plcontainer'
 	rm -rf '$(PLCONTAINERDIR)'
+
+.PHONY: proto
+proto:
+	@echo "Generating protobuf and grpc files."
+	$(PROTOC) -I src --grpc_out=src/proto --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH) $(PROTO_FILE)
+	$(PROTOC) -I src --cpp_out=src/proto $(PROTO_FILE)
+	mv src/proto/$(PROTO_PREFIX).pb.h src/include/proto/	
+	mv src/proto/$(PROTO_PREFIX).grpc.pb.h src/include/proto/	
+
+.PHONY: clean-proto
+clean-proto:
+	rm -f src/include/proto/$(PROTO_PREFIX).pb.h 
+	rm -f src/include/proto/$(PROTO_PREFIX).grpc.pb.h 
+	rm -f src/proto/$(PROTO_PREFIX).pb.cc 
+	rm -f src/proto/$(PROTO_PREFIX).grpc.pb.cc 
 
 .PHONY: install-extra
 install-extra: installdirs
@@ -100,7 +148,7 @@ install-extra: installdirs
 .PHONY: install-clients
 install-clients:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)/plcontainer_clients'
-	cp $(PYCLIENTDIR)/* $(DESTDIR)$(bindir)/plcontainer_clients/
+	#cp $(PYCLIENTDIR)/* $(DESTDIR)$(bindir)/plcontainer_clients/
 	cp $(RCLIENTDIR)/*  $(DESTDIR)$(bindir)/plcontainer_clients/
 
 .PHONY: installcheck
@@ -109,7 +157,7 @@ installcheck:
 
 .PHONY: build-clients
 build-clients:
-	CC='$(CC)' CFLAGS='$(CLIENT_CFLAGS)' LDFLAGS='$(CLIENT_LDFLAGS)' $(MAKE) -C $(SRCDIR)/pyclient all
+	#CC='$(CC)' CFLAGS='$(CLIENT_CFLAGS)' LDFLAGS='$(CLIENT_LDFLAGS)' $(MAKE) -C $(SRCDIR)/pyclient all
 	CC='$(CC)' CFLAGS='$(CLIENT_CFLAGS)' LDFLAGS='$(CLIENT_LDFLAGS)' $(MAKE) -C $(SRCDIR)/rclient all
 
 .PHONY: clean-clients
