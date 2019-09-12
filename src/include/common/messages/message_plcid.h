@@ -11,10 +11,16 @@
 #include "message_base.h"
 
 typedef struct plcMsgPLCId {
-    base_message_content;
-    int sessionid;
-    int pid;
-    char *runtimeid;
+	base_message_content;
+	int sessionid;
+	int pid;
+	int ccnt;
+	char *runtimeid;
 } plcMsgPLCId;
 
+typedef struct plcMsgContainer {
+	base_message_content;
+	int status;
+	char *msg;
+} plcMsgContainer;
 #endif /* PLC_MESSAGE_PLCID_H */

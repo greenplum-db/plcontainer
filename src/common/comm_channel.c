@@ -84,6 +84,7 @@ static int send_sql_prepare(plcConn *conn, plcMsgSQL *msg);
 static int send_sql_unprepare(plcConn *conn, plcMsgSQL *msg);
 static int send_sql_pexecute(plcConn *conn, plcMsgSQL *msg);
 static int send_rawmsg(plcConn *conn, plcMsgRaw *msg);
+static int send_plccontainer(plcConn *conn, plcMsgContainer *mcontainer);
 static int receive_exception(plcConn *conn, plcMessage **mExc);
 static int receive_result(plcConn *conn, plcMessage **mRes);
 static int receive_log(plcConn *conn, plcMessage **mLog);
@@ -99,6 +100,8 @@ static int receive_ping(plcConn *conn, plcMessage **mPing);
 static int receive_call(plcConn *conn, plcMessage **mCall);
 static int receive_sql(plcConn *conn, plcMessage **mSql);
 static int receive_rawmsg(plcConn *conn, plcMessage **mRaw);
+static int receive_plcid(plcConn *conn, plcMessage **mPlcId);
+static int receive_plc_container(plcConn *conn, plcMessage **mContainer);
 
 /* Public API Functions */
 
@@ -142,6 +145,9 @@ int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
 		case MT_PLCID:
 			res = send_plcid(conn, (plcMsgPLCId *)msg);
 			break;
+		case MT_PLC_CONTAINER:
+			res = send_plccontainer(conn, (plcMsgContainer*)msg);
+			break;
 		default:
 			plc_elog(ERROR, "UNHANDLED MESSAGE: '%c'", msg->msgtype);
 			res = -1;
@@ -158,7 +164,7 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64_t mask) {
 	conn->rx_timeout_sec = 0x7fffFFFF; /* Wait for ever at this moment */
 	res = receive_message_type(conn, &cType);
 	conn->rx_timeout_sec = 10;
-	plc_elog(DEBUG1, "start to receive data, type is %c", cType);
+	plc_elog(DEBUG1, "start to receive data, type is %c, res is %d", cType, res);
 	if (res >= 0) {
 		switch (cType) {
 			case MT_PING:
@@ -215,6 +221,16 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64_t mask) {
 				if (!(mask & MT_SUBTRAN_RESULT_BIT))
 					goto unexpected_type;
 				res = receive_subtransaction_result(conn, msg);
+				break;
+			case MT_PLCID:
+				if (!(mask & MT_PLCID_BIT))
+					goto unexpected_type;
+				res = receive_plcid(conn, msg);
+				break;
+			case MT_PLC_CONTAINER:
+				if (!(mask & MT_PLC_CONTAINER_BIT))
+					goto unexpected_type;
+				res = receive_plc_container(conn, msg);
 				break;
 			default:
 				plc_elog(ERROR, "unknown message type: %d / '%c'", (int) cType, cType);
@@ -949,13 +965,24 @@ static int send_plcid(plcConn *conn, plcMsgPLCId *mid) {
 	res |= message_start(conn, MT_PLCID);
 	res |= send_int32(conn, mid->sessionid);
 	res |= send_int32(conn, mid->pid);
+	res |= send_int32(conn, mid->ccnt);
 	res |= send_cstring(conn, mid->runtimeid);
 
 	res |= message_end(conn);
 	channel_elog(WARNING, "Finished sending plc id message");
 	return res;
 }
+static int send_plccontainer(plcConn *conn, plcMsgContainer *mcontainer) {
+	int res = 0;
 
+	channel_elog(WARNING, "Sending plc container to backend");
+	res |= message_start(conn, MT_PLC_CONTAINER);
+	res |= send_int32(conn, mcontainer->status);
+	res |= send_cstring(conn, mcontainer->msg);
+	res |= message_end(conn);
+	channel_elog(WARNING, "Finished sending plc container message");
+	return res;
+}
 /* Receive Functions for the Main Engine */
 
 static int receive_exception(plcConn *conn, plcMessage **mExc) {
@@ -1327,4 +1354,34 @@ void fill_prepare_argument(plcArgument *arg, char *str, plcDatatype plcData) {
 	arg->name = NULL;
 	arg->data.isnull = 1;
 	arg->data.value = NULL;
+}
+
+static int receive_plcid(plcConn *conn, plcMessage **mPlcId) {
+	int res = 0;
+	plcMsgPLCId *ret;
+
+	channel_elog(WARNING, "Receiving plc id message");
+	*mPlcId = palloc(sizeof(plcMsgPLCId));
+	ret = (plcMsgPLCId *) *mPlcId;
+	ret->msgtype = MT_PLCID;
+	res |= receive_int32(conn, &(ret->sessionid));
+	res |= receive_int32(conn, &(ret->pid));
+	res |= receive_int32(conn, &(ret->ccnt));
+	res |= receive_cstring(conn, &(ret->runtimeid));
+	channel_elog(WARNING, "Finished receiving id message");
+	return res;
+}
+
+static int receive_plc_container(plcConn *conn, plcMessage **mContainer) {
+	int res = 0;
+	plcMsgContainer *ret;
+
+	channel_elog(WARNING, "Receiving plc container message");
+	*mContainer = palloc(sizeof(plcMsgContainer));
+	ret = (plcMsgContainer *) *mContainer;
+	ret->msgtype = MT_PLC_CONTAINER;
+	res |= receive_int32(conn, &(ret->status));
+	res |= receive_cstring(conn, &(ret->msg));
+	channel_elog(WARNING, "Finished receiving container message");
+	return res;
 }

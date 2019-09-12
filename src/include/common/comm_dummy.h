@@ -35,6 +35,7 @@
 extern char *pstrdup(const char *str);
 extern void pfree(void *ptr);
 extern void *palloc(size_t size);
+extern void *txn_palloc(size_t size);
 
 extern void plc_elog(int log_level, const char *format, ...);
 

@@ -17,7 +17,7 @@ override SHLIB_LINK += $(shell xml2-config --libs)
 override SHLIB_LINK += $(shell curl-config --libs)
 
 INCLUDE_DIR = include
-override CFLAGS += -I$(INCLUDE_DIR) -Wall -Wextra -g -O3
+override CFLAGS += -std=gnu99 -I$(INCLUDE_DIR) -Wall -Wextra -g3 -O0 -ggdb
 
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)

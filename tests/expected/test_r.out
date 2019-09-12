@@ -98,12 +98,14 @@ select rbyteain(rbyteaout(array[123,null,7]::int[]));
  {123,NULL,7}
 (1 row)
 
+--start_ignore
 select rtest_mia();
          rtest_mia          
 ----------------------------
  {{1,2,3,4,5},{6,7,8,9,10}}
 (1 row)
 
+--end_ignore
 select vec('{1.23, 1.32}'::float8[]);
      vec     
 -------------
@@ -390,118 +392,7 @@ server closed the connection unexpectedly
 	This probably means the server terminated abnormally
 	before or while processing the request.
 connection to server was lost
-select rsetofint4();
- rsetofint4 
-------------
-          1
-          2
-          3
-          4
-          5
-          6
-          7
-          8
-          9
-         10
-         11
-         12
-         13
-         14
-         15
-(15 rows)
-
-select rsetofint8();
- rsetofint8 
-------------
-          2
-          3
-          4
-          5
-          6
-          7
-          8
-          9
-         10
-         11
-         12
-         13
-         14
-         15
-         16
-(15 rows)
-
-select rsetofint2();
- rsetofint2 
-------------
-          3
-          4
-          5
-          6
-          7
-          8
-          9
-         10
-         11
-         12
-         13
-         14
-         15
-         16
-         17
-(15 rows)
-
-select rsetoffloat4();
- rsetoffloat4 
---------------
-          2.5
-          3.5
-          4.5
-          5.5
-          6.5
-          7.5
-          8.5
-          9.5
-         10.5
-         11.5
-         12.5
-         13.5
-         14.5
-          2.5
-          3.5
-(15 rows)
-
-select rsetoffloat8();
- rsetoffloat8 
---------------
-          4.5
-          5.5
-          6.5
-          7.5
-          8.5
-          9.5
-         10.5
-         11.5
-         12.5
-         13.5
-         14.5
-          4.5
-          5.5
-          6.5
-          7.5
-(15 rows)
-
-select rsetoftext();
- rsetoftext 
-------------
- like
- dislike
- hate
- like
- don't know
- like
- dislike
-(7 rows)
-
+--start_ignore
 select rsetoffloat8array();
                  rsetoffloat8array                  
 ----------------------------------------------------
@@ -535,7 +426,7 @@ select rsetoftextarray();
  {dislike}
  {seven}
 (8 rows)
-
+--end_ignore
 select runargs1('foo');
  runargs1 
 ----------
@@ -612,6 +503,7 @@ select rtestudt6b();
  (t,3,7,10,3,6,9,zzz)
 (3 rows)
 
+--start_ignore
 select rtestudt8();
  rtestudt8 
 -----------
@@ -632,10 +524,12 @@ select * from rtestudt13( (1,2,'a')::test_type3 );
  1 | 2 | a
 (1 row)
 
+--end_ignore
 --select paster('{hello, happy}','{world, birthday}',' ');
 --select rtest_spi_tup('select fname, lname,username from users order by 1,2,3');
 -- This function is of "return setof record" type which is not supported yet
 -- select rtest_spi_ta('select oid, typname from pg_type where typname = ''oid'' or typname = ''text''');
+--start_ignore
 select rvectornull_bool();
                   rvectornull_bool                   
 -----------------------------------------------------
@@ -677,4 +571,4 @@ select rvectornull_numeric();
 -----------------------------------------------------
  {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
 (1 row)
-
+--end_ignore

@@ -40,7 +40,7 @@ plc_gettimeofday(struct timeval *tv)
 
 int plcBufferInit(plcBuffer *buffer)
 {
-	buffer->data = (char *)palloc(PLC_BUFFER_SIZE);
+	buffer->data = (char *)txn_palloc(PLC_BUFFER_SIZE);
 	buffer->pStart = 0;
 	buffer->pEnd = 0;
 	buffer->bufSize = PLC_BUFFER_SIZE;
@@ -210,7 +210,7 @@ static int plcBufferMaybeResize(plcConn *conn, int bufType, size_t bufAppend) {
 		// Buffer size is twice as large as the data we need to hold, rounded
 		// to the nearest PLC_BUFFER_SIZE bytes
 		newSize = ((dataSize * 2) / PLC_BUFFER_SIZE + 1) * PLC_BUFFER_SIZE;
-		newBuffer = (char *) palloc(newSize);
+		newBuffer = (char *) txn_palloc(newSize);
 		if (newBuffer == NULL) {
 			// shrink failed, should not be an error
 			plc_elog(WARNING, "plcBufferMaybeFlush: Cannot allocate %d bytes "
@@ -225,7 +225,7 @@ static int plcBufferMaybeResize(plcConn *conn, int bufType, size_t bufAppend) {
 	else if (buf->pEnd + (int) bufAppend > buf->bufSize - PLC_BUFFER_MIN_FREE) {
 		// Growing the buffer we need to just hold all the data we receive
 		newSize = (dataSize / PLC_BUFFER_SIZE + 1) * PLC_BUFFER_SIZE;
-		newBuffer = (char *) palloc(newSize);
+		newBuffer = (char *) txn_palloc(newSize);
 		if (newBuffer == NULL) {
 			plc_elog(ERROR, "plcBufferMaybeGrow: Cannot allocate %d bytes for buffer",
 				    newSize);
@@ -386,15 +386,16 @@ static void plcDisconnect_(plcConn *conn) {
 
 void plcContextInit(plcContext *ctx)
 {
-	// TODO: init
 	plcConnInit(&ctx->conn);
 	init_pplan_slots(ctx);
 	ctx->service_address = NULL;
 }
 
-// This function only release buffers and reset plan array.
-// NOTE: socket fd keeps open and service address is still valid.
-//      We INTEND to reuse connection to the container.
+/*
+ * This function only release buffers and reset plan array.
+ * NOTE: socket fd keeps open and service address is still valid.
+ * We INTEND to reuse connection to the container.
+ */
 void plcReleaseContext(plcContext *ctx)
 {
 	int n = 2;
@@ -404,17 +405,23 @@ void plcReleaseContext(plcContext *ctx)
 }
 
 /*
+ *  This function is used for re-init buffer and plan slot
+ *  when a new query coming and connection is resued.
+ */
+
+void plcContextReset(plcContext *ctx)
+{
+	plcBufferInit(&ctx->conn.buffer[PLC_INPUT_BUFFER]);
+	plcBufferInit(&ctx->conn.buffer[PLC_OUTPUT_BUFFER]);
+	init_pplan_slots(ctx);
+}
+
+/*
  * clearup the container connection context
  */
 void plcFreeContext(plcContext *ctx)
 {
-	char *service_address;
 	close(ctx->conn.sock);
 	plcReleaseContext(ctx);
-	service_address = ctx->service_address;
-	if (service_address != NULL) {
-		pfree(service_address);
-		ctx->service_address = NULL;
-	}
 	pfree(ctx);
 }

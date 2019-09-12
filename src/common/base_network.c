@@ -192,7 +192,7 @@ static int DialTCP(const char *network, const char *address)
 static int DialUnix(const char *network, const char *address)
 {
     struct sockaddr_un sockaddr;
-    int fd, sotype;
+    int fd, sotype, res;
     socklen_t socklen;
     if (!network || !address) {
         plc_elog(ERROR, "null network or address");
@@ -222,9 +222,16 @@ static int DialUnix(const char *network, const char *address)
     sockaddr.sun_family = AF_UNIX;
     strcpy(sockaddr.sun_path, address);
     socklen = sizeof(sockaddr);
-    if (connect(fd, (const struct sockaddr*)&sockaddr, socklen)) {
-        plc_elog(ERROR, "connect error(%s)", strerror(errno));
-        goto out;
+	res = connect(fd, (const struct sockaddr*)&sockaddr, socklen);
+    if (res == -1) {
+		/* Server maynot ready during this time, we should not return error at this stage */
+		if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK || errno == ECONNREFUSED
+		|| errno == ECONNRESET || errno == ENOENT) {
+			return 0;
+		} else {
+			plc_elog(ERROR, "connect error(%s)", strerror(errno));
+			goto out;
+		}
     }
     return fd;
 

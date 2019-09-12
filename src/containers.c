@@ -35,6 +35,7 @@
 #include "plc/plc_configuration.h"
 #include "plc/containers.h"
 #include "plc/plc_backend_api.h"
+#include "plc/message_fns.h"
 
 
 
@@ -70,10 +71,15 @@ plcContext *get_container_context(const char *runtime_id)
 	SIMPLE_FAULT_INJECTOR("plcontainer_before_container_connected");
 #endif
 	for (i = 0; i < containers_size; i++)
+	{
 		if (strcmp(containers[i].runtimeid, runtime_id) == 0)
+		{
+			/* Re-init data buffer and plan slot */
+			plcContextReset(containers[i].ctx);
 			return containers[i].ctx;
+		}
+	}
 
-	i = containers_size+1;
 	/* No connection available */
 	if (i >= MAX_CONTAINER_NUMBER)
 		plc_elog(ERROR, "too many plcontainer runtime in a session");
@@ -81,7 +87,8 @@ plcContext *get_container_context(const char *runtime_id)
 	/* Container Context could not be NULL, otherwise an elog(ERROR) will be thrown out */
 	newCtx = get_new_container_ctx(runtime_id);
 
-	insert_container_ctx(runtime_id, newCtx, i);
+	/* The id is start from 0, so using containers_size as its index */
+	insert_container_ctx(runtime_id, newCtx, containers_size);
 	containers_size++;
 	return newCtx;
 }
@@ -93,7 +100,7 @@ static plcContext *get_new_container_ctx(const char *runtime_id)
 	int res = 0;
 
 	/* TODO: the initialize refactor? */
-	ctx = (plcContext*) palloc0(sizeof(plcContext));
+	ctx = (plcContext*) top_palloc(sizeof(plcContext));
 	plcContextInit(ctx);
 
 	res = get_new_container_from_coordinator(runtime_id, ctx);
@@ -121,12 +128,13 @@ static int get_new_container_from_coordinator(const char *runtime_id, plcContext
 	plcConn *conn; // a connection used to connect to coordinator
 	int ret = 0;
 	int res = 0;
-	(void)ctx;
+
 	plcMsgPLCId* mplc_id = palloc(sizeof(plcMsgPLCId));
 	mplc_id->msgtype = MT_PLCID;
 	mplc_id->sessionid = gp_session_id;
 	mplc_id->pid = getpid();
-	mplc_id->runtimeid = runtime_id;
+	mplc_id->ccnt = gp_command_count;
+	mplc_id->runtimeid = pstrdup(runtime_id);
 
 	conn = (plcConn*) palloc0(sizeof(plcConn));
 	plcConnInit(conn);
@@ -140,6 +148,21 @@ static int get_new_container_from_coordinator(const char *runtime_id, plcContext
 		plc_elog(ERROR, "Error sending plc id to coordinator");
 		return -1;
 	}
+	plcMessage *answer;
+	res = plcontainer_channel_receive(conn, &answer, MT_PLC_CONTAINER_BIT);
+	if (res < 0) {
+		plc_elog(ERROR, "Error receiving container message from coordinator");
+		return -1;
+	}
+	plcMsgContainer *mContainer = (plcMsgContainer *) answer;
+	if (mContainer->status != 0)
+	{
+		plc_elog(ERROR, "Could not create new connection, reason %s", mContainer->msg);
+		return -1;
+	} else {
+		ctx->service_address = mContainer->msg;
+	}
+
 	pfree(mplc_id);
 	/* release the connection */
 	plcDisconnect(conn);
@@ -154,6 +177,7 @@ static int init_container_connection(plcContext *ctx)
 {
 	plcMsgPing *mping = NULL;
 	plcConn *conn = (plcConn *)ctx;
+
 	unsigned int sleepus = 25000;
 	unsigned int sleepms = 0;
 
@@ -163,45 +187,49 @@ static int init_container_connection(plcContext *ctx)
 	while (sleepms < CONTAINER_CONNECT_TIMEOUT_MS) {
 		int res = 0;
 		plcMessage *mresp = NULL;
-
-		res = plcontainer_channel_send(conn, (plcMessage *) mping);
-		if (res == 0)
-		{
-			res = plcontainer_channel_receive(conn, &mresp, MT_PING_BIT);
-			if (mresp != NULL)
-				pfree(mresp);
-
+		conn->sock = plcDialToServer("unix", ctx->service_address);
+		if (conn->sock > 0) {
+			res = plcontainer_channel_send(conn, (plcMessage *) mping);
 			if (res == 0)
 			{
-				pfree(mping);
-				return 0;
+				res = plcontainer_channel_receive(conn, &mresp, MT_PING_BIT);
+				if (mresp != NULL)
+					pfree(mresp);
+
+				if (res == 0)
+				{
+					pfree(mping);
+					return 0;
+				}
+				else
+				{
+					plc_elog(DEBUG1, "Failed to receive pong from client.");
+				}
+			} else {
+				plc_elog(DEBUG1, "Failed to send ping to client.");
 			}
-			else
-			{
-				plc_elog(DEBUG1, "Failed to receive pong from client.");
-			}
-		} else {
-			plc_elog(DEBUG1, "Failed to send ping to client.");
+		} else if (conn->sock == -1) {
+			return -1;
 		}
 
-			/*
-			 * Note about the plcDisconnect(conn) code above:
-			 *
-			 * We saw the case that connection() + send() are ok, but rx
-			 * fails with "reset by peer" while the client program has not started
-			 * listen()-ing. That happens with the docker bridging + NAT network
-			 * solution when the QE connects via the lo interface (i.e. 127.0.0.1).
-			 * We did not try other solutions like macvlan, etc yet. It appears
-			 * that this is caused by the docker proxy program. We could work
-			 * around this by setting docker userland-proxy as false or connecting via
-			 * non-localhost on QE, however to make our code tolerate various
-			 * configurations, we allow reconnect here since that does not seemi
-			 * to harm the normal case although since client will just accept()
-			 * the tcp connection once reconnect should never happen.
-			 */
+		/*
+		 * Note about the plcDisconnect(conn) code above:
+		 *
+		 * We saw the case that connection() + send() are ok, but rx
+		 * fails with "reset by peer" while the client program has not started
+		 * listen()-ing. That happens with the docker bridging + NAT network
+		 * solution when the QE connects via the lo interface (i.e. 127.0.0.1).
+		 * We did not try other solutions like macvlan, etc yet. It appears
+		 * that this is caused by the docker proxy program. We could work
+		 * around this by setting docker userland-proxy as false or connecting via
+		 * non-localhost on QE, however to make our code tolerate various
+		 * configurations, we allow reconnect here since that does not seemi
+		 * to harm the normal case although since client will just accept()
+		 * the tcp connection once reconnect should never happen.
+		 */
 
 
-		/* TODO: using pg_sleep()? */
+		/* TODO: using waitlatch()? */
 		usleep(sleepus);
 		plc_elog(DEBUG1, "Waiting for %u ms for before reconnecting", sleepus / 1000);
 		sleepms += sleepus / 1000;

@@ -1,75 +1,75 @@
 CREATE OR REPLACE FUNCTION runtime_id_cr() RETURNS int8 AS $$
 # container:
-plc_python_shared
-return 1
+plc_r_shared
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_no_name() RETURNS int8 AS $$
 # container:
-return 1
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_no_hash() RETURNS int8 AS $$
 container:
-return 1
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_lots_space() RETURNS int8 AS $$
-	  # container 	:  	 plc_python_shared  
-return 1
+	  # container 	:  	 plc_r_shared  
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_too_long() RETURNS int8 AS $$
-          #container: plc_python_shared_toooooooooooooooooooooooooooooooooooooooooooooooooooooooo_long
-return 1
+          #container: plc_r_shared_toooooooooooooooooooooooooooooooooooooooooooooooooooooooo_long
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_blank_line() RETURNS int8 AS $$
 
-return 1
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_wrong_start() RETURNS int8 AS $$
-# extra_container: plc_python_shared
-return 1
+# extra_container: plc_r_shared
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_extra_char() RETURNS int8 AS $$
-# container_extra: plc_python_shared
-return 1
+# container_extra: plc_r_shared
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_space_inner() RETURNS int8 AS $$
-# container: plc_python_  shared
-return 1
+# container: plc_r_  shared
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_space_in_container() RETURNS int8 AS $$
-# cont  ainer: plc_python_shared
-return 1
+# cont  ainer: plc_r_shared
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_wrong_char() RETURNS int8 AS $$
-# container: plc_#python#_shared
-return 1
+# container: plc_#r#_shared
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_no_id() RETURNS int8 AS $$
-return 1
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_no_colon() RETURNS int8 AS $$
-# container plc_python_shared
-return 1
+# container plc_r_shared
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_no_space() RETURNS int8 AS $$
-#container:plc_python_shared
-return 1
+#container:plc_r_shared
+return (1)
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_no_cr() RETURNS int8 AS $$
-#container:plc_python_shared $$ LANGUAGE plcontainer;
+#container:plc_r_shared $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION runtime_id_blank() RETURNS int8 AS $$
 #container:  	$$ LANGUAGE plcontainer;

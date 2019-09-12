@@ -10,7 +10,11 @@ select rtestudt4( array[
 select rtestudt5(null::test_type4[]);
 select rtestudt5(array[null]::test_type4[]);
 select rtestudt7();
+--start_ignore
 select rtestudt9();
+--end_ignore
 select rtestudt10();
 select * from unnest(rtestudt14( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] ));
+--start_ignore
 select * from rtestudt15( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] );
+--end_ignore

@@ -33,6 +33,7 @@ select rtestudt7();
  {"(1,2,foo)","(3,4,bar)"}
 (1 row)
 
+--start_ignore
 select rtestudt9();
          rtestudt9         
 ---------------------------
@@ -40,6 +41,7 @@ select rtestudt9();
  {"(5,6,buz)","(7,8,zzz)"}
 (2 rows)
 
+--end_ignore
 select rtestudt10();
                             rtestudt10                             
 -------------------------------------------------------------------
@@ -54,6 +56,7 @@ select * from unnest(rtestudt14( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_ty
  3 | 3 | c
 (3 rows)
 
+--start_ignore
 select * from rtestudt15( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] );
  a | b | c 
 ---+---+---
@@ -62,3 +65,4 @@ select * from rtestudt15( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] )
  3 | 3 | c
 (3 rows)
 
+--end_ignore

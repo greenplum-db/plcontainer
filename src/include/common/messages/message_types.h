@@ -11,6 +11,7 @@
 #define MT_CALLREQ        'C'
 #define MT_EXCEPTION      'E'
 #define MT_PLCID          'I'
+#define MT_PLC_CONTAINER  'A'
 #define MT_LOG            'L'
 #define MT_QUOTE          'Q'
 #define MT_QUOTE_RESULT   'O'
@@ -40,6 +41,8 @@
 #define MT_EOF_BIT            0x1000LL
 #define MT_QUOTE_BIT          0x2000LL
 #define MT_QUOTE_RESULT_BIT   0x4000LL
+#define MT_PLCID_BIT		  0x8000LL
+#define MT_PLC_CONTAINER_BIT  0x10000LL
 
 #define MT_ALL_BITS        0xFFFFffffFFFFffffLL
 

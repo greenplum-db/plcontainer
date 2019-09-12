@@ -1,6 +1,7 @@
 #include <stdarg.h>
 #include "postgres.h"
 #include "lib/stringinfo.h"
+#include "utils/memutils.h"
 #include "common/comm_dummy.h"
 
 extern void plc_elog(int log_level, const char *format, ...) pg_attribute_printf(2,3);
@@ -22,4 +23,12 @@ void plc_elog(int log_level, const char *format, ...)
 	}
 	elog(log_level, "%s", buf.data);
 	pfree(buf.data);
+}
+
+void *txn_palloc(size_t size) {
+	/* Allocat memory to live in the transcation level */
+	if (TopTransactionContext != NULL)
+		return MemoryContextAlloc(TopTransactionContext, size);
+	else
+		return MemoryContextAlloc(CurrentMemoryContext, size);
 }

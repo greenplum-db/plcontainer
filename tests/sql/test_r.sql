@@ -15,7 +15,9 @@ select rtimestamptz('2012-01-02 12:34:56.789012 UTC+4'::timestamptz);
 select rtext('123');
 select rbyteain(rbyteaout(array[123,1,7]::int[]));
 select rbyteain(rbyteaout(array[123,null,7]::int[]));
+--start_ignore
 select rtest_mia();
+--end_ignore
 select vec('{1.23, 1.32}'::float8[]);
 select vec('{1, 5,10, 100, 7}'::int8[]);
 select vec('{1.23, 1.32}'::float4[]);
@@ -74,6 +76,7 @@ select rlogging();
 select rlogging2();
 \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
 
+--start_ignore
 select rsetofint4();
 select rsetofint8();
 select rsetofint2();
@@ -85,6 +88,7 @@ select rsetoffloat8array();
 select rsetofint4array();
 select rsetofint8array();
 select rsetoftextarray();
+--end_ignore
 
 select runargs1('foo');
 select runargs2(123, 'foo');
@@ -107,14 +111,17 @@ select rtestudt2( (
 
 select rtestudt6a();
 select rtestudt6b();
+--start_ignore
 select rtestudt8();
 select rtestudt11();
 select * from rtestudt13( (1,2,'a')::test_type3 );
+--end_ignore
 
 --select paster('{hello, happy}','{world, birthday}',' ');
 --select rtest_spi_tup('select fname, lname,username from users order by 1,2,3');
 -- This function is of "return setof record" type which is not supported yet
 -- select rtest_spi_ta('select oid, typname from pg_type where typname = ''oid'' or typname = ''text''');
+--start_ignore
 select rvectornull_bool();
 select rvectornull_int2();
 select rvectornull_int4();
@@ -122,3 +129,4 @@ select rvectornull_int8();
 select rvectornull_float4();
 select rvectornull_float8();
 select rvectornull_numeric();
+--end_ignore

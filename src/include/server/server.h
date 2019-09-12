@@ -30,13 +30,13 @@ void set_signal_handlers(void);
 
 int sanity_check_client(void);
 
-int start_listener(void);
+int start_listener(const char* stand_alone_uds);
 
 void connection_wait(int sock);
 
 plcConn *connection_init(int sock);
 
-plcConn *start_server();
+plcConn *start_server(const char *stand_alone_uds);
 
 // Global log level for server
 extern int server_log_level;

@@ -14,6 +14,11 @@ void *palloc(size_t size)
 	return addr;
 }
 
+void *txn_palloc(size_t size) {
+	/* dummy function for server side */
+	return palloc(size);
+}
+
 void pfree(void *ptr)
 {
 	return free(ptr);

@@ -35,16 +35,20 @@ static int start_listener_inet() {
 /*
  * Function binds the socket and starts listening on it: unix domain socket.
  */
-static int start_listener_ipc() {
+static int start_listener_ipc(const char *stand_alone_uds) {
 	int sock;
-	char uds_fn[600];
+	char uds_fn[1024];
 	char *env_str, *endptr;
 	uid_t qe_uid;
 	gid_t qe_gid;
 	long val;
 
 	/* filename: IPC_CLIENT_DIR + '/' + UDS_SHARED_FILE */
-	snprintf(uds_fn, sizeof(uds_fn), "%s/%s", IPC_CLIENT_DIR, UDS_SHARED_FILE);
+	if (stand_alone_uds == NULL) {
+		snprintf(uds_fn, sizeof(uds_fn), "%s/%s", IPC_CLIENT_DIR, UDS_SHARED_FILE);
+	} else {
+		strncpy(uds_fn, stand_alone_uds, 1024);
+	}
 	unlink(uds_fn);
 	sock = plcListenServer("unix", uds_fn);
 	if (sock == -1) {
@@ -58,31 +62,37 @@ static int start_listener_ipc() {
 	 */
 
 	/* Get executor uid: for permission of the unix domain socket file. */
-	if ((env_str = getenv("EXECUTOR_UID")) == NULL)
-		plc_elog (ERROR, "EXECUTOR_UID is not set, something wrong on QE side");
-	errno = 0;
-	val = strtol(env_str, &endptr, 10);
-	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-	    (errno != 0 && val == 0) ||
-	    endptr == env_str ||
-	    *endptr != '\0') {
-		plc_elog(ERROR, "EXECUTOR_UID is wrong:'%s'", env_str);
+	if (stand_alone_uds != NULL) {
+		qe_uid = getuid();
+	} else {
+		if ((env_str = getenv("EXECUTOR_UID")) == NULL)
+			plc_elog (ERROR, "EXECUTOR_UID is not set, something wrong on QE side");
+		errno = 0;
+		val = strtol(env_str, &endptr, 10);
+		if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
+			(errno != 0 && val == 0) ||
+			endptr == env_str ||
+			*endptr != '\0') {
+			plc_elog(ERROR, "EXECUTOR_UID is wrong:'%s'", env_str);
+		}
+		qe_uid = val;
 	}
-	qe_uid = val;
-
 	/* Get executor gid: for permission of the unix domain socket file. */
-	if ((env_str = getenv("EXECUTOR_GID")) == NULL)
-		plc_elog (ERROR, "EXECUTOR_GID is not set, something wrong on QE side");
-	errno = 0;
-	val = strtol(env_str, &endptr, 10);
-	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-	    (errno != 0 && val == 0) ||
-	    endptr == env_str ||
-	    *endptr != '\0') {
-		plc_elog(ERROR, "EXECUTOR_GID is wrong:'%s'", env_str);
+	if (stand_alone_uds != NULL){
+		qe_gid = getgid();
+	} else {
+		if ((env_str = getenv("EXECUTOR_GID")) == NULL)
+			plc_elog (ERROR, "EXECUTOR_GID is not set, something wrong on QE side");
+			errno = 0;
+		val = strtol(env_str, &endptr, 10);
+		if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
+			(errno != 0 && val == 0) ||
+			endptr == env_str ||
+			*endptr != '\0') {
+			plc_elog(ERROR, "EXECUTOR_GID is wrong:'%s'", env_str);
+		}
+		qe_gid = val;
 	}
-	qe_gid = val;
-
 	/* Change ownership & permission for the file for unix domain socket so
 	 * code on the QE side could access it and clean up it later.
 	 */
@@ -105,7 +115,7 @@ static int start_listener_ipc() {
 /*
  * Start listener based on network environment setting
  */
-int start_listener() {
+int start_listener(const char *stand_alone_uds) {
 	int sock = -1;
 	char *use_container_network;
 
@@ -118,10 +128,10 @@ int start_listener() {
 	if (strcasecmp("true", use_container_network) == 0) {
 		sock = start_listener_inet();
 	} else if (strcasecmp("false", use_container_network) == 0){
-		if (geteuid() != 0 || getuid() != 0) {
-			plc_elog(ERROR, "Must run as root and then downgrade to usual user.");
+		if ((geteuid() != 0 || getuid() != 0) && stand_alone_uds == NULL) {
+			plc_elog(ERROR, "Must run as root and then downgrade to usual user in container mode.");
 		}
-		sock = start_listener_ipc();
+		sock = start_listener_ipc(stand_alone_uds);
 	} else {
 		plc_elog(ERROR, "USE_CONTAINER_NETWORK is set to wrong value '%s'", use_container_network);
 	}
@@ -186,9 +196,9 @@ plcConn *connection_init(int sock) {
 /*
  * Start computing unit server
  */
-plcConn *start_server() {
+plcConn *start_server(const char *stand_alone_uds) {
 	int sock;
-	sock = start_listener();
+	sock = start_listener(stand_alone_uds);
 	if (sock == -1) {
 		plc_elog(ERROR, "Cannot start listener %s", strerror(errno));
 	}

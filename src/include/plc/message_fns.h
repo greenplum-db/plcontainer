@@ -61,10 +61,13 @@ typedef struct {
 
 } plcProcInfo;
 
-plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo);
+extern plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo);
 
-void free_proc_info(plcProcInfo *proc);
+extern void free_proc_info(plcProcInfo *proc);
 
-plcMsgCallreq *plcontainer_generate_call_request(FunctionCallInfo fcinfo, plcProcInfo *pinfo);
+extern plcMsgCallreq *plcontainer_generate_call_request(FunctionCallInfo fcinfo, plcProcInfo *pinfo);
+
+extern void *top_palloc(size_t bytes);
+extern char *plc_top_strdup(const char *str);
 
 #endif /* PLC_MESSAGE_FNS_H */

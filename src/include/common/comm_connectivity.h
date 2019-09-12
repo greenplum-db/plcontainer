@@ -69,38 +69,37 @@ typedef struct plcContext
 // #endif
 // return socket file descriptor, or -1 if failed
 // network : unix
-int plcListenServer(const char *network, const char *service_address);
-int plcDialToServer(const char *network, const char *server_address);
+extern int plcListenServer(const char *network, const char *service_address);
+extern int plcDialToServer(const char *network, const char *server_address);
 // separator initialization of plcConn/plcContext with socket fd
-void plcContextInit(plcContext *ctx);
-void plcConnInit(plcConn *conn);
-void plcDisconnect(plcConn *conn);
-void plcFreeContext(plcContext *ctx);
-void plcReleaseContext(plcContext *ctx);
+extern void plcContextInit(plcContext *ctx);
+extern void plcConnInit(plcConn *conn);
+extern void plcDisconnect(plcConn *conn);
+extern void plcFreeContext(plcContext *ctx);
+extern void plcReleaseContext(plcContext *ctx);
+extern void plcContextInit(plcContext *ctx);
+extern void plcContextReset(plcContext *ctx);
 
 // plcConn *plcConnInit(int sock);
 
-int plcBufferAppend(plcConn *conn, char *prt, size_t len);
-
-int plcBufferRead(plcConn *conn, char *resBuffer, size_t len);
-
-int plcBufferReceive(plcConn *conn, size_t nBytes);
-
-int plcBufferFlush(plcConn *conn);
+extern int plcBufferAppend(plcConn *conn, char *prt, size_t len);
+extern int plcBufferRead(plcConn *conn, char *resBuffer, size_t len);
+extern int plcBufferReceive(plcConn *conn, size_t nBytes);
+extern int plcBufferFlush(plcConn *conn);
 
 // init plcBuffer to retain a default buffer.
-int plcBufferInit(plcBuffer *buffer);
+extern int plcBufferInit(plcBuffer *buffer);
 
 // free the internal buffer in plcBuffer, not plcBuffer itself
 // i.e. to make the buffer empty
-void plcBufferRelease(plcBuffer *buffer);
+extern void plcBufferRelease(plcBuffer *buffer);
 // return the available data size.
 static inline int plcBufferAvailableSize(const plcBuffer *buffer)
 {
 	return buffer->pEnd - buffer->pStart;
 }
 
-int ListenUnix(const char *network, const char *address);
-int ListenTCP(const char *network, const char *address);
+extern int ListenUnix(const char *network, const char *address);
+extern int ListenTCP(const char *network, const char *address);
 
 #endif /* PLC_COMM_CONNECTIVITY_H */

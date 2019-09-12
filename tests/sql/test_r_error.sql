@@ -65,4 +65,6 @@ select rerror_setof();
 
 select rerror_dataframe();
 
+--start_ignore
 select rerror_datatype();
+--end_ignore

@@ -74,6 +74,8 @@ static char * PLy_procedure_name(plcProcInfo *proc);
  */
 static plcProcInfo *PLy_curr_procedure = NULL;
 
+static int plcCallRecursiveLevel = 0;
+
 /* this is saved and restored by plcontainer_call_handler */
 MemoryContext pl_container_caller_context = NULL;
 
@@ -262,6 +264,8 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		int res;
 		result = NULL;
 
+		/* Increase level per each call */
+		plcCallRecursiveLevel++;
 		req = plcontainer_generate_call_request(fcinfo, proc);
 		runtime_id = parse_container_meta(req->proc.src);
 		
@@ -331,6 +335,13 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 				&& message_type != MT_SUBTRANSACTION && message_type != MT_QUOTE)
 				break;
 		}
+
+		/* Decrease level when query is done */
+		plcCallRecursiveLevel--;
+
+		/* Query end, release buffer and plan cache */
+		if (plcCallRecursiveLevel == 0)
+			plcReleaseContext(ctx);
 		/*
 		 * Since plpy will only let you close subtransactions that you
 		 * started, you cannot *unnest* subtransactions, only *nest* them
@@ -341,6 +352,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 	PG_CATCH();
 	{
 		plcontainer_abort_open_subtransactions(save_subxact_level);
+		plcCallRecursiveLevel--;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();

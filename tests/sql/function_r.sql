@@ -272,34 +272,36 @@ create or replace function rtest_spi_ta(arg1 text) returns setof record as $$
 pg.spi.exec(arg1)
 $$ language plcontainer;
 
-CREATE OR REPLACE FUNCTION rsetofint4() RETURNS setof int4 AS $$
-# container: plc_r_shared
-as.vector(array(1:15,c(5,3)))
-$$ LANGUAGE plcontainer ;
-
-CREATE OR REPLACE FUNCTION rsetofbool() RETURNS setof boolean AS $$
-# container: plc_r_shared
-as.vector(c(TRUE,FALSE,TRUE,TRUE,FALSE,FALSE))
-$$ LANGUAGE plcontainer ;
-
-CREATE OR REPLACE FUNCTION rsetofint8() RETURNS setof int8 AS $$
-# container: plc_r_shared
-as.vector(array(2:16,c(5,3)))
-$$ LANGUAGE plcontainer ;
-
-CREATE OR REPLACE FUNCTION rsetofint2() RETURNS setof int2 AS $$
-# container: plc_r_shared
-as.vector(array(3:17,c(5,3)))
-$$ LANGUAGE plcontainer ;
-CREATE OR REPLACE FUNCTION rsetoffloat4() RETURNS setof float4 AS $$
-# container: plc_r_shared
-as.vector(array(2.5:15,c(5,3)))
-$$ LANGUAGE plcontainer ;
-
-CREATE OR REPLACE FUNCTION rsetoffloat8() RETURNS setof float8 AS $$
-# container: plc_r_shared
-as.vector(array(4.5:15,c(5,3)))
-$$ LANGUAGE plcontainer ;
+--start_ignore
+-- CREATE OR REPLACE FUNCTION rsetofint4() RETURNS setof int4 AS $$
+-- # container: plc_r_shared
+-- as.vector(array(1:15,c(5,3)))
+-- $$ LANGUAGE plcontainer ;
+ 
+-- CREATE OR REPLACE FUNCTION rsetofbool() RETURNS setof boolean AS $$
+-- # container: plc_r_shared
+-- as.vector(c(TRUE,FALSE,TRUE,TRUE,FALSE,FALSE))
+-- $$ LANGUAGE plcontainer ;
+ 
+-- CREATE OR REPLACE FUNCTION rsetofint8() RETURNS setof int8 AS $$
+-- # container: plc_r_shared
+-- as.vector(array(2:16,c(5,3)))
+-- $$ LANGUAGE plcontainer ;
+ 
+-- CREATE OR REPLACE FUNCTION rsetofint2() RETURNS setof int2 AS $$
+-- # container: plc_r_shared
+-- as.vector(array(3:17,c(5,3)))
+-- $$ LANGUAGE plcontainer ;
+-- CREATE OR REPLACE FUNCTION rsetoffloat4() RETURNS setof float4 AS $$
+-- # container: plc_r_shared
+-- as.vector(array(2.5:15,c(5,3)))
+-- $$ LANGUAGE plcontainer ;
+ 
+-- CREATE OR REPLACE FUNCTION rsetoffloat8() RETURNS setof float8 AS $$
+-- # container: plc_r_shared
+-- as.vector(array(4.5:15,c(5,3)))
+-- $$ LANGUAGE plcontainer ;
+--end_ignore
 
 CREATE OR REPLACE FUNCTION rsetoffloat8array() RETURNS setof float8[] AS $$
 # container: plc_r_shared

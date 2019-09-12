@@ -17,6 +17,8 @@ m/^DETAIL:  drop cascades to function*/
 m/^drop cascades to function*/
 m/^and \d+ other objects (see server log for list)*/
 
+m/there is no package called */
+
 # match plcontainer command outputs: startswith timestamp: 20170906:14:06:03
 m/^[0-9]{8}:[0-9]{2}:[0-9]{2}:[0-9]{2}.*/
 -- end_matchignore
@@ -33,4 +35,6 @@ m/sqlhandler.c:\d+\)/
 s/sqlhandler.c:\d+\)/sqlhandler.c:xxx/
 m/plc_typeio.c:\d+\)/
 s/plc_typeio.c:\d+\)/plc_typeio.c:xxx/
+m/comm_dummy_plc.c:\d+\)/
+s/comm_dummy_plc.c:\d+\)/comm_dummy_plc.c:xxx/
 -- end_matchsubs

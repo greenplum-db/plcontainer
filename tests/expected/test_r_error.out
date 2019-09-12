@@ -82,7 +82,9 @@ DETAIL:
  Error in data.frame(a, b, c, d, e, f, g, h) : 
   arguments imply differing number of rows: 3, 2
 CONTEXT:  PLContainer function "rerror_dataframe"
+--start_ignore
 select rerror_datatype();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Actual R type is not matching excpected returned type PLC_DATA_FLOAT8 [5]
 CONTEXT:  PLContainer function "rerror_datatype"
+--end_ignore

@@ -200,7 +200,7 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 		type->outfunc = plc_datum_as_array;
 		type->infunc = plc_datum_from_array;
 		type->nSubTypes = 1;
-		type->subTypes = (plcTypeInfo *) palloc(sizeof(plcTypeInfo));
+		type->subTypes = (plcTypeInfo *) top_palloc(sizeof(plcTypeInfo));
 		fill_type_info_inner(fcinfo, typeStruct->typelem, &type->subTypes[0], true, isUDTElement);
 	}
 
@@ -263,7 +263,7 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 			}
 
 			// Allocate memory for this number of arguments
-			type->subTypes = (plcTypeInfo *) palloc(type->nSubTypes * sizeof(plcTypeInfo));
+			type->subTypes = (plcTypeInfo *) top_palloc(type->nSubTypes * sizeof(plcTypeInfo));
 			memset(type->subTypes, 0, type->nSubTypes * sizeof(plcTypeInfo));
 
 			// Fill all the subtypes
@@ -289,7 +289,7 @@ void copy_type_info(plcType *type, plcTypeInfo *ptype) {
 	type->type = ptype->type;
 	type->nSubTypes = 0;
 	if (ptype->typeName != NULL) {
-		type->typeName = pstrdup(ptype->typeName);
+		type->typeName = plc_top_strdup(ptype->typeName);
 	} else {
 		type->typeName = NULL;
 	}
@@ -302,7 +302,7 @@ void copy_type_info(plcType *type, plcTypeInfo *ptype) {
 			}
 		}
 
-		type->subTypes = (plcType *) palloc(type->nSubTypes * sizeof(plcType));
+		type->subTypes = (plcType *) top_palloc(type->nSubTypes * sizeof(plcType));
 		for (i = 0, j = 0; i < ptype->nSubTypes; i++) {
 			if (!ptype->subTypes[i].attisdropped) {
 				copy_type_info(&type->subTypes[j], &ptype->subTypes[i]);
