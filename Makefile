@@ -59,6 +59,7 @@ PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 INCLUDE_DIR = $(SRCDIR)/include
 
 override CFLAGS += -Werror -Wextra -Wall -Wno-sign-compare -I$(INCLUDE_DIR)
+override CFLAGS += $(shell xml2-config --cflags)
 
 override SHLIB_LINK += $(shell pkg-config --libs json-c)
 override SHLIB_LINK += $(shell xml2-config --libs)

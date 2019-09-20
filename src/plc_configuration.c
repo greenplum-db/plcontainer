@@ -42,10 +42,6 @@
 #include "plc/plc_docker_api.h"
 #include "plc/plc_configuration.h"
 
-// we just want to avoid cleanup process to remove previous domain
-// socket file, so int32 is sufficient
-static int domain_socket_no = 0;
-
 static runtimeConfEntry *parse_runtime_configuration(HTAB *table, xmlNode *node);
 
 static void parse_root_runtime_configurations(HTAB *table, xmlNode *node);
@@ -670,8 +666,6 @@ char *get_sharing_options(runtimeConfEntry *conf, bool *has_error, char **uds_di
 
 		if (!conf->useContainerNetwork) {
 			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
-			int gpdb_dir_sz;
-
 			if (i > 0)
 				comma = ',';
 			volume_size = 10 + strlen(*uds_dir) + strlen(IPC_CLIENT_DIR);
