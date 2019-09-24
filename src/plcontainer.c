@@ -252,7 +252,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
                                              plcProcInfo *proc) {
 	char *runtime_id;
-	plcContext *ctx;
+	plcContext *ctx = NULL;
 	plcConn *conn;
 	int message_type;
 	plcMsgCallreq *req = NULL;
@@ -351,6 +351,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 	}
 	PG_CATCH();
 	{
+		plcontainer_delete_container();
 		plcontainer_abort_open_subtransactions(save_subxact_level);
 		plcCallRecursiveLevel--;
 		PG_RE_THROW();

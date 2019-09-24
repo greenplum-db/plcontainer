@@ -15,6 +15,7 @@ typedef struct plcMsgPLCId {
 	int sessionid;
 	int pid;
 	int ccnt;
+	int action;
 	char *runtimeid;
 } plcMsgPLCId;
 

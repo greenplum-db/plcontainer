@@ -49,9 +49,8 @@ typedef struct requester_info_entry
 
 typedef enum QeRequestType
 {
-	CREATE_SERVER_DEBUG = 1,
-	DESTROY_SERVER_DEBUG = 2,
-	DESTROY_SERVER_DOCKER = 3,
+	CREATE_SERVER = 1,
+	DESTROY_SERVER = 2,
 	UNKNOWN_REQUEST = -99,
 } QeRequestType;
 
@@ -84,6 +83,7 @@ typedef struct QeRequest
 	int conn; /* gp_session_id */
 	QeRequestType requestType; /* type of request from QE */
 	char containerId[16]; /* container id (pid of stand alone, for debug mode only)  */
+	pid_t server_pid; /* SERVER PID */
 } QeRequest;
 
 typedef struct ShmqBufferStatus

@@ -20,7 +20,8 @@ char *parse_container_meta(const char *source);
 
 /* return the port of a started container, -1 if the container isn't started */
 plcContext *get_container_context(const char *runtime_id);
-
+/* Function send delete container control messageto coordinator */ 
+int plcontainer_delete_container();
 /* Function deletes all the containers */
 void reset_containers(void);
 

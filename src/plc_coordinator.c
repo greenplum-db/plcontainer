@@ -72,14 +72,15 @@ char *plcontainer_stand_alone_server_path;
 
 
 static int start_container(const char *runtimeid, pid_t qe_pid, int session_id, int ccnt, char **uds_address);
+static int destroy_container(pid_t qe_pid, int session_id);
 static int send_message(QeRequest *request);
 static int receive_message();
+static int handle_request(QeRequest *req);
 static int start_stand_alone_process(const char* uds_address);
 static void shm_message_queue_receiver_init(dsm_segment *seg);
 static dsm_handle shm_message_queue_sender_init();
 
-
-// HTAB *container_status_table;
+HTAB *container_status_table;
 
 static void
 plc_coordinator_shmem_startup(void)
@@ -101,6 +102,21 @@ request_shmem_(void)
     prev_shmem_startup_hook = shmem_startup_hook;
     shmem_startup_hook = plc_coordinator_shmem_startup;
 }
+
+HTAB*
+init_runtime_info_table() {
+	HASHCTL hash_ctl;
+	memset(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = sizeof(ContainerKey);
+	hash_ctl.entrysize = sizeof(ContainerEntry);
+	hash_ctl.hcxt = CurrentMemoryContext;
+	hash_ctl.hash = string_hash;
+	return hash_create("container info hash",
+								8,
+								&hash_ctl,
+								HASH_ELEM | HASH_FUNCTION);
+}
+
 static void
 plc_coordinator_sigterm(pg_attribute_unused() SIGNAL_ARGS)
 {
@@ -192,9 +208,12 @@ static void process_msg_from_sock(int sock)
 	container_msg->msgtype = MT_PLC_CONTAINER;
 	plcMsgPLCId *mplc_id = (plcMsgPLCId *)msg;
 	elog(DEBUG1, "receive id msg from process %d", mplc_id->pid);
-	container_msg->status = start_container(mplc_id->runtimeid, mplc_id->pid, mplc_id->sessionid, mplc_id->ccnt, &(container_msg->msg));
-	plcontainer_channel_send(conn, (plcMessage *)container_msg);
-
+	if (mplc_id->action < 0) {
+		destroy_container(mplc_id->pid, mplc_id->sessionid);
+	} else {
+		container_msg->status = start_container(mplc_id->runtimeid, mplc_id->pid, mplc_id->sessionid, mplc_id->ccnt, &(container_msg->msg));
+		plcontainer_channel_send(conn, (plcMessage *)container_msg);
+	}
 clean:
     if (shutdown(s2, 2) < 0)
     {
@@ -241,6 +260,12 @@ plc_coordinator_main(Datum datum)
 
     coordinator_shm->state = CO_STATE_READY;
     elog(INFO, "plcoordinator is going to enter main loop, sock=%d", sock);
+	if (plcontainer_stand_alone_mode) {
+		container_status_table = init_runtime_info_table();
+		if (container_status_table == NULL) {
+			elog(ERROR, "Failed to init container status hash table");
+		}
+	}
     while(!got_sigterm) {
         if (wait_for_msg(sock) > 0)
         {
@@ -266,7 +291,12 @@ plc_coordinator_aux_main(Datum datum)
 {
     int rc;
 	dsm_segment *seg;
-
+	if (!plcontainer_stand_alone_mode) {
+		container_status_table = init_runtime_info_table();
+		if (container_status_table == NULL) {
+			elog(ERROR, "Failed to init container status hash table");
+		}
+	}
     pqsignal(SIGTERM, plc_coordinator_sigterm);
     pqsignal(SIGHUP, SIG_IGN);
 	/* TODO: error process */
@@ -336,36 +366,104 @@ _PG_init(void)
     elog(NOTICE, "init plc_coordinator %d done", (int)getpid());
 }
 
+static int store_container_info(ContainerKey *key, pid_t server_pid, char* container_id)
+{
+	ContainerEntry *entry = NULL;
+	bool found = false;
+	entry = (ContainerEntry *) hash_search(container_status_table, key, HASH_ENTER,
+											&found);
+	if (!found || (found && entry->stand_alone_pid == 0)) {
+		entry->stand_alone_pid = server_pid;
+	} else {
+		//TODO: what should we do?
+		elog(LOG, "previous server process exist %d", entry->stand_alone_pid);
+	}
+	return 0;
+}
+
+static int clear_container_info(ContainerKey *key)
+{
+	ContainerEntry *entry = NULL;
+	bool found = false;
+	int res;
+	entry = (ContainerEntry *) hash_search(container_status_table, key, HASH_FIND,
+											&found);
+	if (found && entry->stand_alone_pid != 0) {
+		elog(LOG, "try to terminate server process %d", entry->stand_alone_pid);
+		res = kill(entry->stand_alone_pid, SIGKILL);
+		if (waitpid(entry->stand_alone_pid, NULL, 0) < 0) {
+			elog(LOG, "failed terminate server process %d", entry->stand_alone_pid);
+		}
+		
+		entry->stand_alone_pid = 0;
+	}
+	// TODO: close container here
+	return 0;
+}
+
 static int start_container(const char *runtimeid, pid_t qe_pid, int session_id, int ccnt, char **uds_address)
 {
-	/* debug test only */
+	pid_t server_pid;
+	QeRequest *request;
+	int res;
+
+	(void) runtimeid;
+	*uds_address = (char*) palloc(1024);
+	snprintf(*uds_address, 1024, "%s.%d.%d.%d.%d", DEBUG_UDS_PREFIX, qe_pid, session_id, ccnt, (int)getpid());
+
+	/* debug test only, we need to store the container info in coordinator */
 	if (plcontainer_stand_alone_mode)
 	{
-		pid_t server_pid;
-		QeRequest *request;
-		int res;
-
-		(void) runtimeid;
-		*uds_address = (char*) palloc(1024);
-		snprintf(*uds_address, 1024, "%s.%d.%d.%d.%d", DEBUG_UDS_PREFIX, qe_pid, session_id, ccnt, (int)getpid());
 		server_pid = start_stand_alone_process(*uds_address);
+		ContainerKey key;
+		key.conn = session_id;
+		key.qe_pid = qe_pid;
+		store_container_info(&key, server_pid, NULL);
+		return 0;
+	} else {
 		request = (QeRequest*) palloc (sizeof(QeRequest));
 		request->pid = qe_pid;
 		request->conn = session_id;
-		request->requestType = CREATE_SERVER_DEBUG;
+		request->requestType = CREATE_SERVER;
+		request->server_pid = server_pid;
 		snprintf(request->containerId, sizeof(request->containerId), "%d", server_pid);
 		res = send_message(request);
 		if (res != 0)
 		{
-			elog(WARNING, "send message failure");
+			elog(WARNING, "send start server message failure");
 			return -1;
 		} else {
-			elog(LOG, "send message success");
+			elog(LOG, "send start server message success");
 			return 0;
 		}
+	}
+}
 
-	} else {
+static int destroy_container(pid_t qe_pid, int session_id)
+{
+	/* if we are in stand alone mode kill the process in coordinator to avoid defunct */
+	if (plcontainer_stand_alone_mode) {
+		ContainerKey key;
+		key.conn = session_id;
+		key.qe_pid = qe_pid;
+		clear_container_info(&key);
 		return 0;
+	} else {
+		QeRequest *request;
+		int res;
+		request = (QeRequest*) palloc (sizeof(QeRequest));
+		request->pid = qe_pid;
+		request->conn = session_id;
+		request->requestType = DESTROY_SERVER;
+		res = send_message(request);
+		if (res != 0)
+		{
+			elog(WARNING, "send destroy message failure");
+			return -1;
+		} else {
+			elog(LOG, "send destroy message success");
+			return 0;
+		}
 	}
 }
 
@@ -402,13 +500,36 @@ static int receive_message()
 			QeRequest *request;
 
 			request = (QeRequest*) data;
-
 			elog(LOG, "PLC coordinator: receive message %d.%d --- %s", request->pid, request->conn, request->containerId);
+			handle_request(request);
 		}
 		return 0;
 	} else {
 		return -1;
 	}
+}
+
+static int handle_request(QeRequest *req)
+{
+	int res = 0;
+	ContainerKey key;
+	key.conn = req->conn;
+	key.qe_pid = req->pid;
+	ContainerEntry *entry = NULL;
+	bool found = false;
+	switch (req->requestType) {
+		case CREATE_SERVER:
+			store_container_info(&key, 0, req->containerId);
+			// TODO: store container info
+			break;	
+		case DESTROY_SERVER:
+			clear_container_info(&key);
+			// TODO: else close container
+			break;
+		default:
+			break;
+	}
+	return res;
 }
 
 static int start_stand_alone_process(const char* uds_address)

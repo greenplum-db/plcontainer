@@ -143,7 +143,6 @@ static int get_new_container_from_coordinator(const char *runtime_id, plcContext
 
 	/* send message to coordinator */
 	res = plcontainer_channel_send(conn, (plcMessage *) mplc_id);
-	// TODO: response
 	if (res < 0) {
 		plc_elog(ERROR, "Error sending plc id to coordinator");
 		return -1;
@@ -170,9 +169,44 @@ static int get_new_container_from_coordinator(const char *runtime_id, plcContext
 	return ret;
 }
 
-// This function is called by plcontainer only.
-// when socket fd of plcConn is ready, make a shakehand to the server
-// returns 0 if successfully, otherwise -1 if failed.
+int plcontainer_delete_container()
+{
+	plcConn *conn;
+	int ret = 0;
+	int res = 0;
+
+	plcMsgPLCId* mplc_fail= palloc(sizeof(plcMsgPLCId));
+	mplc_fail->msgtype = MT_PLCID;
+	mplc_fail->sessionid = gp_session_id;
+	mplc_fail->pid = getpid();
+	mplc_fail->ccnt = gp_command_count;
+	mplc_fail->action = -1;
+	mplc_fail->runtimeid = NULL;
+
+	conn = (plcConn*) palloc0(sizeof(plcConn));
+	plcConnInit(conn);
+	/* current only uds is supported */
+	conn->sock = plcDialToServer("unix", get_coordinator_address());
+
+	/* send message to coordinator */
+	res = plcontainer_channel_send(conn, (plcMessage *) mplc_fail);
+	if (res < 0) {
+		plc_elog(ERROR, "Error sending plc container delete message to coordinator");
+		return -1;
+	}
+
+	pfree(mplc_fail);
+	/* release the connection */
+	plcDisconnect(conn);
+
+	return ret;
+}
+
+/**
+ * This function is called by plcontainer only.
+ * when socket fd of plcConn is ready, make a shakehand to the server
+ * returns 0 if successfully, otherwise -1 if failed.
+ **/
 static int init_container_connection(plcContext *ctx)
 {
 	plcMsgPing *mping = NULL;

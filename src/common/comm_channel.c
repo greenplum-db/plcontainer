@@ -966,8 +966,8 @@ static int send_plcid(plcConn *conn, plcMsgPLCId *mid) {
 	res |= send_int32(conn, mid->sessionid);
 	res |= send_int32(conn, mid->pid);
 	res |= send_int32(conn, mid->ccnt);
+	res |= send_int32(conn, mid->action);
 	res |= send_cstring(conn, mid->runtimeid);
-
 	res |= message_end(conn);
 	channel_elog(WARNING, "Finished sending plc id message");
 	return res;
@@ -1367,6 +1367,7 @@ static int receive_plcid(plcConn *conn, plcMessage **mPlcId) {
 	res |= receive_int32(conn, &(ret->sessionid));
 	res |= receive_int32(conn, &(ret->pid));
 	res |= receive_int32(conn, &(ret->ccnt));
+	res |= receive_int32(conn, &(ret->action));
 	res |= receive_cstring(conn, &(ret->runtimeid));
 	channel_elog(WARNING, "Finished receiving id message");
 	return res;
