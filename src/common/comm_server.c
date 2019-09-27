@@ -199,7 +199,7 @@ int start_listener() {
 	if (strcasecmp("true", use_container_network) == 0) {
 		sock = start_listener_inet();
 	} else if (strcasecmp("false", use_container_network) == 0){
-		if ((CurrentBackendType == BACKEND_DOCKER) && (geteuid() != 0 || getuid() != 0)) {
+		if ((getenv("LOCAL_PROCESS_MODE") == NULL) && (geteuid() != 0 || getuid() != 0)) {
 			plc_elog(ERROR, "Must run as root and then downgrade to usual user.");
 			return -1;
 		}

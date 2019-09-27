@@ -63,6 +63,7 @@ int plc_process_create_container(runtimeConfEntry *conf, char **name, int contai
         // TODO add more environment variables needed.
         char *const env[] = {
             "USE_CONTAINER_NETWORK=false",
+            "LOCAL_PROCESS_MODE=1",
             uid_string,
             gid_string,
             NULL
