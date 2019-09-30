@@ -64,7 +64,9 @@ DETAIL:
 CONTEXT:  PLContainer function "rerror_timestamp"
 select rerror_non_exist_function();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  Error in as.mx(array(1:10, c(2, 5))) : could not find function "as.mx"
+DETAIL:  
+ Error in (gpdb.rerror_non_exist_function <- function(args) { : 
+  could not find function "as.mx"
 CONTEXT:  PLContainer function "rerror_non_exist_function"
 select rerror_spi_queryfail(); 
 ERROR:  relation "non_exist_table" does not exist
