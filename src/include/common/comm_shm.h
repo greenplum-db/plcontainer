@@ -81,8 +81,9 @@ typedef struct QeRequest
 {
 	pid_t pid; /* QE PID */
 	int conn; /* gp_session_id */
+	int ccnt;
 	QeRequestType requestType; /* type of request from QE */
-	char containerId[16]; /* container id (pid of stand alone, for debug mode only)  */
+	char containerId[16]; /* container id */
 	pid_t server_pid; /* SERVER PID */
 } QeRequest;
 

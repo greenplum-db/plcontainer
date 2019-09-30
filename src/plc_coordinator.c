@@ -40,6 +40,7 @@
 #include "storage/shm_toc.h"
 
 #include "common/base_network.h"
+#include "plc/plc_docker_api.h"
 #include "plc/plc_configuration.h"
 #include "plc/plc_coordinator.h"
 #include "common/comm_shm.h"
@@ -72,7 +73,7 @@ char *plcontainer_stand_alone_server_path;
 
 
 static int start_container(const char *runtimeid, pid_t qe_pid, int session_id, int ccnt, char **uds_address);
-static int destroy_container(pid_t qe_pid, int session_id);
+static int destroy_container(pid_t qe_pid, int session_id, int ccnt);
 static int send_message(QeRequest *request);
 static int receive_message();
 static int handle_request(QeRequest *req);
@@ -209,7 +210,7 @@ static void process_msg_from_sock(int sock)
 	plcMsgPLCId *mplc_id = (plcMsgPLCId *)msg;
 	elog(DEBUG1, "receive id msg from process %d", mplc_id->pid);
 	if (mplc_id->action < 0) {
-		destroy_container(mplc_id->pid, mplc_id->sessionid);
+		destroy_container(mplc_id->pid, mplc_id->sessionid, mplc_id->ccnt);
 	} else {
 		container_msg->status = start_container(mplc_id->runtimeid, mplc_id->pid, mplc_id->sessionid, mplc_id->ccnt, &(container_msg->msg));
 		plcontainer_channel_send(conn, (plcMessage *)container_msg);
@@ -372,12 +373,16 @@ static int store_container_info(ContainerKey *key, pid_t server_pid, char* conta
 	bool found = false;
 	entry = (ContainerEntry *) hash_search(container_status_table, key, HASH_ENTER,
 											&found);
-	if (!found || (found && entry->stand_alone_pid == 0)) {
-		entry->stand_alone_pid = server_pid;
-	} else {
-		//TODO: what should we do?
-		elog(LOG, "previous server process exist %d", entry->stand_alone_pid);
+	if (found) {
+		if (entry->stand_alone_pid != 0) {
+			elog(LOG, "previous server process exist %d", entry->stand_alone_pid);
+		}
+		if (entry->containerId[0] != '\0') {
+			elog(LOG, "previous container Id exist %s", entry->containerId);
+		}
 	}
+	entry->stand_alone_pid = server_pid;
+	snprintf(entry->containerId, sizeof(entry->containerId), "%s", container_id);
 	return 0;
 }
 
@@ -385,10 +390,14 @@ static int clear_container_info(ContainerKey *key)
 {
 	ContainerEntry *entry = NULL;
 	bool found = false;
-	int res;
+	int res = 0;
 	entry = (ContainerEntry *) hash_search(container_status_table, key, HASH_FIND,
 											&found);
-	if (found && entry->stand_alone_pid != 0) {
+	if (!found || entry == NULL) {
+		elog(LOG, "failed to find server info");
+		return -1;
+	}
+	if (entry->stand_alone_pid != 0) {
 		elog(LOG, "try to terminate server process %d", entry->stand_alone_pid);
 		res = kill(entry->stand_alone_pid, SIGKILL);
 		if (waitpid(entry->stand_alone_pid, NULL, 0) < 0) {
@@ -396,9 +405,14 @@ static int clear_container_info(ContainerKey *key)
 		}
 		
 		entry->stand_alone_pid = 0;
+		return 0;
 	}
-	// TODO: close container here
-	return 0;
+	if (entry->containerId[0] != '\0') {
+		res = plc_docker_delete_container(entry->containerId);
+		snprintf(entry->containerId, sizeof(entry->containerId), "");
+	}
+
+	return res;
 }
 
 static int start_container(const char *runtimeid, pid_t qe_pid, int session_id, int ccnt, char **uds_address)
@@ -408,7 +422,8 @@ static int start_container(const char *runtimeid, pid_t qe_pid, int session_id, 
 	int res;
 
 	*uds_address = (char*) palloc(DEFAULT_STRING_BUFFER_SIZE);
-
+	
+	
 	/* debug test only, we need to store the container info in coordinator */
 	if (plcontainer_stand_alone_mode)
 	{
@@ -417,6 +432,7 @@ static int start_container(const char *runtimeid, pid_t qe_pid, int session_id, 
 		ContainerKey key;
 		key.conn = session_id;
 		key.qe_pid = qe_pid;
+		key.ccnt = ccnt;
 		store_container_info(&key, server_pid, NULL);
 		return 0;
 	} else {
@@ -438,9 +454,10 @@ static int start_container(const char *runtimeid, pid_t qe_pid, int session_id, 
 		request = (QeRequest*) palloc (sizeof(QeRequest));
 		request->pid = qe_pid;
 		request->conn = session_id;
+		request->ccnt = ccnt;
 		request->requestType = CREATE_SERVER;
-		request->server_pid = server_pid;
-		snprintf(request->containerId, sizeof(request->containerId), "%d", server_pid);
+		request->server_pid = 0;
+		snprintf(request->containerId, sizeof(request->containerId), "%s", docker_name);
 		res = send_message(request);
 		if (res != 0)
 		{
@@ -453,21 +470,24 @@ static int start_container(const char *runtimeid, pid_t qe_pid, int session_id, 
 	}
 }
 
-static int destroy_container(pid_t qe_pid, int session_id)
+static int destroy_container(pid_t qe_pid, int session_id, int ccnt)
 {
 	/* if we are in stand alone mode kill the process in coordinator to avoid defunct */
 	if (plcontainer_stand_alone_mode) {
 		ContainerKey key;
 		key.conn = session_id;
 		key.qe_pid = qe_pid;
+		key.ccnt = ccnt;
 		clear_container_info(&key);
 		return 0;
 	} else {
 		QeRequest *request;
 		int res;
 		request = (QeRequest*) palloc (sizeof(QeRequest));
+		memset(request, 0, sizeof(request));
 		request->pid = qe_pid;
 		request->conn = session_id;
+		request->ccnt = ccnt;
 		request->requestType = DESTROY_SERVER;
 		res = send_message(request);
 		if (res != 0)
@@ -529,16 +549,15 @@ static int handle_request(QeRequest *req)
 	ContainerKey key;
 	key.conn = req->conn;
 	key.qe_pid = req->pid;
+	key.ccnt = req->ccnt;
 	ContainerEntry *entry = NULL;
 	bool found = false;
 	switch (req->requestType) {
 		case CREATE_SERVER:
 			store_container_info(&key, 0, req->containerId);
-			// TODO: store container info
-			break;	
+			break;
 		case DESTROY_SERVER:
 			clear_container_info(&key);
-			// TODO: else close container
 			break;
 		default:
 			break;

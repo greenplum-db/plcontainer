@@ -450,6 +450,7 @@ int plc_docker_delete_container(const char *name) {
 
 	/* 204 = deleted success, 404 = container not found, both are OK for delete */
 	if (res == 204 || res == 404) {
+		plc_elog(LOG, "Docker deleted: %s", name);
 		res = 0;
 	} else if (res >= 0) {
 		snprintf(backend_error_message, sizeof(backend_error_message),
@@ -459,7 +460,6 @@ int plc_docker_delete_container(const char *name) {
 
 	plcCurlBufferFree(response);
 	pfree(url);
-
 	return res;
 }
 

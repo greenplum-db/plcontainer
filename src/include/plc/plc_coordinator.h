@@ -13,6 +13,7 @@ typedef struct ContainerKey
 {
 	pid_t       qe_pid;
 	int         conn;
+	int 		ccnt;
 } ContainerKey;
 
 /* the container status entry */
