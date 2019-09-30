@@ -153,6 +153,7 @@ int plcontainer_channel_send(plcConn *conn, plcMessage *msg) {
 			res = -1;
 			break;
 	}
+	plc_elog(DEBUG1, "send data finished, res is %d", res);
 	return res;
 }
 
@@ -238,6 +239,7 @@ int plcontainer_channel_receive(plcConn *conn, plcMessage **msg, int64_t mask) {
 				return -1;
 		}
 	}
+	plc_elog(DEBUG1, "receive data finished, res is %d", res);
 	return res;
 
 	unexpected_type:

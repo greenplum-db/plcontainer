@@ -22,7 +22,6 @@
 
 #include "common/comm_dummy.h"
 #include "plc/plc_docker_api.h"
-#include "plc/plc_backend_api.h"
 
 // Default location of the Docker API unix socket
 static char *plc_docker_socket = "/var/run/docker.sock";
@@ -30,7 +29,7 @@ static char *plc_docker_socket = "/var/run/docker.sock";
 // URL prefix specifies Docker API version
 static char *plc_docker_url_prefix = "http:/v1.27";
 static char *default_log_dirver = "journald";
-
+char backend_error_message[256];
 
 /* Static functions of the Docker API module */
 static plcCurlBuffer *plcCurlBufferInit();

@@ -39,7 +39,6 @@
 #include "common/comm_dummy.h"
 #include "plc/message_fns.h"
 #include "plc/plcontainer.h"
-#include "plc/plc_backend_api.h"
 #include "plc/plc_docker_api.h"
 #include "plc/plc_configuration.h"
 

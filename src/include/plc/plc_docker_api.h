@@ -26,6 +26,8 @@ typedef struct {
 	int status;
 } plcCurlBuffer;
 
+extern char backend_error_message[256];
+
 int plc_docker_create_container(runtimeConfEntry *conf, char **name, char **uds_dir, pid_t qe_pid, int session_id, int ccnt);
 
 int plc_docker_start_container(const char *name);
