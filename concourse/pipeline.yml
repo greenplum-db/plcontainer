@@ -292,7 +292,7 @@ jobs:
 - name: plcontainer_build_centos6
   max_in_flight: 4
   plan:
-  - aggregate:
+  - in_parallel:
     - get: bin_gpdb_centos6
     - get: gpdb_src
     - get: plcontainer_src
@@ -305,15 +305,14 @@ jobs:
     image: centos-gpdb-dev-6
     input_mapping:
       bin_gpdb: bin_gpdb_centos6
-  - aggregate:
-    - put: plcontainer_gpdb_centos6_build
-      params:
-        file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
+  - put: plcontainer_gpdb_centos6_build
+    params:
+      file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
 
 - name: plcontainer_build_centos7
   max_in_flight: 4
   plan:
-  - aggregate:
+  - in_parallel:
     - get: bin_gpdb_centos7
     - get: gpdb_src
     - get: plcontainer_src
@@ -326,15 +325,14 @@ jobs:
     image: centos-gpdb-dev-7
     input_mapping:
       bin_gpdb: bin_gpdb_centos7
-  - aggregate:
-    - put: plcontainer_gpdb_centos7_build
-      params:
-        file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
+  - put: plcontainer_gpdb_centos7_build
+    params:
+      file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
 
 
 - name: plcontainer_function_test_centos6
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
       passed:
       - plcontainer_build_centos6
@@ -386,7 +384,7 @@ jobs:
 
 - name: plcontainer_resgroup_test_centos6
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
       passed:
       - plcontainer_build_centos6
@@ -439,7 +437,7 @@ jobs:
 
 - name: plcontainer_function_test_centos7
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
       passed:
       - plcontainer_build_centos7
@@ -491,7 +489,7 @@ jobs:
 
 - name: plcontainer_resgroup_test_centos7
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
       passed:
       - plcontainer_build_centos7
@@ -547,7 +545,7 @@ jobs:
 # concourse container in a neat way.(running docker inside container is ugly)
 - name: plcontainer_build_python_image
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
     - get: gpdb_src
     - get: gpdb_binary
@@ -598,7 +596,7 @@ jobs:
 
 - name: plcontainer_build_r_image
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
     - get: gpdb_src
     - get: gpdb_binary
