@@ -22,6 +22,7 @@ typedef struct ContainerEntry
 	ContainerKey    key;		        /* hash key */
 	char            containerId[16];    /* for container */
 	pid_t           stand_alone_pid;    /* for stand alone mode */
+	char* 			status;
 } ContainerEntry;
 
 #endif /* _CO_COORDINATOR_H */

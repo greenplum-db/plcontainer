@@ -519,6 +519,32 @@ int plc_docker_get_container_state(const char *name, char **result) {
 	return res;
 }
 
+int plc_docker_get_container_status(const char *name, char **result) {
+	plcCurlBuffer *response = NULL;
+	char *method = "/containers/%s/stats?stream=false";
+	char *url = NULL;
+	int res = 0;
+
+	url = palloc(strlen(method) + strlen(name) + 2);
+	sprintf(url, method, name);
+	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, NULL);
+	res = response->status;
+
+	if (res == 200) {
+		res = 0;
+	} else if (res >= 0) {
+		snprintf(backend_error_message, sizeof(backend_error_message),
+		         "Failed to get container %s state, return code: %d, detail: %s", name, res, response->data);
+		res = -1;
+	}
+
+	*result = pstrdup(response->data);
+
+	pfree(url);
+
+	return res;
+}
+
 static int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 	int i;
 	struct json_object *response = NULL;

@@ -80,6 +80,7 @@ static int handle_request(QeRequest *req);
 static int start_stand_alone_process(const char* uds_address);
 static void shm_message_queue_receiver_init(dsm_segment *seg);
 static dsm_handle shm_message_queue_sender_init();
+static int update_containers_status();
 
 HTAB *container_status_table;
 
@@ -316,8 +317,9 @@ plc_coordinator_aux_main(Datum datum)
         rc = WaitLatch(&MyProc->procLatch, WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH, 0);
         if (rc & WL_POSTMASTER_DEATH)
             break;
-		receive_message();
-		sleep(2);
+        receive_message();
+        update_containers_status();
+        sleep(2);
     }
 
     proc_exit(0);
@@ -546,6 +548,36 @@ static int receive_message()
 	} else {
 		return -1;
 	}
+}
+static int update_containers_status()
+{
+    int entry_num = 0;
+    int res = 0;
+    int i = 0;
+    entry_num = hash_get_num_entries(container_status_table);
+    if (entry_num == 0) {
+        return 0;
+    }
+    HASH_SEQ_STATUS scan;
+    ContainerEntry *container_entry = NULL;
+    hash_seq_init(&scan, container_status_table);
+    ContainerKey **entry_array = palloc(entry_num * sizeof(ContainerKey *));
+
+	while ((container_entry = (ContainerEntry *) hash_seq_search(&scan)) != NULL) {
+		res = plc_docker_inspect_container(container_entry->containerId, &container_entry->status, PLC_INSPECT_STATUS);
+        if (res < 0) {
+            entry_array[i++] = &(container_entry->key);
+        }
+		if (strcmp(container_entry->status, "exited") == 0) {
+			plc_docker_delete_container(container_entry->containerId);
+			entry_array[i++] = &(container_entry->key);
+		}
+		// check if pid is not exist?
+	}
+	for (int j = 0; j < i; j++) {
+		res = hash_search(container_status_table, entry_array[j], HASH_REMOVE, NULL);
+	}
+    return 0;
 }
 
 static int handle_request(QeRequest *req)
