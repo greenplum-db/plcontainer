@@ -318,7 +318,9 @@ plc_coordinator_aux_main(Datum datum)
         if (rc & WL_POSTMASTER_DEATH)
             break;
         receive_message();
-        update_containers_status();
+        if (!plcontainer_stand_alone_mode) {
+            update_containers_status();
+        }
         sleep(2);
     }
 
