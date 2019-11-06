@@ -114,4 +114,5 @@ message CallResponse {
     PlcRuntimeType  runtimeType= 1;
     repeated    PlcValue    results = 2;
     Error       exception = 3;
+    srting      logs = 4;
 }
