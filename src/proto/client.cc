@@ -443,6 +443,9 @@ void PLCoordinatorClient::StartContainer(const StartContainerRequest &request, S
     grpc::ClientContext context;
     plc_elog(DEBUG1, "StartContainer request:%s", request.DebugString().c_str());
     grpc::Status status = stub_->StartContainer(&context, request, &response);
+    if (!status.ok()) {
+        plc_elog(ERROR, "StartContainer RPC failed., error:%s", status.error_message().c_str());
+    }
     plc_elog(DEBUG1, "StartContainer response:%s", response.DebugString().c_str());
     plc_elog(DEBUG1, "StartContainer finished with status %d", status.error_code());
 }
@@ -451,6 +454,9 @@ void PLCoordinatorClient::StopContainer(const StopContainerRequest &request, Sto
     grpc::ClientContext context;
     plc_elog(DEBUG1, "StopContainer request:%s", request.DebugString().c_str());
     grpc::Status status = stub_->StopContainer(&context, request, &response);
+    if (!status.ok()) {
+        plc_elog(ERROR, "StopContainer RPC failed., error:%s", status.error_message().c_str());
+    }
     plc_elog(DEBUG2, "StopContainer response:%s", response.DebugString().c_str());
     plc_elog(DEBUG1, "StopContainer finished with status %d", status.error_code());
 }
