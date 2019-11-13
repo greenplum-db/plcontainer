@@ -25,8 +25,11 @@ ccp_create_params_anchor: &ccp_default_params
   terraform_source: ccp_src/google/
 
 ccp_vars_anchor: &ccp_default_vars
-  instance_type: n1-standard-2
-  platform: centos6
+  instance_type: n1-standard-4
+  region: {{google-region}}
+  zone: {{google-zone}}
+  disk_size: 100
+  disk_type: pd-ssd
 
 ccp_gen_cluster_default_params_anchor: &ccp_gen_cluster_default_params
   AWS_ACCESS_KEY_ID: {{tf-machine-access-key-id}}
@@ -47,13 +50,6 @@ ccp_destroy_anchor: &ccp_destroy
       aws_ebs_volume_type: standard
   get_params:
     action: destroy
-
-
-ccp_options_anchor7: &ccp_options7
-  terraform_source: ccp_src/google/
-  vars:
-    instance_type: n1-standard-2
-    platform: centos7
 
 set_failed_anchor: &set_failed
   do:
@@ -229,23 +225,22 @@ jobs:
 - name: plcontainer_client_build
   max_in_flight: 4
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
       trigger: true
     - get: ubuntu18-image
   - task: plcontainer_client_build
     file: plcontainer_src/concourse/tasks/plcontainer_client_build.yml
     image: ubuntu18-image
-  - aggregate:
-    - put: plcontainer_client_ubuntu18_build
-      params:
-        file: plcontainer_client/plcontainer_client.tar.gz
+  - put: plcontainer_client_ubuntu18_build
+    params:
+      file: plcontainer_client/plcontainer_client.tar.gz
 
 # Build PL/Container GP Package
 - name: plcontainer_build_ubuntu18
   max_in_flight: 4
   plan:
-  - aggregate:
+  - in_parallel:
     - get: bin_gpdb_ubuntu18
     - get: gpdb_src
     - get: plcontainer_src
@@ -259,15 +254,14 @@ jobs:
     input_mapping:
       bin_gpdb: bin_gpdb_ubuntu18
       plcontainer_client: plcontainer_client_ubuntu18_build
-  - aggregate:
-    - put: plcontainer_gpdb_ubuntu18_build
-      params:
-        file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
+  - put: plcontainer_gpdb_ubuntu18_build
+    params:
+      file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
 
 - name: plcontainer_build_centos7
   max_in_flight: 4
   plan:
-  - aggregate:
+  - in_parallel:
     - get: bin_gpdb_centos7
     - get: gpdb_src
     - get: plcontainer_src
@@ -281,14 +275,13 @@ jobs:
     input_mapping:
       bin_gpdb: bin_gpdb_centos7
       plcontainer_client: plcontainer_client_ubuntu18_build
-  - aggregate:
-    - put: plcontainer_gpdb_centos7_build
-      params:
-        file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
+  - put: plcontainer_gpdb_centos7_build
+    params:
+      file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
 
 - name: plcontainer_function_test_ubuntu18
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
       passed:
       - plcontainer_build_ubuntu18
@@ -312,12 +305,8 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
-        instance_type: n1-standard-4
+        <<: *ccp_default_vars
         PLATFORM: ubuntu18.04
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
@@ -340,7 +329,7 @@ jobs:
 
 - name: plcontainer_function_test_centos7
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
       passed:
       - plcontainer_build_centos7
@@ -364,12 +353,8 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
-        instance_type: n1-standard-4
+        <<: *ccp_default_vars
         PLATFORM: centos7
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
@@ -391,7 +376,7 @@ jobs:
 
 - name: plcontainer_resgroup_test_centos7
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
       passed:
       - plcontainer_build_centos7
@@ -415,12 +400,8 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
-        instance_type: n1-standard-4
+        <<: *ccp_default_vars
         PLATFORM: centos7
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
@@ -443,7 +424,7 @@ jobs:
 
 - name: plcontainer_resgroup_test_ubuntu18
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
       passed:
       - plcontainer_build_ubuntu18
@@ -467,12 +448,8 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
-        instance_type: n1-standard-4
+        <<: *ccp_default_vars
         PLATFORM: ubuntu18.04
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
@@ -498,7 +475,7 @@ jobs:
 # concourse container in a neat way.(running docker inside container is ugly)
 - name: plcontainer_build_python_image
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
     - get: gpdb_src
     - get: gpdb_binary
@@ -510,12 +487,9 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
+        <<: *ccp_default_vars
         instance_type: n1-standard-2
         PLATFORM: centos7
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
@@ -541,7 +515,7 @@ jobs:
 
 - name: plcontainer_build_r_image
   plan:
-  - aggregate:
+  - in_parallel:
     - get: plcontainer_src
     - get: gpdb_src
     - get: gpdb_binary
@@ -553,12 +527,9 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
+        <<: *ccp_default_vars
         instance_type: n1-standard-2
         PLATFORM: centos7
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
   - task: gen_cluster
     file: ccp_src/ci/tasks/gen_cluster.yml
     params:
