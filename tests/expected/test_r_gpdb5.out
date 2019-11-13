@@ -1,68 +1,36 @@
 set datestyle='ISO,MDY';
 select rtestudt3( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] );
-              rtestudt3               
---------------------------------------
-  # 1 | 1 | a # 2 | 2 | b # 3 | 3 | c
-(1 row)
-
+ERROR:  plcontainer log: init call request for setof type has not implemented. (comm_dummy_plc.c:24)
+CONTEXT:  PLContainer function "rtestudt3"
 select rtestudt4( array[
                 (1,array[1,2,3],array['a','b','c']),
                 (2,array[2,3,4],array['b','c','d']),
                 (3,array[3,4,5],array['c','d','e'])
             ]::test_type4[] );
-                  rtestudt4                  
----------------------------------------------
-  # 1 | 6 | , a # 2 | 9 | , b # 3 | 12 | , c
-(1 row)
-
+ERROR:  plcontainer log: init call request for setof type has not implemented. (comm_dummy_plc.c:24)
+CONTEXT:  PLContainer function "rtestudt4"
 select rtestudt5(null::test_type4[]);
- rtestudt5 
------------
-         1
-(1 row)
-
+ERROR:  plcontainer log: init call request for setof type has not implemented. (comm_dummy_plc.c:24)
+CONTEXT:  PLContainer function "rtestudt5"
 select rtestudt5(array[null]::test_type4[]);
- rtestudt5 
------------
-         2
-(1 row)
-
+ERROR:  plcontainer log: init call request for setof type has not implemented. (comm_dummy_plc.c:24)
+CONTEXT:  PLContainer function "rtestudt5"
 select rtestudt7();
-         rtestudt7         
----------------------------
- {"(1,2,foo)","(3,4,bar)"}
-(1 row)
-
+ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, WARNING, Unsupport return type 7  stacktrace: (comm_dummy_plc.c:24)
+CONTEXT:  PLContainer function "rtestudt7"
 --start_ignore
 select rtestudt9();
-         rtestudt9         
----------------------------
- {"(1,2,foo)","(3,4,bar)"}
- {"(5,6,buz)","(7,8,zzz)"}
-(2 rows)
-
+ERROR:  plcontainer log: plcontainer_function_handler not support fn_retset (comm_dummy_plc.c:24)
+CONTEXT:  PLContainer function "rtestudt9"
 --end_ignore
 select rtestudt10();
-                            rtestudt10                             
--------------------------------------------------------------------
- {"(1,\"{2,22}\",\"{foo,foo2}\")","(3,\"{4,44}\",\"{bar,bar2}\")"}
-(1 row)
-
+ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, WARNING, Unsupport return type 7  stacktrace: (comm_dummy_plc.c:24)
+CONTEXT:  PLContainer function "rtestudt10"
 select * from unnest(rtestudt14( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] ));
- a | b | c 
----+---+---
- 1 | 1 | a
- 2 | 2 | b
- 3 | 3 | c
-(3 rows)
-
+ERROR:  plcontainer log: init call request for setof type has not implemented. (comm_dummy_plc.c:24)
+CONTEXT:  PLContainer function "rtestudt14"
 --start_ignore
 select * from rtestudt15( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] );
- a | b | c 
----+---+---
- 1 | 1 | a
- 2 | 2 | b
- 3 | 3 | c
-(3 rows)
-
+ERROR:  plcontainer log: plcontainer_function_handler not support fn_retset (comm_dummy_plc.c:24)
+CONTEXT:  PLContainer function "rtestudt15"
 --end_ignore

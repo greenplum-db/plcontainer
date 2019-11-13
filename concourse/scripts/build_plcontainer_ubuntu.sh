@@ -13,11 +13,10 @@ TOP_DIR=${CWDIR}/../../../
 
 build_plcontainer() {
   # source greenplum
+  [ -f 'opt/gcc_env.sh' ] && source /opt/gcc_env.sh
   source /usr/local/greenplum-db/greenplum_path.sh
   source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
   
-  [ -f 'opt/gcc_env.sh' ] && source /opt/gcc_env.sh
- 
   # build plcontainer
   pushd plcontainer_src
   if [ "${DEV_RELEASE}" == "release" ]; then
@@ -31,15 +30,32 @@ build_plcontainer() {
       PLCONTAINER_RELEASE="0"
   fi
 
-  # copy clients into folder
-  pushd ../plcontainer_client
-  tar zxf plcontainer_client.tar.gz
+  # copy servers into folder
+  pushd ../plcontainer_server
+  tar zxf plcontainer_server.tar.gz
   popd
-  tar zxvf ../plcontainer_client/pyclient.tar.gz -C src/pyclient/bin/
-  tar zxvf ../plcontainer_client/rclient.tar.gz -C src/rclient/bin/
+  #tar zxvf ../plcontainer_server/pyserver.tar.gz -C src/pyserver/bin/
+  tar zxvf ../plcontainer_server/rserver.tar.gz -C src/rclient/bin/
+
+  # copy grpc libs
+  mkdir ${TOP_DIR}/grpc_lib
+  pushd ${TOP_DIR}/grpc_lib 
+  cp -d /usr/local/lib/libgrpc++.so* . 
+  cp -d /usr/local/lib/libgrpc++_reflection.so* .
+  cp -d /usr/local/lib/libgrpc.so* .
+  cp -d /usr/local/lib/libgpr.so* .
+  cp -d /usr/local/lib/libprotobuf.so* .
+  cp -d /usr/lib/x86_64-linux-gnu/libjson-c.so* .
+  tar czf plcontainer-libs.tar.gz *
+  popd
+  
+  export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+  make proto
 
   pushd package
   cp Makefile.ubuntu Makefile
+
+
 
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make cleanall;
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make
@@ -48,8 +64,10 @@ build_plcontainer() {
   
   if [ "${DEV_RELEASE}" == "devel" ]; then
       cp plcontainer_src/package/plcontainer-*.gppkg $OUTPUT/plcontainer-concourse.gppkg
+      cp grpc_lib/plcontainer-libs.tar.gz $OUTPUT/plcontainer-concourse-lib.tar.gz
   else
       cp plcontainer_src/package/plcontainer-*.gppkg $OUTPUT/
+      cp grpc_lib/plcontainer-libs.tar.gz $OUTPUT/plcontainer-concourse-lib.tar.gz
   fi
 }  
 

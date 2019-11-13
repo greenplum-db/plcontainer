@@ -8,7 +8,7 @@
 
 set -exo pipefail
 
-DockerFolder="~/data-science-bundle/plcontainer_dockerfiles/$language/"
+DockerFolder="~/plcontainer_src/dockerfiles/"
 
 pushd plcontainer_src
 if [ "$DEV_RELEASE" == "devel" ]; then
@@ -36,8 +36,6 @@ docker_build() {
 	ssh $node "bash -c \" \
 	set -eox pipefail; \
 	pushd $DockerFolder; \
-	mv ../../concourse/scripts/rlibs ./ ;\
-	mv ../../concourse/scripts/rlibs.higher_gcc ./ ;\
 	chmod +x *.sh; \
 	ls -lh; \
 	docker build -f Dockerfile.$language -t pivotaldata/plcontainer_${language}_shared:devel ./ ; \
@@ -62,7 +60,6 @@ docker_build_ubuntu() {
 
 	ssh $node "bash -c \" \
 	set -eox pipefail; \
-	cp ~/artifacts_$language/* $DockerFolder; \
 	pushd $DockerFolder; \
 	chmod +x *.sh; \
 	ls -lh

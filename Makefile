@@ -82,6 +82,8 @@ SYSTEM ?= $(HOST_SYSTEM)
 CXX = g++
 #CPPFLAGS += `pkg-config --cflags protobuf grpc`
 CXXFLAGS += -std=c++11
+override SHLIB_LINK += -lstdc++
+
 ifeq ($(SYSTEM),Darwin)
 #LDFLAGS += -L/usr/local/lib `pkg-config --libs protobuf grpc++`
 override SHLIB_LINK += -L/usr/local/lib -lprotobuf -lgrpc++\
@@ -99,6 +101,7 @@ ifeq ($(ENABLE_COVERAGE),yes)
   override CFLAGS += -coverage
   override SHLIB_LINK += -lgcov --coverage
 endif
+
 
 all: proto coordinator all-lib
 	@echo "Build PL/Container Done."

@@ -7,7 +7,7 @@ inputs:
   - name: plcontainer_src
 
 outputs:
-  - name: plcontainer_client
+  - name: plcontainer_server
 
 run:
-  path: plcontainer_src/concourse/scripts/build_plcontainer_client.sh
+  path: plcontainer_src/concourse/scripts/build_plcontainer_server.sh

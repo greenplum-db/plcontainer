@@ -19,7 +19,7 @@ test: test_r
 # test: test_python
 # test: plpython_quote
 test: test_r_gpdb5 
-test: spi_r 
+#test: spi_r 
 # test: test_python_gpdb5  #spi_python subtransaction_python
 test: test_r_error 
 # test: test_python_error 

@@ -274,7 +274,7 @@ std::string PLContainerClient::functionCallInfoToStr(const FunctionCallInfo fcin
 }
 
 std::string PLContainerClient::procInfoToStr(const plcProcInfo *proc) {
-    char result[1024];
+    char result[4096];
 
     std::string argnames;
     std::string args;
@@ -318,7 +318,7 @@ std::string PLContainerClient::procInfoToStr(const plcProcInfo *proc) {
 }
 
 std::string PLContainerClient::typeInfoToStr(const plcTypeInfo *type) {
-    char result[1024];
+    char result[2048];
 
     snprintf(result, sizeof(result),
                     "type:%d "
@@ -337,7 +337,7 @@ std::string PLContainerClient::typeInfoToStr(const plcTypeInfo *type) {
                     type->typeName);
     for (int i=0;i<type->nSubTypes;i++) {
 
-        snprintf(result+strlen(result), sizeof(result), "subtype_%d:%s", i,
+        snprintf(result+strlen(result), sizeof(result) - strlen(result) - 2, "subtype_%d:%s", i,
                     PLContainerClient::typeInfoToStr(&type->subTypes[i]).c_str());
     }
     return std::string(result);

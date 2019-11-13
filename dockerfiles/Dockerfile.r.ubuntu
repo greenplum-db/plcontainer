@@ -1,0 +1,15 @@
+FROM ubuntu:18.04
+
+RUN mkdir -p /tempdir
+
+ADD ./ubuntu.r.sh /tempdir/
+
+RUN /tempdir/ubuntu.r.sh 
+
+ENV R_HOME "/usr/lib/R"
+ENV PATH "/usr/lib/R/bin:$PATH"
+ENV LD_LIBRARY_PATH "/clientdir:/usr/local/lib/:/usr/lib/R/lib:/usr/lib/R/extlib:$LD_LIBRARY_PATH"
+
+RUN rm -rf /tempdir 
+
+WORKDIR /clientdir

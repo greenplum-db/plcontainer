@@ -16,8 +16,23 @@ function _main() {
  
   # install R
   yum -y install epel-release
-  yum -y install R  
+  yum -y install vim
 
+  [ -f 'opt/gcc_env.sh' ] && source /opt/gcc_env.sh
+
+  # install protobuf
+  git clone --recursive --branch v1.24.3 --depth 1 https://github.com/grpc/grpc.git
+  pushd ${TOP_DIR}/grpc/third_party/protobuf
+  ./autogen.sh
+  ./configure
+  make -j
+  make install
+  popd
+  pushd ${TOP_DIR}/grpc
+  export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+  make -j
+  make install
+  popd
   # setup gpdb environment
   install_gpdb
   ${TOP_DIR}/gpdb_src/concourse/scripts/setup_gpadmin_user.bash "centos"

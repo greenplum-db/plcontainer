@@ -44,49 +44,32 @@ x<-data.frame(a,b,c,d,e,f,g,h)
 return(x)
 $$ LANGUAGE plcontainer ;
 select rerror_invalid_program();
-ERROR:  PL/Container client exception occurred:
+ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Error R Server Logs, ERROR, Cannot parse user code gpdbR.rerror_invalid_program <- function() { (comm_dummy_plc.c:24)
 DETAIL:  
- Parse Error
-gpdb.rerror_invalid_program <- function(args) {
 # container: plc_r_shared
 this is invalid r program
-}
+}  stacktrace:
 CONTEXT:  PLContainer function "rerror_invalid_program"
 select rerror_invalid_import();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  Error in library(invalid_lib) : there is no package called 'invalid_lib'
+ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, WARNING, Unable execute user code  stacktrace: (comm_dummy_plc.c:24)
 CONTEXT:  PLContainer function "rerror_invalid_import"
 select rerror_timestamp('2017-09-10 12:10:09');
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Error in (gpdb.rerror_timestamp <- function(args, t) { : 
-  object 'i' not found
+ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, WARNING, Unable execute user code  stacktrace: (comm_dummy_plc.c:24)
 CONTEXT:  PLContainer function "rerror_timestamp"
 select rerror_non_exist_function();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Error in (gpdb.rerror_non_exist_function <- function(args) { : 
-  could not find function "as.mx"
+ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, WARNING, Unable execute user code  stacktrace: (comm_dummy_plc.c:24)
 CONTEXT:  PLContainer function "rerror_non_exist_function"
 select rerror_spi_queryfail(); 
-ERROR:  relation "non_exist_table" does not exist
-LINE 1: select fname from non_exist_table order by 1
-                          ^
-QUERY:  select fname from non_exist_table order by 1
+ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, WARNING, Unable execute user code  stacktrace: (comm_dummy_plc.c:24)
 CONTEXT:  PLContainer function "rerror_spi_queryfail"
 select rerror_setof();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  Error in array(1:3, c(-1, 2)) : negative length vectors are not allowed
+ERROR:  plcontainer log: plcontainer_function_handler not support fn_retset (comm_dummy_plc.c:24)
 CONTEXT:  PLContainer function "rerror_setof"
 select rerror_dataframe();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  
- Error in data.frame(a, b, c, d, e, f, g, h) : 
-  arguments imply differing number of rows: 3, 2
+ERROR:  plcontainer log: plcontainer_function_handler not support fn_retset (comm_dummy_plc.c:24)
 CONTEXT:  PLContainer function "rerror_dataframe"
 --start_ignore
 select rerror_datatype();
-ERROR:  PL/Container client exception occurred:
-DETAIL:  Actual R type is not matching excpected returned type PLC_DATA_FLOAT8 [5]
+ERROR:  plcontainer log: plcontainer_function_handler not support fn_retset (comm_dummy_plc.c:24)
 CONTEXT:  PLContainer function "rerror_datatype"
 --end_ignore

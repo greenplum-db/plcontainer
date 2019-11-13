@@ -13,10 +13,11 @@ TOP_DIR=${CWDIR}/../../../
 
 build_plcontainer() {
   # source greenplum
+
+  [ -f 'opt/gcc_env.sh' ] && source /opt/gcc_env.sh
+
   source /usr/local/greenplum-db/greenplum_path.sh
   source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
-
-  source /opt/gcc_env.sh
 
   # build plcontainer
   pushd plcontainer_src
@@ -32,11 +33,14 @@ build_plcontainer() {
   fi
 
   # copy clients into folder
-  pushd ../plcontainer_client
-  tar zxf plcontainer_client.tar.gz
+  pushd ../plcontainer_server
+  tar zxf plcontainer_server.tar.gz
   popd
-  tar zxvf ../plcontainer_client/pyclient.tar.gz -C src/pyclient/bin/
-  tar zxvf ../plcontainer_client/rclient.tar.gz -C src/rclient/bin/
+  #tar zxvf ../plcontainer_client/pyclient.tar.gz -C src/pyclient/bin/
+  tar zxvf ../plcontainer_server/rserver.tar.gz -C src/rclient/bin/
+
+  export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+  make proto
 
   pushd package
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make cleanall;
