@@ -28,7 +28,7 @@ DATA_built = $(MGMTDIR)/sql/plcontainer_install.sql $(MGMTDIR)/sql/plcontainer_u
 
 # Files to build
 # TODO: clean docker out from plcontainer
-FILES = src/function_cache.c src/plcontainer.c src/sqlhandler.c \
+FILES = src/function_cache.c src/plcontainer.c  \
         src/containers.c src/message_fns.c src/plc_configuration.c src/plc_docker_api.c \
         src/plc_typeio.c src/subtransaction_handler.c \
         src/common/base_network.c src/common/comm_channel.c src/common/comm_connectivity.c src/common/comm_messages.c src/common/comm_dummy_plc.c
@@ -105,14 +105,22 @@ else
   override CLIENT_CFLAGS += -O3 -g
 endif
 
-all: proto all-lib
+all: proto coordinator all-lib
 	@echo "Build PL/Container Done."
 
 
-install: all installdirs install-lib install-extra install-clients
+install: all install-coordinator installdirs install-lib install-extra install-clients
 
 clean: clean-clients clean-coverage clean-proto
 distclean: distclean-config
+
+.PHONY: coordinator
+coordinator:
+	$(MAKE) -C $(SRCDIR)/
+
+.PHONY: install-coordinator
+install-coordinator:
+	$(MAKE) -C $(SRCDIR)/ install
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'

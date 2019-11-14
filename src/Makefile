@@ -6,7 +6,7 @@ DATA = plc_coordinator--1.0.0.sql
 EXTENSION = plc_coordinator
 SRCDIR = ./
 FILES = plc_coordinator.c containers.c message_fns.c plc_configuration.c \
-        plc_docker_api.c plcontainer_udfs.c sqlhandler.c function_cache.c \
+        plc_docker_api.c plcontainer_udfs.c function_cache.c \
         plc_typeio.c subtransaction_handler.c \
         common/base_network.c common/comm_channel.c common/comm_connectivity.c \
         common/comm_dummy_plc.c common/comm_messages.c
