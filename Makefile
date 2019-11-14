@@ -98,11 +98,6 @@ endif
 ifeq ($(ENABLE_COVERAGE),yes)
   override CFLAGS += -coverage
   override SHLIB_LINK += -lgcov --coverage
-  override CLIENT_CFLAGS += -coverage -O0 -g
-  override CLIENT_LDFLAGS += -lgcov --coverage
-else
-  override SHLIB_LINK += $(libpq) $(shell pkg-config --libs json-c)
-  override CLIENT_CFLAGS += -O3 -g
 endif
 
 all: proto coordinator all-lib
@@ -149,8 +144,8 @@ clean-proto:
 install-extra: installdirs
 	$(INSTALL_PROGRAM) '$(MGMTDIR)/bin/plcontainer'                         '$(DESTDIR)$(bindir)/plcontainer'
 	$(INSTALL_DATA)    '$(MGMTDIR)/config/plcontainer_configuration.xml'    '$(PLCONTAINERDIR)/'
-	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_install.sql'             '$(PLCONTAINERDIR)/'
-	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_uninstall.sql'           '$(PLCONTAINERDIR)/'
+	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_install.sql.in'             '$(PLCONTAINERDIR)/plcontainer_install.sql'
+	$(INSTALL_DATA)    '$(MGMTDIR)/sql/plcontainer_uninstall.sql.in'           '$(PLCONTAINERDIR)/plcontainer_uninstall.sql'
 
 .PHONY: install-clients
 install-clients:
@@ -163,7 +158,7 @@ installcheck:
 
 .PHONY: build-clients
 build-clients:
-	CC='$(CC)' CFLAGS='$(CLIENT_CFLAGS)' LDFLAGS='$(CLIENT_LDFLAGS)' $(MAKE) -C $(SRCDIR)/rclient all
+	$(MAKE) -C $(SRCDIR)/rclient all
 
 .PHONY: clean-clients
 clean-clients:
