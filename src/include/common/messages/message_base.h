@@ -8,6 +8,7 @@
 #ifndef PLC_MESSAGE_BASE_H
 #define PLC_MESSAGE_BASE_H
 
+#ifndef __cplusplus
 #ifndef bool
 typedef char bool;
 #endif
@@ -18,6 +19,8 @@ typedef char bool;
 
 #ifndef false
 #define false ((bool)0)
+#endif
+
 #endif
 
 #include <stdint.h>
