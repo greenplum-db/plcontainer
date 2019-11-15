@@ -39,7 +39,7 @@ extern void *txn_palloc(size_t size);
 
 extern void plc_elog(int log_level, const char *format, ...);
 
-void deinit_pplan_slots(plcContext *ctx);
-void init_pplan_slots(plcContext *ctx);
+//void deinit_pplan_slots(plcContext *ctx);
+//void init_pplan_slots(plcContext *ctx);
 
 #endif

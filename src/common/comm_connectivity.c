@@ -386,7 +386,7 @@ static void plcDisconnect_(plcConn *conn) {
 
 void plcContextInit(plcContext *ctx)
 {
-	init_pplan_slots(ctx);
+	//init_pplan_slots(ctx);
 	ctx->service_address = NULL;
 }
 
@@ -397,7 +397,8 @@ void plcContextInit(plcContext *ctx)
  */
 void plcReleaseContext(plcContext *ctx)
 {
-	deinit_pplan_slots(ctx);
+	(void) ctx;
+	//deinit_pplan_slots(ctx);
 }
 
 /*
@@ -407,7 +408,8 @@ void plcReleaseContext(plcContext *ctx)
 
 void plcContextReset(plcContext *ctx)
 {
-	init_pplan_slots(ctx);
+	(void) ctx;
+	//init_pplan_slots(ctx);
 }
 
 /*
