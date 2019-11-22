@@ -9,6 +9,7 @@ pushd /tempdir/grpc/third_party/protobuf
 ./configure
 make -j
 make install
+export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 popd
 pushd /tempdir/grpc
 make -j
