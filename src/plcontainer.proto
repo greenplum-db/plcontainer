@@ -74,6 +74,11 @@ message CompositeData {
     repeated    ScalarData  values = 2;
 }
 
+message ReturnType{
+	PlcDataType type = 1;
+	repeated PlcDataType subtypes = 2;
+}
+
 message ArrayData {
     string      name = 1;
     PlcDataType     elementType = 2;
@@ -107,7 +112,7 @@ message CallRequest {
     int32       hasChanged = 3;
     ProcSrc     proc = 4;
     int32       logLevel = 5;
-    PlcDataType     retType = 6;
+    ReturnType  retType = 6;
     string      serverenc = 7;
     repeated    PlcValue    args = 8;
 }
