@@ -9,8 +9,12 @@
 
 PLCONTAINER_DIR = ..
 
-ifeq ($(PYTHON),)
+ifeq ($(PYTHON_VERSION),3)
+  PYTHON = python3.7
+  CLIENT = py3client
+else
   PYTHON = python
+  CLIENT = pyclient
 endif
 
 # Python build flags
@@ -22,7 +26,6 @@ CLIENT_LDFLAGS = $(shell $(PYTHON) -c "from distutils import sysconfig; import s
 override CFLAGS += $(CLIENT_CFLAGS) -I$(PLCONTAINER_DIR)/ -DPLC_CLIENT -Wall -Wextra -Werror -Wno-unused-result
 override LDFLAGS += $(CLIENT_LDFLAGS)
 
-CLIENT = pyclient
 common_src = $(shell find $(PLCONTAINER_DIR)/common -name "*.c")
 common_objs = $(foreach src,$(common_src),$(subst .c,.$(CLIENT).o,$(src)))
 client_src = $(shell find . -name "*.c")

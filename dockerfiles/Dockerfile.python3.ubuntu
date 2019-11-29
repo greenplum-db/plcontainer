@@ -1,0 +1,12 @@
+FROM ubuntu:18.04
+
+RUN mkdir -p /clientdir
+RUN apt update && apt install -y python3.7 python3.7-dev
+
+ENV PATH "${PATH:+:${PATH}}"
+ENV LD_LIBRARY_PATH "/usr/lib/python3.7${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+ENV MANPATH "${MANPATH}"
+ENV XDG_DATA_DIRS "${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"
+
+WORKDIR /clientdir

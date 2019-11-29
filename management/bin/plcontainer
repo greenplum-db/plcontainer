@@ -74,8 +74,8 @@ def parseargs():
     runtime_add_parser.add_argument("-i", "--image", dest="image_name",
                                     help="image name:tag (e.g. centos:7.2)", required=True)
     runtime_add_parser.add_argument("-l", "--language", dest="language",
-                                    help="language type, currently support python and r. " +
-                                    "Used to auto-configure container command.", required=True, choices=['r','python'])
+                                    help="language type, currently support python, python3 and r. " +
+                                    "Used to auto-configure container command.", required=True, choices=['r','python','python3'])
     runtime_add_parser.add_argument("-v", "--volume", dest="shared", action="append",
                                     help="Bind mount a volume, can work with multiple volumes" +
                                     " format: HOST:CONTAINER:[rw|ro]")
@@ -89,8 +89,8 @@ def parseargs():
     runtime_replace_parser.add_argument("-i", "--image", dest="image_name",
                                     help="image name:tag (e.g. centos:7.2)", required=True)
     runtime_replace_parser.add_argument("-l", "--language", dest="language",
-                                    help="language type, currently support python and r. " +
-                                    "Used to auto-configure container command.", required=True, choices=['r','python'])
+                                    help="language type, currently support python, python3 and r. " +
+                                    "Used to auto-configure container command.", required=True, choices=['r','python', 'python3'])
     runtime_replace_parser.add_argument("-v", "--volume", dest="shared", action="append",
                                     help="Bind mount a volume, can work with multiple volumes" +
                                     " format: HOST:CONTAINER:[rw|ro]")
@@ -273,8 +273,10 @@ def update_xml_runtime(runtime, elements):
     command = runtime.find('command')
     if elements['language'] == "r":
         command.text = "/clientdir/rclient.sh"
-    else:
+    elif elements['language'] == "python":
         command.text = "/clientdir/pyclient.sh"
+    else:
+        command.text = "/clientdir/py3client.sh"
 
     update_xml_check_shared_folders(runtime, elements)
     update_xml_check_settings(runtime, elements)
@@ -294,8 +296,10 @@ def update_xml_new_runtime(elements):
     command = ElementTree.Element("command")
     if elements['language'] == "r":
         command.text = "/clientdir/rclient.sh"
-    else:
+    elif elements['language'] == "python":
         command.text = "/clientdir/pyclient.sh"
+    else:
+        command.text = "/clientdir/py3client.sh"
     runtime.append(runtime_id)
     runtime.append(image)
     runtime.append(command)

@@ -64,7 +64,7 @@ static PyObject *PLy_output(volatile int level, PyObject *self UNUSED, PyObject 
 			so = PyObject_Str(args);
 		}
 
-		if (so == NULL || ((sv = PyString_AsString(so)) == NULL)) {
+		if (so == NULL || ((sv = (char*) PyString_AsString(so)) == NULL)) {
 			level = ERROR;
 			sv = strdup("could not parse error message in plpy.elog");
 			freesv = 1;
