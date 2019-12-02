@@ -57,7 +57,7 @@ static char *get_python_error() {
 
 					tbList = PyObject_CallMethod(tracebackModule, "format_tb", "O", traceback);
 					strTbRetval = PyObject_CallMethod(emptyString, "join", "O", tbList);
-					chrTbRetval = PyString_AsString(strTbRetval);
+					chrTbRetval = (char*) PyString_AsString(strTbRetval);
 
 					tmp = malloc(100 + strlen(chrRetval) + strlen(chrTbRetval));
 					sprintf(tmp, "Traceback (most recent call last):\n%s%s", chrTbRetval, chrRetval);

@@ -42,39 +42,7 @@ static void
 PLy_exception_set(PyObject *, const char *, ...)
 __attribute__((format(printf, 2, 3)));
 
-static void PLy_add_exceptions(PyObject *plpy);
-
-static PyObject *PLy_exc_error = NULL;
-static PyObject *PLy_exc_fatal = NULL;
 static PyObject *PLy_exc_spi_error = NULL;
-
-static PyMethodDef PLy_exc_methods[] = {
-	{NULL, NULL, 0, NULL}
-};
-
-#if PY_MAJOR_VERSION >= 3
-static PyModuleDef PLy_module = {
-	PyModuleDef_HEAD_INIT,		/* m_base */
-	"plpy",						/* m_name */
-	NULL,						/* m_doc */
-	-1,							/* m_size */
-	PLy_methods,				/* m_methods */
-};
-
-static PyModuleDef PLy_exc_module = {
-	PyModuleDef_HEAD_INIT,		/* m_base */
-	"spiexceptions",			/* m_name */
-	NULL,						/* m_doc */
-	-1,							/* m_size */
-	PLy_exc_methods,			/* m_methods */
-	NULL,						/* m_reload */
-	NULL,						/* m_traverse */
-	NULL,						/* m_clear */
-	NULL						/* m_free */
-};
-
-PLyInit_plpy(void);
-#endif
 
 static PyMethodDef PLy_subtransaction_methods[] = {
 	{"__enter__", PLy_subtransaction_enter, METH_VARARGS, NULL},
@@ -925,7 +893,7 @@ PyObject *PLy_spi_prepare(PyObject *self UNUSED, PyObject *args) {
 
 		optr = PySequence_GetItem(list, i);
 		if (PyString_Check(optr))
-			sptr = PyString_AsString(optr);
+			sptr = (char*) PyString_AsString(optr);
 #if 0
 			/* FIXME: add PLyUnicode_AsString() */
 			else if (PyUnicode_Check(optr))
@@ -1019,59 +987,3 @@ PLy_exception_set(PyObject *exc, const char *fmt, ...) {
 	PyErr_SetString(exc, buf);
 }
 
-void Ply_spi_exception_init(PyObject *plpy)
-{
-	PLy_add_exceptions(plpy);
-}
-
-/*
- * Add exception object to Python, currently only SPIError is needed.
- */
-static void
-PLy_add_exceptions(PyObject *plpy)
-{
-	PyObject *excmod;
-
-#if PY_MAJOR_VERSION < 3
-	excmod = Py_InitModule("spiexceptions", PLy_exc_methods);
-#else
-	excmod = PyModule_Create(&PLy_exc_module);
-#endif
-	if (PyModule_AddObject(plpy, "spiexceptions", excmod) < 0)
-		plc_elog(ERROR, "could not add the spiexceptions module");
-
-	Py_INCREF(excmod);
-
-	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
-	PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
-	PLy_exc_spi_error = PyErr_NewException("plpy.SPIError", NULL, NULL);
-
-	Py_INCREF(PLy_exc_error);
-	PyModule_AddObject(plpy, "Error", PLy_exc_error);
-	Py_INCREF(PLy_exc_fatal);
-	PyModule_AddObject(plpy, "Fatal", PLy_exc_fatal);
-	Py_INCREF(PLy_exc_spi_error);
-	PyModule_AddObject(plpy, "SPIError", PLy_exc_spi_error);
-
-	/*
-	 * TODO: lack detailed spi exception
-	 * refer to PLy_generate_spi_exceptions in upstream.
-	 */
-
-}
-
-#if PY_MAJOR_VERSION >= 3
-static PyMODINIT_FUNC
-PLyInit_plpy(void)
-{
-	PyObject   *m;
-
-	m = PyModule_Create(&PLy_module);
-	if (m == NULL)
-		return NULL;
-
-	PLy_add_exceptions(m);
-
-	return m;
-}
-#endif

@@ -20,6 +20,4 @@ PyObject *PLy_spi_prepare(PyObject *self, PyObject *args);
 
 PyObject *PLy_subtransaction(PyObject *, PyObject *);
 
-void Ply_spi_exception_init(PyObject *plpy);
-
 #endif /* PLC_PYSPI_H */

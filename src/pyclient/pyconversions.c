@@ -325,7 +325,7 @@ static int plc_pyobject_as_text(PyObject *input, char **output, plcPyType *type 
 #endif
 	} else {
 #if PY_MAJOR_VERSION >= 3
-		PyObject *s = PyObject_Str(plrv);
+		PyObject *s = PyObject_Str(input);
 
 		plrv_bo = PLyUnicode_Bytes(s);
 		Py_XDECREF(s);
@@ -539,7 +539,7 @@ static int plc_pyobject_as_bytea(PyObject *input, char **output, plcPyType *type
 		Py_ssize_t sz = 0;
 		char *str;
 
-		str = PyUnicode_AsUTF8AndSize(input, &sz);
+		str = (char*) PyUnicode_AsUTF8AndSize(input, &sz);
 		if (str == NULL) {
 			raise_execution_error("Failed to get byte representation of unicode string");
 			return -1;

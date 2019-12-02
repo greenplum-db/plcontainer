@@ -32,6 +32,8 @@ static int process_call_results(plcConn *conn, PyObject *retval, plcPyFunction *
 
 static int fill_rawdata(rawdata *res, PyObject *retval, plcPyFunction *pyfunc);
 
+static void PLy_add_exceptions(PyObject *plpy);
+
 static PyObject *PyMainModule = NULL;
 static PyMethodDef moddef[] = {
 	/*
@@ -70,6 +72,14 @@ static PyMethodDef moddef[] = {
 	{NULL, NULL, 0,                                      NULL}
 };
 
+static PyMethodDef PLy_exc_methods[] = {
+    {NULL, NULL, 0, NULL}
+};
+
+static PyObject *PLy_exc_error = NULL;
+static PyObject *PLy_exc_fatal = NULL;
+static PyObject *PLy_exc_spi_error = NULL;
+
 #if PY_MAJOR_VERSION >= 3
 static PyModuleDef plc_plpy_module = {
 	PyModuleDef_HEAD_INIT,     /* m_base */
@@ -82,7 +92,23 @@ static PyModuleDef plc_plpy_module = {
 	NULL,                      /* m_clear */
 	NULL                       /* m_free */
 };
+
+static PyModuleDef PLy_exc_module = {
+    PyModuleDef_HEAD_INIT,      /* m_base */
+    "spiexceptions",            /* m_name */
+    NULL,                       /* m_doc */
+    -1,                         /* m_size */
+    PLy_exc_methods,            /* m_methods */
+    NULL,                       /* m_reload */
+    NULL,                       /* m_traverse */
+    NULL,                       /* m_clear */
+    NULL                        /* m_free */
+};
+
+static PyMODINIT_FUNC PLyInit_plpy(void);
 #endif
+
+
 
 int python_init() {
 	PyObject *plpymod = NULL;
@@ -105,10 +131,10 @@ int python_init() {
 	/* create the plpy module */
 #if PY_MAJOR_VERSION >= 3
 	plpymod = PyModule_Create(&plc_plpy_module);
-	PyImport_AppendInittab("plpy", PyInit_plpy);
+	PyImport_AppendInittab("plpy", PLyInit_plpy);
 #else
 	plpymod = Py_InitModule("plpy", moddef);
-	Ply_spi_exception_init(plpymod);
+	PLy_add_exceptions(plpymod);
 #endif
 
 	/* Initialize the main module */
@@ -482,3 +508,60 @@ static int fill_rawdata(rawdata *res, PyObject *retval, plcPyFunction *pyfunc) {
 	}
 	return 0;
 }
+
+void Ply_spi_exception_init(PyObject *plpy)
+{
+    PLy_add_exceptions(plpy);
+}
+
+/*
+ * Add exception object to Python, currently only SPIError is needed.
+ */
+static void
+PLy_add_exceptions(PyObject *plpy)
+{
+    PyObject *excmod;
+
+#if PY_MAJOR_VERSION < 3
+    excmod = Py_InitModule("spiexceptions", PLy_exc_methods);
+#else
+    excmod = PyModule_Create(&PLy_exc_module);
+#endif
+    if (PyModule_AddObject(plpy, "spiexceptions", excmod) < 0)
+        plc_elog(ERROR, "could not add the spiexceptions module");
+
+    Py_INCREF(excmod);
+
+    PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
+    PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
+    PLy_exc_spi_error = PyErr_NewException("plpy.SPIError", NULL, NULL);
+
+    Py_INCREF(PLy_exc_error);
+    PyModule_AddObject(plpy, "Error", PLy_exc_error);
+    Py_INCREF(PLy_exc_fatal);
+    PyModule_AddObject(plpy, "Fatal", PLy_exc_fatal);
+    Py_INCREF(PLy_exc_spi_error);
+    PyModule_AddObject(plpy, "SPIError", PLy_exc_spi_error);
+
+    /*
+     * TODO: lack detailed spi exception
+     * refer to PLy_generate_spi_exceptions in upstream.
+     */
+
+}
+
+#if PY_MAJOR_VERSION >= 3
+static PyMODINIT_FUNC
+PLyInit_plpy(void)
+{
+    PyObject   *m;
+
+    m = PyModule_Create(&plc_plpy_module);
+    if (m == NULL)
+        return NULL;
+
+    PLy_add_exceptions(m);
+
+    return m;
+}
+#endif
