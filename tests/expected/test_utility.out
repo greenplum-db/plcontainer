@@ -56,18 +56,18 @@ Prepare a blank runtime configuration file and test runtime-backup
 
 
 Test runtime-add: nagative cases
-usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
-                               [-v SHARED] [-s SETTING]
+usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l
+                               {r,python,python3} [-v SHARED] [-s SETTING]
 plcontainer runtime-add: error: argument -i/--image is required
-usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
-                               [-v SHARED] [-s SETTING]
+usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l
+                               {r,python,python3} [-v SHARED] [-s SETTING]
 plcontainer runtime-add: error: argument -r/--runtime is required
-usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
-                               [-v SHARED] [-s SETTING]
+usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l
+                               {r,python,python3} [-v SHARED] [-s SETTING]
 plcontainer runtime-add: error: argument -l/--language is required
-usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l {r,python}
-                               [-v SHARED] [-s SETTING]
-plcontainer runtime-add: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python')
+usage: plcontainer runtime-add [-h] -r RUNTIME_ID -i IMAGE_NAME -l
+                               {r,python,python3} [-v SHARED] [-s SETTING]
+plcontainer runtime-add: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python', 'python3')
 
 Test runtime-add, runtime-backup, and runtime-delete
 -image image1 is not in the list of 'docker images'
@@ -155,14 +155,14 @@ No runtime or no specified runtime was found.
 
 Test runtime-replace: negative cases
 usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
-                                   {r,python} [-v SHARED] [-s SETTING]
+                                   {r,python,python3} [-v SHARED] [-s SETTING]
 plcontainer runtime-replace: error: argument -i/--image is required
 usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
-                                   {r,python} [-v SHARED] [-s SETTING]
+                                   {r,python,python3} [-v SHARED] [-s SETTING]
 plcontainer runtime-replace: error: argument -l/--language is required
 usage: plcontainer runtime-replace [-h] -r RUNTIME_ID -i IMAGE_NAME -l
-                                   {r,python} [-v SHARED] [-s SETTING]
-plcontainer runtime-replace: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python')
+                                   {r,python,python3} [-v SHARED] [-s SETTING]
+plcontainer runtime-replace: error: argument -l/--language: invalid choice: 'java' (choose from 'r', 'python', 'python3')
 -plcontainer failed. (Reason='Bad setting key: use_container_network') exiting...
 
 Test runtime-replace: add a new one

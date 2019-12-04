@@ -705,7 +705,7 @@ except Exception as e:
 return 0
 $$ LANGUAGE plcontainer;
 SELECT pyspi_exec_exception();
-NOTICE:  <class 'plpy.SPIError'>
+NOTICE:  <type 'exceptions.SystemError'>
 CONTEXT:  PLContainer function "pyspi_exec_exception"
  pyspi_exec_exception 
 ----------------------
