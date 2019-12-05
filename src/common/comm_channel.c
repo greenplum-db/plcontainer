@@ -1112,6 +1112,7 @@ static int receive_sql_unprepare(plcConn *conn, plcMessage **mStmt) {
 	channel_elog(WARNING, "Receiving spi unprepare request");
 	res |= receive_int64(conn, &pplan);
 	ret->pplan = (void *) pplan;
+	ret->statement = NULL;
 
 	channel_elog(WARNING, "Received spi unprepare request and returned %d", res);
 	return res;
@@ -1170,6 +1171,7 @@ static int receive_sql_pexecute(plcConn *conn, plcMessage **mStmt) {
 	res |= receive_int64(conn, &ret->limit);
 	res |= receive_int64(conn, &pplan);
 	ret->pplan = (void *) pplan;
+	ret->statement = NULL;
 
 	channel_elog(WARNING, "Received spi pexecute request and returned %d", res);
 	return res;
