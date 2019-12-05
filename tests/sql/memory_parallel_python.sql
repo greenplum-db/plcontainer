@@ -11,7 +11,7 @@ CREATE OR REPLACE FUNCTION py_memory_allocate_return(num int) RETURNS text[] AS 
 import time
 allocate = 'a' * num * 1024 * 1024
 time.sleep(1)
-return ['Allocate:' + str(num) + 'MB as ' + allocate[1024*1024*(num/2)]]
+return ['Allocate:' + str(num) + 'MB as ' + allocate[int(1024*1024*(num/2))]]
 $$ LANGUAGE plcontainer;
 
 CREATE TABLE NUM_OF_LOOPS_PY (num int, aux int);
