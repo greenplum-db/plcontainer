@@ -13,9 +13,9 @@ TOP_DIR=${CWDIR}/../../../
 
 function _main() {
 
-  # install R
+  # install R & PYTHON3
   apt update
-  DEBIAN_FRONTEND=noninteractive apt install -y r-base pkg-config libpython2.7-dev python2.7
+  DEBIAN_FRONTEND=noninteractive apt install -y r-base pkg-config libpython2.7-dev python2.7 python3.7-dev
 
   # build client only
   pushd plcontainer_src
@@ -24,8 +24,12 @@ function _main() {
   PLCONTAINER_VERSION=$(git describe)
   echo "#define PLCONTAINER_VERSION \"${PLCONTAINER_VERSION}\"" > src/common/config.h
 
-  make CFLAGS='-Werror -Wextra -Wall -Wno-sign-compare -O3' -C src/pyclient all
-  make CFLAGS='-Werror -Wextra -Wall -Wno-sign-compare -O3' -C src/rclient all
+  make CFLAGS='-Werror -Wextra -Wall -Wno-sign-compare -O3 -g' -C src/pyclient all
+  cp src/pyclient/bin/pyclient src/pyclient/bin/pyclient.bak
+  make CFLAGS='-Werror -Wextra -Wall -Wno-sign-compare -O3 -g' -C src/pyclient clean
+  make CFLAGS='-Werror -Wextra -Wall -Wno-sign-compare -O3 -g' PYTHON_VERSION=3 -C src/pyclient all
+  mv src/pyclient/bin/pyclient.bak src/pyclient/bin/pyclient
+  make CFLAGS='-Werror -Wextra -Wall -Wno-sign-compare -O3 -g' -C src/rclient all
 
   pushd src/pyclient/bin
   tar czf pyclient.tar.gz *

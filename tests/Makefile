@@ -33,14 +33,8 @@ resgroup:
 	plcontainer runtime-show -r plc_r_shared
 
 	# Might use branch to handle the difference later.
-	pg_config --version
-	if [ "`pg_config --version`" == "PostgreSQL 8.3.23" ]; then    \
-		cp expected/test_python.out.gp5 expected/test_python.out; \
-		cp expected/uda_python.out.gp5 expected/uda_python.out;  \
-	else                                                         \
-		cp expected/test_python.out.gp6 expected/test_python.out; \
-		cp expected/uda_python.out.gp6 expected/uda_python.out;  \
-	fi
+	cp expected/test_python.out.gp6 expected/test_python.out;
+	cp expected/uda_python.out.gp6 expected/uda_python.out;
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
 				$(PSQLDIR) $(RESGROUP_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
 .PHONY: tests
@@ -52,14 +46,8 @@ tests:
 	plcontainer runtime-show -r plc_python_shared
 	plcontainer runtime-show -r plc_r_shared
 	# Might use branch to handle the difference later.
-	pg_config --version
-	if [ "`pg_config --version`" == "PostgreSQL 8.3.23" ]; then    \
-		cp expected/test_python.out.gp5 expected/test_python.out; \
-		cp expected/uda_python.out.gp5 expected/uda_python.out;  \
-	else                                                         \
-		cp expected/test_python.out.gp6 expected/test_python.out; \
-		cp expected/uda_python.out.gp6 expected/uda_python.out;  \
-	fi
+	cp expected/test_python.out.gp6 expected/test_python.out;
+	cp expected/uda_python.out.gp6 expected/uda_python.out;
 	
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
 				$(PSQLDIR) $(REGRESS_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
