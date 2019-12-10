@@ -121,8 +121,8 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: pipeline
-    uri: https://github.com/HaozhouWang/plcontainer.git
+    branch: 6X_STABLE
+    uri: https://github.com/greenplum-db/plcontainer.git
 
 - name: gpdb_src
   type: git
