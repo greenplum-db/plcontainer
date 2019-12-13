@@ -61,7 +61,6 @@ SELECT pyldavis_test();
 
 DROP FUNCTION pyldavis_test();
 
-
 --
 -- import gensim
 --
@@ -135,7 +134,6 @@ DROP FUNCTION lifelines_test();
 --
 create or replace function pattern_test() RETURNS TEXT AS $$
 # container: plc_python_shared
-import pattern.en
 from pattern.web import Twitter
 twitter = Twitter()
 return "Success!"
@@ -281,8 +279,12 @@ import sys
 sys.argv=['']
 import tensorflow as tf
 hello = tf.constant('Hello, TensorFlow!')
-sess = tf.Session()
-print(sess.run(hello))
+with tf.compat.v1.Session() as sess:
+    c = tf.constant([[1.0, 2.0], [3.0, 4.0]])
+    d = tf.constant([[1.0, 1.0], [0.0, 1.0]])
+    e = tf.matmul(c, d)
+    result = sess.run(e)
+    print(result)
 
 return "Success!"
 $$ LANGUAGE plcontainer;

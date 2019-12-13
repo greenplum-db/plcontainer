@@ -10,6 +10,7 @@ include $(PGXS)
 SHELL:=/bin/bash
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --init-file=./init_file --schedule=pl_schedule
+PY3_OPTS = --dbname=$(PL_TESTDB) --init-file=./init_file --schedule=pl_schedule_py
 RESGROUP_OPTS = --dbname=$(PL_TESTDB) --init-file=./init_file --schedule=pl_resgroup_schedule
 PSQLDIR = --psqldir=$(bindir)
 ifeq ($(PLC_PG),yes)
@@ -35,6 +36,8 @@ resgroup:
 	# Might use branch to handle the difference later.
 	cp expected/test_python.out.gp6 expected/test_python.out;
 	cp expected/uda_python.out.gp6 expected/uda_python.out;
+	cp expected/test_python3_error.out expected/test_python_error.out;
+
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
 				$(PSQLDIR) $(RESGROUP_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
 .PHONY: tests
@@ -48,10 +51,21 @@ tests:
 	# Might use branch to handle the difference later.
 	cp expected/test_python.out.gp6 expected/test_python.out;
 	cp expected/uda_python.out.gp6 expected/uda_python.out;
-	
+
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
 				$(PSQLDIR) $(REGRESS_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
-
+testpy3:
+	@echo "Tests require two runtime configurations. Will check the two"
+	@echo "runtime configurations soon. If there is configuration missing,"
+	@echo "please refer plcontainer script concourse/scripts/run_plcontainer_tests.sh"
+	@echo "as example to learn how to set up those configurations"
+	plcontainer runtime-show -r plc_python_shared
+	plcontainer runtime-show -r plc_r_shared
+	# Might use branch to handle the difference later.
+	cp expected/uda_python3.out.gp6 expected/uda_python3.out;  \
+	cp sql/test_python_error.sql sql/test_python3_error.sql
+	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
+				$(PSQLDIR) $(PY3_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
 .PHONY: submake
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
