@@ -1,8 +1,3 @@
 /results/
 *.diffs
 regression.out
-expected/uda_python.out
-expected/uda_python3.out
-expected/test_python.out
-expected/test_python_error.out
-sql/test_python3_error.sql

@@ -1,6 +1,5 @@
 \! $(pwd)/test_utility.sh
 usage: plcontainer [-h] [--verbose]
-                   
                    {image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-show,runtime-delete,runtime-edit,runtime-backup,runtime-restore,runtime-verify}
                    ...
 
@@ -44,7 +43,6 @@ plcontainer image-delete: error: argument -i/--image is required
 
 Test image-list: negative cases
 usage: plcontainer [-h] [--verbose]
-                   
                    {image-add,image-delete,image-list,runtime-add,runtime-replace,runtime-show,runtime-delete,runtime-edit,runtime-backup,runtime-restore,runtime-verify}
                    ...
 plcontainer: error: unrecognized arguments: not_exist
