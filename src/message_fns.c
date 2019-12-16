@@ -189,6 +189,8 @@ plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 				if (lenOfArgnames < proc->nargs) {
 					plc_elog(ERROR, "Length of argname list(%d) should be equal to or larger than \
 							number of args(%d)", lenOfArgnames, proc->nargs);
+				} else if (lenOfArgnames > proc->nargs) {
+					plc_elog(ERROR, "argname list containers OUT parameter, will not support.");
 				}
 			}
 
