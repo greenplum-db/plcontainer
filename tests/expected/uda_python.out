@@ -42,7 +42,7 @@ $$
 # container: plc_python_shared
     import ast
 
-    if groupid not in GD:
+    if not (GD.has_key(groupid)):
         GD[groupid] = [ast.literal_eval('[{vecstring}]'.format(vecstring=vec))]
         return groupid
     else:
@@ -50,13 +50,12 @@ $$
         return groupid
 
 $$ language plcontainer;
-CREATE or REPLACE FUNCTION pystack_ffunc(groupid text)
+CREATE FUNCTION pystack_ffunc(groupid text)
 RETURNS text AS
 $$
 # container: plc_python_shared
-   import pickle
-   GD[groupid].sort()
-   serialized_array = pickle.dumps(GD[groupid])
+   import cPickle
+   serialized_array = cPickle.dumps(GD[groupid])
    return serialized_array
 $$ language plcontainer;
 CREATE AGGREGATE stack_array_agg (text,text) (
@@ -68,19 +67,19 @@ create table a(i int, col text);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into a values(1,'2,3,4'),(2,'4,5,6'),(3,'5,6,8');
-select stack_array_agg('1', col) from (select * from a order by i) as b;
+select stack_array_agg('1', col) from a;
  stack_array_agg 
 -----------------
- (lp0           +
  (lp1           +
- I2             +
- aI3            +
- aI4            +
- aa(lp2         +
+ (lp2           +
  I4             +
  aI5            +
  aI6            +
  aa(lp3         +
+ I2             +
+ aI3            +
+ aI4            +
+ aa(lp4         +
  I5             +
  aI6            +
  aI8            +
