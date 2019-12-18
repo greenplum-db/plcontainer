@@ -730,11 +730,7 @@ select unicode_test_return();
 (1 row)
 
 select multiout_simple_setof();
- multiout_simple_setof 
------------------------
-                     1
-(1 row)
-
+ERROR:  plcontainer: argname list containers OUT parameter, will not support. (message_fns.c:193)
 SELECT nnint_test(null, 3);
 ERROR:  plcontainer: plcontainer does not support domain type (plc_typeio.c:107)
 select nested_error_raise();

@@ -33,11 +33,6 @@ resgroup:
 	plcontainer runtime-show -r plc_python_shared
 	plcontainer runtime-show -r plc_r_shared
 
-	# Might use branch to handle the difference later.
-	cp expected/test_python.out.gp6 expected/test_python.out;
-	cp expected/uda_python.out.gp6 expected/uda_python.out;
-	cp expected/test_python3_error.out expected/test_python_error.out;
-
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
 				$(PSQLDIR) $(RESGROUP_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
 .PHONY: tests
@@ -49,8 +44,6 @@ tests:
 	plcontainer runtime-show -r plc_python_shared
 	plcontainer runtime-show -r plc_r_shared
 	# Might use branch to handle the difference later.
-	cp expected/test_python.out.gp6 expected/test_python.out;
-	cp expected/uda_python.out.gp6 expected/uda_python.out;
 
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
 				$(PSQLDIR) $(REGRESS_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
@@ -62,8 +55,6 @@ testpy3:
 	plcontainer runtime-show -r plc_python_shared
 	plcontainer runtime-show -r plc_r_shared
 	# Might use branch to handle the difference later.
-	cp expected/uda_python3.out.gp6 expected/uda_python3.out;  \
-	cp sql/test_python_error.sql sql/test_python3_error.sql
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
 				$(PSQLDIR) $(PY3_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
 .PHONY: submake
