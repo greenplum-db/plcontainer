@@ -11,12 +11,12 @@ test: test_configuration
 test: runtimeid_declaration
 
 # set R and Python function - need before "test PL/Container normal function"
-test: function_python function_python_gpdb5
+test: function_python3 function_python3_gpdb5
 
 # test PL/Container normal function
 test: test_python3
 test: plpython_quote
-test: test_python_gpdb5 spi_python3 subtransaction_python
+test: test_python3_gpdb5 spi_python3 subtransaction_python
 test: test_python3_error 
 test: exception_py
 test: faultinject_python
