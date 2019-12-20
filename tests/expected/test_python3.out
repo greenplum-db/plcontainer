@@ -710,7 +710,7 @@ DETAIL:
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 5, in pyinvalid_function
-AttributeError: 'module' object has no attribute 'foobar'
+AttributeError: module 'math' has no attribute 'foobar'
 CONTEXT:  PLContainer function "pyinvalid_function"
 select pysubtransaction('t');
  pysubtransaction 
@@ -743,7 +743,7 @@ DETAIL:
   File "<string>", line 11, in fun3
   File "<string>", line 8, in fun2
   File "<string>", line 5, in fun1
-Error: boom
+AttributeError: module 'plpy' has no attribute 'Error'
 CONTEXT:  PLContainer function "nested_error_raise"
 select nested_fatal_raise();
 ERROR:  PL/Container client exception occurred:
@@ -754,7 +754,7 @@ DETAIL:
   File "<string>", line 11, in fun3
   File "<string>", line 8, in fun2
   File "<string>", line 5, in fun1
-Fatal: boom
+AttributeError: module 'plpy' has no attribute 'Fatal'
 CONTEXT:  PLContainer function "nested_fatal_raise"
 select pseudotype_result(1);
 ERROR:  PLContainer functions cannot return type anyarray

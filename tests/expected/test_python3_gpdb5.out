@@ -1,0 +1,80 @@
+select pytestudt3( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] );
+WARNING:  Docker API 'create' call returned warning message: '["Your kernel does not support swap limit capabilities, memory limited without swap."]'
+        pytestudt3        
+--------------------------
+ #1|1.0|a#2|2.0|b#3|3.0|c
+(1 row)
+
+select pytestudt4( array[
+                (1,array[1,2,3],array['a','b','c']),
+                (2,array[2,3,4],array['b','c','d']),
+                (3,array[3,4,5],array['c','d','e'])
+            ]::test_type4[] );
+              pytestudt4               
+---------------------------------------
+ #1|6.0|a,b,c#2|9.0|b,c,d#3|12.0|c,d,e
+(1 row)
+
+select pytestudt5(null::test_type4[]);
+ pytestudt5 
+------------
+          1
+(1 row)
+
+select pytestudt5(array[null]::test_type4[]);
+ pytestudt5 
+------------
+          2
+(1 row)
+
+select pytestudt7();
+        pytestudt7         
+---------------------------
+ {"(1,2,foo)","(3,4,bar)"}
+(1 row)
+
+select pytestudt9();
+        pytestudt9         
+---------------------------
+ {"(1,2,foo)","(3,4,bar)"}
+ {"(5,6,buz)","(7,8,zzz)"}
+(2 rows)
+
+select * from unnest(pytestudt10());
+ a |   b    |     c      
+---+--------+------------
+ 1 | {2,22} | {foo,foo2}
+ 3 | {4,44} | {bar,bar2}
+(2 rows)
+
+select unnest(a) from (select pytestudt12() as a) as q;
+          unnest           
+---------------------------
+ (1,"{2,22}","{foo,foo2}")
+ (3,"{4,44}","{bar,bar2}")
+ (5,"{6,66}","{buz,buz2}")
+ (7,"{8,88}","{zzz,zzz2}")
+(4 rows)
+
+select * from unnest(pytestudt14( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] ));
+ a | b | c 
+---+---+---
+ 1 | 1 | a
+ 2 | 2 | b
+ 3 | 3 | c
+(3 rows)
+
+select * from pytestudt15( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] );
+ a | b | c 
+---+---+---
+ 1 | 1 | a
+ 2 | 2 | b
+ 3 | 3 | c
+(3 rows)
+
+select pybadudtarr();
+ERROR:  PL/Container client exception occurred:
+DETAIL:  Cannot find key 'c' in result dictionary for converting it into UDT
+select pybadudtarr2();
+ERROR:  PL/Container client exception occurred:
+DETAIL:  Exception occurred transforming result object to float8
