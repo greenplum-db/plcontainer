@@ -34,6 +34,8 @@ release_plcontainer() {
   # release python image
   mkdir -p release_image_python
   cp plcontainer_docker_image_build_python/plcontainer*.tar.gz release_image_python/plcontainer-python-image-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}-gp6.tar.gz
+  mkdir -p release_image_python3
+  cp plcontainer_docker_image_build_python3/plcontainer*.tar.gz release_image_python3/plcontainer-python3-image-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}-gp6.tar.gz
 }
 
 release_plcontainer

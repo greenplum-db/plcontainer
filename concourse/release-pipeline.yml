@@ -161,6 +161,13 @@ resources:
     json_key: {{concourse-gcs-resources-service-account-key}}
     regexp: plcontainer/released/gpdb6/plcontainer-python-image-(.*)-gp6.tar.gz
 
+- name: plcontainer_docker_image_python3
+  type: gcs
+  source:
+    bucket: {{gcs-bucket}}
+    json_key: {{concourse-gcs-resources-service-account-key}}
+    regexp: plcontainer/released/gpdb6/plcontainer-python3-image-(.*)-gp6.tar.gz
+
 - name: plcontainer_docker_image_r
   type: gcs
   source:
@@ -174,6 +181,13 @@ resources:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
     versioned_file: plcontainer/published/gpdb6/plcontainer-python-images-devel.tar.gz
+
+- name: plcontainer_docker_image_build_python3
+  type: gcs
+  source:
+    bucket: {{gcs-bucket-intermediates}}
+    json_key: {{concourse-gcs-resources-service-account-key}}
+    versioned_file: plcontainer/published/gpdb6/plcontainer-python3-images-devel.tar.gz
 
 - name: plcontainer_docker_image_build_r
   type: gcs
@@ -239,6 +253,7 @@ jobs:
     - get: plcontainer_gpdb_ubuntu18_build
     - get: plcontainer_gpdb_centos7_build
     - get: plcontainer_docker_image_build_python
+    - get: plcontainer_docker_image_build_python3
     - get: plcontainer_docker_image_build_r
     - get: plcontainer_src  
     - get: centos-gpdb-dev-7
@@ -258,6 +273,9 @@ jobs:
     - put: plcontainer_docker_image_python
       params:
         file: release_image_python/plcontainer-*.tar.gz
+    - put: plcontainer_docker_image_python3
+      params:
+        file: release_image_python3/plcontainer-*.tar.gz
 
 - name: plcontainer_function_test_centos7
   plan:
@@ -271,6 +289,8 @@ jobs:
     - get: centos-gpdb-dev-7
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_build_python
+    - get: plcontainer_py3client_docker_image
+      resource: plcontainer_docker_image_build_python3
     - get: plcontainer_rclient_docker_image
       resource: plcontainer_docker_image_build_r
     - get: plcontainer_gpdb_centos7_release
@@ -360,6 +380,8 @@ jobs:
     - get: ubuntu18-image
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_build_python
+    - get: plcontainer_py3client_docker_image
+      resource: plcontainer_docker_image_build_python3
     - get: plcontainer_rclient_docker_image
       resource: plcontainer_docker_image_build_r
     - get: plcontainer_gpdb_ubuntu18_build
