@@ -115,7 +115,7 @@ resources:
 - name: gpdb_src
   type: git
   source:
-    branch: {{gpdb-git-branch}}
+    branch: 6X_STABLE
     uri: {{gpdb-git-remote}}
     ignore_paths:
     - gpdb-doc/*
@@ -384,7 +384,7 @@ jobs:
       resource: plcontainer_docker_image_build_python3
     - get: plcontainer_rclient_docker_image
       resource: plcontainer_docker_image_build_r
-    - get: plcontainer_gpdb_ubuntu18_build
+    - get: plcontainer_gpdb_ubuntu18_release
   - put: terraform
     params:
       <<: *ccp_default_params
@@ -408,7 +408,7 @@ jobs:
       platform: ubuntu18
     image: ubuntu18-image
     input_mapping:
-      plcontainer_gpdb_build: plcontainer_gpdb_ubuntu18_build
+      plcontainer_gpdb_build: plcontainer_gpdb_ubuntu18_release
     on_success:
       <<: *ccp_destroy
   ensure:
@@ -428,7 +428,7 @@ jobs:
       resource: plcontainer_docker_image_build_python
     - get: plcontainer_rclient_docker_image
       resource: plcontainer_docker_image_build_r
-    - get: plcontainer_gpdb_ubuntu18_build
+    - get: plcontainer_gpdb_ubuntu18_release
   - put: terraform
     params:
       <<: *ccp_default_params
@@ -453,7 +453,7 @@ jobs:
       platform: ubuntu18
     image: ubuntu18-image
     input_mapping:
-      plcontainer_gpdb_build: plcontainer_gpdb_ubuntu18_build
+      plcontainer_gpdb_build: plcontainer_gpdb_ubuntu18_release
     on_success:
       <<: *ccp_destroy
   ensure:
