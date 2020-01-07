@@ -22,7 +22,7 @@ test: exception_py
 test: faultinject_python
 
 # test wrong configuration validation in pl/container C code
-test: test_wrong_config
+test: test_wrong_config_python3
 # PL/Container UDA test
 test: uda_python3 
 
