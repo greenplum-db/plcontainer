@@ -672,3 +672,10 @@ create function pseudotype_result(anyelement) returns anyarray as $$
 # container: plc_python3_shared
 pass;
 $$ language plcontainer;
+
+create function exec_prepare_array_error(x int4[]) RETURNS text AS $$
+# container: plc_python3_shared
+plan = plpy.prepare("SELECT ($1)", ["int4[]"])
+plpy.execute(plan, [x])
+return "should not reach here"
+$$ language plcontainer;

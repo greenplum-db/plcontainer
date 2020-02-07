@@ -669,6 +669,9 @@ select * from pytestudtrecord2() as t(a int, b int, c varchar);
  3 | 4 | bar
 (2 rows)
 
+select exec_prepare_array_error(array[1,2,3]);
+ERROR:  plcontainer: Array and Udt are not supported for execute with plan (sqlhandler.c:306)
+CONTEXT:  PLContainer function "exec_prepare_array_error"
 select pyreturnsetofint8(2), pyreturnsetofint8(3);
  pyreturnsetofint8 | pyreturnsetofint8 
 -------------------+-------------------

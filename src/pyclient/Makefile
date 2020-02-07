@@ -66,6 +66,8 @@ clean:
 	rm -f bin/$(CLIENT)
 	rm -f $(common_dep)
 	rm -rf $(DEPDIR)
+	rm -rf $(PLCONTAINER_DIR)/common/*.o
+	rm -rf $(PLCONTAINER_DIR)/common/*.d
 
 $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
