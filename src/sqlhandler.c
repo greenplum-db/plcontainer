@@ -301,6 +301,10 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 						} else {
 							/* A bit heavy to populate plcTypeInfo. */
 							fill_type_info(NULL, plc_plan->argOids[i], pexecType);
+							if (pexecType->type == PLC_DATA_ARRAY || pexecType->type == PLC_DATA_UDT)
+							{
+								plc_elog(ERROR, "Array and Udt are not supported for execute with plan");
+							}
 							values[i] = pexecType->infunc(msg->args[i].data.value, pexecType);
 							nulls[i] = ' ';
 						}

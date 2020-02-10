@@ -14,3 +14,4 @@ select * from unnest(pytestudt14( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_t
 select * from pytestudt15( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] );
 select pybadudtarr();
 select pybadudtarr2();
+select exec_prepare_array_error(array[1,2,3]::int4[]);

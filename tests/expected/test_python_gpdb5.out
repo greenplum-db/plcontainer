@@ -78,3 +78,5 @@ DETAIL:  Cannot find key 'c' in result dictionary for converting it into UDT
 select pybadudtarr2();
 ERROR:  PL/Container client exception occurred:
 DETAIL:  Exception occurred transforming result object to float8
+select exec_prepare_array_error(array[1,2,3]::int4[]);
+ERROR:  plcontainer: Array and Udt are not supported for execute with plan (sqlhandler.c:306)

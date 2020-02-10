@@ -5,11 +5,9 @@
 groups:
 - name: plcontainer
   jobs:
-  - plcontainer_build_centos6
   - plcontainer_build_centos7
   - plcontainer_build_python_image
   - plcontainer_build_r_image
-  - plcontainer_function_test_centos6
   - plcontainer_function_test_centos7
 
 ################################################################################
@@ -144,12 +142,6 @@ resources:
 
 # Docker images
 
-- name: centos-gpdb-dev-6
-  type: docker-image
-  source:
-    repository: pivotaldata/centos-gpdb-dev
-    tag: '6-gcc6.2-llvm3.7'
-
 - name: centos-gpdb-dev-7
   type: docker-image
   source:
@@ -157,15 +149,6 @@ resources:
     tag: 7-gcc6.2-llvm3.7
 
 # S3 Input and intermediate binaries
-
-- name: plr_gpdb5_centos6_build
-  type: s3
-  source:
-    bucket: {{pl-bucket-name}}
-    region_name: {{aws-region}}
-    access_key_id: {{bucket-access-key-id}}
-    secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: release/gpdb5/plr/plr-2.3.2-gp5-rhel6-x86_64.gppkg
 - name: plr_gpdb5_centos7_build
   type: s3
   source:
@@ -266,15 +249,6 @@ resources:
     secret_access_key: {{bucket-secret-access-key}}
     versioned_file: {{bin_gpdb_centos7_versioned_file}}
 
-- name: bin_gpdb_centos6
-  type: s3
-  source:
-    access_key_id: {{bucket-access-key-id}}
-    bucket: {{bucket-name}}
-    region_name: {{aws-region}}
-    secret_access_key: {{bucket-secret-access-key}}
-    versioned_file: {{bin_gpdb_centos_versioned_file}}
-
 - name: plcontainer_gpdb_centos7_build
   type: s3
   source:
@@ -283,15 +257,6 @@ resources:
     access_key_id: {{bucket-access-key-id}}
     secret_access_key: {{bucket-secret-access-key}}
     regexp: release_candidate/gpdb5/plcontainer/plcontainer-(.*)-rhel7-x86_64.gppkg
-
-- name: plcontainer_gpdb_centos6_build
-  type: s3
-  source:
-    bucket: {{pl-bucket-name}}
-    region_name: {{aws-region}}
-    access_key_id: {{bucket-access-key-id}}
-    secret_access_key: {{bucket-secret-access-key}}
-    regexp: release_candidate/gpdb5/plcontainer/plcontainer-(.*)-rhel6-x86_64.gppkg
 
 - name: plcontainer_gpdb_centos7_build_release
   type: s3
@@ -317,29 +282,6 @@ resources:
 jobs:
 
 # Build PL/Container GP Package
-- name: plcontainer_build_centos6
-  max_in_flight: 4
-  plan:
-  - aggregate:
-    - get: bin_gpdb_centos6
-    - get: gpdb_src
-    - get: plcontainer_src
-      trigger: true
-    - get: centos-gpdb-dev-6
-    - get: plr
-      resource: plr_gpdb5_centos6_build
-  - task: plcontainer_gpdb_build
-    file: plcontainer_src/concourse/tasks/plcontainer_build.yml
-    image: centos-gpdb-dev-6
-    params:
-      DEV_RELEASE: release
-    input_mapping:
-      bin_gpdb: bin_gpdb_centos6
-  - aggregate:
-    - put: plcontainer_gpdb_centos6_build
-      params:
-        file: plcontainer_gpdb_build/plcontainer*.gppkg
-
 - name: plcontainer_build_centos7
   max_in_flight: 4
   plan:
@@ -362,55 +304,6 @@ jobs:
     - put: plcontainer_gpdb_centos7_build
       params:
         file: plcontainer_gpdb_build/plcontainer*.gppkg
-
-
-- name: plcontainer_function_test_centos6
-  plan:
-  - aggregate:
-    - get: plcontainer_src
-    - get: gpdb_src
-    - get: gpdb_binary
-      resource: bin_gpdb_centos6
-      trigger: true
-    - get: ccp_src
-    - get: centos-gpdb-dev-6
-    - get: plcontainer_pyclient_docker_image
-      resource: plcontainer_docker_image_centos_python_release
-      trigger: true
-    - get: plcontainer_rclient_docker_image
-      resource: plcontainer_docker_image_centos_r_release
-      trigger: true
-    - get: plcontainer_gpdb_centos6_build_release
-      trigger: true
-  - put: terraform
-    params:
-      <<: *ccp_default_params
-      vars:
-        instance_type: n1-standard-4
-        PLATFORM: centos6
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
-  - task: gen_cluster
-    file: ccp_src/ci/tasks/gen_cluster.yml
-    params:
-      <<: *ccp_gen_cluster_default_params
-      PLATFORM: centos6
-  - task: gpinitsystem
-    file: ccp_src/ci/tasks/gpinitsystem.yml
-  - task: plcontainer
-    file: plcontainer_src/concourse/tasks/plcontainer_tests.yml
-    params:
-      platform: centos6
-    image: centos-gpdb-dev-6
-    input_mapping:
-      plcontainer_gpdb_build: plcontainer_gpdb_centos6_build_release
-    on_success:
-      <<: *ccp_destroy
-  ensure:
-    <<: *set_failed
-
 
 - name: plcontainer_function_test_centos7
   plan:
@@ -469,7 +362,7 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos6
     - get: ccp_src
-    - get: centos-gpdb-dev-6
+    - get: centos-gpdb-dev-7
     - get: data-science-bundle
     - get: python
       resource: python-gp5
@@ -499,7 +392,7 @@ jobs:
       DEV_RELEASE: release
       platform: centos7
       language: python
-    image: centos-gpdb-dev-6
+    image: centos-gpdb-dev-7
     input_mapping:
       plcontainer_gpdb_build: plcontainer_gpdb_centos6_build
   - put: plcontainer_docker_image_centos_python
@@ -517,9 +410,9 @@ jobs:
       trigger: true
     - get: gpdb_src
     - get: gpdb_binary
-      resource: bin_gpdb_centos6
+      resource: bin_gpdb_centos7
     - get: ccp_src
-    - get: centos-gpdb-dev-6
+    - get: centos-gpdb-dev-7
     - get: data-science-bundle
     - get: r
       resource: r-gp5
@@ -548,7 +441,7 @@ jobs:
       DEV_RELEASE: release
       platform: centos7
       language: r
-    image: centos-gpdb-dev-6
+    image: centos-gpdb-dev-7
     input_mapping:
       plcontainer_gpdb_build: plcontainer_gpdb_centos6_build
   - put: plcontainer_docker_image_centos_r

@@ -66,3 +66,10 @@ CREATE OR REPLACE FUNCTION pybadudtarr2() RETURNS test_type4[] AS $$
 return [ {'a': 1, 'b': [2, 3], 'c': ['foo', 'bar']},
          {'a': 4, 'b': [5, 'f'], 'c': ['a', 'b']} ]
 $$ LANGUAGE plcontainer;
+
+CREATE OR REPLACE FUNCTION exec_prepare_array_error(x int4[]) RETURNS text AS $$
+# container: plc_python_shared
+plan = plpy.prepare("SELECT ($1)", ["int4[]"])
+plpy.execute(plan, [x])
+return "should not reach here"
+$$ language plcontainer;
