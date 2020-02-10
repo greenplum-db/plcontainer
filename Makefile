@@ -44,7 +44,7 @@ endif
 # See https://github.com/greenplum-db/plcontainer/issues/322
 
 # Plcontainer version
-PLCONTAINER_VERSION = $(shell git describe)
+PLCONTAINER_VERSION = $(shell git describe --tags)
 ifeq ($(PLCONTAINER_VERSION),)
   $(error can not determine the plcontainer version)
 else
