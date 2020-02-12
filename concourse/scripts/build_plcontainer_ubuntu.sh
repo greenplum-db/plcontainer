@@ -50,6 +50,7 @@ build_plcontainer() {
   popd
   
   export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+  make docker-dep
   make proto
 
   pushd package

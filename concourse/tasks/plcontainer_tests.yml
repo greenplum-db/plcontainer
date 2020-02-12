@@ -7,7 +7,6 @@ inputs:
   - name: gpdb_binary
   - name: ccp_src
   - name: plcontainer_gpdb_build
-  - name: plcontainer_pyserver_docker_image
   - name: plcontainer_rserver_docker_image
   - name: cluster_env_files
   - name: plcontainer_gpdb_ubuntu18_build_lib

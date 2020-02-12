@@ -46,7 +46,8 @@ function _main() {
   # test server
   export R_HOME=/usr/lib/R
   make clone-gtest
-  make test
+  # skip one test due to R version is low
+  make test gtest_filter=-RConvTest.RConvReturnArrayWithOneArgsBYTEA 
 
   popd
 

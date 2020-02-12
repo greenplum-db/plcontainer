@@ -40,6 +40,7 @@ build_plcontainer() {
   tar zxvf ../plcontainer_server/rserver.tar.gz -C src/rclient/bin/
 
   export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+  make docker-dep
   make proto
 
   pushd package

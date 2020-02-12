@@ -188,7 +188,6 @@ void handle_config_file_events(int fd, int wd)
 	char buf[4096]
 		__attribute__ ((aligned(__alignof__(struct inotify_event))));
 	const struct inotify_event *event;
-	int i;
 	ssize_t len;
 	char *ptr;
 
@@ -666,7 +665,7 @@ static int update_containers_status(bool inspect)
 	while ((container_entry = (ContainerEntry *) hash_seq_search(&scan)) != NULL) {
         if (!plcontainer_stand_alone_mode) {
 			/* check process first */
-            int res = kill(container_entry->key.qe_pid, 0);
+            res = kill(container_entry->key.qe_pid, 0);
             if (res != 0 ) {
                 elog(LOG, "delete container %s of pid %d session id %d ccnt %d", container_entry->containerId, container_entry->key.qe_pid, container_entry->key.conn, container_entry->key.ccnt);
 				entry_array[i] = &(container_entry->key);
@@ -707,7 +706,7 @@ static int update_containers_status(bool inspect)
 		pfree(msg);
 	}
 	for (int j = 0; j < i; j++) {
-		res = hash_search(container_status_table, entry_array[j], HASH_REMOVE, NULL);
+		hash_search(container_status_table, entry_array[j], HASH_REMOVE, NULL);
 	}
 	pfree(entry_array);
 	pfree(delete_ids);
@@ -721,7 +720,6 @@ static int handle_request(QeRequest *req)
 	key->conn = req->conn;
 	key->qe_pid = req->pid;
 	key->ccnt = req->ccnt;
-	bool found = false;
 	switch (req->requestType) {
 		case CREATE_SERVER:
 			store_container_info(key, 0, req->containerId);
