@@ -25,7 +25,7 @@ export MASTER_DATA_DIRECTORY=/data/gpdata/master/gpseg-1; \
 source /usr/local/greenplum-db-devel/greenplum_path.sh; \
 plcontainer image-add -f /usr/local/greenplum-db-devel/share/postgresql/plcontainer/plcontainer-r-images.tar.gz; \
 plcontainer runtime-add -r plc_r_shared -i pivotaldata/plcontainer_r_shared:devel -l r -s use_container_logging=yes; \
-gpconfig -c shared_preload_libraries -v 'plc_coordinator'
+gpconfig -c shared_preload_libraries -v 'plc_coordinator'; \
 gpstop -arf; \
 psql -d postgres -f /usr/local/greenplum-db-devel/share/postgresql/plcontainer/plcontainer_install.sql; \
 pushd plcontainer_src/tests; \
