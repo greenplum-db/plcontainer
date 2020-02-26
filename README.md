@@ -57,7 +57,7 @@ make install
 
 #### Build and install PL/Container GPDB backend sever
 
-```
+```shell
 cd plcontainer/src/rclient
 make copy-proto
 make
