@@ -201,7 +201,7 @@ resources:
   source:
     bucket: {{gcs-bucket}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: plcontainer/released/gpdb6/master/plcontainer-lib-(.*)-ubuntu18.04-x86_64.tar.gz
+    regexp: plcontainer/released/gpdb6/plcontainer-lib-(.*)-ubuntu18.04-x86_64.tar.gz
 
 - name: plcontainer_gpdb_ubuntu18_build
   type: gcs

@@ -12,7 +12,7 @@ outputs:
   - name: release_bin_centos7
   - name: release_bin_ubuntu18
   - name: release_image_r
-  - name: plcontainer_gpdb_ubuntu18_build_lib_release
+  - name: release_lib
   
 run:
   path: plcontainer_src/concourse/scripts/plcontainer_release.sh
