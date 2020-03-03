@@ -186,7 +186,7 @@ resources:
   source:
     bucket: {{gcs-bucket}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    regexp: pl-analysis-suite/released/gpdb6/plcontainer-(.*)-rhel7-x86_64.gppkg
+    regexp: plcontainer/released/gpdb6/plcontainer-(.*)-rhel7-x86_64.gppkg
 
 
 - name: plcontainer_gpdb_ubuntu18_release
@@ -194,14 +194,14 @@ resources:
   source:
     bucket: {{gcs-bucket}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    regexp: pl-analysis-suite/released/gpdb6/plcontainer-(.*)-ubuntu18.04-x86_64.gppkg
+    regexp: plcontainer/released/gpdb6/plcontainer-(.*)-ubuntu18.04-x86_64.gppkg
 
 - name: plcontainer_gpdb_ubuntu18_build_lib_release
   type: gcs
   source:
     bucket: {{gcs-bucket}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: pl-analysis-suite/released/gpdb6/master/plcontainer-lib-(.*)-ubuntu18.04-x86_64.tar.gz
+    versioned_file: plcontainer/released/gpdb6/master/plcontainer-lib-(.*)-ubuntu18.04-x86_64.tar.gz
 
 - name: plcontainer_gpdb_ubuntu18_build
   type: gcs
