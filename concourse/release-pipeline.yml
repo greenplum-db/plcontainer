@@ -157,7 +157,7 @@ resources:
   source:
     bucket: {{gcs-bucket}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    regexp: pl-analysis-suite/released/gpdb6/plcontainer-r-image-(.*)-gp6.tar.gz
+    regexp: plcontainer/released/gpdb6/plcontainer-r-image-(.*)-gp6.tar.gz
 
 - name: plcontainer_docker_image_build_r
   type: gcs
@@ -186,7 +186,7 @@ resources:
   source:
     bucket: {{gcs-bucket}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    regexp: plcontainer/released/gpdb6/plcontainer-(.*)-rhel7-x86_64.gppkg
+    regexp: plcontainer/released/gpdb6/plcontainer-(.*)-rhel7_x86_64.gppkg
 
 
 - name: plcontainer_gpdb_ubuntu18_release
@@ -194,14 +194,14 @@ resources:
   source:
     bucket: {{gcs-bucket}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    regexp: plcontainer/released/gpdb6/plcontainer-(.*)-ubuntu18.04-x86_64.gppkg
+    regexp: plcontainer/released/gpdb6/plcontainer-(.*)-ubuntu18.04_x86_64.gppkg
 
 - name: plcontainer_gpdb_ubuntu18_build_lib_release
   type: gcs
   source:
     bucket: {{gcs-bucket}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    regexp: plcontainer/released/gpdb6/plcontainer-lib-(.*)-ubuntu18.04-x86_64.tar.gz
+    regexp: plcontainer/released/gpdb6/plcontainer-lib-(.*)-ubuntu18.04_x86_64.tar.gz
 
 - name: plcontainer_gpdb_ubuntu18_build
   type: gcs
@@ -267,9 +267,10 @@ jobs:
       trigger: true
     - get: ccp_src
     - get: centos-gpdb-dev-7
-    - get: plcontainer_rclient_docker_image
+    - get: plcontainer_rserver_docker_image
       resource: plcontainer_docker_image_build_r
     - get: plcontainer_gpdb_centos7_release
+    - get: plcontainer_gpdb_ubuntu18_build_lib
   - put: terraform
     params:
       <<: *ccp_default_params
@@ -309,9 +310,10 @@ jobs:
       trigger: true
     - get: ccp_src
     - get: ubuntu18-image
-    - get: plcontainer_rclient_docker_image
+    - get: plcontainer_rserver_docker_image
       resource: plcontainer_docker_image_build_r
     - get: plcontainer_gpdb_ubuntu18_build
+    - get: plcontainer_gpdb_ubuntu18_build_lib
   - put: terraform
     params:
       <<: *ccp_default_params
