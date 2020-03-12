@@ -8,8 +8,6 @@
 
 set -exo pipefail
 
-DockerFolder="~/plcontainer_src/dockerfiles/"
-
 pushd plcontainer_src
 if [ "$DEV_RELEASE" == "devel" ]; then
 	IMAGE_NAME="plcontainer-$language-images-devel.tar.gz"
@@ -26,8 +24,10 @@ docker_build() {
 	scp -r plcontainer_src $node:~/
 	scp -r data-science-bundle $node:~/
 	if [[ $language = "python" ]]; then
+		DockerFolder="~/data-science-bundle/plcontainer_dockerfiles/python/"
 		echo "language python in pipeline." 
 	elif [[ $language = "r" ]]; then
+		DockerFolder="~/data-science-bundle/plcontainer_dockerfiles/r/"
 		echo "language R in pipeline." 
 	else
 		echo "Wrong language in pipeline." || exit 1
@@ -61,6 +61,8 @@ docker_build_ubuntu() {
 	ssh $node "bash -c \" \
 	set -eox pipefail; \
 	pushd $DockerFolder; \
+	mv ../../concourse/scripts/rlibs ./ ;\
+	mv ../../concourse/scripts/rlibs.higher_gcc ./ ;\
 	chmod +x *.sh; \
 	ls -lh
 	docker build -f Dockerfile.$language.ubuntu -t pivotaldata/plcontainer_${language}_shared:devel ./ ; \

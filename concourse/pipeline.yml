@@ -101,7 +101,7 @@ resources:
 - name: data-science-bundle
   type: git
   source:
-    branch: gpdb6
+    branch: gpdb6-plc3
     private_key: {{plpkg-git-key}}
     uri: git@github.com:greenplum-db/data-science-bundle.git
 
