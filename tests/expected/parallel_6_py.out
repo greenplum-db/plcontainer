@@ -1,0 +1,37 @@
+select py_cpu_intensive();
+ py_cpu_intensive 
+------------------
+             1229
+(1 row)
+
+select py_cpu_intensive() from generate_series(1,2);
+ py_cpu_intensive 
+------------------
+             1229
+             1229
+(2 rows)
+
+select py_large_spi();
+ py_large_spi 
+--------------
+       561562
+(1 row)
+
+select py_io_intensive();
+ py_io_intensive 
+-----------------
+         2097152
+(1 row)
+
+select pylargeint8in(array_agg(id)) from generate_series(1, 1123123) id;
+ pylargeint8in 
+---------------
+        561562
+(1 row)
+
+select round(avg(x)) from (select unnest(pylargeint8out(1123123)) as x) as q;
+ round  
+--------
+ 561561
+(1 row)
+

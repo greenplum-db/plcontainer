@@ -2,19 +2,19 @@
 CREATE FUNCTION sfunc_sum_cols(state numeric, col_a numeric, col_b numeric) 
 RETURNS numeric AS 
 $$
-# container: plc_python_shared
+# container: plc_python3_shared
    return state + col_a + col_b
 $$ language plcontainer;
 CREATE FUNCTION prefunc_sum_cols(state_a numeric, state_b numeric) 
 RETURNS numeric AS 
 $$
-# container: plc_python_shared
+# container: plc_python3_shared
    return state_a + state_b
 $$ language plcontainer;
 CREATE FUNCTION final_func_sum_cols(state_a numeric)
 RETURNS numeric AS
 $$
-# container: plc_python_shared
+# container: plc_python3_shared
    return state_a*10
 $$ language plcontainer;
 CREATE AGGREGATE sum_cols(numeric, numeric) (
@@ -39,7 +39,7 @@ drop table t;
 CREATE or replace FUNCTION pystack(state text, groupid text, vec text)
 RETURNS text AS
 $$
-# container: plc_python_shared
+# container: plc_python3_shared
     import ast
 
     if groupid not in GD:
@@ -52,7 +52,7 @@ $$ language plcontainer;
 CREATE or REPLACE FUNCTION pystack_ffunc(groupid text)
 RETURNS text AS
 $$
-# container: plc_python_shared
+# container: plc_python3_shared
    import pickle
    GD[groupid].sort()
    serialized_array = pickle.dumps(GD[groupid])
@@ -68,22 +68,9 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into a values(1,'2,3,4'),(2,'4,5,6'),(3,'5,6,8');
 select stack_array_agg('1', col) from (select * from a order by i) as b;
- stack_array_agg 
------------------
- (lp0           +
- (lp1           +
- I2             +
- aI3            +
- aI4            +
- aa(lp2         +
- I4             +
- aI5            +
- aI6            +
- aa(lp3         +
- I5             +
- aI6            +
- aI8            +
- aa.
+                                      stack_array_agg
+-------------------------------------------------------------------------------------------
+ b'\x80\x03]q\x00(]q\x01(K\x02K\x03K\x04e]q\x02(K\x04K\x05K\x06e]q\x03(K\x05K\x06K\x08ee.'
 (1 row)
 
 drop table a;

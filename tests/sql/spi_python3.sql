@@ -14,7 +14,7 @@ insert into t2 values(null, true, 'm', 1000);
 insert into t2 values(null, true, 'm', 1001);
 
 CREATE OR REPLACE FUNCTION py_spi_pexecute1() RETURNS void AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 
 plpy.notice("Test query execution")
 rv = plpy.execute("select * from t2 where name='bob1' and online=True and sex='m' order by id limit 2")
@@ -85,7 +85,7 @@ insert into t3 values('alice1', 40, 6000);
 insert into t3 values('alice2', 50, 6000);
 
 CREATE OR REPLACE FUNCTION py_spi_pexecute2() RETURNS void AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 
 plpy.notice("Test int2")
 plan = plpy.prepare("select * from t3 where age=$1 order by id", ["int2"])
@@ -121,7 +121,7 @@ insert into t4 values('bob3', 9.125, 16.125);
 insert into t4 values('bob4', 9.25, 16.25);
 
 CREATE OR REPLACE FUNCTION py_spi_pexecute3() RETURNS void AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 
 plan1 = plpy.prepare("select * from t4 where name=$1 order by score1", ["bytea"])
 plan2 = plpy.prepare("select * from t4 where score1<$1 order by name", ["float4"])
@@ -155,7 +155,7 @@ select py_spi_pexecute3();
 
 ----- negative tests
 CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute1() RETURNS void AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 
 plan1 = plpy.prepare("select * from t4 where name=$1 order by score1", ["integer"])
 rv = plpy.execute(plan1, ["bob0"]);
@@ -165,7 +165,7 @@ for r in rv:
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute2() RETURNS void AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 
 plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["bytea"])
 rv = plpy.execute(plan1, ["bob0"]);
@@ -175,7 +175,7 @@ for r in rv:
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute3() RETURNS void AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 
 plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["float4"])
 rv = plpy.execute(plan1, ["bob0"]);
@@ -185,7 +185,7 @@ for r in rv:
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute4() RETURNS void AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 
 plan1 = plpy.prepare("select * from t4 where score1<$1 and score2<$2 order by score1", ["float4", "float8"])
 rv = plpy.execute(plan1, [9.5, "bob0"]);
@@ -196,7 +196,7 @@ $$ LANGUAGE plcontainer;
 
 
 CREATE OR REPLACE FUNCTION py_spi_simple_t4() RETURNS void AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 
 plan1 = plpy.prepare("select * from t4 where name='bob0' order by score1")
 rv = plpy.execute(plan1);
@@ -206,7 +206,7 @@ for r in rv:
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION py_spi_simple_num() RETURNS void AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 
 plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["numeric"])
 rv = plpy.execute(plan1, [10.5]);
@@ -225,20 +225,20 @@ select py_spi_simple_t4();
 SELECT py_spi_simple_num();
 
 CREATE OR REPLACE FUNCTION pyspi_illegal_sql() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 plpy.execute("select datname from pg_database_invalid");
 return 0
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi_illegal_sql_pexecute() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 plan = plpy.prepare("select datname from pg_database_invalid");
 plpy.execute(plan);
 return 0
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi_bad_limit() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 rv = plpy.execute("select datname from pg_database order by datname", -2);
 for r in rv:
     plpy.notice(str(r))
@@ -246,7 +246,7 @@ return 0
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi_bad_limit_pexecute() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 plan = plpy.prepare("select datname from pg_database order by datname", -2);
 rv = plpy.execute(plan);
 for r in rv:
@@ -255,7 +255,7 @@ return 0
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi_bad_limit_stable() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 rv = plpy.execute("select datname from pg_database order by datname", -2);
 for r in rv:
     plpy.notice(str(r))
@@ -263,7 +263,7 @@ return 0
 $$ LANGUAGE plcontainer STABLE;
 
 CREATE OR REPLACE FUNCTION pyspi_bad_limit_immutable() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 rv = plpy.execute("select datname from pg_database order by datname", -2);
 for r in rv:
     plpy.notice(str(r))
@@ -292,7 +292,7 @@ insert into t5 values('bob1', 8.75, 16.75);
 
 -- execute
 CREATE OR REPLACE FUNCTION pyspi_insert_exec() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 rv = plpy.execute("insert into t5 values('bob2', 8.5, 16.5)");
 for r in rv:
 	plpy.notice(str(r))
@@ -300,7 +300,7 @@ return 0
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi_update_exec() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 rv = plpy.execute("update t5 set score1=11 where name='bob2'");
 for r in rv:
 	plpy.notice(str(r))
@@ -308,7 +308,7 @@ return 0
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi_delete_exec() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 rv = plpy.execute("delete from t5 where name='bob2'");
 for r in rv:
 	plpy.notice(str(r))
@@ -324,7 +324,7 @@ SELECT * FROM t5 order by name;
 
 -- executep
 CREATE OR REPLACE FUNCTION pyspi_insert_execp() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 plan = plpy.prepare("insert into t5 values('bob3', 8.5, 16.5)");
 rv = plpy.execute(plan);
 for r in rv:
@@ -333,7 +333,7 @@ return 0
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi_update_execp() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 plan = plpy.prepare("update t5 set score1=12 where name='bob3'");
 rv = plpy.execute(plan);
 for r in rv:
@@ -342,7 +342,7 @@ return 0
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi_delete_execp() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 plan = plpy.prepare("delete from t5 where name='bob3'");
 rv = plpy.execute(plan);
 for r in rv:
@@ -351,7 +351,7 @@ return 0
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi_select_notexist_execp() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 plan = plpy.prepare("select * from t5 where name='bob_notexist'");
 rv = plpy.execute(plan);
 for r in rv:
@@ -360,7 +360,7 @@ return 0
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION pyspi_delete_notexist_execp() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 plan = plpy.prepare("delete from t5 where name='bob3_notexist'");
 rv = plpy.execute(plan);
 for r in rv:
@@ -386,7 +386,7 @@ DROP TABLE t5;
 
 -- Test for Exception
 CREATE OR REPLACE FUNCTION pyspi_exec_exception() RETURNS integer AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 plan = list();
 try:
 	rv = plpy.execute(plan);
@@ -404,7 +404,7 @@ SELECT pyspi_exec_exception();
 -- which in turn means it can't be part of a primary key
 
 CREATE FUNCTION invalid_type_uncaught(a text) RETURNS text AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	SD["plan"] = plpy.prepare(q, [ "test" ])
@@ -417,7 +417,7 @@ $$ LANGUAGE plcontainer;
 -- for what it's worth catch the exception generated by
 -- the typo, and return None
 CREATE FUNCTION invalid_type_caught(a text) RETURNS text AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	try:
@@ -435,7 +435,7 @@ $$ LANGUAGE plcontainer;
 -- the typo, and reraise it as a plain error
 
 CREATE FUNCTION invalid_type_reraised(a text) RETURNS text AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	try:
@@ -452,7 +452,7 @@ $$ LANGUAGE plcontainer;
 -- no typo no messing about
 
 CREATE FUNCTION valid_type(a text) RETURNS text AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 if "plan" not in SD:
 	SD["plan"] = plpy.prepare("SELECT fname FROM users WHERE lname = $1", [ "text" ])
 rv = plpy.execute(SD["plan"], [ a ])
@@ -462,28 +462,28 @@ return None
 $$ LANGUAGE plcontainer;
 
 CREATE FUNCTION nested_call_one(a text) RETURNS text AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 q = "SELECT nested_call_two('%s')" % a
 r = plpy.execute(q)
 return r[0]
 $$ LANGUAGE plcontainer ;
 
 CREATE FUNCTION nested_call_two(a text) RETURNS text AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 q = "SELECT nested_call_three('%s')" % a
 r = plpy.execute(q)
 return r[0]
 $$ LANGUAGE plcontainer ;
 
 CREATE FUNCTION nested_call_three(a text) RETURNS text AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 return a
 $$ LANGUAGE plcontainer ;
 
 -- some spi stuff
 
 CREATE FUNCTION spi_prepared_plan_test_one(a text) RETURNS text AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 if "myplan" not in SD:
 	q = "SELECT count(*) FROM users WHERE lname = $1"
 	SD["myplan"] = plpy.prepare(q, [ "text" ])
@@ -496,7 +496,7 @@ return None
 $$ LANGUAGE plcontainer;
 
 CREATE FUNCTION spi_prepared_plan_test_nested(a text) RETURNS text AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 if "myplan" not in SD:
 	q = "SELECT spi_prepared_plan_test_one('%s') as count" % a
 	SD["myplan"] = plpy.prepare(q)
@@ -521,7 +521,7 @@ select spi_prepared_plan_test_nested('smith');
 
 CREATE FUNCTION result_nrows_test() RETURNS int
 AS $$
-# container: plc_python_shared
+# container: plc_python3_shared
 plan = plpy.prepare("SELECT 1 UNION SELECT 2")
 plpy.info(plan.status())
 result = plpy.execute(plan)

@@ -12,17 +12,6 @@ CWDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TOP_DIR=${CWDIR}/../../../
 
 build_plcontainer() {
-  source /usr/local/greenplum-db/greenplum_path.sh
-  
-  source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
-  
-  #install plr
-  pushd plr
-  gppkg -i plr*.gppkg
-  popd
-  source /usr/local/greenplum-db/greenplum_path.sh
-  source /opt/gcc_env.sh
- 
   # build plcontainer
   pushd plcontainer_src
   if [ "${DEV_RELEASE}" == "release" ]; then
@@ -36,7 +25,22 @@ build_plcontainer() {
       PLCONTAINER_RELEASE="0"
   fi
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make clean
+  pushd src/pyclient
+  make cleanall
+  make all
+  make clean
+  unset PYTHONPATH
+  unset PYTHONHOME
+  make PYTHON_VERSION=3 all
+  make clean
+  popd
   pushd package
+  # only source greenplum path for gppkg
+  source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
+  
+  source /usr/local/greenplum-db/greenplum_path.sh
+
+  export R_HOME=/usr/lib64/R
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make cleanall;
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make
   popd

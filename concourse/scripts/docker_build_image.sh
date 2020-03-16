@@ -8,8 +8,6 @@
 
 set -exo pipefail
 
-DockerFolder="~/data-science-bundle/plcontainer_dockerfiles/$language/"
-
 pushd plcontainer_src
 if [ "$DEV_RELEASE" == "devel" ]; then
 	IMAGE_NAME="plcontainer-$language-images-devel.tar.gz"
@@ -20,33 +18,35 @@ fi
 popd
 
 docker_build() {
-	local node=$1
-	ssh $node "bash -c \" mkdir -p ~/artifacts_$language\" "
+    local node=$1
+    ssh $node "bash -c \" mkdir -p ~/artifacts_$language\" "
 
-	scp -r datascience/Data*.gppkg $node:~/artifacts_$language
-	scp -r plcontainer_src $node:~/
-	scp -r data-science-bundle $node:~/
-	if [[ $language = "python" ]]; then
-		scp -r python/python*.targz $node:~/artifacts_python
-		scp -r openssl/openssl*.targz $node:~/artifacts_python
-	elif [[ $language = "r" ]]; then
-		scp -r r/bin_r_*.tar.gz $node:~/artifacts_r
-	else
-		echo "Wrong language in pipeline." || exit 1
-	fi
+    scp -r plcontainer_src $node:~/
+    scp -r data-science-bundle $node:~/
+    if [[ $language = "python" ]]; then
+        DockerFolder="~/data-science-bundle/plcontainer_dockerfiles/python/"
+        echo "language python in pipeline."
+    elif [[ $language = "python3" ]]; then
+        DockerFolder="~/data-science-bundle/plcontainer_dockerfiles/python/"
+        echo "language python3 in pipeline."
+    elif [[ $language = "r" ]]; then
+        DockerFolder="~/data-science-bundle/plcontainer_dockerfiles/r/"
+        echo "language R in pipeline."
+    else
+        echo "Wrong language in pipeline." || exit 1
+    fi
 
-	ssh $node "bash -c \" \
-	set -eox pipefail; \
-	cp ~/artifacts_$language/* $DockerFolder; \
-	pushd $DockerFolder; \
-	tar -zxvf DataScience*.gppkg; \
-	chmod +x *.sh; \
-	cp /usr/local/greenplum-db-devel/lib/libstdc++.so.6 .
-	ls -lh
-	docker build -f Dockerfile.$language -t pivotaldata/plcontainer_${language}_shared:devel ./ ; \
-	popd; \
-	docker save pivotaldata/plcontainer_${language}_shared:devel | gzip -c > ~/${IMAGE_NAME}; \
-	\""
+    ssh $node "bash -c \" \
+    set -eox pipefail; \
+    pushd $DockerFolder; \
+    mv ../../concourse/scripts/rlibs ./ ;\
+    mv ../../concourse/scripts/rlibs.higher_gcc ./ ;\
+    chmod +x *.sh; \
+    ls -lh; \
+    docker build -f Dockerfile.$language -t pivotaldata/plcontainer_${language}_shared:devel ./ ; \
+    popd; \
+    docker save pivotaldata/plcontainer_${language}_shared:devel | gzip -c > ~/${IMAGE_NAME}; \
+    \""
 }
 
 docker_build mdw

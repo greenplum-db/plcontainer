@@ -14,6 +14,7 @@ source "${TOP_DIR}/gpdb_src/concourse/scripts/common.bash"
 
 function _main() {
 
+  yum install -y python3 python3-devel R
   # install json-c
   pushd ${TOP_DIR}
     git clone https://github.com/json-c/json-c.git
