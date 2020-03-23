@@ -7,6 +7,7 @@ groups:
   jobs:
   - plcontainer_build_centos7
   - plcontainer_build_python_image
+  - plcontainer_build_python3_image
   - plcontainer_build_r_image
   - plcontainer_function_test_centos7
 
@@ -212,6 +213,15 @@ resources:
     secret_access_key: {{bucket-secret-access-key}}
     regexp: release_candidate/gpdb5/plcontainer/plcontainer-python-image(.*).tar.gz
 
+- name: plcontainer_docker_image_centos_python3
+  type: s3
+  source:
+    access_key_id: {{bucket-access-key-id}}
+    bucket: {{pl-bucket-name}}
+    region_name: {{aws-region}}
+    secret_access_key: {{bucket-secret-access-key}}
+    regexp: release_candidate/gpdb5/plcontainer/plcontainer-python3-image(.*).tar.gz
+
 - name: plcontainer_docker_image_centos_r
   type: s3
   source:
@@ -229,6 +239,15 @@ resources:
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
     regexp: release/gpdb5/plcontainer/plcontainer-python-image(.*).tar.gz
+
+- name: plcontainer_docker_image_centos_python3_release
+  type: s3
+  source:
+    access_key_id: {{bucket-access-key-id}}
+    bucket: {{pl-bucket-name}}
+    region_name: {{aws-region}}
+    secret_access_key: {{bucket-secret-access-key}}
+    regexp: release/gpdb5/plcontainer/plcontainer-python3-image(.*).tar.gz
 
 - name: plcontainer_docker_image_centos_r_release
   type: s3
@@ -267,14 +286,6 @@ resources:
     secret_access_key: {{bucket-secret-access-key}}
     regexp: release/gpdb5/plcontainer/plcontainer-(.*)-rhel7-x86_64.gppkg
 
-- name: plcontainer_gpdb_centos6_build_release
-  type: s3
-  source:
-    bucket: {{pl-bucket-name}}
-    region_name: {{aws-region}}
-    access_key_id: {{bucket-access-key-id}}
-    secret_access_key: {{bucket-secret-access-key}}
-    regexp: release/gpdb5/plcontainer/plcontainer-(.*)-rhel6-x86_64.gppkg
 
 ##################################### JOBS #####################################
 ################################################################################
@@ -318,6 +329,9 @@ jobs:
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_centos_python_release
       trigger: true
+    - get: plcontainer_py3client_docker_image
+      resource: plcontainer_docker_image_centos_python3_release
+      trigger: true
     - get: plcontainer_rclient_docker_image
       resource: plcontainer_docker_image_centos_r_release
       trigger: true
@@ -352,15 +366,14 @@ jobs:
   ensure:
     <<: *set_failed
 
-
-- name: plcontainer_build_python_image
+- name: plcontainer_build_python3_image
   plan:
   - aggregate:
     - get: plcontainer_src
       trigger: true
     - get: gpdb_src
     - get: gpdb_binary
-      resource: bin_gpdb_centos6
+      resource: bin_gpdb_centos7
     - get: ccp_src
     - get: centos-gpdb-dev-7
     - get: data-science-bundle
@@ -373,9 +386,58 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
-        instance_type: n1-standard-1
+        instance_type: n1-standard-8
         PLATFORM: centos7
         disk_size: 100
+        disk_type: pd-ssd
+        zone: {{google-zone}}
+        region: {{google-region}}
+  - task: gen_cluster
+    file: ccp_src/ci/tasks/gen_cluster.yml
+    params:
+      <<: *ccp_gen_cluster_default_params
+      PLATFORM: centos7
+  - task: gpinitsystem
+    file: ccp_src/ci/tasks/gpinitsystem.yml
+  - task: docker_build
+    file: plcontainer_src/concourse/tasks/docker_build_python.yml
+    params:
+      platform: centos7
+      language: python3
+    image: centos-gpdb-dev-7
+    input_mapping:
+      plcontainer_gpdb_build: plcontainer_gpdb_centos6_build
+  - put: plcontainer_docker_image_centos_python3
+    params:
+      file: plcontainer_docker_image/plcontainer*.tar.gz
+    on_success:
+      <<: *ccp_destroy
+  ensure:
+    <<: *set_failed
+
+- name: plcontainer_build_python_image
+  plan:
+  - aggregate:
+    - get: plcontainer_src
+      trigger: true
+    - get: gpdb_src
+    - get: gpdb_binary
+      resource: bin_gpdb_centos7
+    - get: ccp_src
+    - get: centos-gpdb-dev-7
+    - get: data-science-bundle
+    - get: python
+      resource: python-gp5
+    - get: datascience
+      resource: datascience-python-gp5
+    - get: openssl
+  - put: terraform
+    params:
+      <<: *ccp_default_params
+      vars:
+        instance_type: n1-standard-8
+        PLATFORM: centos7
+        disk_size: 50
         disk_type: pd-ssd
         zone: {{google-zone}}
         region: {{google-region}} 

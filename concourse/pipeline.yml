@@ -116,8 +116,8 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: pipeline
-    uri: https://github.com/HaozhouWang/plcontainer.git 
+    branch: 5X_STABLE
+    uri: https://github.com/greenplum-db/plcontainer.git 
 
 - name: gpdb_src
   type: git
@@ -239,7 +239,7 @@ resources:
   type: s3
   source:
     access_key_id: {{bucket-access-key-id}}
-    bucket: {{bucket-name}}
+    bucket: gpdb5-release-builds
     region_name: {{aws-region}}
     secret_access_key: {{bucket-secret-access-key}}
     versioned_file: {{bin_gpdb_centos7_versioned_file}}
