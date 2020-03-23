@@ -10,7 +10,7 @@
 PLCONTAINER_DIR = ..
 
 ifeq ($(PYTHON_VERSION),3)
-  PYTHON = python3.7
+  PYTHON = python3.6
   CLIENT = py3client
 else
   PYTHON = python
@@ -60,6 +60,14 @@ all: $(client_objs) $(common_objs)
 
 .PHONY: clean
 clean:
+	rm -f $(common_objs)
+	rm -f *.o
+	rm -f $(CLIENT)
+	rm -f $(common_dep)
+	rm -rf $(DEPDIR)
+
+.PHONY: cleanall
+cleanall:
 	rm -f $(common_objs)
 	rm -f *.o
 	rm -f $(CLIENT)

@@ -7,6 +7,7 @@ groups:
   jobs:
   - plcontainer_build_centos7
   - plcontainer_build_python_image
+  - plcontainer_build_python3_image
   - plcontainer_build_r_image
   - plcontainer_function_test_centos7
   - plcontainer_resgroup_test_centos7
@@ -115,13 +116,13 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: 5X_STABLE
-    uri: {{plcontainer-git-remote}}
+    branch: pipeline
+    uri: https://github.com/HaozhouWang/plcontainer.git 
 
 - name: gpdb_src
   type: git
   source:
-    branch: {{gpdb-git-branch}}
+    branch: 5X_STABLE
     uri: {{gpdb-git-remote}}
     ignore_paths:
     - gpdb-doc/*
@@ -216,6 +217,15 @@ resources:
     secret_access_key: {{bucket-secret-access-key}}
     versioned_file: build/gpdb5/plcontainer/plcontainer-python-images-devel.tar.gz
 
+- name: plcontainer_docker_image_centos_python3
+  type: s3
+  source:
+    access_key_id: {{bucket-access-key-id}}
+    bucket: {{pl-bucket-name}}
+    region_name: {{aws-region}}
+    secret_access_key: {{bucket-secret-access-key}}
+    versioned_file: build/gpdb5/plcontainer/plcontainer-python3-images-devel.tar.gz
+
 - name: plcontainer_docker_image_centos_r
   type: s3
   source:
@@ -285,6 +295,10 @@ jobs:
       resource: plcontainer_docker_image_centos_python
       passed: [plcontainer_build_python_image]
       trigger: true
+    - get: plcontainer_py3client_docker_image
+      resource: plcontainer_docker_image_centos_python3
+      passed: [plcontainer_build_python3_image]
+      trigger: true
     - get: plcontainer_rclient_docker_image
       resource: plcontainer_docker_image_centos_r
       passed: [plcontainer_build_r_image]
@@ -343,6 +357,10 @@ jobs:
     - get: plcontainer_gpdb_centos7_build
       passed: [plcontainer_build_centos7]
       trigger: true
+    - get: plcontainer_py3client_docker_image
+      resource: plcontainer_docker_image_centos_python3
+      passed: [plcontainer_build_python3_image]
+      trigger: true
   - put: terraform
     params:
       <<: *ccp_default_params
@@ -398,7 +416,7 @@ jobs:
     params:
       <<: *ccp_default_params
       vars:
-        instance_type: n1-standard-1
+        instance_type: n1-standard-8
         PLATFORM: centos7
         disk_size: 100
         disk_type: pd-ssd
@@ -422,6 +440,57 @@ jobs:
   - put: plcontainer_docker_image_centos_python
     params:
       file: plcontainer_docker_image/plcontainer-python-images-devel.tar.gz
+    on_success:
+      <<: *ccp_destroy
+  ensure:
+    <<: *set_failed
+
+- name: plcontainer_build_python3_image
+  plan:
+  - aggregate:
+    - get: plcontainer_src
+    - get: gpdb_src
+    - get: gpdb_binary
+      resource: bin_gpdb_centos7
+    - get: ccp_src
+    - get: centos-gpdb-dev-7
+    - get: data-science-bundle
+    - get: python
+      trigger: true
+      resource: python-gp5
+    - get: datascience
+      trigger: true
+      resource: datascience-python-gp5
+    - get: openssl
+      trigger: true
+  - put: terraform
+    params:
+      <<: *ccp_default_params
+      vars:
+        instance_type: n1-standard-8
+        PLATFORM: centos7
+        disk_size: 100
+        disk_type: pd-ssd
+        zone: {{google-zone}}
+        region: {{google-region}}
+  - task: gen_cluster
+    file: ccp_src/ci/tasks/gen_cluster.yml
+    params:
+      <<: *ccp_gen_cluster_default_params
+      PLATFORM: centos7
+  - task: gpinitsystem
+    file: ccp_src/ci/tasks/gpinitsystem.yml
+  - task: docker_build
+    file: plcontainer_src/concourse/tasks/docker_build_python.yml
+    params:
+      platform: centos7
+      language: python3
+    image: centos-gpdb-dev-7
+    input_mapping:
+      plcontainer_gpdb_build: plcontainer_gpdb_centos6_build
+  - put: plcontainer_docker_image_centos_python3
+    params:
+      file: plcontainer_docker_image/plcontainer-python3-images-devel.tar.gz
     on_success:
       <<: *ccp_destroy
   ensure:
