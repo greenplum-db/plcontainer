@@ -61,9 +61,10 @@ def parseargs():
                                                 help="Sanity check configurations on all the hosts")
 
     # For image-add
-    image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
-    image_add_options.add_argument("-f", "--file", dest="file", help="image location (e.g. /tmp/centos.7.2.tar.gz)")
-    image_add_options.add_argument("-u", "--url", dest="url", help="image url (e.g. 192.168.0.1:5000/images/centos:7.2)")
+    #image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
+    image_add_parser.add_argument("-f", "--file", dest="file", help="image location (e.g. /tmp/centos.7.2.tar.gz)")
+    image_add_parser.add_argument("-ulc", "--use_local_copy", action="store_true", dest="local", help="If set, use the local image file (default is no)")
+    image_add_parser.add_argument("-u", "--url", dest="url", help="image url (e.g. 192.168.0.1:5000/images/centos:7.2)")
 
     # For image-delete
     image_delete_parser.add_argument("-i", "--image", dest="image_name", help="image name:tag (e.g. centos:7.2)", required=True)
@@ -174,38 +175,85 @@ def get_docker_image(url):
 
     return image_path
 
-
-def install_images(options, pool, hosts):
-    '''
-    install docker image either form url or file
-    '''
-    if options.file:
-        docker_image = options.file
-    if options.url:
-        docker_image = get_docker_image(options.url)
-
-    if not os.path.exists(docker_image):
-        logger.error("docker image file %s does not exist" % docker_image)
-        sys.exit(1)
-
+def install_image_remote(hosts, pool, docker_image):
     try:
+        step = 0
         logger.info('Checking whether docker is installed on all hosts...')
         check_docker_cmd = 'which docker'
         remote_cmd(pool, check_docker_cmd, hosts)
+        step = 1
 
         logger.info('Distributing image file %s to all hosts...' % docker_image)
         dest = os.path.join(DBHOME, TMP, os.path.basename(docker_image))
         distribute_docker_file(pool, docker_image, dest, hosts)
+        step = 2
 
         logger.info('Loading image on all hosts...')
         docker_load_cmd = " ".join(["docker load -i ", dest])
         remote_cmd(pool, docker_load_cmd, hosts)
+        step = 3
 
         logger.info('Removing temporary image files on all hosts...')
         docker_load_cmd = " ".join(["rm -f ", dest])
         remote_cmd(pool, docker_load_cmd, hosts)
     except Exception, ex:
+        if (step == 0):
+            logger.error("Cannot find docker in all hosts, please check docker installation again")
+        elif (step == 1):
+            logger.error("Unable to distribute the docker tarball into all hosts")
+        elif (step == 2):
+            logger.error("Cannot load docker image in all hosts")
+        elif (step == 3):
+            logger.error("Unable to remove temporary files")
         raise(ex)
+
+def install_image_local(hosts, pool, docker_file):
+    try:
+        step = 0
+        logger.info('Checking whether docker is installed on all hosts...')
+        check_docker_cmd = 'which docker'
+        remote_cmd(pool, check_docker_cmd, hosts)
+        step = 1
+
+        logger.info('Checking whether docker image tarball is exsited on all hosts...')
+        check_file_cmd = " ".join(["ls ", os.path.basename(docker_file)])
+        remote_cmd(pool, check_file_cmd, hosts)
+        step = 2
+
+        logger.info('Loading image on all hosts via local file...')
+        docker_load_cmd = " ".join(["docker load -i ", os.path.basename(docker_file)])
+        remote_cmd(pool, docker_load_cmd, hosts)
+    except Exception, ex:
+        if (step == 0):
+            logger.error("Cannot find docker in all hosts, please check docker installation again")
+        elif (step == 1):
+            logger.error("Docker image tarball %s is not existed on all hosts, please copy them again" % docker_file)
+        elif (step == 2):
+            logger.error("Cannot load docker image in all hosts")
+        raise(ex)
+
+def install_images(options, pool, hosts):
+    '''
+    install docker image either form url or file
+    '''
+    if options.local:
+        if options.file:
+            docker_image = options.file
+        else:
+            logger.error("Please use -f option to indicate file location")
+            sys.exit(1)
+    if options.file:
+        docker_image = options.file
+    if options.url:
+        docker_image = get_docker_image(options.url)
+
+    if options.local:
+        install_image_local(hosts, pool, docker_image)
+    else:
+        if not os.path.exists(docker_image):
+            logger.error("docker image file %s does not exist" % docker_image)
+            sys.exit(1)
+        install_image_remote(hosts, pool, docker_image)
 
 def delete_images(options, pool, hosts):
     '''
