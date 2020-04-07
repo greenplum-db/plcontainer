@@ -216,12 +216,12 @@ def install_image_local(hosts, pool, docker_file):
         step = 1
 
         logger.info('Checking whether docker image tarball is exsited on all hosts...')
-        check_file_cmd = " ".join(["ls ", os.path.basename(docker_file)])
+        check_file_cmd = " ".join(["ls ", docker_file])
         remote_cmd(pool, check_file_cmd, hosts)
         step = 2
 
         logger.info('Loading image on all hosts via local file...')
-        docker_load_cmd = " ".join(["docker load -i ", os.path.basename(docker_file)])
+        docker_load_cmd = " ".join(["docker load -i ", docker_file])
         remote_cmd(pool, docker_load_cmd, hosts)
     except Exception, ex:
         if (step == 0):
