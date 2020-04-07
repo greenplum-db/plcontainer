@@ -27,9 +27,9 @@ optional arguments:
   --verbose             Enable verbose logging
 
 Test image-add: negative cases
-usage: plcontainer image-add [-h] (-f FILE | -u URL)
+usage: plcontainer image-add [-h] [-f FILE] [-ulc] [-u URL]
 plcontainer image-add: error: one of the arguments -f/--file -u/--url is required
-usage: plcontainer image-add [-h] (-f FILE | -u URL)
+usage: plcontainer image-add [-h] [-f FILE] [-ulc] [-u URL]
 plcontainer image-add: error: one of the arguments -f/--file -u/--url is required
 -docker image file nonexist_file does not exist
 -Getting docker image from nonexist_url

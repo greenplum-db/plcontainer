@@ -61,10 +61,10 @@ def parseargs():
                                                 help="Sanity check configurations on all the hosts")
 
     # For image-add
-    #image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
-    image_add_parser.add_argument("-f", "--file", dest="file", help="image location (e.g. /tmp/centos.7.2.tar.gz)")
+    image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
+    image_add_options.add_argument("-f", "--file", dest="file", help="image location (e.g. /tmp/centos.7.2.tar.gz)")
     image_add_parser.add_argument("-ulc", "--use_local_copy", action="store_true", dest="local", help="If set, use the local image file (default is no)")
-    image_add_parser.add_argument("-u", "--url", dest="url", help="image url (e.g. 192.168.0.1:5000/images/centos:7.2)")
+    image_add_options.add_argument("-u", "--url", dest="url", help="image url (e.g. 192.168.0.1:5000/images/centos:7.2)")
 
     # For image-delete
     image_delete_parser.add_argument("-i", "--image", dest="image_name", help="image name:tag (e.g. centos:7.2)", required=True)
