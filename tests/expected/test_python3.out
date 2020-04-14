@@ -24,7 +24,7 @@ select pybool('t');
 (1 row)
 
 select pyint(NULL::int2);
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 4, in pyint
@@ -652,7 +652,7 @@ select * from pytestudt13( (1,2,'a')::test_type3 );
 (1 row)
 
 select pytestudt16();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Only 'dict' object can be converted to UDT "test_type3"
 CONTEXT:  PLContainer function "pytestudt16"
 select * from pytestudtrecord1() as t(a int, b int, c varchar);
@@ -683,31 +683,31 @@ select pyreturnsetofint8(2), pyreturnsetofint8(3);
 (6 rows)
 
 select pybadint();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Exception occurred transforming result object to int4
 CONTEXT:  PLContainer function "pybadint"
 select pybadfloat8();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Exception occurred transforming result object to float4
 CONTEXT:  PLContainer function "pybadfloat8"
 select pybadudt();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Cannot find key 'c' in result dictionary for converting it into UDT
 CONTEXT:  PLContainer function "pybadudt"
 select pybadudt2();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Exception occurred transforming result object to float8
 CONTEXT:  PLContainer function "pybadudt2"
 select pybadarr();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Exception occurred transforming result object to int4
 CONTEXT:  PLContainer function "pybadarr"
 select pybadarr2();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Cannot convert non-sequence object to array
 CONTEXT:  PLContainer function "pybadarr2"
 select pyinvalid_function();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 5, in pyinvalid_function
@@ -736,7 +736,7 @@ ERROR:  plcontainer: argname list containers OUT parameter, will not support. (m
 SELECT nnint_test(null, 3);
 ERROR:  plcontainer: plcontainer does not support domain type (plc_typeio.c:110)
 select nested_error_raise();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 13, in nested_error_raise
@@ -746,7 +746,7 @@ ERROR:  PL/Container client exception occurred:
 AttributeError: module 'plpy' has no attribute 'Error'
 CONTEXT:  PLContainer function "nested_error_raise"
 select nested_fatal_raise();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 13, in nested_fatal_raise

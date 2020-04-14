@@ -1,6 +1,6 @@
 set datestyle='ISO,MDY';
 select rshouldnotparse();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Parse Error
 gpdb.rshouldnotparse <- function(args) {
 # container: plc_r_shared

@@ -303,7 +303,7 @@ LINE 1: select * from t4r where name=$1 order by score1
 HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
 QUERY:  select * from t4r where name=$1 order by score1
 select r_spi_illegal_pexecute2();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Error in pg.spi.prepare("select * from t4r where score1<$1 order by score1",  : 
   object 'BYTEAOID' not found
 CONTEXT:  PLContainer function "r_spi_illegal_pexecute2"
@@ -316,12 +316,12 @@ CONTEXT:  PLContainer function "r_spi_simple_t4"
 (1 row)
 
 select r_spi_illegal_pexecute3();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Error in pg.spi.prepare("select * from t4r where score1<$1 order by score1",  : 
   object 'FLOAT4OID' not found
 CONTEXT:  PLContainer function "r_spi_illegal_pexecute3"
 select r_spi_illegal_pexecute4();
-ERROR:  PL/Container client exception occurred:
+ERROR:  PL/Container client exception occurred: 
  Error in pg.spi.prepare("select * from t4r where score1<$1 and score2<$2 order by score1",  : 
   object 'FLOAT4OID' not found
 CONTEXT:  PLContainer function "r_spi_illegal_pexecute4"
