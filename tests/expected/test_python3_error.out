@@ -25,7 +25,6 @@ return i+j+k
 $$ LANGUAGE plcontainer;
 select pyerror_invalid_program();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  
  Cannot compile function in Python 
    File "<string>", line 4
     this is invalid python program
@@ -34,7 +33,6 @@ SyntaxError: invalid syntax
 CONTEXT:  PLContainer function "pyerror_invalid_program"
 select pyerror_invalid_import();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 4, in pyerror_invalid_import
@@ -42,7 +40,6 @@ ImportError: No module named invalid_package
 CONTEXT:  PLContainer function "pyerror_invalid_import"
 select pyerror_invalid_num();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  
  Cannot compile function in Python 
    File "<string>", line 4
     return (float)3.4
@@ -51,7 +48,6 @@ SyntaxError: invalid syntax
 CONTEXT:  PLContainer function "pyerror_invalid_num"
 select pyerror_invalid_division();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 4, in pyerror_invalid_division
@@ -59,7 +55,6 @@ ZeroDivisionError: integer division or modulo by zero
 CONTEXT:  PLContainer function "pyerror_invalid_division"
 select pyerror_raise();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 4, in pyerror_raise
@@ -67,7 +62,6 @@ OverflowError
 CONTEXT:  PLContainer function "pyerror_raise"
 select pyerror_argument(3,4);
 ERROR:  PL/Container client exception occurred:
-DETAIL:  
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 4, in pyerror_argument
