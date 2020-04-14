@@ -14,8 +14,14 @@ TOP_DIR=${CWDIR}/../../../
 function _main() {
 
   # install R & PYTHON3
-  apt update
-  DEBIAN_FRONTEND=noninteractive apt install -y r-base pkg-config libpython2.7-dev python2.7 python3.7-dev
+  apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get -y install gnupg2 apt-utils
+  DEBIAN_FRONTEND=noninteractive apt-get -y install --reinstall ca-certificates
+
+  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+  echo 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/' >> /etc/apt/sources.list
+  apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get install -y r-base pkg-config libpython2.7-dev python2.7 python3.7-dev
 
   # build client only
   pushd plcontainer_src

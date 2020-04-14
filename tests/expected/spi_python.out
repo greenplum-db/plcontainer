@@ -400,11 +400,11 @@ CONTEXT:  PLContainer function "py_spi_simple_t4"
 
 select py_spi_illegal_pexecute3();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  Exception occurred transforming result object to float4
+ Exception occurred transforming result object to float4
 CONTEXT:  PLContainer function "py_spi_illegal_pexecute3"
 select py_spi_illegal_pexecute4();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  Exception occurred transforming result object to float8
+ Exception occurred transforming result object to float8
 CONTEXT:  PLContainer function "py_spi_illegal_pexecute4"
 select py_spi_simple_t4();
 NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
@@ -503,7 +503,6 @@ CONTEXT:  PLContainer function "py_spi_simple_t4"
 
 select pyspi_bad_limit_pexecute();
 ERROR:  PL/Container client exception occurred:
-DETAIL:  
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 4, in pyspi_bad_limit_pexecute
