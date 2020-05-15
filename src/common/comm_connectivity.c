@@ -12,6 +12,7 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -20,6 +21,12 @@
 #include "common/comm_dummy.h"
 
 plcContext *global_context = NULL;
+
+void plcContextBeginStage(plcContext *ctx, const char *stage_name, const char *message_format, ...)
+	__attribute__ ((format (printf, 3, 4)));
+
+void plcContextEndStage(plcContext *ctx, const char *stage_name, plcContextStageStatus status, const char *message_format, ...)
+	__attribute__ ((format (printf, 4, 5)));
 
 void plcContextInit(plcContext *ctx)
 {
@@ -67,7 +74,8 @@ void plcFreeContext(plcContext *ctx)
 	global_context = NULL;
 }
 
-void plcContextBeginStage(plcContext *ctx, const char *stage_name, const char *message_format, ...) {
+void plcContextBeginStage(plcContext *ctx, const char *stage_name, const char *message_format, ...)
+{
     if (ctx->current_stage_num >= ctx->max_stage_num) {
         plc_elog(ERROR, "plcContext has too many stages.");
     }

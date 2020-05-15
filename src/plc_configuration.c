@@ -56,6 +56,8 @@ static void release_runtime_configuration_table(HTAB *table);
 
 static void print_runtime_configurations();
 
+static char* get_config_filename();
+
 PG_FUNCTION_INFO_V1(refresh_plcontainer_config);
 
 PG_FUNCTION_INFO_V1(show_plcontainer_config);
@@ -483,7 +485,8 @@ static void release_runtime_configuration_table(HTAB *table) {
 	}
 	hash_destroy(table);
 }
-char* get_config_filename() {
+
+static char* get_config_filename() {
 	char* filename = (char*) palloc(DEFAULT_STRING_BUFFER_SIZE);
 #ifdef PLC_PG
 	char data_directory[DEFAULT_STRING_BUFFER_SIZE];
@@ -495,6 +498,7 @@ char* get_config_filename() {
 	sprintf(filename, "%s/%s", data_directory, PLC_PROPERTIES_FILE);
 	return filename;
 }
+
 HTAB *load_runtime_configuration() {
 	xmlDoc* volatile doc = NULL;
 	HTAB *table;
@@ -640,8 +644,8 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		arraylen = json_object_array_length(container_list);
 
 		struct json_object *containerObj = NULL;
-		struct json_object *containerStateObj = NULL;
-		int64_t containerMemoryUsage = 0;
+		//struct json_object *containerStateObj = NULL;
+		// int64_t containerMemoryUsage = 0; To enable later
 
 		struct json_object *statusObj = NULL;
 		const char *statusStr;
@@ -695,11 +699,11 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			}
 
 			idStr = json_object_get_string(idObj);
-			ids[actualLen] = idStr;
-			datums[actualLen].idStr = idStr;
-			datums[actualLen].statusStr = statusStr;
-			datums[actualLen].dbidStr = dbidStr;
-			datums[actualLen].ownerStr = ownerStr;
+			ids[actualLen] = (char*) idStr;
+			datums[actualLen].idStr = (char*) idStr;
+			datums[actualLen].statusStr = (char*) statusStr;
+			datums[actualLen].dbidStr = (char*) dbidStr;
+			datums[actualLen].ownerStr = (char*) ownerStr;
 			actualLen++;
 		}
 		funcctx->max_calls = (uint32_t) actualLen;
@@ -748,7 +752,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	if (isFirstCall) {
 		funcctx->user_fctx = (void *) datums;
 	} else {
-		datums = (json_object *) funcctx->user_fctx;
+		datums = (containerStatus *) funcctx->user_fctx;
 	}
 	/*if a record is not suitable, skip it and scan next record*/
 	while (1) {
@@ -757,10 +761,10 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			char **values;
 			HeapTuple tuple;
 			Datum result;
-			int res;
-			char *containerState = NULL;
-			struct json_object *memoryObj = NULL;
-			struct json_object *memoryUsageObj = NULL;
+			// int res;
+			// char *containerState = NULL;
+			// struct json_object *memoryObj = NULL;
+			// struct json_object *memoryUsageObj = NULL;
 			values = (char **) palloc(5 * sizeof(char *));
 			values[0] = (char *) palloc(8 * sizeof(char));
 			values[1] = (char *) palloc(80 * sizeof(char));

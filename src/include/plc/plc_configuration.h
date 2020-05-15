@@ -29,8 +29,6 @@ Datum show_plcontainer_config(PG_FUNCTION_ARGS);
 Datum containers_summary(PG_FUNCTION_ARGS);
 runtimeConfEntry *plc_get_runtime_configuration(const char *id);
 
-char* get_config_filename();
-
 HTAB *load_runtime_configuration(void);
 
 bool plc_check_user_privilege(char *users);

@@ -115,12 +115,15 @@ pl4k: proto all-lib
 
 install: all install-coordinator installdirs install-lib install-extra install-clients
 installpl4k: pl4k installdirs install-lib install-extra install-clients
-clean: clean-clients clean-coverage clean-proto
+clean: clean-clients clean-coverage clean-proto clean-coordinator
 distclean: distclean-config
 
 .PHONY: coordinator
 coordinator:
 	$(MAKE) -C $(SRCDIR)/
+
+clean-coordinator:
+	$(MAKE) -C $(SRCDIR)/ clean
 
 .PHONY: install-coordinator
 install-coordinator:

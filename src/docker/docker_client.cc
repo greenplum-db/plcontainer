@@ -171,6 +171,8 @@ JSON_DOC Docker::requestAndParse(Method method, const std::vector<std::string>& 
     std::string readBuffer;
     std::string method_str;
 
+	(void) success_code;
+
     switch(method){
         case GET:
             method_str = "GET";
@@ -197,7 +199,11 @@ JSON_DOC Docker::requestAndParse(Method method, const std::vector<std::string>& 
         m = curl_multi_info_read(curlm, &msgq);
         if (m && (m->msg == CURLMSG_DONE)) {
             CURL *e = m->easy_handle;
-            status = (status == 0 || status == CURLE_OK)?m->data.result:status;
+			if (status == 0 || status == CURLE_OK)
+			{
+				status = m->data.result;
+			}
+
             curl_multi_remove_handle(curlm, e);
             curl_easy_cleanup(e);
         }

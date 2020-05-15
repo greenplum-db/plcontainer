@@ -172,6 +172,8 @@ int PlcDocker::start(std::string id, std::string& result) {
         result = jsonToString(res);
         return -1;
     }
+
+	return -1;
 }
 
 int PlcDocker::remove(std::vector<std::string>& ids, std::string& result) {
@@ -187,6 +189,7 @@ int PlcDocker::remove(std::vector<std::string>& ids, std::string& result) {
 int PlcDocker::inspect_status(std::vector<std::string>& ids, std::vector<std::string>& status) {
     Docker client = Docker();
     JSON_DOC res = client.inspect_containers(ids);
+	(void) status;
     return 0;
 }
 
@@ -222,4 +225,6 @@ int PlcDocker::mem_stats(std::vector<std::string>& ids, std::vector<std::int64_t
     } else if (res["success"] == false) {
         return -1;
     }
+
+	return -1;
 }
