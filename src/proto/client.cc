@@ -15,11 +15,10 @@ PLContainerClient *PLContainerClient::GetPLContainerClient() {
     return client;
 }
 
-#ifdef PL4K
 std::string get_pl4k_service_address() {
     return std::string(plcontainer_service_address);
 }
-#endif
+
 void PLContainerClient::Init(const plcContext *ctx) {
     this->ctx = ctx;
 
@@ -644,25 +643,26 @@ int get_new_container_from_coordinator(const char *runtime_id, plcContext *ctx) 
     request.set_command_count(gp_command_count);
     request.set_ownername(username);
     request.set_dbid(dbid);
-#ifndef PL4K
-    std::string server_addr = get_coordinator_address();
-    PLCoordinatorClient     client(grpc::CreateChannel(
-        "unix://"+server_addr, grpc::InsecureChannelCredentials()));
-    client.StartContainer(request, response);
-    plcContextEndStage(ctx, "request_coordinator_for_container",
+
+    if (!is_plcontainer_for_k8s) {
+        std::string server_addr = get_coordinator_address();
+        PLCoordinatorClient     client(grpc::CreateChannel(
+            "unix://"+server_addr, grpc::InsecureChannelCredentials()));
+        client.StartContainer(request, response);
+        plcContextEndStage(ctx, "request_coordinator_for_container",
                     response.status() == 0 ? PLC_CONTEXT_STAGE_SUCCESS : PLC_CONTEXT_STAGE_FAIL,
                     "[REQUEST]:%s, [RESPONSE]:%s", request.DebugString().c_str(), response.DebugString().c_str());
 
-    if (response.status() != 0) {
-        return -1;
+        if (response.status() != 0) {
+            return -1;
+        }
+        ctx->service_address = plc_top_strdup(("unix://"+response.container_address()).c_str());
+        ctx->container_id = plc_top_strdup(response.container_id().c_str());
+    } else {
+        std::string server_addr = get_pl4k_service_address();
+        ctx->service_address = plc_top_strdup(server_addr.c_str());
+        ctx->container_id = plc_top_strdup("");
     }
-    ctx->service_address = plc_top_strdup(("unix://"+response.container_address()).c_str());
-    ctx->container_id = plc_top_strdup(response.container_id().c_str());
-#else
-    std::string server_addr = get_pl4k_service_address();
-    ctx->service_address = plc_top_strdup(server_addr.c_str());
-    ctx->container_id = plc_top_strdup("");
-#endif
 
     return 0;
 }

@@ -56,8 +56,6 @@ static void release_runtime_configuration_table(HTAB *table);
 
 static void print_runtime_configurations();
 
-static char* get_config_filename();
-
 PG_FUNCTION_INFO_V1(refresh_plcontainer_config);
 
 PG_FUNCTION_INFO_V1(show_plcontainer_config);
@@ -486,7 +484,7 @@ static void release_runtime_configuration_table(HTAB *table) {
 	hash_destroy(table);
 }
 
-static char* get_config_filename() {
+char* get_config_filename() {
 	char* filename = (char*) palloc(DEFAULT_STRING_BUFFER_SIZE);
 #ifdef PLC_PG
 	char data_directory[DEFAULT_STRING_BUFFER_SIZE];
@@ -707,12 +705,12 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			actualLen++;
 		}
 		funcctx->max_calls = (uint32_t) actualLen;
-#ifndef PL4K
-		res = PlcDocker_stat(ids, actualLen, mem_usage);
-#else
-		plc_elog(ERROR, "PlcDocker_stat is not supported in PL4K mode");
-		res = -2;
-#endif
+		if (!is_plcontainer_for_k8s) {
+			res = PlcDocker_stat(ids, actualLen, mem_usage);
+		} else {
+			plc_elog(ERROR, "PlcDocker_stat is not supported in PL4K mode");
+			res = -2;
+		}
 		if (res < 0) {
 			plc_elog(INFO, "Fail to get docker container state");
 		} else {

@@ -18,4 +18,6 @@ Datum plcontainer_inline_handler(PG_FUNCTION_ARGS);
 char *plc_top_strdup(const char *str);
 void *top_palloc(size_t bytes);
 
+extern bool is_plcontainer_for_k8s;
+
 #endif /* PLC_PLCONTAINER_H */

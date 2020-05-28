@@ -53,9 +53,6 @@ ifeq ($(PLC_PG),yes)
 #	override CFLAGS += -DPLC_PG  -Wno-sign-compare
 endif
 
-ifeq ($(PL4K),yes)
-	override CFLAGS += -DPL4K
-endif
 # FIXME: We might need a configure script to handle below checks later.
 # See https://github.com/greenplum-db/plcontainer/issues/322
 
@@ -71,7 +68,7 @@ endif
 PLCONTAINERDIR = $(DESTDIR)$(datadir)/plcontainer
 INCLUDE_DIR = $(SRCDIR)/include
 
-override CFLAGS += -Werror -Wextra -Wall -Wno-sign-compare -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/proto
+override CFLAGS += -Wextra -Wall -Wno-sign-compare -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/proto
 override CFLAGS += $(shell xml2-config --cflags)
 
 CXXFLAGS += $(subst -fexcess-precision=standard,,$(subst -Wmissing-prototypes,,$(subst -std=gnu99,,$(CFLAGS)))) -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/proto
@@ -108,13 +105,8 @@ endif
 
 all: proto coordinator all-lib
 	@echo "Build PL/Container Done."
-pl4k: proto all-lib
-	@echo "Build PL4KPL/Container Done."
-
-
 
 install: all install-coordinator installdirs install-lib install-extra install-clients
-installpl4k: pl4k installdirs install-lib install-extra install-clients
 clean: clean-clients clean-coverage clean-proto clean-coordinator
 distclean: distclean-config
 

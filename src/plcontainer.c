@@ -63,9 +63,8 @@ static plcProcInfo *PLy_curr_procedure = NULL;
 /* this is saved and restored by plcontainer_call_handler */
 MemoryContext pl_container_caller_context = NULL;
 char *plcontainer_service_address;
-#ifdef PL4K
 int plc_client_timeout = -1;
-#endif
+bool is_plcontainer_for_k8s = false;
 void _PG_init(void);
 
 /*
@@ -75,7 +74,6 @@ void _PG_init(void);
  */
 void
 _PG_init(void) {
-#ifdef PL4K
 	DefineCustomStringVariable("plcontainer.service_address",
 							   "Set the address of the pl4k service",
 							   NULL,
@@ -96,8 +94,14 @@ _PG_init(void) {
 							NULL,
 							NULL,
 							NULL);
-	plc_elog(DEBUG1, "PL/Container initialize with address %s", plcontainer_service_address);
-#endif
+
+	if (strcmp(plcontainer_service_address, "none") == 0) {
+		is_plcontainer_for_k8s = false;
+	} else {
+		is_plcontainer_for_k8s = true;
+	}
+	plc_elog(DEBUG1, "PL/Container initialize with address %s, pl4k_mode:%d", plcontainer_service_address, is_plcontainer_for_k8s);
+	
 	/* Be sure we do initialization only once (should be redundant now) */
 	static bool inited = false;
 	if (inited)
