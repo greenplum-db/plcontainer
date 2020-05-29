@@ -28,9 +28,6 @@ extern "C"
 #include "plc/containers.h"
 #include "plc/plc_coordinator.h"
 #include "cdb/cdbvars.h"
-
-extern int plc_client_timeout;
-extern char *plcontainer_service_address;
 }
 
 using namespace plcontainer;
@@ -51,7 +48,7 @@ public:
 
 private:
     PLContainerClient();
- 
+
     static void initCallRequestArgument(const FunctionCallInfo fcinfo, const plcProcInfo *proc, int argIdx, ScalarData &arg);
     static void initCallRequestArgument(const FunctionCallInfo fcinfo, const plcProcInfo *proc, int argIdx, ArrayData &arg);
     static void initCallRequestArgument(const FunctionCallInfo fcinfo, const plcProcInfo *proc, int argIdx, CompositeData &arg);

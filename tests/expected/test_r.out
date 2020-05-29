@@ -1,10 +1,11 @@
 set datestyle='ISO,MDY';
 select rshouldnotparse();
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Cannot parse user code gpdbR.rshouldnotparse <- function() { (comm_dummy_plc.c:30)
-DETAIL:  
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Cannot parse user code gpdbR.rshouldnotparse <- function() {
 # container: plc_r_shared
 return 'hello'
-}  stacktrace:
+} (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rshouldnotparse"
 select rlog100();
  rlog100 
@@ -310,16 +311,24 @@ select rtimestamparr($${'2012-01-02 12:34:56.789012','2012-01-03 12:34:56.789012
 
 --select rlog100_shared();
 select rpg_spi_exec('select 1');
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rpg_spi_exec"
 select rlogging();
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rlogging"
 select rlogging2();
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rlogging2"
 \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rlogging_fatal"
 --start_ignore
 --select rsetofint4();
@@ -335,28 +344,33 @@ CONTEXT:  PLContainer function "rlogging_fatal"
 --select rsetoftextarray();
 --end_ignore
 select runargs1('foo');
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "runargs1"
 select runargs2(123, 'foo');
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Cannot parse user code gpdbR.runargs2 <- function(a, ) { (comm_dummy_plc.c:30)
-DETAIL:  
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Cannot parse user code gpdbR.runargs2 <- function(a, ) {
 # container: plc_r_shared
 return(paste(a, args[[2]], sep=""))
-}  stacktrace:
+} (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "runargs2"
 select runargs3(123, 'foo', 'bar');
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Cannot parse user code gpdbR.runargs3 <- function(a, , c) { (comm_dummy_plc.c:30)
-DETAIL:  
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Cannot parse user code gpdbR.runargs3 <- function(a, , c) {
 # container: plc_r_shared
 return(paste(a, args[[2]], c, sep=""))
-}  stacktrace:
+} (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "runargs3"
 select runargs4(1,null,null,1);
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Cannot parse user code gpdbR.runargs4 <- function(, , , ) { (comm_dummy_plc.c:30)
-DETAIL:  
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Cannot parse user code gpdbR.runargs4 <- function(, , , ) {
 # container: plc_r_shared
 return(length(args))
-}  stacktrace:
+} (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "runargs4"
 select rnested_call_three('foo');
  rnested_call_three 
@@ -365,10 +379,14 @@ select rnested_call_three('foo');
 (1 row)
 
 select rnested_call_two('foobar');
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rnested_call_two"
 select rnested_call_one('foo1');
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rnested_call_one"
 select rtestudt1( ('t', 1, 2, 3, 4, 5, 6, 'foobar')::test_type );
  rtestudt1 

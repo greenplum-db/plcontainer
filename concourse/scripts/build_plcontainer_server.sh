@@ -14,8 +14,15 @@ TOP_DIR=${CWDIR}/../../../
 function _main() {
 
   # install R
-  apt update
-  DEBIAN_FRONTEND=noninteractive apt install -y r-base pkg-config git
+  apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get -y install gnupg2 apt-utils
+  DEBIAN_FRONTEND=noninteractive apt-get -y install --reinstall ca-certificates
+
+  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+  echo 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/' >> /etc/apt/sources.list
+
+  apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get -y install r-base r-base-dev wget jags libcurl4-openssl-dev git
 
   git clone --recursive --branch v1.24.3 --depth 1 https://github.com/grpc/grpc.git
   pushd ${TOP_DIR}/grpc/third_party/protobuf

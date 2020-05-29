@@ -62,9 +62,9 @@ static plcProcInfo *PLy_curr_procedure = NULL;
 
 /* this is saved and restored by plcontainer_call_handler */
 MemoryContext pl_container_caller_context = NULL;
-char *plcontainer_service_address;
-int plc_client_timeout = -1;
-bool is_plcontainer_for_k8s = false;
+extern char *plcontainer_service_address;
+extern int plc_client_timeout;
+extern bool is_plcontainer_for_k8s;
 void _PG_init(void);
 
 /*

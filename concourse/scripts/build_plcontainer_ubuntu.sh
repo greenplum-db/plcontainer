@@ -57,7 +57,6 @@ build_plcontainer() {
   cp Makefile.ubuntu Makefile
 
 
-
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make cleanall;
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make
   popd
@@ -70,6 +69,23 @@ build_plcontainer() {
       cp plcontainer_src/package/plcontainer-*.gppkg $OUTPUT/
       cp grpc_lib/plcontainer-libs.tar.gz $OUTPUT/plcontainer-concourse-lib.tar.gz
   fi
-}  
+}
 
+create_pl4k_package() {
+  mkdir pl4k
+  cp -r plcontainer_src/package/UBUNTU/bin pl4k
+  cp -r plcontainer_src/package/UBUNTU/lib pl4k
+  cp -r plcontainer_src/package/UBUNTU/share pl4k
+  cp -d /usr/local/lib/libgrpc++.so* pl4k/lib 
+  cp -d /usr/local/lib/libgrpc++_reflection.so* pl4k/lib
+  cp -d /usr/local/lib/libgrpc.so* pl4k/lib
+  cp -d /usr/local/lib/libgpr.so* pl4k/lib
+  cp -d /usr/local/lib/libprotobuf.so* pl4k/lib
+  cp -d /usr/lib/x86_64-linux-gnu/libjson-c.so* pl4k/lib
+  pushd pl4k
+  tar czf pl4k.tar.gz *
+  popd
+  cp pl4k/pl4k.tar.gz $OUTPUT/pl4k.tar.gz
+}
 build_plcontainer
+create_pl4k_package
