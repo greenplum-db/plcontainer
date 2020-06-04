@@ -38,7 +38,10 @@ install_docker() {
            wget https://download.docker.com/linux/ubuntu/gpg -O /tmp/docker.key ; \ 
 	       sudo apt-key add /tmp/docker.key ; \
            sudo add-apt-repository -y 'deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable' ; \
-           sudo apt-get update; \
+         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9; \
+         sudo echo 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/' >> /etc/apt/sources.list; \
+         sudo apt-get update; \
+         sudo DEBIAN_FRONTEND=noninteractive apt-get -y install r-base; \
 	       sudo apt-get -y install docker-ce docker-ce-cli containerd.io; \
            sudo systemctl start docker; \
            sudo groupadd docker; \

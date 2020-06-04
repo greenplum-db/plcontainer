@@ -44,32 +44,47 @@ x<-data.frame(a,b,c,d,e,f,g,h)
 return(x)
 $$ LANGUAGE plcontainer ;
 select rerror_invalid_program();
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Cannot parse user code gpdbR.rerror_invalid_program <- function() { (comm_dummy_plc.c:30)
-DETAIL:  
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Cannot parse user code gpdbR.rerror_invalid_program <- function() {
 # container: plc_r_shared
 this is invalid r program
-}  stacktrace:
+} (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rerror_invalid_program"
 select rerror_invalid_import();
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rerror_invalid_import"
 select rerror_timestamp('2017-09-10 12:10:09');
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rerror_timestamp"
 select rerror_non_exist_function();
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rerror_non_exist_function"
 select rerror_spi_queryfail(); 
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rerror_spi_queryfail"
 select rerror_setof();
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rerror_setof"
 select rerror_dataframe();
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, Unable execute user code  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, Unable execute user code (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rerror_dataframe"
 --start_ignore
 select rerror_datatype();
-ERROR:  plcontainer log: plcontainer function call failed. error:R Server Runtime Warning R Server Logs, ERROR, the column length 15 of R object is different with column length 1 of return type in vector  stacktrace: (comm_dummy_plc.c:30)
+ERROR:  plcontainer log: plcontainer function call RPC failed., error:R Server Runtime Warning 
+Log from R Server: 
+Type: ERROR, the column length 15 of R object is different with column length 1 of return type in vector (comm_dummy_plc.c:30)
 CONTEXT:  PLContainer function "rerror_datatype"
 --end_ignore

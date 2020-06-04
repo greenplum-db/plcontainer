@@ -2,7 +2,9 @@
 #include "proto_utils.h"
 
 PLContainerClient *PLContainerClient::client = NULL; 
-
+char *plcontainer_service_address;
+int plc_client_timeout = -1;
+bool is_plcontainer_for_k8s = false;
 PLContainerClient::PLContainerClient() {
     this->stub_ = NULL;
     this->ctx = NULL;
