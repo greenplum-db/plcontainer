@@ -28,6 +28,7 @@ build_plcontainer() {
   else
       PLCONTAINER_VERSION="0.0"
       PLCONTAINER_RELEASE="0"
+  git describe > VERSION
   fi
 
   # copy servers into folder
@@ -73,6 +74,7 @@ build_plcontainer() {
 
 create_pl4k_package() {
   mkdir pl4k
+  cp plcontainer_src/VERSION pl4k
   cp -r plcontainer_src/package/UBUNTU/bin pl4k
   cp -r plcontainer_src/package/UBUNTU/lib pl4k
   cp -r plcontainer_src/package/UBUNTU/share pl4k
