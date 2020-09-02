@@ -330,7 +330,7 @@ plcConn *get_container_conn(const char *runtime_id) {
 	}
 
 #ifndef PLC_PG
-	SIMPLE_FAULT_INJECTOR("plcontainer_before_container_connected");
+	// SIMPLE_FAULT_INJECTOR("plcontainer_before_container_connected");
 #endif
 	for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
 		if (containers[i].runtimeid != NULL &&
@@ -467,7 +467,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 
 
 #ifndef PLC_PG
-	SIMPLE_FAULT_INJECTOR("plcontainer_before_container_started");
+	//SIMPLE_FAULT_INJECTOR("plcontainer_before_container_started");
 #endif
 	/*
 	 * Making a series of connection attempts unless connection timeout of
