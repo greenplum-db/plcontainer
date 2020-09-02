@@ -7,14 +7,9 @@ groups:
   jobs:
   - plcontainer_client_build
   - plcontainer_build_centos7
-  - plcontainer_build_ubuntu18
-  - plcontainer_build_python_image
   - plcontainer_build_python3_image
-  - plcontainer_build_r_image
   - plcontainer_function_test_centos7
   - plcontainer_resgroup_test_centos7
-  - plcontainer_resgroup_test_ubuntu18
-  - plcontainer_function_test_ubuntu18
 
 ################################################################################
 ################################## RESOURCES ###################################
@@ -105,7 +100,7 @@ resources:
 - name: data-science-bundle
   type: git
   source:
-    branch: gpdb6
+    branch: python3.8
     private_key: {{plpkg-git-key}}
     uri: git@github.com:greenplum-db/data-science-bundle.git
 
@@ -121,7 +116,7 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: 6X_STABLE
+    branch: python3.8
     uri: https://github.com/greenplum-db/plcontainer.git
 
 - name: gpdb_src
@@ -165,12 +160,6 @@ resources:
     repository: pivotaldata/gpdb6-ubuntu18.04-build
     tag: latest
 
-- name: ubuntu18-image-test
-  type: docker-image
-  source:
-    repository: pivotaldata/gpdb6-ubuntu18.04-test
-    tag: latest
-
 # GCS Input and intermediate binaries
 
 - name: plcontainer_docker_image_python
@@ -180,19 +169,19 @@ resources:
     json_key: {{concourse-gcs-resources-service-account-key}}
     versioned_file: plcontainer/published/gpdb6/plcontainer-python-images-devel.tar.gz
 
-- name: plcontainer_docker_image_python3
-  type: gcs
-  source:
-    bucket: {{gcs-bucket-intermediates}}
-    json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: plcontainer/published/gpdb6/plcontainer-python3-images-devel.tar.gz
-
 - name: plcontainer_docker_image_r
   type: gcs
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
     versioned_file: plcontainer/published/gpdb6/plcontainer-r-images-devel.tar.gz
+
+- name: plcontainer_docker_image_python3
+  type: gcs
+  source:
+    bucket: {{gcs-bucket-intermediates}}
+    json_key: {{concourse-gcs-resources-service-account-key}}
+    versioned_file: plcontainer/published/gpdb6/plcontainer-python3.8-images-devel.tar.gz
 
 - name: bin_gpdb_centos7
   type: gcs
@@ -201,33 +190,19 @@ resources:
     json_key: {{concourse-gcs-resources-service-account-key}}
     versioned_file: 6X_STABLE/bin_gpdb_centos7/bin_gpdb.tar.gz
 
-- name: bin_gpdb_ubuntu18
-  type: gcs
-  source:
-    bucket: {{gcs-bucket-intermediates}}
-    json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: 6X_STABLE/bin_gpdb_ubuntu18.04/bin_gpdb.tar.gz
-
-- name: plcontainer_gpdb_ubuntu18_build
-  type: gcs
-  source:
-    bucket: {{gcs-bucket-intermediates}}
-    json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-ubuntu18.gppkg
-
 - name: plcontainer_client_ubuntu18_build
   type: gcs
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: plcontainer/published/gpdb6/plcontainer_client.tar.gz
+    versioned_file: plcontainer/published/gpdb6/plcontainer_client-py3.8.tar.gz
 
 - name: plcontainer_gpdb_centos7_build
   type: gcs
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-centos7.gppkg
+    versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-centos7-py3.8.gppkg
 
 ##################################### JOBS #####################################
 ################################################################################
@@ -247,30 +222,9 @@ jobs:
   - aggregate:
     - put: plcontainer_client_ubuntu18_build
       params:
-        file: plcontainer_client/plcontainer_client.tar.gz
+        file: plcontainer_client/plcontainer_client-py3.8.tar.gz
 
 # Build PL/Container GP Package
-- name: plcontainer_build_ubuntu18
-  max_in_flight: 4
-  plan:
-  - aggregate:
-    - get: bin_gpdb_ubuntu18
-    - get: gpdb_src
-    - get: plcontainer_src
-    - get: plcontainer_client_ubuntu18_build
-      passed: [plcontainer_client_build]
-      trigger: true
-    - get: ubuntu18-image-test
-  - task: plcontainer_gpdb_build
-    file: plcontainer_src/concourse/tasks/plcontainer_build_ubuntu18.yml
-    image: ubuntu18-image-test
-    input_mapping:
-      bin_gpdb: bin_gpdb_ubuntu18
-      plcontainer_client: plcontainer_client_ubuntu18_build
-  - aggregate:
-    - put: plcontainer_gpdb_ubuntu18_build
-      params:
-        file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
 
 - name: plcontainer_build_centos7
   max_in_flight: 4
@@ -293,56 +247,6 @@ jobs:
     - put: plcontainer_gpdb_centos7_build
       params:
         file: plcontainer_gpdb_build/plcontainer-concourse.gppkg
-
-- name: plcontainer_function_test_ubuntu18
-  plan:
-  - aggregate:
-    - get: plcontainer_src
-      passed:
-      - plcontainer_build_ubuntu18
-    - get: gpdb_src
-    - get: gpdb_binary
-      resource: bin_gpdb_ubuntu18
-    - get: ccp_src
-    - get: ubuntu18-image
-    - get: plcontainer_pyclient_docker_image
-      resource: plcontainer_docker_image_python
-    - get: plcontainer_py3client_docker_image
-      resource: plcontainer_docker_image_python3
-    - get: plcontainer_rclient_docker_image
-      resource: plcontainer_docker_image_r
-    - get: plcontainer_gpdb_ubuntu18_build
-      passed: [plcontainer_build_ubuntu18]
-      trigger: true
-  - put: terraform
-    params:
-      <<: *ccp_default_params
-      vars:
-        instance_type: n1-standard-4
-        PLATFORM: ubuntu18.04
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
-  - task: gen_cluster
-    file: ccp_src/ci/tasks/gen_cluster.yml
-    params:
-      <<: *ccp_gen_cluster_default_params
-      PLATFORM: ubuntu18.04
-  - task: gpinitsystem
-    file: ccp_src/ci/tasks/gpinitsystem.yml
-  - task: plcontainer
-    file: plcontainer_src/concourse/tasks/plcontainer_tests.yml
-    params:
-      platform: ubuntu18
-    image: ubuntu18-image
-    input_mapping:
-      plcontainer_gpdb_build: plcontainer_gpdb_ubuntu18_build
-    on_success:
-      <<: *ccp_destroy
-  ensure:
-    <<: *set_failed
-
 
 - name: plcontainer_function_test_centos7
   plan:
@@ -441,99 +345,9 @@ jobs:
   ensure:
     <<: *set_failed
 
-- name: plcontainer_resgroup_test_ubuntu18
-  plan:
-  - aggregate:
-    - get: plcontainer_src
-      passed:
-      - plcontainer_build_ubuntu18
-    - get: gpdb_src
-    - get: gpdb_binary
-      resource: bin_gpdb_ubuntu18
-    - get: ccp_src
-    - get: ubuntu18-image
-    - get: plcontainer_pyclient_docker_image
-      resource: plcontainer_docker_image_python
-    - get: plcontainer_rclient_docker_image
-      resource: plcontainer_docker_image_r
-    - get: plcontainer_gpdb_ubuntu18_build
-      passed: [plcontainer_build_ubuntu18]
-      trigger: true
-  - put: terraform
-    params:
-      <<: *ccp_default_params
-      vars:
-        instance_type: n1-standard-4
-        PLATFORM: ubuntu18.04
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
-  - task: gen_cluster
-    file: ccp_src/ci/tasks/gen_cluster.yml
-    params:
-      <<: *ccp_gen_cluster_default_params
-      PLATFORM: ubuntu18.04
-  - task: gpinitsystem
-    file: ccp_src/ci/tasks/gpinitsystem.yml
-  - task: plcontainer_resgroup
-    file: plcontainer_src/concourse/tasks/plcontainer_resgroup_tests.yml
-    params:
-      TEST_OS: ubuntu18
-      platform: ubuntu18
-    image: ubuntu18-image
-    input_mapping:
-      plcontainer_gpdb_build: plcontainer_gpdb_ubuntu18_build
-    on_success:
-      <<: *ccp_destroy
-  ensure:
-    <<: *set_failed
-
 # We use CCP to build image, since 'docker build' needs docker 
 # daemon is running. But we cannot start docker daemon inside 
 # concourse container in a neat way.(running docker inside container is ugly)
-- name: plcontainer_build_python_image
-  plan:
-  - aggregate:
-    - get: plcontainer_src
-    - get: gpdb_src
-    - get: gpdb_binary
-      resource: bin_gpdb_centos7
-    - get: ccp_src
-    - get: centos-gpdb-dev-7
-    - get: data-science-bundle
-  - put: terraform
-    params:
-      <<: *ccp_default_params
-      vars:
-        instance_type: n1-standard-2
-        PLATFORM: centos7
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
-  - task: gen_cluster
-    file: ccp_src/ci/tasks/gen_cluster.yml
-    params:
-      <<: *ccp_gen_cluster_default_params
-      PLATFORM: centos7
-  - task: gpinitsystem
-    file: ccp_src/ci/tasks/gpinitsystem.yml
-  - task: docker_build
-    file: plcontainer_src/concourse/tasks/docker_build_python.yml
-    params:
-      platform: centos7
-      language: python
-    image: centos-gpdb-dev-7
-    input_mapping:
-      plcontainer_gpdb_build: plcontainer_gpdb_centos7_build
-  - put: plcontainer_docker_image_python
-    params:
-      file: plcontainer_docker_image/plcontainer-python-images-devel.tar.gz
-    on_success:
-      <<: *ccp_destroy
-  ensure:
-    <<: *set_failed
 
 - name: plcontainer_build_python3_image
   plan:
@@ -578,45 +392,3 @@ jobs:
   ensure:
     <<: *set_failed
 
-- name: plcontainer_build_r_image
-  plan:
-  - aggregate:
-    - get: plcontainer_src
-    - get: gpdb_src
-    - get: gpdb_binary
-      resource: bin_gpdb_centos7
-    - get: ccp_src
-    - get: centos-gpdb-dev-7
-    - get: data-science-bundle
-  - put: terraform
-    params:
-      <<: *ccp_default_params
-      vars:
-        instance_type: n1-standard-2
-        PLATFORM: centos7
-        disk_size: 100
-        disk_type: pd-ssd
-        zone: {{google-zone}}
-        region: {{google-region}}
-  - task: gen_cluster
-    file: ccp_src/ci/tasks/gen_cluster.yml
-    params:
-      <<: *ccp_gen_cluster_default_params
-      PLATFORM: centos7
-  - task: gpinitsystem
-    file: ccp_src/ci/tasks/gpinitsystem.yml
-  - task: docker_build
-    file: plcontainer_src/concourse/tasks/docker_build_r.yml
-    params:
-      platform: centos7
-      language: r
-    image: centos-gpdb-dev-7
-    input_mapping:
-      plcontainer_gpdb_build: plcontainer_gpdb_centos7_build
-  - put: plcontainer_docker_image_r
-    params:
-      file: plcontainer_docker_image/plcontainer-r-images-devel.tar.gz
-    on_success:
-      <<: *ccp_destroy
-  ensure:
-    <<: *set_failed
