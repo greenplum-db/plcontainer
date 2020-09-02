@@ -49,7 +49,7 @@ function _main() {
   tar czf plcontainer_client.tar.gz pyclient.tar.gz rclient.tar.gz
 
   mkdir -p ../plcontainer_client
-  cp plcontainer_client.tar.gz ../plcontainer_client/
+  cp plcontainer_client.tar.gz ../plcontainer_client/plcontainer_client-py3.8.tar.gz
 
   popd
 }
