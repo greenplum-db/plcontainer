@@ -33,7 +33,7 @@ build_plcontainer() {
 
   # copy clients into folder
   pushd ../plcontainer_client
-  tar zxf plcontainer_client.tar.gz
+  tar zxf plcontainer_client-py3.8.tar.gz
   popd
   tar zxvf ../plcontainer_client/pyclient.tar.gz -C src/pyclient/bin/
   tar zxvf ../plcontainer_client/rclient.tar.gz -C src/rclient/bin/
