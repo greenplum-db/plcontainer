@@ -21,7 +21,7 @@ function _main() {
   apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
   echo 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/' >> /etc/apt/sources.list
   apt-get update
-  DEBIAN_FRONTEND=noninteractive apt-get install -y r-base pkg-config libpython2.7-dev python2.7 python3.7-dev
+  DEBIAN_FRONTEND=noninteractive apt-get install -y r-base pkg-config libpython2.7-dev python2.7 python3.8 python3.8-dev
 
   # build client only
   pushd plcontainer_src
