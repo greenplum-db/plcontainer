@@ -229,7 +229,7 @@ resources:
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: plcontainer/published/master/pl4k.tar.gz
+    regexp: plcontainer/published/master/pl4k-(.*).tar.gz
 ##################################### JOBS #####################################
 ################################################################################
 
@@ -264,7 +264,7 @@ jobs:
         file: release_lib/plcontainer-*.tar.gz
     - put: plcontainer_gpdb_ubuntu18_build_pl4k
       params:
-        file: release_lib/pl4k.tar.gz
+        file: release_lib/pl4k-*.tar.gz
 
 - name: plcontainer_function_test_centos7
   plan:

@@ -87,7 +87,7 @@ create_pl4k_package() {
   pushd pl4k
   tar czf pl4k.tar.gz *
   popd
-  cp pl4k/pl4k.tar.gz $OUTPUT/pl4k.tar.gz
+  cp pl4k/pl4k.tar.gz $OUTPUT/pl4k-$PLCONTAINER_VERSION.tar.gz
 }
 build_plcontainer
 create_pl4k_package
