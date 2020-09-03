@@ -34,6 +34,7 @@ release_plcontainer() {
   # release plcontainer ubuntu lib
   mkdir -p release_lib
   cp plcontainer_gpdb_ubuntu18_build_lib/plcontainer*.tar.gz release_lib/plcontainer-lib-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}-gp6-ubuntu18.04_x86_64.tar.gz
+  cp plcontainer_gpdb_ubuntu18_build_lib/pl4k*.tar.gz release_lib/pl4k-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}.tar.gz
 }
 
 release_plcontainer
