@@ -33,8 +33,9 @@ release_plcontainer() {
   cp plcontainer_docker_image_build_r/plcontainer*.tar.gz release_image_r/plcontainer-r-image-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}-gp6.tar.gz
   # release plcontainer ubuntu lib
   mkdir -p release_lib
+  mkdir -p release_pl4k
   cp plcontainer_gpdb_ubuntu18_build_lib/plcontainer*.tar.gz release_lib/plcontainer-lib-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}-gp6-ubuntu18.04_x86_64.tar.gz
-  cp plcontainer_gpdb_ubuntu18_build_lib/pl4k*.tar.gz release_lib/pl4k-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}.tar.gz
+  cp plcontainer_gpdb_ubuntu18_build_pl4k/pl4k*.tar.gz release_pl4k/pl4k-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}.tar.gz
 }
 
 release_plcontainer

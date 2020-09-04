@@ -272,7 +272,7 @@ jobs:
         file: release_lib/plcontainer-*.tar.gz
     - put: plcontainer_gpdb_ubuntu18_build_pl4k_release
       params:
-        file: release_lib/pl4k-*.tar.gz
+        file: release_pl4k/pl4k-*.tar.gz
 
 - name: plcontainer_function_test_centos7
   plan:
