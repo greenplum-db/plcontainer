@@ -203,6 +203,13 @@ resources:
     json_key: {{concourse-gcs-resources-service-account-key}}
     regexp: plcontainer/released/gpdb6/plcontainer-lib-(.*)-ubuntu18.04_x86_64.tar.gz
 
+- name: plcontainer_gpdb_ubuntu18_build_pl4k_release
+  type: gcs
+  source:
+    bucket: {{gcs-bucket}}
+    json_key: {{concourse-gcs-resources-service-account-key}}
+    regexp: plcontainer/released/gpdb6/pl4k-(.*).tar.gz
+
 - name: plcontainer_gpdb_ubuntu18_build
   type: gcs
   source:
@@ -244,6 +251,7 @@ jobs:
     - get: plcontainer_gpdb_centos7_build
     - get: plcontainer_docker_image_build_r
     - get: plcontainer_gpdb_ubuntu18_build_lib
+    - get: plcontainer_gpdb_ubuntu18_build_pl4k
     - get: plcontainer_src  
     - get: centos-gpdb-dev-7
   - task: plcontainer_gpdb_build
@@ -262,7 +270,7 @@ jobs:
     - put: plcontainer_gpdb_ubuntu18_build_lib_release
       params:
         file: release_lib/plcontainer-*.tar.gz
-    - put: plcontainer_gpdb_ubuntu18_build_pl4k
+    - put: plcontainer_gpdb_ubuntu18_build_pl4k_release
       params:
         file: release_lib/pl4k-*.tar.gz
 

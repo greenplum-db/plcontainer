@@ -209,7 +209,7 @@ resources:
   source:
     bucket: {{gcs-bucket-intermediates}}
     json_key: {{concourse-gcs-resources-service-account-key}}
-    versioned_file: plcontainer/published/master/pl4k.tar.gz
+    regexp: plcontainer/published/master/pl4k-(.*).tar.gz
 
 - name: plcontainer_server_ubuntu18_build
   type: gcs
@@ -272,7 +272,7 @@ jobs:
         file: plcontainer_gpdb_build/plcontainer-concourse-lib.tar.gz
     - put: plcontainer_gpdb_ubuntu18_build_pl4k
       params:
-        file: plcontainer_gpdb_build/pl4k.tar.gz
+        file: plcontainer_gpdb_build/pl4k*.tar.gz
 
 - name: plcontainer_build_centos7
   max_in_flight: 4

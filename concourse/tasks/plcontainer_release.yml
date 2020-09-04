@@ -7,6 +7,7 @@ inputs:
   - name: plcontainer_gpdb_centos7_build
   - name: plcontainer_gpdb_ubuntu18_build_lib
   - name: plcontainer_docker_image_build_r
+  - name: plcontainer_gpdb_ubuntu18_build_pl4k
 
 outputs:
   - name: release_bin_centos7
