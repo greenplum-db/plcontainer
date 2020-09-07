@@ -36,6 +36,8 @@ install_docker() {
            yum install -y docker-ce; \
            yum install -y cpan; \
            yum install -y perl-Module-CoreList; \
+           yum install -y json-c; \
+           yum install -y json-c-devel; \
            systemctl start docker; \
            groupadd docker; \
            chown root:docker /var/run/docker.sock; \
