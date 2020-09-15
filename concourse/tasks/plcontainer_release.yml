@@ -9,6 +9,9 @@ inputs:
   - name: plcontainer_docker_image_build_r
   - name: plcontainer_gpdb_ubuntu18_build_pl4k
 
+params:
+  DEV_RELEASE: release
+
 outputs:
   - name: release_bin_centos7
   - name: release_bin_ubuntu18
