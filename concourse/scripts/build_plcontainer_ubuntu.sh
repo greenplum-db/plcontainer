@@ -31,7 +31,7 @@ build_plcontainer() {
       PLCONTAINER_RELEASE="0"
       git describe > VERSION
   fi
-
+  cat VERSION
   # copy servers into folder
   pushd ../plcontainer_server
   tar zxf plcontainer_server.tar.gz
@@ -75,6 +75,8 @@ build_plcontainer() {
 
 create_pl4k_package() {
   mkdir pl4k
+  echo "pl4k version:"
+  cat plcontainer_src/VERSION
   cp plcontainer_src/VERSION pl4k
   cp -r plcontainer_src/package/UBUNTU/bin pl4k
   cp -r plcontainer_src/package/UBUNTU/lib pl4k
