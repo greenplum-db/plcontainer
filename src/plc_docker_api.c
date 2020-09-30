@@ -30,13 +30,12 @@
 static char *plc_docker_socket = "/var/run/docker.sock";
 
 // URL prefix specifies Docker API version
-#ifdef DOCKER_API_LOW
-static char *plc_docker_url_prefix = "http:/v1.19";
-static char *default_log_dirver = "syslog";
+#ifdef DOCKER_API_ENABLE_MONITOR
+static char *plc_docker_url_prefix = "http:/v1.40";
 #else
 static char *plc_docker_url_prefix = "http:/v1.27";
-static char *default_log_dirver = "journald";
 #endif
+static char *default_log_dirver = "journald";
 
 /* Static functions of the Docker API module */
 static plcCurlBuffer *plcCurlBufferInit();
@@ -130,11 +129,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
 
 		/* Setting timeout for connecting. */
-#ifdef DOCKER_API_LOW
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 180L);
-#else
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
-#endif
 
 		/* Choosing the right request type */
 		switch (cType) {
@@ -609,16 +604,6 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 			backend_log(WARNING, "failed to get json \"State\" field.");
 			return -1;
 		}
-#ifdef DOCKER_API_LOW
-		struct json_object *RunningObj = NULL;
-		if (!json_object_object_get_ex(StateObj, "Running", &RunningObj)) {
-			backend_log(WARNING, "failed to get json \"Running\" field.");
-			return -1;
-		}
-		const char *RunningStr = json_object_get_string(RunningObj);
-		*element = pstrdup(RunningStr);
-		return 0;
-#else
 		struct json_object *StatusObj = NULL;
 		if (!json_object_object_get_ex(StateObj, "Status", &StatusObj)) {
 			backend_log(WARNING, "failed to get json \"Status\" field.");
@@ -627,7 +612,6 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 		const char *StatusStr = json_object_get_string(StatusObj);
 		*element = pstrdup(StatusStr);
 		return 0;
-#endif
 	} else if (type == PLC_INSPECT_OOM) {
 		struct json_object *StateObj = NULL;
 		struct json_object *OOMKillObj = NULL;
