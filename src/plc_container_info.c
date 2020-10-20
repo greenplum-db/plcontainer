@@ -21,13 +21,9 @@
 #include "plcontainer.h"
 #include "plc_backend_api.h"
 #include "plc_docker_api.h"
-#include "plc_configuration.h"
-
-
-PG_FUNCTION_INFO_V1(containers_summary);
+#include "plc_container_info.h"
 
 PG_FUNCTION_INFO_V1(list_running_containers);
-
 
 Datum
 list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
@@ -129,23 +125,26 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			struct json_object *memoryUsageObj = NULL;
             struct json_object *memoryStateObj = NULL;
             struct json_object *memoryStateCacheObj = NULL;
-            int64 containerMemoryTotal = 0;
-            int64 containerMemoryCache = 0;
-            int64 containerMemoryUsage = 0;
+            int64_t containerMemoryTotal = 0;
+            int64_t containerMemoryCache = 0;
+            int64_t containerMemoryUsage = 0;
 
             /* CPU Usage */
             struct json_object *cpuObj = NULL;
             struct json_object *preCpuObj = NULL;
             struct json_object *cpuStatusObj = NULL;
             struct json_object *preCpuStatusObj = NULL;
-			struct json_object *cpuStatusUsageObj = NULL;
-            struct json_object *preCpuStatusUsageObj = NULL;
+			//struct json_object *cpuStatusUsageObj = NULL;
+            //struct json_object *preCpuStatusUsageObj = NULL;
             struct json_object *cpuSystemUsageObj = NULL;
             struct json_object *preCpuSystemUsageObj = NULL;
             struct json_object *numberCpusObj = NULL;
-            double containerMemoryTotal = 0;
-            double containerMemoryCache = 0;
-            double containerMemoryUsage = 0;
+            int64_t containerCPUDelta = 0;
+            int64_t containerpreCPUDelta = 0;
+            int64_t containerCPUSystemDelta = 0;
+            int64_t containerpreCPUSystemDelta = 0;
+            int containerNumberCPU = 0;
+            double containerCPUUsage = 0;
 
 			struct json_object *statusObj = NULL;
 			const char *statusStr;
@@ -157,11 +156,6 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			const char *dbidStr;
 			struct json_object *idObj = NULL;
 			const char *idStr;
-			struct json_object *memoryObj = NULL;
-			struct json_object *memoryUsageObj = NULL;
-            struct json_object *cpuObj = NULL;
-			struct json_object *cpuUsageObj = NULL;
-			
 			/*
 			 * Process json object by its key, and then get value
 			 */
@@ -246,25 +240,39 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				plc_elog(ERROR, "failed to get json \"precpu_stats\" field.");
 			}
 
-			if (!json_object_object_get_ex(cpuObj, "usage", &cpuStatusObj)) {
+			if (!json_object_object_get_ex(cpuObj, "total_usage", &cpuStatusObj)) {
 				plc_elog(LOG, "failed to get json \"cpu.usage\" field.");
-			}
-
-            if (!json_object_object_get_ex(preCpuObj, "usage", &preCpuStatusObj)) {
-				plc_elog(LOG, "failed to get json \"precpu.usage\" field.");
-			}
-
-            if (!json_object_object_get_ex(memoryStateObj, "stats", &memoryUsageObj)) {
-				plc_elog(LOG, "failed to get json \"stats\" field.");
-			}
-
-            if (!json_object_object_get_ex(memoryStateCacheObj, "cache", &memoryStateObj)) {
-				plc_elog(LOG, "failed to get json \"stats.cache\" field.");
 			} else {
-                containerMemoryCache = json_object_get_int64(memoryStateCacheObj) / 1024;
+                containerCPUDelta = json_object_get_int64(cpuStatusObj);
             }
 
-            containerMemoryUsage = containerMemoryTotal - containerMemoryCache;
+            if (!json_object_object_get_ex(preCpuObj, "total_usage", &preCpuStatusObj)) {
+				plc_elog(LOG, "failed to get json \"precpu.usage\" field.");
+			} else {
+                containerpreCPUDelta = json_object_get_int64(preCpuStatusObj);
+            }
+
+            if (!json_object_object_get_ex(cpuObj, "system_cpu_usage", &cpuSystemUsageObj)) {
+				plc_elog(LOG, "failed to get json \"cpu.systemusage\" field.");
+			} else {
+                containerCPUSystemDelta = json_object_get_int64(cpuSystemUsageObj);
+            }
+
+            if (!json_object_object_get_ex(preCpuObj, "system_cpu_usage", &preCpuSystemUsageObj)) {
+				plc_elog(LOG, "failed to get json \"precpu.system.suage\" field.");
+			} else {
+                containerpreCPUSystemDelta = json_object_get_int64(preCpuSystemUsageObj);
+            }
+
+            if (!json_object_object_get_ex(cpuObj, "online_cpus", &numberCpusObj)) {
+				plc_elog(LOG, "failed to get json \"cpu.online_cpus\" field.");
+			} else {
+                containerNumberCPU = json_object_get_int(numberCpusObj);
+            }
+
+            containerCPUUsage = ((containerCPUDelta - containerpreCPUDelta)
+                                / (containerCPUSystemDelta - containerpreCPUSystemDelta))
+                                * containerNumberCPU * 100.0;
 
 
 			values = (char **) palloc(5 * sizeof(char *));
@@ -278,7 +286,8 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			snprintf(values[1], 80, "%s", idStr);
 			snprintf(values[2], 64, "%s", statusStr);
 			snprintf(values[3], 64, "%s", ownerStr);
-			snprintf(values[4], 32, "%ld", containerMemoryUsage);
+			snprintf(values[4], 64, "%" PRId64 "KB", containerMemoryUsage);
+            snprintf(values[5], 32, "%lf%%", containerCPUUsage);
 
 			/* build a tuple */
 			tuple = BuildTupleFromCStrings(attinmeta, values);
@@ -296,6 +305,8 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	}
 
 }
+
+PG_FUNCTION_INFO_V1(containers_summary);
 
 Datum
 containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {

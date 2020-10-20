@@ -17,9 +17,15 @@ AS '$libdir/plcontainer', 'refresh_plcontainer_config'
 LANGUAGE C VOLATILE;
 
 CREATE TYPE container_summary_type AS ("SEGMENT_ID" text, "CONTAINER_ID" text, "UP_TIME" text, "OWNER" text, "MEMORY_USAGE(KB)" text);
+CREATE TYPE container_info_type AS ("SEGMENT_ID" text, "CONTAINER_ID" text, "UP_TIME" text, "OWNER" text, "MEMORY_USAGE(KB)" text, "CPU_USAGE");
 
 CREATE OR REPLACE FUNCTION plcontainer_containers_summary() RETURNS setof container_summary_type
 AS '$libdir/plcontainer', 'containers_summary'
+LANGUAGE C VOLATILE;
+
+
+CREATE OR REPLACE FUNCTION plcontainer_containers_info() RETURNS setof container_info_type
+AS '$libdir/plcontainer', 'list_running_containers'
 LANGUAGE C VOLATILE;
 
 CREATE OR REPLACE VIEW plcontainer_show_config as
