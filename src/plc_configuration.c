@@ -687,3 +687,34 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 
 	return res;
 }
+
+bool plc_check_user_privilege(char *roles){
+
+	List *elemlist;
+	ListCell *l;
+	Oid currentUserOid;
+
+	if (!SplitIdentifierString(roles, ',', &elemlist))
+	{
+		list_free(elemlist);
+		elog(ERROR, "Could not get role list from %s, please check it again", roles);
+	}
+
+	currentUserOid = GetUserId();
+
+	if (currentUserOid == InvalidDbid){
+		elog(ERROR, "Could not get current user Oid");
+	}
+
+	foreach(l, elemlist)
+	{
+		char *role = (char*) lfirst(l);
+		Oid roleOid = get_role_oid(role, true);
+		if (is_member_of_role(currentUserOid, roleOid)){
+			return true;
+		}
+	}
+
+	return false;
+
+}
