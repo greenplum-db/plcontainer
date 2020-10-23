@@ -24,7 +24,7 @@ AS '$libdir/plcontainer', 'containers_summary'
 LANGUAGE C VOLATILE;
 
 
-CREATE OR REPLACE FUNCTION plcontainer_containers_info() RETURNS setof container_info_type
+CREATE OR REPLACE FUNCTION plcontainer_containers_info(dbid int4) RETURNS setof container_info_type
 AS '$libdir/plcontainer', 'list_running_containers'
 LANGUAGE C VOLATILE;
 
@@ -47,3 +47,11 @@ CREATE OR REPLACE VIEW plcontainer_refresh_config as
             ) as segments
     union all
     select -1, plcontainer_refresh_local_config(false);
+
+CREATE OR REPLACE VIEW plcontainer_containers as 
+      WITH gpdbtmpa AS (SELECT (plcontainer_containers_info(gp_segment_id)) AS gpdbtmpb FROM (select gp_segment_id
+           from gp_dist_random('pg_namespace')
+           group by 1
+      )  tmptbl) 
+      SELECT (gpdbtmpb::container_info_type).* FROM gpdbtmpa union all 
+      select * from plcontainer_containers_info(-1) ;

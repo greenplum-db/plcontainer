@@ -487,17 +487,12 @@ int plc_docker_delete_container(const char *name) {
 	return res;
 }
 
-int plc_docker_list_container(char **result) {
+int plc_docker_list_container(char **result, int dbid) {
 	plcCurlBuffer *response = NULL;
 	char *url = "/containers/json?all=1&filters=";
 	char *param = "{\"label\":[\"dbid=%d\"]}";
 	char *body = NULL;
 	int res = 0;
-	int16 dbid = 0;
-
-#ifndef PLC_PG
-	dbid = GpIdentity.segindex;
-#endif			 
 
 	body = (char *) palloc((strlen(param) + 12) * sizeof(char));
 	sprintf(body, param, dbid); 

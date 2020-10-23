@@ -9,6 +9,8 @@
 #include "commands/resgroupcmds.h"
 #include "catalog/gp_segment_config.h"
 
+#include "cdb/cdbvars.h"
+
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "libpq/libpq-be.h"
@@ -43,14 +45,17 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	if (SRF_IS_FIRSTCALL()) {
 		MemoryContext oldcontext;
 		int arraylen;
+		int dbid;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/* switch to memory context appropriate for multiple function calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-		sleep(2);
-		res = plc_docker_list_container(&json_result);
+
+		dbid = PG_GETARG_INT32(0);
+		
+		res = plc_docker_list_container(&json_result, dbid);
 		if (res < 0) {
 			plc_elog(ERROR, "Docker container list error: %s", backend_error_message);
 		}
@@ -342,7 +347,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		/* switch to memory context appropriate for multiple function calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		res = plc_docker_list_container(&json_result);
+		res = plc_docker_list_container(&json_result, GpIdentity.segindex);
 		if (res < 0) {
 			plc_elog(ERROR, "Docker container list error: %s", backend_error_message);
 		}
