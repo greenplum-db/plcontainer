@@ -39,7 +39,7 @@ int plc_docker_wait_container(const char *name);
 int plc_docker_delete_container(const char *name);
 
 /* FIXME: We may want below two functions or their callers to have common intefaces in backend code. */
-int plc_docker_list_container(char **result) __attribute__((warn_unused_result));
+int plc_docker_list_container(char **result, int dbid) __attribute__((warn_unused_result));
 
 int plc_docker_get_container_state(const char *name, char **result) __attribute__((warn_unused_result));
 

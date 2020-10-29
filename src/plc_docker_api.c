@@ -30,13 +30,8 @@
 static char *plc_docker_socket = "/var/run/docker.sock";
 
 // URL prefix specifies Docker API version
-#ifdef DOCKER_API_LOW
-static char *plc_docker_url_prefix = "http:/v1.19";
-static char *default_log_dirver = "syslog";
-#else
 static char *plc_docker_url_prefix = "http:/v1.27";
 static char *default_log_dirver = "journald";
-#endif
 
 /* Static functions of the Docker API module */
 static plcCurlBuffer *plcCurlBufferInit();
@@ -117,9 +112,19 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 		curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, plc_docker_socket);
 
 		/* Setting up request URL */
-		fullurl = palloc(strlen(plc_docker_url_prefix) + strlen(url) + 2);
-		sprintf(fullurl, "%s%s", plc_docker_url_prefix, url);
-		curl_easy_setopt(curl, CURLOPT_URL, fullurl);
+		if (cType == PLC_HTTP_GET && body != NULL)
+		{
+			char *param = NULL;
+			param = curl_easy_escape(curl, body ,strlen(body));
+			fullurl = palloc(strlen(plc_docker_url_prefix) + strlen(url) + strlen(param) + 2);
+			sprintf(fullurl, "%s%s%s", plc_docker_url_prefix, url, param);
+			curl_easy_setopt(curl, CURLOPT_URL, fullurl);
+			curl_free(param);
+		} else {
+			fullurl = palloc(strlen(plc_docker_url_prefix) + strlen(url) + 2);
+			sprintf(fullurl, "%s%s", plc_docker_url_prefix, url);
+			curl_easy_setopt(curl, CURLOPT_URL, fullurl);
+		}
 
 		/* Providing a buffer to store errors in */
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
@@ -130,11 +135,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
 
 		/* Setting timeout for connecting. */
-#ifdef DOCKER_API_LOW
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 180L);
-#else
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
-#endif
 
 		/* Choosing the right request type */
 		switch (cType) {
@@ -253,7 +254,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 
 	int16 dbid = 0;
 #ifndef PLC_PG
-	dbid = GpIdentity.dbid;
+	dbid = GpIdentity.segindex;
 #endif
 
 	/*
@@ -486,20 +487,16 @@ int plc_docker_delete_container(const char *name) {
 	return res;
 }
 
-int plc_docker_list_container(char **result) {
+int plc_docker_list_container(char **result, int dbid) {
 	plcCurlBuffer *response = NULL;
-	char *method = "/containers/json?all=1&label=\"dbid=%d\"";
-	char *url = NULL;
+	char *url = "/containers/json?all=1&filters=";
+	char *param = "{\"label\":[\"dbid=%d\"]}";
+	char *body = NULL;
 	int res = 0;
-	int16 dbid = 0;
 
-	url = (char *) palloc((strlen(method) + 12) * sizeof(char));
-#ifndef PLC_PG
-	dbid = GpIdentity.dbid;
-#endif			 
-
-	sprintf(url, method, dbid); 
-	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, NULL);
+	body = (char *) palloc((strlen(param) + 12) * sizeof(char));
+	sprintf(body, param, dbid); 
+	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, body);
 	res = response->status;
 
 	if (res == 200) {
@@ -511,7 +508,7 @@ int plc_docker_list_container(char **result) {
 	}
 	*result = pstrdup(response->data);
 
-	pfree(url);
+	pfree(body);
 
 	return res;
 }
@@ -609,16 +606,6 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 			backend_log(WARNING, "failed to get json \"State\" field.");
 			return -1;
 		}
-#ifdef DOCKER_API_LOW
-		struct json_object *RunningObj = NULL;
-		if (!json_object_object_get_ex(StateObj, "Running", &RunningObj)) {
-			backend_log(WARNING, "failed to get json \"Running\" field.");
-			return -1;
-		}
-		const char *RunningStr = json_object_get_string(RunningObj);
-		*element = pstrdup(RunningStr);
-		return 0;
-#else
 		struct json_object *StatusObj = NULL;
 		if (!json_object_object_get_ex(StateObj, "Status", &StatusObj)) {
 			backend_log(WARNING, "failed to get json \"Status\" field.");
@@ -627,7 +614,6 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 		const char *StatusStr = json_object_get_string(StatusObj);
 		*element = pstrdup(StatusStr);
 		return 0;
-#endif
 	} else if (type == PLC_INSPECT_OOM) {
 		struct json_object *StateObj = NULL;
 		struct json_object *OOMKillObj = NULL;
