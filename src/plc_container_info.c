@@ -80,7 +80,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		 * prepare attribute metadata for next calls that generate the tuple
 		 */
 
-		tupdesc = CreateTemplateTupleDesc(6, false);
+		tupdesc = CreateTemplateTupleDesc(7, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "SEGMENT_ID",
 		                   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "CONTAINER_ID",
@@ -92,6 +92,8 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "MEMORY_USAGE(KB)",
 		                   TEXTOID, -1, 0);
         TupleDescInitEntry(tupdesc, (AttrNumber) 6, "CPU_USAGE",
+		                   TEXTOID, -1, 0);
+        TupleDescInitEntry(tupdesc, (AttrNumber) 7, "Current Running Function",
 		                   TEXTOID, -1, 0);
 
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
@@ -302,6 +304,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			snprintf(values[3], 64, "%s", ownerStr);
 			snprintf(values[4], 64, "%" PRId64 "KB", containerMemoryUsage);
             snprintf(values[5], 32, "%lf%%", containerCPUUsage);
+            snprintf(values[5], 224, "%s", cid->udf_name);
 
 			/* build a tuple */
 			tuple = BuildTupleFromCStrings(attinmeta, values);
@@ -428,6 +431,8 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			const char *idStr;
 			struct json_object *memoryObj = NULL;
 			struct json_object *memoryUsageObj = NULL;
+
+            UdfContainerIdMap *cid = NULL;
 			
 			/*
 			 * Process json object by its key, and then get value
@@ -496,6 +501,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			values[2] = (char *) palloc(64 * sizeof(char));
 			values[3] = (char *) palloc(64 * sizeof(char));
 			values[4] = (char *) palloc(32 * sizeof(char));
+            values[5] = (char *) palloc(225 * sizeof(char));
 
 			snprintf(values[0], 8, "%s", dbidStr);
 			snprintf(values[1], 80, "%s", idStr);
@@ -518,4 +524,139 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		}
 	}
 
+}
+
+static Size
+PLContainerShmemSize(void)
+{
+	Size		size = 0;
+
+	size = add_size(size, hash_estimate_size(MAX_UDF_ENTRIES, sizeof(UdfContainerIdMap)));
+	return size;
+}
+
+static void
+init_lwlocks(void)
+{
+	LWLockPadded *base;
+	base = GetNamedLWLockTranche("plcontainer_locks");
+	plc_lw_lock = &base[0].lock;
+}
+/*
+ * 	Allocate and initialize plcontainer-related shared memory
+ */
+void
+plcontainer_shmem_startup(void)
+{
+	bool		found;
+	HASHCTL		hash_ctl;
+
+	if (prev_shmem_startup_hook)
+		(*prev_shmem_startup_hook)();
+
+	udf_container_id_map = NULL;
+
+	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
+
+	init_lwlocks();
+
+	memset(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = PREFIX_CONTAINER_ID_LENGTH;
+	hash_ctl.entrysize =  sizeof(UdfContainerIdMap);
+	hash_ctl.hash = string_hash;
+
+	udf_container_id_map = ShmemInitHash("blackmap whose quota limitation is reached",
+									INIT_DISK_QUOTA_BLACK_ENTRIES,
+									MAX_DISK_QUOTA_BLACK_ENTRIES,
+									&hash_ctl,
+									HASH_ELEM | HASH_FUNCTION);
+
+	LWLockRelease(AddinShmemInitLock);
+}
+
+void
+init_plcontainer_shmem(void)
+{
+	/*
+	 * Request additional shared resources.  (These are no-ops if we're not in
+	 * the postmaster process.)  We'll allocate or attach to the shared
+	 * resources in pgss_shmem_startup().
+	 */
+	RequestAddinShmemSpace(DiskQuotaShmemSize());
+	RequestNamedLWLockTranche("plcontainer_locks", 1);
+
+	/*
+	 * Install startup hook to initialize our shared memory.
+	 */
+	prev_shmem_startup_hook = shmem_startup_hook;
+	shmem_startup_hook = plcontainer_shmem_startup;
+}
+
+void
+add_containerid_entry(char *dockerid, char *udf)
+{
+    bool found;
+    UdfContainerIdMap *cidentry;
+    char cid[PREFIX_CONTAINER_ID_LENGTH];
+
+    if (udf_container_id_map == NULL)
+    {
+        return;
+    }
+    /* Copy the data into hashmap entry */
+    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
+    cid[31] = '\0';
+    
+    LWLockAcquire(plc_lw_lock, LW_EXCLUSIVE);
+
+    cidentry = hash_search(udf_container_id_map, (void *)cid, HASH_ENTER, &found);
+    strncpy(cidentry->udf_name, udf, 224 - 1);
+    cidentry->udf_name[223] = '\0';
+	LWLockRelease(plc_lw_lock);
+}
+
+void del_containerid_entry(char *dockerid)
+{
+    bool found;
+    char cid[PREFIX_CONTAINER_ID_LENGTH];
+
+    /* Copy the data into hashmap entry */
+    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
+    cid[31] = '\0';
+
+    if (udf_container_id_map == NULL)
+    {
+        return;
+    }
+
+    LWLockAcquire(plc_lw_lock, LW_EXCLUSIVE);
+
+    hash_search(udf_container_id_map, (void *)cid, HASH_REMOVE, &found);
+
+	LWLockRelease(plc_lw_lock);
+}
+
+UdfContainerIdMap* find_containerid_entry(char *dockerid)
+{
+    bool found;
+    char cid[PREFIX_CONTAINER_ID_LENGTH];
+    UdfContainerIdMap *cidentry = NULL;
+
+    /* Copy the data into hashmap entry */
+    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
+    cid[31] = '\0';
+
+    if (udf_container_id_map == NULL)
+    {
+        return NULL;
+    }
+
+    cidentry = hash_search(udf_container_id_map, (void *)cid, HASH_FOUND, &found);
+
+    if (found)
+    {
+        return cidentry;
+    }
+
+    return NULL;
 }

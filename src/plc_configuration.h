@@ -66,5 +66,4 @@ runtimeConfEntry *plc_get_runtime_configuration(char *id);
 bool plc_check_user_privilege(char *users);
 
 char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_error, char **uds_dir);
-
 #endif /* PLC_CONFIGURATION_H */
