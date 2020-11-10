@@ -43,8 +43,8 @@ endif
 # FIXME: We might need a configure script to handle below checks later.
 # See https://github.com/greenplum-db/plcontainer/issues/322
 
-# Plcontainer version
-PLCONTAINER_VERSION = $(shell git describe --tags)
+# Plcontainer version, show the nearest version and ignore the following commit
+PLCONTAINER_VERSION = $(shell git describe --abbrev=0)
 ifeq ($(PLCONTAINER_VERSION),)
   $(error can not determine the plcontainer version)
 else

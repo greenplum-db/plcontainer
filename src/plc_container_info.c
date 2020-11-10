@@ -15,6 +15,9 @@
 #include "utils/guc.h"
 #include "libpq/libpq-be.h"
 #include "utils/acl.h"
+#include "storage/ipc.h"
+#include "storage/lwlock.h"
+#include "storage/shmem.h"
 
 #include "funcapi.h"
 
@@ -26,6 +29,14 @@
 #include "plc_container_info.h"
 
 PG_FUNCTION_INFO_V1(list_running_containers);
+
+static HTAB *udf_container_id_map = NULL;
+LWLock	   *plc_lw_lock;
+static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
+static Size PLContainerShmemSize(void);
+static UdfContainerIdMap* find_containerid_entry(const char *dockerid);
+#define MAX_UDF_ENTRIES 256
+#define PREFIX_CONTAINER_ID_LENGTH 32
 
 Datum
 list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
@@ -53,7 +64,8 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		/* switch to memory context appropriate for multiple function calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		dbid = PG_GETARG_INT32(0);
+		//dbid = PG_GETARG_INT32(0);
+		dbid = GpIdentity.segindex;
 		
 		res = plc_docker_list_container(&json_result, dbid);
 		if (res < 0) {
@@ -141,7 +153,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
             struct json_object *preCpuObj = NULL;
             struct json_object *cpuStatusObj = NULL;
             struct json_object *preCpuStatusObj = NULL;
-			struct json_object *cpuStatusUsageObj = NULL;
+		struct json_object *cpuStatusUsageObj = NULL;
             struct json_object *preCpuStatusUsageObj = NULL;
             struct json_object *cpuSystemUsageObj = NULL;
             struct json_object *preCpuSystemUsageObj = NULL;
@@ -163,6 +175,8 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			const char *dbidStr;
 			struct json_object *idObj = NULL;
 			const char *idStr;
+
+            UdfContainerIdMap *cid = NULL;
 			/*
 			 * Process json object by its key, and then get value
 			 */
@@ -288,23 +302,30 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
             containerCPUUsage = (((containerCPUDelta - containerpreCPUDelta) * 1.0)
                                 / ((containerCPUSystemDelta - containerpreCPUSystemDelta) * 1.0))
                                 * containerNumberCPU * 100.0;
+            /* Then found UDF name from shm */
+            cid = find_containerid_entry(idStr);
 
+            if (cid == NULL){
+                cid = (UdfContainerIdMap*) palloc(sizeof(UdfContainerIdMap));
+                strcpy(cid->udf_name, "No Infomation");
+            }
 
-			values = (char **) palloc(6 * sizeof(char *));
+			values = (char **) palloc(7 * sizeof(char *));
 			values[0] = (char *) palloc(8 * sizeof(char));
 			values[1] = (char *) palloc(80 * sizeof(char));
 			values[2] = (char *) palloc(64 * sizeof(char));
 			values[3] = (char *) palloc(64 * sizeof(char));
 			values[4] = (char *) palloc(64 * sizeof(char));
 			values[5] = (char *) palloc(32 * sizeof(char));
+			values[6] = (char *) palloc(225 * sizeof(char));
 
 			snprintf(values[0], 8, "%s", dbidStr);
 			snprintf(values[1], 80, "%s", idStr);
 			snprintf(values[2], 64, "%s", statusStr);
 			snprintf(values[3], 64, "%s", ownerStr);
 			snprintf(values[4], 64, "%" PRId64 "KB", containerMemoryUsage);
-            snprintf(values[5], 32, "%lf%%", containerCPUUsage);
-            snprintf(values[5], 224, "%s", cid->udf_name);
+			snprintf(values[5], 32, "%lf%%", containerCPUUsage);
+			snprintf(values[6], 224, "%s", cid->udf_name);
 
 			/* build a tuple */
 			tuple = BuildTupleFromCStrings(attinmeta, values);
@@ -432,7 +453,6 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			struct json_object *memoryObj = NULL;
 			struct json_object *memoryUsageObj = NULL;
 
-            UdfContainerIdMap *cid = NULL;
 			
 			/*
 			 * Process json object by its key, and then get value
@@ -501,7 +521,6 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			values[2] = (char *) palloc(64 * sizeof(char));
 			values[3] = (char *) palloc(64 * sizeof(char));
 			values[4] = (char *) palloc(32 * sizeof(char));
-            values[5] = (char *) palloc(225 * sizeof(char));
 
 			snprintf(values[0], 8, "%s", dbidStr);
 			snprintf(values[1], 80, "%s", idStr);
@@ -535,20 +554,12 @@ PLContainerShmemSize(void)
 	return size;
 }
 
-static void
-init_lwlocks(void)
-{
-	LWLockPadded *base;
-	base = GetNamedLWLockTranche("plcontainer_locks");
-	plc_lw_lock = &base[0].lock;
-}
 /*
  * 	Allocate and initialize plcontainer-related shared memory
  */
 void
 plcontainer_shmem_startup(void)
 {
-	bool		found;
 	HASHCTL		hash_ctl;
 
 	if (prev_shmem_startup_hook)
@@ -558,16 +569,16 @@ plcontainer_shmem_startup(void)
 
 	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
 
-	init_lwlocks();
+	plc_lw_lock = LWLockAssign();
 
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = PREFIX_CONTAINER_ID_LENGTH;
 	hash_ctl.entrysize =  sizeof(UdfContainerIdMap);
 	hash_ctl.hash = string_hash;
 
-	udf_container_id_map = ShmemInitHash("blackmap whose quota limitation is reached",
-									INIT_DISK_QUOTA_BLACK_ENTRIES,
-									MAX_DISK_QUOTA_BLACK_ENTRIES,
+	udf_container_id_map = ShmemInitHash("plcontainer map entries between container id and udf name",
+									MAX_UDF_ENTRIES,
+									MAX_UDF_ENTRIES,
 									&hash_ctl,
 									HASH_ELEM | HASH_FUNCTION);
 
@@ -582,8 +593,8 @@ init_plcontainer_shmem(void)
 	 * the postmaster process.)  We'll allocate or attach to the shared
 	 * resources in pgss_shmem_startup().
 	 */
-	RequestAddinShmemSpace(DiskQuotaShmemSize());
-	RequestNamedLWLockTranche("plcontainer_locks", 1);
+	RequestAddinShmemSpace(PLContainerShmemSize());
+	RequestAddinLWLocks(1);
 
 	/*
 	 * Install startup hook to initialize our shared memory.
@@ -612,7 +623,7 @@ add_containerid_entry(char *dockerid, char *udf)
     cidentry = hash_search(udf_container_id_map, (void *)cid, HASH_ENTER, &found);
     strncpy(cidentry->udf_name, udf, 224 - 1);
     cidentry->udf_name[223] = '\0';
-	LWLockRelease(plc_lw_lock);
+    LWLockRelease(plc_lw_lock);
 }
 
 void del_containerid_entry(char *dockerid)
@@ -633,10 +644,11 @@ void del_containerid_entry(char *dockerid)
 
     hash_search(udf_container_id_map, (void *)cid, HASH_REMOVE, &found);
 
-	LWLockRelease(plc_lw_lock);
+    LWLockRelease(plc_lw_lock);
 }
 
-UdfContainerIdMap* find_containerid_entry(char *dockerid)
+static UdfContainerIdMap*
+find_containerid_entry(const char *dockerid)
 {
     bool found;
     char cid[PREFIX_CONTAINER_ID_LENGTH];
@@ -651,7 +663,7 @@ UdfContainerIdMap* find_containerid_entry(char *dockerid)
         return NULL;
     }
 
-    cidentry = hash_search(udf_container_id_map, (void *)cid, HASH_FOUND, &found);
+    cidentry = hash_search(udf_container_id_map, (void *)cid, HASH_FIND, &found);
 
     if (found)
     {

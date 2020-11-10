@@ -30,8 +30,6 @@ void init_plcontainer_shmem(void);
 
 void add_containerid_entry(char *dockerid, char *udf);
 
-UdfContainerIdMap* find_containerid_entry(char *dockerid);
-
 void del_containerid_entry(char *dockerid);
 
 #endif /* PLC_CONTAINER_INFO_H */

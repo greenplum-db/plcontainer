@@ -35,6 +35,7 @@
 #include "common/messages/messages.h"
 #include "plc_configuration.h"
 #include "containers.h"
+#include "plc_container_info.h"
 #include "plc_backend_api.h"
 
 
@@ -152,9 +153,9 @@ static void cleanup_atexit_callback() {
 	cleanup_uds(uds_fn_for_cleanup);
 	free(uds_fn_for_cleanup);
     /* Remove entry from shm */
-    del_containerid_entry(dockerid);
-    free(dockerid);
-    dockerid = NULL;
+    del_containerid_entry(dockerid_for_cleanup);
+    free(dockerid_for_cleanup);
+    dockerid_for_cleanup = NULL;
 	uds_fn_for_cleanup = NULL;
 }
 

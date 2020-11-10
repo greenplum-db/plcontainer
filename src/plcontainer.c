@@ -33,7 +33,9 @@
 #include "containers.h"
 #include "message_fns.h"
 #include "plcontainer.h"
+#include "containers.h"
 #include "plc_configuration.h"
+#include "plc_container_info.h"
 #include "plc_typeio.h"
 #include "sqlhandler.h"
 #include "subtransaction_handler.h"
@@ -85,11 +87,6 @@ static volatile bool DeleteBackendsWhenError;
 
 /* Monitoring */
 
-static HTAB *udf_container_id_map = NULL;
-LWLock	   *plc_lw_lock;
-static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
-#define MAX_UDF_ENTRIES 256
-#define PREFIX_CONTAINER_ID_LENGTH 32
 static bool enable_cid = false;
 
 /*
@@ -154,146 +151,12 @@ _PG_init(void) {
 							 NULL,
 							 NULL,
 							 NULL);
+	//if (enable_cid)
+	init_plcontainer_shmem();
 
-    init_plcontainer_shmem();
 	on_proc_exit(plcontainer_cleanup, 0);
 	explicit_subtransactions = NIL;
 	inited = true;
-}
-
-Size
-PLContainerShmemSize(void)
-{
-	Size		size = 0;
-
-	size = add_size(size, hash_estimate_size(MAX_UDF_ENTRIES, sizeof(UdfContainerIdMap)));
-	return size;
-}
-
-static void
-init_lwlocks(void)
-{
-	LWLockPadded *base;
-	base = GetNamedLWLockTranche("plcontainer_locks");
-	plc_lw_lock = &base[0].lock;
-}
-/*
- * 	Allocate and initialize plcontainer-related shared memory
- */
-void
-plcontainer_shmem_startup(void)
-{
-	bool		found;
-	HASHCTL		hash_ctl;
-
-	if (prev_shmem_startup_hook)
-		(*prev_shmem_startup_hook)();
-
-	udf_container_id_map = NULL;
-
-	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
-
-	init_lwlocks();
-
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
-	hash_ctl.keysize = PREFIX_CONTAINER_ID_LENGTH;
-	hash_ctl.entrysize =  sizeof(UdfContainerIdMap);
-	hash_ctl.hash = string_hash;
-
-	udf_container_id_map = ShmemInitHash("blackmap whose quota limitation is reached",
-									INIT_DISK_QUOTA_BLACK_ENTRIES,
-									MAX_DISK_QUOTA_BLACK_ENTRIES,
-									&hash_ctl,
-									HASH_ELEM | HASH_FUNCTION);
-
-	LWLockRelease(AddinShmemInitLock);
-}
-
-void
-init_plcontainer_shmem(void)
-{
-	/*
-	 * Request additional shared resources.  (These are no-ops if we're not in
-	 * the postmaster process.)  We'll allocate or attach to the shared
-	 * resources in pgss_shmem_startup().
-	 */
-	RequestAddinShmemSpace(DiskQuotaShmemSize());
-	RequestNamedLWLockTranche("plcontainer_locks", 1);
-
-	/*
-	 * Install startup hook to initialize our shared memory.
-	 */
-	prev_shmem_startup_hook = shmem_startup_hook;
-	shmem_startup_hook = plcontainer_shmem_startup;
-}
-
-void
-add_containerid_entry(char *dockerid, char *udf)
-{
-    bool found;
-    UdfContainerIdMap *cidentry;
-    char cid[PREFIX_CONTAINER_ID_LENGTH];
-
-    if (udf_container_id_map == NULL)
-    {
-        return;
-    }
-    /* Copy the data into hashmap entry */
-    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
-    cid[31] = '\0';
-    
-    LWLockAcquire(plc_lw_lock, LW_EXCLUSIVE);
-
-    cidentry = hash_search(udf_container_id_map, (void *)cid, HASH_ENTER, &found);
-    strncpy(cidentry->udf_name, udf, 224 - 1);
-    cidentry->udf_name[223] = '\0';
-	LWLockRelease(plc_lw_lock);
-}
-
-void del_containerid_entry(char *dockerid)
-{
-    bool found;
-    char cid[PREFIX_CONTAINER_ID_LENGTH];
-
-    /* Copy the data into hashmap entry */
-    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
-    cid[31] = '\0';
-
-    if (udf_container_id_map == NULL)
-    {
-        return;
-    }
-
-    LWLockAcquire(plc_lw_lock, LW_EXCLUSIVE);
-
-    hash_search(udf_container_id_map, (void *)cid, HASH_REMOVE, &found);
-
-	LWLockRelease(plc_lw_lock);
-}
-
-UdfContainerIdMap* find_containerid_entry(char *dockerid)
-{
-    bool found;
-    char cid[PREFIX_CONTAINER_ID_LENGTH];
-    UdfContainerIdMap *cidentry = NULL;
-
-    /* Copy the data into hashmap entry */
-    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
-    cid[31] = '\0';
-
-    if (udf_container_id_map == NULL)
-    {
-        return NULL;
-    }
-
-    cidentry = hash_search(udf_container_id_map, (void *)cid, HASH_FOUND, &found);
-
-    if (found)
-    {
-        return cidentry;
-    }
-
-    return NULL;
 }
 
 static bool

@@ -17,7 +17,7 @@ AS '$libdir/plcontainer', 'refresh_plcontainer_config'
 LANGUAGE C VOLATILE;
 
 CREATE TYPE container_summary_type AS ("SEGMENT_ID" text, "CONTAINER_ID" text, "UP_TIME" text, "OWNER" text, "MEMORY_USAGE(KB)" text);
-CREATE TYPE container_info_type AS ("SEGMENT_ID" text, "CONTAINER_ID" text, "UP_TIME" text, "OWNER" text, "MEMORY_USAGE(KB)" text, "CPU_USAGE");
+CREATE TYPE container_info_type AS ("SEGMENT_ID" text, "CONTAINER_ID" text, "UP_TIME" text, "OWNER" text, "MEMORY_USAGE(KB)" text, "CPU_USAGE" text, "UDF INFO" text);
 
 CREATE OR REPLACE FUNCTION plcontainer_containers_summary() RETURNS setof container_summary_type
 AS '$libdir/plcontainer', 'containers_summary'
@@ -50,7 +50,7 @@ CREATE OR REPLACE VIEW plcontainer_refresh_config as
 
 CREATE OR REPLACE VIEW plcontainer_containers as 
       WITH gpdbtmpa AS (SELECT (plcontainer_containers_info(gp_segment_id)) AS gpdbtmpb FROM (select gp_segment_id
-           from gp_dist_random('pg_namespace')
+           from gp_dist_random('gp_id')
            group by 1
       )  tmptbl) 
       SELECT (gpdbtmpb::container_info_type).* FROM gpdbtmpa union all 
