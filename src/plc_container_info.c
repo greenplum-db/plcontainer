@@ -672,3 +672,82 @@ find_containerid_entry(const char *dockerid)
 
     return NULL;
 }
+
+PG_FUNCTION_INFO_V1(collect_running_containers);
+
+Datum
+collect_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS)
+{
+    char **values;
+    FuncCallContext *funcctx;
+	TupleDesc tupdesc;
+	AttInMetadata *attinmeta;
+    CdbPgResults cdb_pgresults = {NULL, 0};
+    int	i,j;
+    char  *sql = NULL;
+    Tuplestorestate	   *tupstore;
+    MemoryContext	per_query_ctx;
+	MemoryContext	oldcontext;
+    ReturnSetInfo  *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+
+    /* Prepare Tuplestore */
+    per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory;);
+
+    tupdesc = CreateTemplateTupleDesc(7, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "SEGMENT_ID",
+	                   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "CONTAINER_ID",
+	                   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "UP_TIME",
+	                   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "OWNER",
+	                   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "MEMORY_USAGE(KB)",
+	                   TEXTOID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 6, "CPU_USAGE",
+	                   TEXTOID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 7, "Current Running Function",
+	                   TEXTOID, -1, 0);
+
+	attinmeta = TupleDescGetAttInMetadata(tupdesc);
+    rsinfo->returnMode = SFRM_Materialize;
+
+    /* initialize our tuplestore */
+	tupstore = TUPLESTORE_BEGIN_HEAP;
+
+    /* first get all oid of tables which are active table on any segment */
+	sql = "select * from list_running_containers()";
+
+	/* any errors will be catch in upper level */
+	CdbDispatchCommand(sql, DF_NONE, &cdb_pgresults);
+
+	for (i = 0; i < cdb_pgresults.numResults; i++)
+	{
+
+	    struct pg_result *pgresult = cdb_pgresults.pg_results[i];
+
+	    if (PQresultStatus(pgresult) != PGRES_TUPLES_OK)
+	    {
+		    cdbdisp_clearCdbPgResults(&cdb_pgresults);
+		    ereport(ERROR,
+				(errmsg("Unable to get container information from segment: %d",
+						PQresultStatus(pgresult))));
+	    }
+
+        values = (char **) palloc(PQntuples(pgresult) * sizeof(char *));
+
+		for (j = 0; j < PQntuples(pgresult); j++)
+		{
+            values[j] = PQgetvalue(pgresult, j, 0);	
+		}
+        tuple = BuildTupleFromCStrings(attinmeta, values);
+        tuplestore_puttuple(tupstore, tuple);
+        pfree(values);
+	}
+    cdbdisp_clearCdbPgResults(&cdb_pgresults);
+    rsinfo->setDesc = tupdesc;
+	MemoryContextSwitchTo(oldcontext);
+
+	return (Datum) 0;	
+}
