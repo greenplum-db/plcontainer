@@ -348,8 +348,11 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 			/* TODO: We could only remove this backend when error occurs. */
 			DeleteBackendsWhenError = true;
 			conn = start_backend(runtime_conf_entry);
-            add_containerid_entry(get_container_id(runtime_id), PLy_procedure_name(proc));
+			add_containerid_entry(get_container_id(runtime_id), PLy_procedure_name(proc));
 			DeleteBackendsWhenError = false;
+		} else {
+			/* Connection existed, only need update the udf name */
+			replace_containerid_entry(get_container_id(runtime_id), PLy_procedure_name(proc));
 		}
 
 		pfree(runtime_id);

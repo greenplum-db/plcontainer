@@ -9,11 +9,14 @@
 #include "commands/resgroupcmds.h"
 #include "catalog/gp_segment_config.h"
 
+#include "cdb/cdbdisp_query.h"
+#include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbvars.h"
 
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "libpq/libpq-be.h"
+#include "libpq-fe.h"
 #include "utils/acl.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -64,7 +67,6 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		/* switch to memory context appropriate for multiple function calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		//dbid = PG_GETARG_INT32(0);
 		dbid = GpIdentity.segindex;
 		
 		res = plc_docker_list_container(&json_result, dbid);
@@ -626,6 +628,29 @@ add_containerid_entry(char *dockerid, char *udf)
     LWLockRelease(plc_lw_lock);
 }
 
+void
+replace_containerid_entry(char *dockerid, char *udf)
+{
+    bool found;
+    UdfContainerIdMap *cidentry;
+    char cid[PREFIX_CONTAINER_ID_LENGTH];
+
+    if (udf_container_id_map == NULL)
+    {
+        return;
+    }
+    /* Copy the data into hashmap entry */
+    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
+    cid[31] = '\0';
+    
+    LWLockAcquire(plc_lw_lock, LW_EXCLUSIVE);
+
+    cidentry = hash_search(udf_container_id_map, (void *)cid, HASH_FIND, &found);
+    strncpy(cidentry->udf_name, udf, 224 - 1);
+    cidentry->udf_name[223] = '\0';
+    LWLockRelease(plc_lw_lock);
+}
+
 void del_containerid_entry(char *dockerid)
 {
     bool found;
@@ -679,7 +704,6 @@ Datum
 collect_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS)
 {
     char **values;
-    FuncCallContext *funcctx;
 	TupleDesc tupdesc;
 	AttInMetadata *attinmeta;
     CdbPgResults cdb_pgresults = {NULL, 0};
@@ -692,7 +716,7 @@ collect_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS)
 
     /* Prepare Tuplestore */
     per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory;);
+	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
     tupdesc = CreateTemplateTupleDesc(7, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "SEGMENT_ID",
@@ -714,10 +738,10 @@ collect_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS)
     rsinfo->returnMode = SFRM_Materialize;
 
     /* initialize our tuplestore */
-	tupstore = TUPLESTORE_BEGIN_HEAP;
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
 
     /* first get all oid of tables which are active table on any segment */
-	sql = "select * from list_running_containers()";
+	sql = "select * from plcontainer_containers_info()";
 
 	/* any errors will be catch in upper level */
 	CdbDispatchCommand(sql, DF_NONE, &cdb_pgresults);
@@ -726,6 +750,7 @@ collect_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS)
 	{
 
 	    struct pg_result *pgresult = cdb_pgresults.pg_results[i];
+	    HeapTuple tuple;
 
 	    if (PQresultStatus(pgresult) != PGRES_TUPLES_OK)
 	    {
@@ -735,18 +760,31 @@ collect_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS)
 						PQresultStatus(pgresult))));
 	    }
 
-        values = (char **) palloc(PQntuples(pgresult) * sizeof(char *));
+	    if (PQntuples(pgresult) == 0)
+	    {
+		    break;
+	    }
+
+
+        values = (char **) palloc(7 * sizeof(char *));
 
 		for (j = 0; j < PQntuples(pgresult); j++)
 		{
-            values[j] = PQgetvalue(pgresult, j, 0);	
+			values[0] = PQgetvalue(pgresult, j, 0);
+			values[1] = PQgetvalue(pgresult, j, 1);
+			values[2] = PQgetvalue(pgresult, j, 2);
+			values[3] = PQgetvalue(pgresult, j, 3);
+			values[4] = PQgetvalue(pgresult, j, 4);
+			values[5] = PQgetvalue(pgresult, j, 5);
+			values[6] = PQgetvalue(pgresult, j, 6);
+        		tuple = BuildTupleFromCStrings(attinmeta, values);
+        		tuplestore_puttuple(tupstore, tuple);
 		}
-        tuple = BuildTupleFromCStrings(attinmeta, values);
-        tuplestore_puttuple(tupstore, tuple);
         pfree(values);
 	}
     cdbdisp_clearCdbPgResults(&cdb_pgresults);
     rsinfo->setDesc = tupdesc;
+    rsinfo->setResult = tupstore;
 	MemoryContextSwitchTo(oldcontext);
 
 	return (Datum) 0;	

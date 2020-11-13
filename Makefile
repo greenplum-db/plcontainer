@@ -32,6 +32,9 @@ DATA_built = $(MGMTDIR)/sql/plcontainer_install.sql $(MGMTDIR)/sql/plcontainer_u
 FILES = $(shell find $(SRCDIR) -not -path "*client*" -type f -name "*.c")
 OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
 
+PG_CPPFLAGS = -I$(libpq_srcdir)
+SHLIB_LINK = $(libpq)
+
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 
