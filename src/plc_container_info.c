@@ -617,9 +617,9 @@ add_containerid_entry(char *dockerid, char *udf)
         return;
     }
     /* Copy the data into hashmap entry */
-    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
+    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);
     cid[31] = '\0';
-    
+
     LWLockAcquire(plc_lw_lock, LW_EXCLUSIVE);
 
     cidentry = hash_search(udf_container_id_map, (void *)cid, HASH_ENTER, &found);
@@ -640,9 +640,9 @@ replace_containerid_entry(char *dockerid, char *udf)
         return;
     }
     /* Copy the data into hashmap entry */
-    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
+    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);
     cid[31] = '\0';
-    
+
     LWLockAcquire(plc_lw_lock, LW_EXCLUSIVE);
 
     cidentry = hash_search(udf_container_id_map, (void *)cid, HASH_FIND, &found);
@@ -657,7 +657,7 @@ void del_containerid_entry(char *dockerid)
     char cid[PREFIX_CONTAINER_ID_LENGTH];
 
     /* Copy the data into hashmap entry */
-    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
+    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);
     cid[31] = '\0';
 
     if (udf_container_id_map == NULL)
