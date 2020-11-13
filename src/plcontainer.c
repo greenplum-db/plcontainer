@@ -151,8 +151,8 @@ _PG_init(void) {
 							 NULL,
 							 NULL,
 							 NULL);
-	//if (enable_cid)
-	init_plcontainer_shmem();
+	if (enable_cid)
+		init_plcontainer_shmem();
 
 	on_proc_exit(plcontainer_cleanup, 0);
 	explicit_subtransactions = NIL;
@@ -355,8 +355,6 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 			replace_containerid_entry(get_container_id(runtime_id), PLy_procedure_name(proc));
 		}
 
-		pfree(runtime_id);
-
 		DeleteBackendsWhenError = true;
 		if (conn != NULL) {
 			int res;
@@ -442,6 +440,9 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 	plcontainer_abort_open_subtransactions(save_subxact_level);
 
 	DeleteBackendsWhenError = false;
+
+	replace_containerid_entry(get_container_id(runtime_id), "Waiting for Query");
+	pfree(runtime_id);
 	return result;
 }
 
