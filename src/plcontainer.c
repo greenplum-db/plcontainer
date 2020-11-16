@@ -33,7 +33,9 @@
 #include "containers.h"
 #include "message_fns.h"
 #include "plcontainer.h"
+#include "containers.h"
 #include "plc_configuration.h"
+#include "plc_container_info.h"
 #include "plc_typeio.h"
 #include "sqlhandler.h"
 #include "subtransaction_handler.h"
@@ -82,6 +84,10 @@ static void plpython_error_callback(void *arg);
 static char * PLy_procedure_name(plcProcInfo *proc);
 
 static volatile bool DeleteBackendsWhenError;
+
+/* Monitoring */
+
+static bool enable_cid = false;
 
 /*
  * Currently active plpython function
@@ -134,6 +140,19 @@ _PG_init(void) {
                                 NULL,
                                 plcontainer_backend_type_assign_hook,
                                 NULL);
+
+	DefineCustomBoolVariable("plcontainer.enable_function_collection",
+							 "Collect current running function in container",
+							 NULL,
+							 &enable_cid,
+							 false,
+							 PGC_SUSET,
+							 0,
+							 NULL,
+							 NULL,
+							 NULL);
+	if (enable_cid)
+		init_plcontainer_shmem();
 
 	on_proc_exit(plcontainer_cleanup, 0);
 	explicit_subtransactions = NIL;
@@ -329,10 +348,12 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 			/* TODO: We could only remove this backend when error occurs. */
 			DeleteBackendsWhenError = true;
 			conn = start_backend(runtime_conf_entry);
+			add_containerid_entry(get_container_id(runtime_id), PLy_procedure_name(proc));
 			DeleteBackendsWhenError = false;
+		} else {
+			/* Connection existed, only need update the udf name */
+			replace_containerid_entry(get_container_id(runtime_id), PLy_procedure_name(proc));
 		}
-
-		pfree(runtime_id);
 
 		DeleteBackendsWhenError = true;
 		if (conn != NULL) {
@@ -419,6 +440,9 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 	plcontainer_abort_open_subtransactions(save_subxact_level);
 
 	DeleteBackendsWhenError = false;
+
+	replace_containerid_entry(get_container_id(runtime_id), "Waiting for Query");
+	pfree(runtime_id);
 	return result;
 }
 

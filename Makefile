@@ -32,6 +32,9 @@ DATA_built = $(MGMTDIR)/sql/plcontainer_install.sql $(MGMTDIR)/sql/plcontainer_u
 FILES = $(shell find $(SRCDIR) -not -path "*client*" -type f -name "*.c")
 OBJS = $(foreach FILE,$(FILES),$(subst .c,.o,$(FILE)))
 
+PG_CPPFLAGS = -I$(libpq_srcdir)
+SHLIB_LINK = $(libpq)
+
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 
@@ -43,8 +46,8 @@ endif
 # FIXME: We might need a configure script to handle below checks later.
 # See https://github.com/greenplum-db/plcontainer/issues/322
 
-# Plcontainer version
-PLCONTAINER_VERSION = $(shell git describe --tags)
+# Plcontainer version, show the nearest version and ignore the following commit
+PLCONTAINER_VERSION = $(shell git describe --abbrev=0)
 ifeq ($(PLCONTAINER_VERSION),)
   $(error can not determine the plcontainer version)
 else

@@ -35,6 +35,7 @@
 #include "common/messages/messages.h"
 #include "plc_configuration.h"
 #include "containers.h"
+#include "plc_container_info.h"
 #include "plc_backend_api.h"
 
 
@@ -52,6 +53,7 @@ typedef struct {
 static volatile int containers_init = 0;
 static volatile container_t* volatile containers;
 static char *uds_fn_for_cleanup;
+static char *dockerid_for_cleanup;
 
 static void init_containers();
 
@@ -150,6 +152,10 @@ static void cleanup_uds(char *uds_fn) {
 static void cleanup_atexit_callback() {
 	cleanup_uds(uds_fn_for_cleanup);
 	free(uds_fn_for_cleanup);
+    /* Remove entry from shm */
+    del_containerid_entry(dockerid_for_cleanup);
+    free(dockerid_for_cleanup);
+    dockerid_for_cleanup = NULL;
 	uds_fn_for_cleanup = NULL;
 }
 
@@ -180,6 +186,8 @@ static void cleanup(char *dockerid, char *uds_fn) {
 			/* use network TCP/IP, no need to clean up uds file */
 			uds_fn_for_cleanup = NULL;
 		}
+        /*Dup container id for clean purpose*/
+        dockerid_for_cleanup = strdup(dockerid);
 #ifdef HAVE_ATEXIT
 		atexit(cleanup_atexit_callback);
 #else
@@ -336,6 +344,23 @@ plcConn *get_container_conn(const char *runtime_id) {
 		if (containers[i].runtimeid != NULL &&
 		    strcmp(containers[i].runtimeid, runtime_id) == 0) {
 			return containers[i].conn;
+		}
+	}
+
+	return NULL;
+}
+
+char *get_container_id(const char *runtime_id)
+{
+   	size_t i;
+	if (containers_init == 0) {
+		init_containers();
+	}
+
+	for (i = 0; i < MAX_CONTAINER_NUMBER; i++) {
+		if (containers[i].runtimeid != NULL &&
+		    strcmp(containers[i].runtimeid, runtime_id) == 0) {
+			return containers[i].dockerid;
 		}
 	}
 
