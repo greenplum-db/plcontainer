@@ -27,7 +27,7 @@ function _main() {
   pushd plcontainer_src
 
   # Plcontainer version
-  PLCONTAINER_VERSION=$(git describe)
+  PLCONTAINER_VERSION=$(git describe --abbrev=0)
   echo "#define PLCONTAINER_VERSION \"${PLCONTAINER_VERSION}\"" > src/common/config.h
 
   make CFLAGS='-Werror -Wextra -Wall -Wno-sign-compare -O3 -g' -C src/pyclient all
