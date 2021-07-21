@@ -580,7 +580,7 @@ PLy_spi_execute_fetch_result(plcMsgResult *resp)
 	}
 	ret:
 	free_result(resp, false);
-	plc_free_result_conversions(obj);
+	//plc_free_result_conversions(obj);
 
 	return (PyObject *) result;
 }
