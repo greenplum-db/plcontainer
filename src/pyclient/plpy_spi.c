@@ -579,8 +579,9 @@ PLy_spi_execute_fetch_result(plcMsgResult *resp)
 		PyList_SetItem(result->rows, i, pydict);
 	}
 	ret:
+	// Call plc_free_result_conversions before resp is freed because we use resp.cols in plc_free_result_conversions.
+	plc_free_result_conversions(obj);
 	free_result(resp, false);
-	//plc_free_result_conversions(obj);
 
 	return (PyObject *) result;
 }
