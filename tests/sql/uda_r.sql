@@ -26,3 +26,14 @@ insert into tr values(2,1),(4,8),(9,10),(10,24),(44,11);
 select rsum_cols(i,j) FROM tr;
 drop table tr;
 
+create or replace function public.test_spi_plcr2(text) returns setof record
+as $$
+# container: plc_r_shared
+pg.spi.exec(args[[1]])
+$$
+language plcontainer
+execute on any;
+
+select * from public.test_spi_plcr2('select relname, relnatts from pg_class  where oid= 1259') as t(relname name, relnatts integer);
+select * from public.test_spi_plcr2('select relnamespace, relname, relnatts from pg_class  where oid= 1259') as t(relnamespace text, relname name, relnatts integer);
+drop function public.test_spi_plcr2(text);

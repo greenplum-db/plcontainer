@@ -286,8 +286,11 @@ static bool plc_type_valid(plcTypeInfo *type) {
 		valid = plc_type_valid(&type->subTypes[i]);
 	}
 
-	/* We exclude record from testing here, as it would change only if the function
-	 * changes itself, which would be caugth by checking function creation xid */
+	/* In some cases: the argument of a function is a query text, and the return type is a record of query,
+	 * the return type may be changed while the argument is changed.*/
+	if (valid && type->is_rowtype && type->is_record) {
+		return false;
+	}
 	if (valid && type->is_rowtype && !type->is_record) {
 		HeapTuple relTup;
 
