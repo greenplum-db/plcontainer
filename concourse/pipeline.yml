@@ -23,6 +23,7 @@ ccp_create_params_anchor: &ccp_default_params
   action: create
   delete_on_failure: true
   generate_random_name: true
+  plugin_dir: ../../terraform.d/plugin-cache/linux_amd64
   terraform_source: ccp_src/google/
 
 ccp_vars_anchor: &ccp_default_vars
@@ -42,6 +43,7 @@ ccp_destroy_anchor: &ccp_destroy
   params:
     action: destroy
     env_name_file: terraform/name
+    plugin_dir: ../../terraform.d/plugin-cache/linux_amd64
     terraform_source: ccp_src/google/
     vars:
       aws_instance-node-instance_type: t2.micro #t2.micro is ignored in destroy, but aws_instance-node-instance_type is required.
@@ -64,8 +66,8 @@ set_failed_anchor: &set_failed
       image_resource:
         type: docker-image
         source:
-          repository: pivotaldata/ccp
-          tag: "7"
+          repository: gcr.io/data-gpdb-public-images/ccp
+          tag: latest
       inputs:
         - name: ccp_src
         - name: terraform
@@ -118,6 +120,15 @@ resources:
     private_key: {{ccp-git-key}}
     uri: {{ccp-git-remote}}
 
+- name: terraform.d
+  source:
+    access_key_id: ((bucket-access-key-id))
+    bucket: ccp-terraform-provider-plugins
+    region_name: ((aws-region))
+    secret_access_key: ((bucket-secret-access-key))
+    versioned_file: plugin-cache.tgz
+  type: s3
+
 - name: plcontainer_src
   type: git
   source:
@@ -156,19 +167,19 @@ resources:
 - name: centos-gpdb-dev-7
   type: docker-image
   source:
-    repository: pivotaldata/centos-gpdb-dev
-    tag: 7-gcc6.2-llvm3.7
+    repository: gcr.io/data-gpdb-public-images/gpdb5-centos7-build-test
+    tag: latest
 
 - name: ubuntu18-image
   type: docker-image
   source:
-    repository: pivotaldata/gpdb6-ubuntu18.04-build
+    repository: gcr.io/data-gpdb-public-images/gpdb6-ubuntu18.04-build
     tag: latest
 
 - name: ubuntu18-image-test
   type: docker-image
   source:
-    repository: pivotaldata/gpdb6-ubuntu18.04-test
+    repository: gcr.io/data-gpdb-public-images/gpdb6-ubuntu18.04-test
     tag: latest
 
 # GCS Input and intermediate binaries
@@ -304,6 +315,9 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_ubuntu18
     - get: ccp_src
+    - get: terraform.d
+      params:
+        unpack: true
     - get: ubuntu18-image
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_python
@@ -354,6 +368,9 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos7
     - get: ccp_src
+    - get: terraform.d
+      params:
+        unpack: true
     - get: centos-gpdb-dev-7
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_python
@@ -403,6 +420,9 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos7
     - get: ccp_src
+    - get: terraform.d
+      params:
+        unpack: true
     - get: centos-gpdb-dev-7
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_python
@@ -451,6 +471,9 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_ubuntu18
     - get: ccp_src
+    - get: terraform.d
+      params:
+        unpack: true
     - get: ubuntu18-image
     - get: plcontainer_pyclient_docker_image
       resource: plcontainer_docker_image_python
@@ -500,6 +523,9 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos7
     - get: ccp_src
+    - get: terraform.d
+      params:
+        unpack: true
     - get: centos-gpdb-dev-7
     - get: data-science-bundle
   - put: terraform
@@ -543,6 +569,9 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos7
     - get: ccp_src
+    - get: terraform.d
+      params:
+        unpack: true
     - get: centos-gpdb-dev-7
     - get: data-science-bundle
   - put: terraform
@@ -586,6 +615,9 @@ jobs:
     - get: gpdb_binary
       resource: bin_gpdb_centos7
     - get: ccp_src
+    - get: terraform.d
+      params:
+        unpack: true
     - get: centos-gpdb-dev-7
     - get: data-science-bundle
   - put: terraform
