@@ -22,6 +22,9 @@
 
 #include <Python.h>
 
+int plc_is_execution_terminated;
+int plc_sending_data;
+
 plcConn *plcconn_global = NULL;
 
 static char *create_python_func(plcMsgCallreq *req);

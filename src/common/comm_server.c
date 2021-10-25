@@ -24,6 +24,13 @@
 #include "comm_log.h"
 #include "messages/messages.h"
 
+// init variable
+char *dbUsername;
+char *dbName;
+int dbQePid;
+char *clientLanguage;
+int client_log_level;
+
 /*
  * Function binds the socket and starts listening on it: tcp
  */
