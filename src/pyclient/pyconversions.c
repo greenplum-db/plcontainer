@@ -14,6 +14,8 @@
 
 #include <Python.h>
 
+const char *serverenc;
+
 static PyObject *PLyUnicode_Bytes(PyObject *unicode);
 
 static PyObject *plc_pyobject_from_int1(char *input, plcPyType *type);

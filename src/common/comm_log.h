@@ -8,11 +8,11 @@
 #ifndef PLC_COMM_LOG_H
 #define PLC_COMM_LOG_H
 
-char *dbUsername;
-char *dbName;
-int dbQePid;
-char *clientLanguage;
+extern char *dbUsername;
+extern char *dbName;
+extern int dbQePid;
+extern char *clientLanguage;
 
-int client_log_level;
+extern int client_log_level;
 
 #endif /* PLC_COMM_LOG_H */

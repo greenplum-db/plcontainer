@@ -10,9 +10,9 @@
 
 #include <Python.h>
 
-PyTypeObject PLy_PlanType;
-PyTypeObject PLy_SubtransactionType;
-PyTypeObject PLy_ResultType;
+extern PyTypeObject PLy_PlanType;
+extern PyTypeObject PLy_SubtransactionType;
+extern PyTypeObject PLy_ResultType;
 
 PyObject *PLy_spi_execute(PyObject *self, PyObject *pyquery);
 
