@@ -63,7 +63,14 @@ static plcMsgResult *create_sql_result(bool isSelect) {
 	result->types = palloc(result->cols * sizeof(*result->types));
 	result->names = palloc(result->cols * sizeof(*result->names));
 	result->exception_callback = NULL;
+
+        /*
+         * We do not need free this array because the array iterator will reference it.
+         * This function is under SPI_proc Memory Context, when SPI_finish is invoked, 
+         * the array will be freed automatically. 
+         */
 	resTypes = palloc(result->cols * sizeof(plcTypeInfo));
+
 	for (j = 0; j < result->cols; j++) {
 		fill_type_info(NULL, SPI_tuptable->tupdesc->attrs[j]->atttypid, &resTypes[j]);
 		copy_type_info(&result->types[j], &resTypes[j]);
@@ -94,11 +101,6 @@ static plcMsgResult *create_sql_result(bool isSelect) {
 			}
 		}
 	}
-
-	for (i = 0; i < result->cols; i++) {
-		free_type_info(&resTypes[i]);
-	}
-	pfree(resTypes);
 
 	return result;
 }
@@ -310,6 +312,11 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 						}
 					}
 
+                                        /*
+                                         * This invocation will make the CurrentMemoryContext to SPI_proc, 
+                                         * so the memory be alloced via SPI will belong to SPI_proc,
+                                         * when we invoke SPI_finish() after, those memories will be freed automatically.
+                                         */
 					retval = SPI_execute_plan(plc_plan->plan, values, nulls,
 					                          pinfo->fn_readonly, (long) msg->limit);
 					if (values)
@@ -343,7 +350,6 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 								     pinfo->fn_readonly, msg->limit, SPI_result_code_string(retval));
 						break;
 				}
-				SPI_freetuptable(SPI_tuptable);
 				break;
 			case SQL_TYPE_PREPARE:
 				plc_plan = PLy_malloc(sizeof(plcPlan));
