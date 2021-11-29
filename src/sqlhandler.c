@@ -312,11 +312,11 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 						}
 					}
 
-                    /*
+					/*
 					* This invocation will make the CurrentMemoryContext to SPI_proc, 
-                    * so the memory be alloced via SPI will belong to SPI_proc,
-                    * when we invoke SPI_finish() after, those memories will be freed automatically.
-                    */
+					* so the memory be alloced via SPI will belong to SPI_proc,
+					* when we invoke SPI_finish() after, those memories will be freed automatically.
+					*/
 					retval = SPI_execute_plan(plc_plan->plan, values, nulls,
 					                          pinfo->fn_readonly, (long) msg->limit);
 					if (values)
