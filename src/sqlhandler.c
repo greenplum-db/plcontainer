@@ -64,11 +64,11 @@ static plcMsgResult *create_sql_result(bool isSelect) {
 	result->names = palloc(result->cols * sizeof(*result->names));
 	result->exception_callback = NULL;
 
-    /*
-    * We do not need free this array because the array iterator will reference it.
-    * This function is under SPI_proc Memory Context, when SPI_finish is invoked, 
-    * the array will be freed automatically. 
-    */
+	/*
+	* We do not need free this array because the array iterator will reference it.
+	* This function is under SPI_proc Memory Context, when SPI_finish is invoked, 
+	* the array will be freed automatically. 
+	*/
 	resTypes = palloc(result->cols * sizeof(plcTypeInfo));
 
 	for (j = 0; j < result->cols; j++) {
