@@ -1,6 +1,8 @@
 -- Creating UDTs
 CREATE EXTENSION plcontainer;
 
+ALTER USER gpadmin WITH SUPERUSER;
+
 CREATE TYPE type_record AS (
     first text,
     second int4

@@ -1,0 +1,36 @@
+DROP TABLE IF EXISTS plcontainer_array_test;
+CREATE TABLE plcontainer_array_test(
+    id serial primary key,
+    content text[]
+);
+DO
+$$
+BEGIN
+    FOR i IN 1..100 LOOP
+        INSERT INTO plcontainer_array_test(content)
+        VALUES ('{8.03,8.033,8.305,8.336,0.838,0.883,8.53,8.586,0.880,0.833,0.883,0.588,0.588,3.885,3.3,3.338,063.858,053.008,80.336,LP,8.655,8.858,8.803,8.608,00.385,88.865,85.088,88.603,85.300,58.086}');
+    END LOOP;
+END
+$$;
+CREATE OR REPLACE FUNCTION plcontainer_array_test()
+RETURNS text
+VOLATILE
+AS $$
+# container: plc_python_shared
+import pandas as pd
+with plpy.subtransaction():
+    df = pd.DataFrame.from_records(
+    plpy.execute(
+    """
+     select * from plcontainer_array_test
+    """))
+    return 'ok'
+$$ 
+LANGUAGE plcontainer
+EXECUTE ON ANY;
+SELECT plcontainer_array_test();
+ plcontainer_array_test 
+------------------------
+ ok
+(1 row)
+

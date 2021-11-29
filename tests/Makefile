@@ -34,7 +34,7 @@ resgroup:
 	plcontainer runtime-show -r plc_r_shared
 
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
-				$(PSQLDIR) $(RESGROUP_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
+				$(PSQLDIR) $(RESGROUP_OPTS)
 .PHONY: tests
 tests:
 	@echo "Tests require two runtime configurations. Will check the two"
@@ -46,7 +46,7 @@ tests:
 	# Might use branch to handle the difference later.
 
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
-				$(PSQLDIR) $(REGRESS_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
+				$(PSQLDIR) $(REGRESS_OPTS)
 testpy3:
 	@echo "Tests require two runtime configurations. Will check the two"
 	@echo "runtime configurations soon. If there is configuration missing,"
@@ -56,7 +56,7 @@ testpy3:
 	plcontainer runtime-show -r plc_r_shared
 	# Might use branch to handle the difference later.
 	PL_TESTDB=$(PL_TESTDB) $(top_builddir)/src/test/regress/pg_regress \
-				$(PSQLDIR) $(PY3_OPTS) || if [[ -f regression.diffs ]]; then cat regression.diffs; exit 1; fi
+				$(PSQLDIR) $(PY3_OPTS)
 .PHONY: submake
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
