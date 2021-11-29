@@ -64,11 +64,11 @@ static plcMsgResult *create_sql_result(bool isSelect) {
 	result->names = palloc(result->cols * sizeof(*result->names));
 	result->exception_callback = NULL;
 
-        /*
-         * We do not need free this array because the array iterator will reference it.
-         * This function is under SPI_proc Memory Context, when SPI_finish is invoked, 
-         * the array will be freed automatically. 
-         */
+    /*
+    * We do not need free this array because the array iterator will reference it.
+    * This function is under SPI_proc Memory Context, when SPI_finish is invoked, 
+    * the array will be freed automatically. 
+    */
 	resTypes = palloc(result->cols * sizeof(plcTypeInfo));
 
 	for (j = 0; j < result->cols; j++) {
@@ -312,11 +312,11 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 						}
 					}
 
-                                        /*
-                                         * This invocation will make the CurrentMemoryContext to SPI_proc, 
-                                         * so the memory be alloced via SPI will belong to SPI_proc,
-                                         * when we invoke SPI_finish() after, those memories will be freed automatically.
-                                         */
+                    /*
+					* This invocation will make the CurrentMemoryContext to SPI_proc, 
+                    * so the memory be alloced via SPI will belong to SPI_proc,
+                    * when we invoke SPI_finish() after, those memories will be freed automatically.
+                    */
 					retval = SPI_execute_plan(plc_plan->plan, values, nulls,
 					                          pinfo->fn_readonly, (long) msg->limit);
 					if (values)
