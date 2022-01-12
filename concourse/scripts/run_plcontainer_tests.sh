@@ -10,7 +10,6 @@ set -eox pipefail
 
 scp -r plcontainer_gpdb_build mdw:/tmp/
 scp -r plcontainer_src mdw:~/
-ssh rhel@mdw "sudo bash -c \"yum install -y cpio\""
 ssh mdw "bash -c \" \
 set -eox pipefail; \
 export MASTER_DATA_DIRECTORY=/data/gpdata/master/gpseg-1; \

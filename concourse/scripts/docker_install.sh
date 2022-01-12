@@ -49,6 +49,7 @@ install_docker() {
         \""
         ;;
       rhel8)
+          # Install cpio for gppkg
           ssh rhel@$node "sudo bash -c \" \
             dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo; \
             dnf install -y docker-ce docker-ce-cli containerd.io; \
@@ -56,6 +57,7 @@ install_docker() {
             usermod -a -G docker gpadmin; \
             newgrp docker; \
             systemctl start docker; \
+            yum install -y cpio; \
           \"
           "
           ;;
