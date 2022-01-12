@@ -12,6 +12,7 @@ scp -r plcontainer_gpdb_build mdw:/tmp/
 scp -r plcontainer_src mdw:~/
 ssh mdw "bash -c \" \
 set -eox pipefail; \
+yum install -y cpio; \
 export MASTER_DATA_DIRECTORY=/data/gpdata/master/gpseg-1; \
 source /usr/local/greenplum-db-devel/greenplum_path.sh; \
 gppkg -i /tmp/plcontainer_gpdb_build/plcontainer*.gppkg; \
