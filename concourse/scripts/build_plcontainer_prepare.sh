@@ -17,15 +17,17 @@ function _main() {
   install_gpdb
 
   # build json-c
-  git clone https://github.com/json-c/json-c.git
-  cd json-c
-  git fetch --all --tags
-  git checkout tags/json-c-0.15-20200726
-  mkdir build && cd build
-  cmake ..
-  make
-  make install
-  cd ../..
+  if [ "${BLD_OS}" = "rhel8" ]; then
+    git clone https://github.com/json-c/json-c.git
+    cd json-c
+    git fetch --all --tags
+    git checkout tags/json-c-0.15-20200726
+    mkdir build && cd build
+    cmake ..
+    make
+    make install
+    cd ../..
+  fi
 
   ln -s /usr/local/greenplum-db-devel /usr/local/greenplum-db
 

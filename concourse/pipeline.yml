@@ -349,6 +349,8 @@ jobs:
     - get: rhel-image-build-8
   - task: plcontainer_gpdb_build
     file: plcontainer_src/concourse/tasks/plcontainer_build.yml
+    params:
+      BLD_OS: rhel8
     image: rhel-image-build-8
     input_mapping:
       bin_gpdb: bin_gpdb_rhel8
