@@ -16,8 +16,10 @@ function _main() {
   # setup gpdb environment
   install_gpdb
 
-  # build json-c
   if [ "${BLD_OS}" = "rhel8" ]; then
+    # install cpio
+    yum install -y cpio
+    # build json-c
     git clone https://github.com/json-c/json-c.git
     cd json-c
     git fetch --all --tags
