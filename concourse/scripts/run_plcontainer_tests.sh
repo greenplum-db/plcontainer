@@ -10,9 +10,9 @@ set -eox pipefail
 
 scp -r plcontainer_gpdb_build mdw:/tmp/
 scp -r plcontainer_src mdw:~/
+ssh rhel@mdw "sudo bash -c \"yum install -y cpio\""
 ssh mdw "bash -c \" \
 set -eox pipefail; \
-sudo yum install -y cpio; \
 export MASTER_DATA_DIRECTORY=/data/gpdata/master/gpseg-1; \
 source /usr/local/greenplum-db-devel/greenplum_path.sh; \
 gppkg -i /tmp/plcontainer_gpdb_build/plcontainer*.gppkg; \

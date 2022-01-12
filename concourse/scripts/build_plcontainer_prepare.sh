@@ -21,7 +21,7 @@ function _main() {
     git clone https://github.com/json-c/json-c.git
     cd json-c
     git fetch --all --tags
-    git checkout tags/json-c-0.15-20200726
+    git checkout tags/json-c-0.13.1-20180305
     mkdir build && cd build
     cmake ..
     make

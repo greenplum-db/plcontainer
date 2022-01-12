@@ -49,8 +49,15 @@ install_docker() {
         \""
         ;;
       rhel8)
-          # TODO
-          true
+          ssh rhel@$node "sudo bash -c \" \
+            dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo; \
+            dnf install -y docker-ce docker-ce-cli containerd.io; \
+            groupadd docker; \
+            usermod -a -G docker gpadmin; \
+            newgrp docker; \
+            systemctl start docker; \
+          \"
+          "
           ;;
       ubuntu18)
         ssh ubuntu@$node "sudo bash -c \" \
