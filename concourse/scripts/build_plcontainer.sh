@@ -15,7 +15,10 @@ build_plcontainer() {
   # source greenplum
   source /usr/local/greenplum-db/greenplum_path.sh
 
-  source /opt/gcc_env.sh
+  # NOTE: this file not exits in rhel8 image
+  if [ -f /opt/gcc_env.sh ]; do
+      source /opt/gcc_env.sh
+  fi
 
   # build plcontainer
   pushd plcontainer_src
