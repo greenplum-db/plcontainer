@@ -16,8 +16,17 @@ function _main() {
   # setup gpdb environment
   install_gpdb
 
-  # install json-c
-  yum install -y json-c-devel
+  # build json-c
+  pushd
+  git clone https://github.com/json-c/json-c.git
+  cd json-c
+  git fetch --all --tags
+  git checkout tags/json-c-0.15-20200726
+  mkdir build & cd build
+  cmake ..
+  make
+  make install
+  popd
 
   ln -s /usr/local/greenplum-db-devel /usr/local/greenplum-db
 
