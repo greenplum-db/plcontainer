@@ -43,7 +43,7 @@ build_plcontainer() {
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make;
   popd
   popd
-  
+
   if [ "${DEV_RELEASE}" == "devel" ]; then
       cp plcontainer_src/package/plcontainer-*.gppkg $OUTPUT/plcontainer-concourse.gppkg
   else
