@@ -17,7 +17,6 @@ function _main() {
   install_gpdb
 
   # build json-c
-  pushd
   git clone https://github.com/json-c/json-c.git
   cd json-c
   git fetch --all --tags
@@ -26,7 +25,7 @@ function _main() {
   cmake ..
   make
   make install
-  popd
+  cd ../..
 
   ln -s /usr/local/greenplum-db-devel /usr/local/greenplum-db
 
