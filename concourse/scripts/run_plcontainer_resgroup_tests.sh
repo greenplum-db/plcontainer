@@ -11,6 +11,7 @@ else
 fi
 
 if [ "$TEST_OS" = centos7 -o "$TEST_OS" = sles12 -o "$TEST_OS" = ubuntu18 ]; then
+    #NOTE: not used
     CGROUP_AUTO_MOUNTED=1
 fi
 

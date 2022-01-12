@@ -26,7 +26,7 @@ install_docker() {
            mv /var/lib/docker /data/gpdata/docker; \
            ln -s /data/gpdata/docker /var/lib/docker; \
            service docker start; \
-	\""
+           \""
         ;;
       centos7)
         ssh centos@$node "sudo bash -c \" \
@@ -48,15 +48,19 @@ install_docker() {
            service docker start; \
         \""
         ;;
+      rhel8)
+          # TODO
+          true
+          ;;
       ubuntu18)
         ssh ubuntu@$node "sudo bash -c \" \
            sudo apt-get update; \
-	   sudo apt-get -y install wget apt-transport-https ca-certificates curl gnupg-agent software-properties-common; \
+       sudo apt-get -y install wget apt-transport-https ca-certificates curl gnupg-agent software-properties-common; \
            wget https://download.docker.com/linux/ubuntu/gpg -O /tmp/docker.key ; \ 
-	   sudo apt-key add /tmp/docker.key ; \
+       sudo apt-key add /tmp/docker.key ; \
            sudo add-apt-repository -y 'deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable' ; \
            sudo apt-get update; \
-	   sudo apt-get -y install docker-ce docker-ce-cli containerd.io; \
+       sudo apt-get -y install docker-ce docker-ce-cli containerd.io; \
            sudo systemctl start docker; \
            sudo groupadd docker; \
            sudo chown root:docker /var/run/docker.sock; \
@@ -69,9 +73,8 @@ install_docker() {
            sudo service docker start; \
         \""
         ;;
-    esac 
+    esac
 }
 
 install_docker mdw
 install_docker sdw1
-
