@@ -16,6 +16,9 @@ function _main() {
   # setup gpdb environment
   install_gpdb
 
+  # install json-c
+  yum install -y json-c-devel
+
   ln -s /usr/local/greenplum-db-devel /usr/local/greenplum-db
 
   # gpadmin need have write permission on TOP_DIR.
