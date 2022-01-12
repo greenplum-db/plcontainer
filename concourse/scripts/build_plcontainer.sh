@@ -14,7 +14,6 @@ TOP_DIR=${CWDIR}/../../../
 build_plcontainer() {
   # source greenplum
   source /usr/local/greenplum-db/greenplum_path.sh
-  source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
 
   source /opt/gcc_env.sh
 
