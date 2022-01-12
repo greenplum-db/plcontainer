@@ -21,7 +21,7 @@ function _main() {
   cd json-c
   git fetch --all --tags
   git checkout tags/json-c-0.15-20200726
-  mkdir build & cd build
+  mkdir build && cd build
   cmake ..
   make
   make install
