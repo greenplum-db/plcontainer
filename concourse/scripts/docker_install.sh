@@ -53,6 +53,10 @@ install_docker() {
           ssh rhel@$node "
             set -exo pipefail; \
             sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo && \
+            ls -al /var/lib/rpm/.rpm.lock && \ 
+            ps aux && \
+            env && \
+            lsof /var/lib/rpm/.rpm.lock && \
             sudo dnf install -y docker-ce && \
             sudo groupadd docker && \
             sudo usermod -a -G docker gpadmin && \
