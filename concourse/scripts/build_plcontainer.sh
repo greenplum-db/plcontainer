@@ -40,6 +40,8 @@ build_plcontainer() {
   tar zxvf ../plcontainer_client/pyclient.tar.gz -C src/pyclient/bin/
   tar zxvf ../plcontainer_client/rclient.tar.gz -C src/rclient/bin/
 
+  env
+
   pushd package
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make cleanall;
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make;
