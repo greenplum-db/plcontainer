@@ -51,14 +51,14 @@ install_docker() {
       rhel8)
           # Install cpio for gppkg
           ssh rhel@$node "
-            sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo; \
-            sleep 6; \
-            sudo dnf install -y docker-ce; \
-            sudo groupadd docker; \
-            sudo usermod -a -G docker gpadmin; \
-            sudo newgrp docker; \
-            sudo systemctl start docker; \
-            sudo yum install -y cpio; \
+            set -exo pipefail; \
+            sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo && \
+            sudo dnf install -y docker-ce && \
+            sudo groupadd docker && \
+            sudo usermod -a -G docker gpadmin && \
+            sudo newgrp docker && \
+            sudo systemctl start docker && \
+            sudo yum install -y cpio \
           "
           ;;
       ubuntu18)
