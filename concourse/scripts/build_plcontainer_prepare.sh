@@ -17,19 +17,15 @@ function _main() {
   install_gpdb
 
   if [ "${BLD_OS}" = "rhel8" ]; then
-    # build json-c staticly
+    # build json-c
     git clone https://github.com/json-c/json-c.git
     cd json-c
     git fetch --all --tags
     git checkout tags/json-c-0.15-20200726
     mkdir build && cd build
-    cmake .. -DBUILD_STATIC_LIBS=yes -DBUILD_SHARED_LIBS=no -DCMAKE_BUILD_TYPE=Release
-    make -j$(nproc)
-
-    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(readlink -f .)"
-    export CFLAGS="$CFLAGS -I$(readlink -f .)"
-    export LIBRARY_PATH="$LIBRARY_PATH:$(readlink -f .)"
-
+    cmake ..
+    make
+    make install
     cd ../..
   fi
 
