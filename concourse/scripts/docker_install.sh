@@ -62,7 +62,6 @@ install_docker() {
           ssh rhel@$node "sudo newgrp docker"
           ssh rhel@$node "sudo systemctl start docker"
           ssh rhel@$node "sudo yum install -y cpio"
-          "
           ;;
       ubuntu18)
         ssh ubuntu@$node "sudo bash -c \" \
