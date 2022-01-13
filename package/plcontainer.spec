@@ -17,5 +17,10 @@ mkdir -p %{buildroot}/temp
 mkdir -p %{buildroot}/temp/share/postgresql/extension
 make -C %{plc_dir} install DESTDIR=%{buildroot}/temp bindir=/bin libdir=/lib/postgresql pkglibdir=/lib/postgresql datadir=/share/postgresql
 
+# NOTE: rhel8 use static build json-c
+if [ -e /lib64/libjson-c.so ]; then
+  cp -d /lib64/libjson-c.so* %{buildroot}/temp/lib/
+fi
+
 %files
 /temp
