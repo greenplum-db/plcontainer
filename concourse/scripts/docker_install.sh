@@ -50,7 +50,8 @@ install_docker() {
         ;;
       rhel8)
           # Install cpio for gppkg
-          ssh rhel@$node "sudo bash -c \" \
+          ssh rhel@$node "bash -c \" \
+            sudo su; \
             dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo; \
             dnf install -y docker-ce; \
             dnf install -y docker-ce-cli; \
