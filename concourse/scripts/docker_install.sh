@@ -51,9 +51,11 @@ install_docker() {
       rhel8)
           # Install cpio for gppkg
           ssh rhel@$node "
-            set -exo pipefail; \
+            set -exo pipefail && \
             sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo && \
-            ls -al /var/lib/rpm/.rpm.lock && \ 
+            ls -al /var/lib/rpm/.rpm.lock
+            "
+          ssh rhel@$node "
             ps aux && \
             env && \
             lsof /var/lib/rpm/.rpm.lock && \
@@ -62,7 +64,7 @@ install_docker() {
             sudo usermod -a -G docker gpadmin && \
             sudo newgrp docker && \
             sudo systemctl start docker && \
-            sudo yum install -y cpio \
+            sudo yum install -y cpio
           "
           ;;
       ubuntu18)
