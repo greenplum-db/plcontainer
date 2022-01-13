@@ -1,0 +1,5 @@
+{
+local:
+  json_object_*;
+  json_tokener_*;
+};

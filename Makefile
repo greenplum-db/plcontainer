@@ -84,6 +84,7 @@ LIBJSON = $(shell pkg-config --libs json-c || echo no)
 ifneq ($(LIBJSON),no)
   override SHLIB_LINK += $(shell pkg-config --libs json-c)
   override CFLAGS += $(shell pkg-config --cflags json-c)
+  override CFLAGS += "-Wl,--version-script=${SRCDIR}/hidejsonc.ld.version"
 else
   $(error libjson-c.so is missing. Have you installed json-c? On RHEL/CENTOS you could install by running "yum install json-c-devel" )
 endif
