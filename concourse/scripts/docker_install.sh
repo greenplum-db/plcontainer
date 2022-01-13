@@ -53,6 +53,7 @@ install_docker() {
           ssh rhel@$node "
             set -exo pipefail && \
             sudo systemctl stop dnf-automatic.timer && \
+            sudo systemctl disable dnf-automatic.timer && \
             sudo yum config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
             "
           ssh rhel@$node "sudo yum install -y cpio"
