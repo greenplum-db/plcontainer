@@ -54,12 +54,11 @@ install_docker() {
             set -exo pipefail && \
             sudo yum config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
             "
+          ssh rhel@$node "sudo yum install -y cpio"
           ssh rhel@$node "sudo yum install -y docker-ce"
-          ssh rhel@$node "sudo groupadd docker"
           ssh rhel@$node "usermod -a -G docker gpadmin"
           ssh rhel@$node "sudo newgrp docker"
           ssh rhel@$node "sudo systemctl start docker"
-          ssh rhel@$node "sudo yum install -y cpio"
           ;;
       ubuntu18)
         ssh ubuntu@$node "sudo bash -c \" \
