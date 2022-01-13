@@ -16,23 +16,21 @@ function _main() {
   # setup gpdb environment
   install_gpdb
 
-  if [ "${BLD_OS}" = "rhel8" ]; then
-    # build json-c staticly
-    git clone https://github.com/json-c/json-c.git
-    cd json-c
-    git fetch --all --tags
-    git checkout tags/json-c-0.15-20200726
-    mkdir build && cd build
-    cmake .. -DCMAKE_INSTALL_PREFIX="$(readlink -f .)" \
-             -DBUILD_STATIC_LIBS=yes \
-             -DBUILD_SHARED_LIBS=no \
-             -DCMAKE_BUILD_TYPE=Release
-    make -j$(nproc)
+  # build json-c staticly
+  git clone https://github.com/json-c/json-c.git
+  cd json-c
+  git fetch --all --tags
+  git checkout tags/json-c-0.15-20200726
+  mkdir build && cd build
+  cmake .. -DCMAKE_INSTALL_PREFIX="$(readlink -f .)" \
+           -DBUILD_STATIC_LIBS=yes \
+           -DBUILD_SHARED_LIBS=no \
+           -DCMAKE_BUILD_TYPE=Release
+  make -j$(nproc)
+  make install
+  export PKG_CONFIG_LIBDIR="$(readlink -f .)"
+  cd ../..
 
-    export PKG_CONFIG_LIBDIR="$(readlink -f .)"
-
-    cd ../..
-  fi
   ln -s /usr/local/greenplum-db-devel /usr/local/greenplum-db
 
   # gpadmin need have write permission on TOP_DIR.
