@@ -54,6 +54,8 @@ install_docker() {
           ssh rhel@$node "sudo yum install -y docker-ce"
           ssh rhel@$node "sudo usermod -a -G docker gpadmin"
           ssh rhel@$node "sudo systemctl start docker"
+          # For redhat8, it needs create link file under /usr/lib/.build-id
+          ssh rhel@$node "sudo chown -R gpadmin:gpadmin /usr/lib/.build-id"
           ;;
       ubuntu18)
         ssh ubuntu@$node "sudo bash -c \" \
