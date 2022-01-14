@@ -52,10 +52,9 @@ install_docker() {
           # Install cpio for gppkg
           ssh rhel@$node "
             set -exo pipefail && \
-            sudo systemctl disable dnf-automatic.timer && \
-            sudo systemctl stop dnf-automatic.timer && \
             sudo yum config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
             "
+          ssh rhel@$node "tail --pid=\${\$(pgrep dnf-automatic)[1]} -f /dev/null"
           ssh rhel@$node "sudo yum install -y cpio"
           ssh rhel@$node "sudo yum install -y docker-ce"
           ssh rhel@$node "usermod -a -G docker gpadmin"
