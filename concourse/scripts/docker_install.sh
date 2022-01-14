@@ -56,6 +56,10 @@ install_docker() {
           ssh rhel@$node "sudo systemctl start docker"
           # For redhat8, it needs create link file under /usr/lib/.build-id
           ssh rhel@$node "sudo chown -R gpadmin:gpadmin /usr/lib/.build-id"
+          ssh rhel@$node "sudo systemctl stop docker"
+          ssh rhel@$node "sudo mv /var/lib/docker /data/gpdata/docker"
+          ssh rhel@$node "sudo ln -s /data/gpdata/docker /var/lib/docker"
+          ssh rhel@$node "sudo systemctl start docker"
           ;;
       ubuntu18)
         ssh ubuntu@$node "sudo bash -c \" \
