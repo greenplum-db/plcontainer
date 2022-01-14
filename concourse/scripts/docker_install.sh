@@ -57,7 +57,7 @@ install_docker() {
           ssh rhel@$node "tail --pid=\$(pgrep dnf-automatic) -f /dev/null"
           ssh rhel@$node "sudo yum install -y cpio"
           ssh rhel@$node "sudo yum install -y docker-ce"
-          ssh rhel@$node "usermod -a -G docker gpadmin"
+          ssh rhel@$node "sudo usermod -a -G docker gpadmin"
           ssh rhel@$node "sudo newgrp docker"
           ssh rhel@$node "sudo systemctl start docker"
           ;;
