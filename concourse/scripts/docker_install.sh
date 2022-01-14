@@ -50,11 +50,8 @@ install_docker() {
         ;;
       rhel8)
           # Install cpio for gppkg
-          ssh rhel@$node "
-            set -exo pipefail; \
-            tail --pid=\$(pgrep dnf-automatic) -f /dev/null; \
-            sudo yum config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-            "
+          ssh rhel@$node "sudo yum config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo"
+          ssh rhel@$node "tail --pid=\$(pgrep dnf-automatic) -f /dev/null; echo ok"
           ssh rhel@$node "sudo yum install -y cpio"
           ssh rhel@$node "sudo yum install -y docker-ce"
           ssh rhel@$node "sudo usermod -a -G docker gpadmin"
