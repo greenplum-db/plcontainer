@@ -12,12 +12,12 @@ Provides:       plcontainer = %{plc_ver}
 %description
 Provides PL/Container procedural language implementation for the Greenplum Database.
 
-%install
+%_build_id_links none
+
+%install 
 mkdir -p %{buildroot}/temp
 mkdir -p %{buildroot}/temp/share/postgresql/extension
 make -C %{plc_dir} install DESTDIR=%{buildroot}/temp bindir=/bin libdir=/lib/postgresql pkglibdir=/lib/postgresql datadir=/share/postgresql
-
-rm -rf ${buildroot}/temp/usr/lib/.build-id
 
 # NOTE: rhel8 use static build json-c
 if [ -e /lib64/libjson-c.so ]; then
