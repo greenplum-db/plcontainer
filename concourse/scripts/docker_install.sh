@@ -58,8 +58,8 @@ install_docker() {
           ssh rhel@$node "sudo yum install -y cpio"
           ssh rhel@$node "sudo yum install -y docker-ce"
           ssh rhel@$node "sudo usermod -a -G docker gpadmin"
-          ssh rhel@$node "sudo newgrp docker"
           ssh rhel@$node "sudo systemctl start docker"
+          ssh rhel@$node "newgrp docker"
           ;;
       ubuntu18)
         ssh ubuntu@$node "sudo bash -c \" \
