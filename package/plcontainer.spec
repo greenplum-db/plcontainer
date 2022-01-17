@@ -12,7 +12,7 @@ Provides:       plcontainer = %{plc_ver}
 %description
 Provides PL/Container procedural language implementation for the Greenplum Database.
 
-%_build_id_links none
+%define _build_id_links none
 
 %install 
 mkdir -p %{buildroot}/temp
