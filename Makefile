@@ -43,6 +43,9 @@ ifeq ($(PLC_PG),yes)
 #	override CFLAGS += -DPLC_PG  -Wno-sign-compare
 endif
 
+# only export the symbols we needed
+override CFLAGS += "-Wl,--version-script=${SRCDIR}/exportplc.ld.version"
+
 # FIXME: We might need a configure script to handle below checks later.
 # See https://github.com/greenplum-db/plcontainer/issues/322
 

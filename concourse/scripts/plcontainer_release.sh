@@ -28,6 +28,9 @@ release_plcontainer() {
   # release centos 7
   mkdir -p release_bin_centos7
   cp plcontainer_gpdb_centos7_build/plcontainer-*.gppkg release_bin_centos7/plcontainer-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}-gp6-rhel7_x86_64.gppkg
+  # release rhel8
+  mkdir -p release_bin_rhel8
+  cp plcontainer_gpdb_rhel8_build/plcontainer-*.gppkg release_bin_rhel8/plcontainer-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}-gp6-rhel8_x86_64.gppkg
   # release r image
   mkdir -p release_image_r
   cp plcontainer_docker_image_build_r/plcontainer*.tar.gz release_image_r/plcontainer-r-image-${PLCONTAINER_VERSION}.${PLCONTAINER_RELEASE}-gp6.tar.gz
