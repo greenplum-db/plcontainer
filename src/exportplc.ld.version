@@ -1,0 +1,9 @@
+{
+global:
+  pg_*;
+  Pg_magic_func;
+  _PG_init;
+  plcontainer_*;
+local:
+  *;
+};

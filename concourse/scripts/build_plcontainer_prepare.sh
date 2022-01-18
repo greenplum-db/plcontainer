@@ -13,27 +13,35 @@ TOP_DIR=${CWDIR}/../../../
 source "${TOP_DIR}/gpdb_src/concourse/scripts/common.bash"
 
 function _main() {
- 
-  # install R
-  yum -y install epel-release
-  yum -y install R  
-
   # setup gpdb environment
   install_gpdb
-  ${TOP_DIR}/gpdb_src/concourse/scripts/setup_gpadmin_user.bash "centos"
-  make_cluster
- 
-  ln -s /usr/local/greenplum-db-devel /usr/local/greenplum-db
-  chown -h gpadmin:gpadmin /usr/local/greenplum-db
 
-  # gpadmin need have write permission on TOP_DIR. 
+  if [ "${BLD_OS}" = "rhel8" ]; then
+    # build json-c staticly
+    git clone -b tags/json-c-0.15-20200726 --depth 1 https://github.com/json-c/json-c.git
+    cd json-c
+    mkdir build && cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX="$(readlink -f .)" \
+             -DBUILD_STATIC_LIBS=yes \
+             -DBUILD_SHARED_LIBS=no \
+             -DCMAKE_BUILD_TYPE=Release
+    make -j$(nproc)
+    make install
+    export PKG_CONFIG_LIBDIR="$(readlink -f .)"
+    cd ../..
+  fi
+
+  ln -s /usr/local/greenplum-db-devel /usr/local/greenplum-db
+
+  # gpadmin need have write permission on TOP_DIR.
   # we use chmod instead of chown -R, due to concourse known issue.
   chmod a+w ${TOP_DIR}
   find ${TOP_DIR} -type d -exec chmod a+w {} \;
-  chown gpadmin:gpadmin ${CWDIR}/build_plcontainer.sh
-  su gpadmin -c "OUTPUT=${OUTPUT} \
-                 DEV_RELEASE=${DEV_RELEASE} \
-                 bash ${CWDIR}/build_plcontainer.sh $(pwd)"
+
+  export OUTPUT=${OUTPUT}
+  export DEV_RELEASE=${DEV_RELEASE}
+
+  bash ${CWDIR}/build_plcontainer.sh $(pwd)
 }
 
 _main "$@"

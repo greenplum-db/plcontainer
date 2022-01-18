@@ -14,9 +14,11 @@ TOP_DIR=${CWDIR}/../../../
 build_plcontainer() {
   # source greenplum
   source /usr/local/greenplum-db/greenplum_path.sh
-  source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
 
-  source /opt/gcc_env.sh
+  # NOTE: this file not exits in rhel8 image
+  if [ -f /opt/gcc_env.sh ]; then
+      source /opt/gcc_env.sh
+  fi
 
   # build plcontainer
   pushd plcontainer_src
@@ -43,7 +45,7 @@ build_plcontainer() {
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make;
   popd
   popd
-  
+
   if [ "${DEV_RELEASE}" == "devel" ]; then
       cp plcontainer_src/package/plcontainer-*.gppkg $OUTPUT/plcontainer-concourse.gppkg
   else
