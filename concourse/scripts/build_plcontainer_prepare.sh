@@ -18,10 +18,8 @@ function _main() {
 
   if [ "${BLD_OS}" = "rhel8" ]; then
     # build json-c staticly
-    git clone https://github.com/json-c/json-c.git
+    git clone -b tags/json-c-0.15-20200726 --depth 1 https://github.com/json-c/json-c.git
     cd json-c
-    git fetch --all --tags
-    git checkout tags/json-c-0.15-20200726
     mkdir build && cd build
     cmake .. -DCMAKE_INSTALL_PREFIX="$(readlink -f .)" \
              -DBUILD_STATIC_LIBS=yes \

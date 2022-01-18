@@ -112,14 +112,14 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: sa/6X_STABLE
+    branch: sa/6X_rhel8
     uri: https://github.com/greenplum-db/plcontainer.git
     tag_filter: 2.*
 
 - name: gpdb_src
   type: git
   source:
-    branch: sa/6X_STABLE
+    branch: 6X_STABLE
     uri: {{gpdb-git-remote}}
     ignore_paths:
     - gpdb-doc/*
