@@ -43,6 +43,9 @@ ifeq ($(PLC_PG),yes)
 #	override CFLAGS += -DPLC_PG  -Wno-sign-compare
 endif
 
+# only export the symbols we needed
+override CFLAGS += "-Wl,--version-script=${SRCDIR}/exportplc.ld.version"
+
 # FIXME: We might need a configure script to handle below checks later.
 # See https://github.com/greenplum-db/plcontainer/issues/322
 
@@ -84,7 +87,6 @@ LIBJSON = $(shell pkg-config --libs json-c || echo no)
 ifneq ($(LIBJSON),no)
   override SHLIB_LINK += $(shell pkg-config --libs json-c)
   override CFLAGS += $(shell pkg-config --cflags json-c)
-  override CFLAGS += "-Wl,--version-script=${SRCDIR}/hidejsonc.ld.version"
 else
   $(error libjson-c.so is missing. Have you installed json-c? On RHEL/CENTOS you could install by running "yum install json-c-devel" )
 endif
