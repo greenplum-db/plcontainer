@@ -3,7 +3,13 @@ global:
   pg_*;
   Pg_magic_func;
   _PG_init;
+  refresh_plcontainer_config;
+  show_plcontainer_config;
+  list_running_containers;
+  containers_summary;
+  collect_running_containers;
   plcontainer_*;
+
 local:
   *;
 };
