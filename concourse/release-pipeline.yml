@@ -112,7 +112,7 @@ resources:
 - name: plcontainer_src
   type: git
   source:
-    branch: sa/6X_rhel8
+    branch: 6X_STABLE
     uri: https://github.com/greenplum-db/plcontainer.git
     tag_filter: 2.*
 
