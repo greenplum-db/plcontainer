@@ -295,7 +295,7 @@ jobs:
     - get: plcontainer_docker_image_build_python
     - get: plcontainer_docker_image_build_python3
     - get: plcontainer_docker_image_build_r
-    - get: plcontainer_src  
+    - get: plcontainer_src
     - get: centos-gpdb-dev-7
   - task: plcontainer_gpdb_build
     file: plcontainer_src/concourse/tasks/plcontainer_release.yml
