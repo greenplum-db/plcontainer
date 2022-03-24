@@ -260,9 +260,9 @@ pg_sleep
 -- end_ignore
 
 SELECT verify_cpu_usage('plgroup', 40, 20);
-verify_cpu_usage
-----------------
-t               
+ verify_cpu_usage 
+------------------
+ t                
 (1 row)
 
 -- start_ignore

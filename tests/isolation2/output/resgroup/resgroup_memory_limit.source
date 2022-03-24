@@ -162,24 +162,24 @@ SET
 -- end_ignore
 
 8<:  <... completed>
-count   
---------
-49499500
+ count    
+----------
+ 49499500 
 (1 row)
 9<:  <... completed>
-count   
---------
-49499500
+ count    
+----------
+ 49499500 
 (1 row)
 10<:  <... completed>
-count   
---------
-49499500
+ count    
+----------
+ 49499500 
 (1 row)
 11<:  <... completed>
-count   
---------
-49499500
+ count    
+----------
+ 49499500 
 (1 row)
 -- start_ignore
 12<:  <... completed>
