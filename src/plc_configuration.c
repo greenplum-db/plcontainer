@@ -716,99 +716,97 @@ plc_get_runtime_configuration(char *runtime_id)
 char *
 get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_error, char **uds_dir)
 {
-	char *res = NULL;
-
-	*has_error = false;
-
-	if (conf->nSharedDirs >= 0)
+	if (conf->nSharedDirs < 0)
 	{
-		char **volumes  = NULL;
-		int    totallen = 0;
-		char  *pos;
-		int    i;
-		int    j;
-		char   comma = ' ';
-
-		volumes = palloc((conf->nSharedDirs + 1) * sizeof(char *));
-		for (i = 0; i < conf->nSharedDirs; i++)
-		{
-			volumes[i] = palloc(10 + strlen(conf->sharedDirs[i].host) + strlen(conf->sharedDirs[i].container));
-			if (i > 0) comma = ',';
-			if (conf->sharedDirs[i].mode == PLC_ACCESS_READONLY)
-			{
-				sprintf(volumes[i], " %c\"%s:%s:ro\"", comma, conf->sharedDirs[i].host, conf->sharedDirs[i].container);
-			}
-			else if (conf->sharedDirs[i].mode == PLC_ACCESS_READWRITE)
-			{
-				sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, conf->sharedDirs[i].host, conf->sharedDirs[i].container);
-			}
-			else
-			{
-				snprintf(backend_error_message, sizeof(backend_error_message),
-				         "Cannot determine directory sharing mode: %d", conf->sharedDirs[i].mode);
-				*has_error = true;
-				for (j = 0; j <= i; j++)
-				{
-					pfree(volumes[i]);
-				}
-				pfree(volumes);
-				return NULL;
-			}
-			totallen += strlen(volumes[i]);
-		}
-
-		if (!conf->useContainerNetwork)
-		{
-			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
-			int gpdb_dir_sz;
-
-			if (i > 0)
-			{
-				comma = ',';
-			}
-
-			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 16 + 1 + 4 + 1;
-			*uds_dir    = pmalloc(gpdb_dir_sz);
-			if (CurrentBackendType == BACKEND_DOCKER)
-			{
-				sprintf(*uds_dir, "%s.%d.%d.%d", IPC_GPDB_BASE_DIR, getpid(), domain_socket_no++, container_slot);
-			}
-			else if (CurrentBackendType == BACKEND_PROCESS)
-			{
-				sprintf(*uds_dir, "%s", IPC_GPDB_BASE_DIR);
-			}
-			volumes[i] = pmalloc(10 + gpdb_dir_sz + strlen(IPC_CLIENT_DIR));
-			sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, *uds_dir, IPC_CLIENT_DIR);
-			totallen += strlen(volumes[i]);
-
-			/* Create the directory. */
-			if (mkdir(*uds_dir, S_IRWXU) < 0 && errno != EEXIST)
-			{
-				snprintf(backend_error_message, sizeof(backend_error_message), "Cannot create directory %s: %s",
-				         *uds_dir, strerror(errno));
-				*has_error = true;
-				for (j = 0; j <= i; j++)
-				{
-					pfree(volumes[i]);
-				}
-				pfree(volumes);
-				return NULL;
-			}
-		}
-
-		res = palloc(totallen + conf->nSharedDirs + 1 + 1);
-		pos = res;
-		for (i = 0; i < (conf->useContainerNetwork ? conf->nSharedDirs : conf->nSharedDirs + 1); i++)
-		{
-			memcpy(pos, volumes[i], strlen(volumes[i]));
-			pos += strlen(volumes[i]);
-			*pos = ' ';
-			pos++;
-			pfree(volumes[i]);
-		}
-		*pos = '\0';
-		pfree(volumes);
+		return NULL;
 	}
+
+	char  *res      = NULL;
+	char **volumes  = NULL;
+	int    totallen = 0, i, j;
+	char  *pos      = NULL;
+	char   comma    = ' ';
+	*has_error      = false;
+
+	volumes = palloc((conf->nSharedDirs + 1) * sizeof(char *));
+	for (i = 0; i < conf->nSharedDirs; i++)
+	{
+		volumes[i] = palloc(10 + strlen(conf->sharedDirs[i].host) + strlen(conf->sharedDirs[i].container));
+		if (i > 0) comma = ',';
+		if (conf->sharedDirs[i].mode == PLC_ACCESS_READONLY)
+		{
+			sprintf(volumes[i], " %c\"%s:%s:ro\"", comma, conf->sharedDirs[i].host, conf->sharedDirs[i].container);
+		}
+		else if (conf->sharedDirs[i].mode == PLC_ACCESS_READWRITE)
+		{
+			sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, conf->sharedDirs[i].host, conf->sharedDirs[i].container);
+		}
+		else
+		{
+			snprintf(backend_error_message, sizeof(backend_error_message),
+			         "Cannot determine directory sharing mode: %d", conf->sharedDirs[i].mode);
+			*has_error = true;
+			for (j = 0; j <= i; j++)
+			{
+				pfree(volumes[i]);
+			}
+			pfree(volumes);
+			return NULL;
+		}
+		totallen += strlen(volumes[i]);
+	}
+
+	if (!conf->useContainerNetwork)
+	{
+		/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
+		int gpdb_dir_sz;
+
+		if (i > 0)
+		{
+			comma = ',';
+		}
+
+		gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 16 + 1 + 4 + 1;
+		*uds_dir    = pmalloc(gpdb_dir_sz);
+		if (CurrentBackendType == BACKEND_DOCKER)
+		{
+			sprintf(*uds_dir, "%s.%d.%d.%d", IPC_GPDB_BASE_DIR, getpid(), domain_socket_no++, container_slot);
+		}
+		else if (CurrentBackendType == BACKEND_PROCESS)
+		{
+			sprintf(*uds_dir, "%s", IPC_GPDB_BASE_DIR);
+		}
+		volumes[i] = pmalloc(10 + gpdb_dir_sz + strlen(IPC_CLIENT_DIR));
+		sprintf(volumes[i], " %c\"%s:%s:rw\"", comma, *uds_dir, IPC_CLIENT_DIR);
+		totallen += strlen(volumes[i]);
+
+		/* Create the directory. */
+		if (mkdir(*uds_dir, S_IRWXU) < 0 && errno != EEXIST)
+		{
+			snprintf(backend_error_message, sizeof(backend_error_message), "Cannot create directory %s: %s", *uds_dir,
+			         strerror(errno));
+			*has_error = true;
+			for (j = 0; j <= i; j++)
+			{
+				pfree(volumes[i]);
+			}
+			pfree(volumes);
+			return NULL;
+		}
+	}
+
+	res = palloc(totallen + conf->nSharedDirs + 1 + 1);
+	pos = res;
+	for (i = 0; i < (conf->useContainerNetwork ? conf->nSharedDirs : conf->nSharedDirs + 1); i++)
+	{
+		memcpy(pos, volumes[i], strlen(volumes[i]));
+		pos += strlen(volumes[i]);
+		*pos = ' ';
+		pos++;
+		pfree(volumes[i]);
+	}
+	*pos = '\0';
+	pfree(volumes);
 
 	return res;
 }

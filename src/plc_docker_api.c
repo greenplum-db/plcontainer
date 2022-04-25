@@ -242,35 +242,7 @@ cleanup:
 int
 plc_docker_create_container(runtimeConfEntry *conf, char **name, int container_id, char **uds_dir)
 {
-	char *createRequest =
-	        "{\n"
-	        "    \"AttachStdin\": false,\n"
-	        "    \"AttachStdout\": %s,\n"
-	        "    \"AttachStderr\": %s,\n"
-	        "    \"Tty\": false,\n"
-	        "    \"Cmd\": [\"%s\"],\n"
-	        "    \"Env\": [\"EXECUTOR_UID=%d\",\n"
-	        "              \"EXECUTOR_GID=%d\",\n"
-	        "              \"DB_USER_NAME=%s\",\n"
-	        "              \"DB_NAME=%s\",\n"
-	        "              \"DB_QE_PID=%d\",\n"
-	        "              \"USE_CONTAINER_NETWORK=%s\"],\n"
-	        "    \"NetworkDisabled\": %s,\n"
-	        "    \"Image\": \"%s\",\n"
-	        "    \"HostConfig\": {\n"
-	        "        \"Binds\": [%s],\n"
-	        "        \"CgroupParent\": \"%s\",\n"
-	        "        \"Memory\": %lld,\n"
-	        "        \"CpuShares\": %lld, \n"
-	        "        \"PublishAllPorts\": true,\n"
-	        "        \"LogConfig\":{\"Type\": \"%s\"}\n"
-	        "    },\n"
-	        "    \"Labels\": {\n"
-	        "        \"owner\": \"%s\",\n"
-	        "        \"dbid\": \"%d\"\n"
-	        "    }\n"
-	        "}\n";
-	bool  has_error;
+	bool  has_error   = false;
 	char *volumeShare = get_sharing_options(conf, container_id, &has_error, uds_dir);
 
 	char          *messageBody      = NULL;
@@ -278,8 +250,8 @@ plc_docker_create_container(runtimeConfEntry *conf, char **name, int container_i
 	int            res              = 0;
 	int            createStringSize = 0;
 
-	const char *username;
-	const char *dbname;
+	const char *username                                = NULL;
+	const char *dbname                                  = NULL;
 	char        cgroupParent[RES_GROUP_PATH_MAX_LENGTH] = "";
 
 	int16 dbid = 0;
@@ -320,18 +292,81 @@ plc_docker_create_container(runtimeConfEntry *conf, char **name, int container_i
 	{
 		snprintf(cgroupParent, RES_GROUP_PATH_MAX_LENGTH, "/gpdb/%d", conf->resgroupOid);
 	}
+
+	// clang-format off
+	static const char *const DOCKER_CREATE_REQUEST =
+			"{"
+				"\"AttachStdin\": false,"
+				"\"AttachStdout\": %s," // useContainerLogging
+				"\"AttachStderr\": %s," // useContainerLogging
+				"\"Tty\": false,"
+				"\"Cmd\": [\"%s\"]," // command
+				"\"Env\": ["
+					"\"EXECUTOR_UID=%d\"," // getuid()
+					"\"EXECUTOR_GID=%d\"," // getgid()
+					"\"DB_USER_NAME=%s\"," // username
+					"\"DB_NAME=%s\"," // dbname
+					"\"DB_QE_PID=%d\"," // MyProcPid
+					"\"USE_CONTAINER_NETWORK=%s\"" // useContainerNetwork
+				"],"
+				"\"NetworkDisabled\": %s," // useContainerNetwork
+				"\"Image\": \"%s\"," // image
+				"\"HostConfig\": {"
+					"\"Binds\": [%s]," // volumeShare
+					"\"CgroupParent\": \"%s\"," // cgroupParent
+					"\"Memory\": %lld," // memoryMb
+					"\"CpuShares\": %lld," // cpuShare
+					"\"PublishAllPorts\": true,"
+					"\"LogConfig\":{\"Type\": \"%s\"}" // useContainerLogging
+				"},"
+				"\"Labels\": {"
+					"\"owner\": \"%s\"," // username
+					"\"dbid\": \"%d\"" // dbid
+				"}"
+			"}";
+	// clang-format on
+
 	/* Get Docket API "create" call JSON message body */
-	createStringSize = 100 + strlen(createRequest) + strlen(conf->command) + strlen(conf->image) + strlen(volumeShare) +
-	                   strlen(username) * 2 + strlen(dbname);
+	createStringSize = 100 +                           //
+	                   strlen(DOCKER_CREATE_REQUEST) + //
+	                   strlen(conf->command) +         //
+	                   strlen(conf->image) +           //
+	                   strlen(volumeShare) +           //
+	                   strlen(username) * 2 +          //
+	                   strlen(dbname) +                //
+	                   0;
 	messageBody = (char *)palloc(createStringSize * sizeof(char));
-	snprintf(messageBody, createStringSize, createRequest, conf->useContainerLogging ? "true" : "false",
-	         conf->useContainerLogging ? "true" : "false", conf->command, getuid(), getgid(), username, dbname,
-	         MyProcPid, conf->useContainerNetwork ? "true" : "false", conf->useContainerNetwork ? "false" : "true",
-	         conf->image, volumeShare, cgroupParent, ((long long)conf->memoryMb) * 1024 * 1024,
-	         ((long long)conf->cpuShare), conf->useContainerLogging ? default_log_dirver : "none", username, dbid);
+
+	int n = snprintf(messageBody, createStringSize,                           //
+	                 DOCKER_CREATE_REQUEST,                                   // template
+	                 conf->useContainerLogging ? "true" : "false",            // .AttachStdout
+	                 conf->useContainerLogging ? "true" : "false",            // .AttachStderr
+	                 conf->command,                                           // .Cmd
+	                 getuid(),                                                // .Env.["EXECUTOR_UID"]
+	                 getgid(),                                                // .Env.["EXECUTOR_GID"]
+	                 username,                                                // .Env.["DB_USER_NAME"]
+	                 dbname,                                                  // .Env.["DB_NAME"]
+	                 MyProcPid,                                               // .Env.["DB_QE_PID"]
+	                 conf->useContainerNetwork ? "true" : "false",            // .Env.["USE_CONTAINER_NETWORK"]
+	                 conf->useContainerNetwork ? "false" : "true",            // .NetworkDisabled
+	                 conf->image,                                             // .Image
+	                 volumeShare,                                             // .HostConfig.Binds
+	                 cgroupParent,                                            // .HostConfig.CgroupParent
+	                 ((long long)conf->memoryMb) * 1024 * 1024,               // .HostConfig.Memory
+	                 ((long long)conf->cpuShare),                             // .HostConfig.CpuShares
+	                 conf->useContainerLogging ? default_log_dirver : "none", // .HostConfig.LogConfig.Type
+	                 username,                                                // .Labels.owner
+	                 dbid                                                     // .Labels.dbid
+	);
+
+	if (n >= createStringSize)
+	{
+		backend_log(WARNING, "container create request buffer truncated.");
+	}
 
 	/* Make a call */
 	response = plcCurlRESTAPICall(PLC_HTTP_POST, "/containers/create", messageBody);
+
 	/* Free up intermediate data */
 	pfree(messageBody);
 	pfree(volumeShare);
