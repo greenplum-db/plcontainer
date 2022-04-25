@@ -1,8 +1,7 @@
 /*
-* Portions Copyright 1994-2004 The PL-J Project. All rights reserved.
-* Portions Copyright © 2016-Present Pivotal Software, Inc.
-*/
-
+ * Portions Copyright 1994-2004 The PL-J Project. All rights reserved.
+ * Portions Copyright © 2016-Present Pivotal Software, Inc.
+ */
 
 /* Postgres Headers */
 #include "postgres.h"
@@ -23,7 +22,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #ifndef PLC_PG
-  #include "utils/faultinjector.h"
+#include "utils/faultinjector.h"
 #endif
 #include "utils/memutils.h"
 #include "utils/guc.h"
@@ -47,7 +46,7 @@ PG_MODULE_MAGIC;
 #endif
 
 #ifdef PLC_PG
-    volatile bool QueryFinishPending = false;
+volatile bool QueryFinishPending = false;
 #endif
 
 /* exported functions */
@@ -59,12 +58,9 @@ PG_FUNCTION_INFO_V1(plcontainer_call_handler);
 
 static Datum plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc);
 
-static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
-                                             plcProcInfo *proc);
+static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo, plcProcInfo *proc);
 
-static Datum plcontainer_process_result(FunctionCallInfo fcinfo,
-                                        plcProcInfo *proc,
-                                        plcProcResult *presult);
+static Datum plcontainer_process_result(FunctionCallInfo fcinfo, plcProcInfo *proc, plcProcResult *presult);
 
 static void plcontainer_process_exception(plcMsgError *msg);
 
@@ -73,7 +69,7 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
 static void plcontainer_process_log(plcMsgLog *log);
 
 #if PG_VERSION_NUM <= 80399
-static char * quote_literal_cstr(const char *rawstr);
+static char *quote_literal_cstr(const char *rawstr);
 #else
 #endif
 
@@ -81,7 +77,7 @@ static void plcontainer_process_quote(plcMsgQuote *quote, plcConn *conn);
 
 static void plpython_error_callback(void *arg);
 
-static char * PLy_procedure_name(plcProcInfo *proc);
+static char *PLy_procedure_name(plcProcInfo *proc);
 
 static volatile bool DeleteBackendsWhenError;
 
@@ -98,85 +94,72 @@ static plcProcInfo *PLy_curr_procedure = NULL;
 MemoryContext pl_container_caller_context = NULL;
 
 static void plcontainer_backend_type_assign_hook(const char *newvalue, void *extra);
-char *plc_backend_type_string = NULL;
+char       *plc_backend_type_string = NULL;
 
 void _PG_init(void);
 
 static void
-plcontainer_cleanup(pg_attribute_unused() int code, pg_attribute_unused() Datum arg) {
+plcontainer_cleanup(pg_attribute_unused() int code, pg_attribute_unused() Datum arg)
+{
 	delete_containers();
 }
 
-static void 
-plcontainer_backend_type_assign_hook(const char *newvalue, void *extra) {
-    (void)(extra);
-    enum PLC_BACKEND_TYPE type = UNIMPLEMENT_TYPE;
-    if (strcmp(newvalue, "docker") == 0) {
-        type = BACKEND_DOCKER;
-    } else if (strcmp(newvalue, "process") == 0) {
-        type = BACKEND_PROCESS;
-    }
-    plc_backend_prepareImplementation(type);
+static void
+plcontainer_backend_type_assign_hook(const char *newvalue, void *extra)
+{
+	(void)(extra);
+	enum PLC_BACKEND_TYPE type = UNIMPLEMENT_TYPE;
+	if (strcmp(newvalue, "docker") == 0)
+	{
+		type = BACKEND_DOCKER;
+	}
+	else if (strcmp(newvalue, "process") == 0)
+	{
+		type = BACKEND_PROCESS;
+	}
+	plc_backend_prepareImplementation(type);
 }
-    
+
 /*
  * _PG_init() - library load-time initialization
  *
  * DO NOT make this static nor change its name!
  */
 void
-_PG_init(void) {
+_PG_init(void)
+{
 	/* Be sure we do initialization only once (should be redundant now) */
 	static bool inited = false;
-	if (inited)
-		return;
+	if (inited) return;
 
-    DefineCustomStringVariable("plcontainer.backend_type",
-                                gettext_noop("plcontainer backend type (docker|process)."),
-                                NULL,
-                                &plc_backend_type_string,
-                                "docker",
-                                PGC_USERSET, 0,
-                                NULL,
-                                plcontainer_backend_type_assign_hook,
-                                NULL);
+	DefineCustomStringVariable("plcontainer.backend_type", gettext_noop("plcontainer backend type (docker|process)."),
+	                           NULL, &plc_backend_type_string, "docker", PGC_USERSET, 0, NULL,
+	                           plcontainer_backend_type_assign_hook, NULL);
 
-	DefineCustomBoolVariable("plcontainer.enable_function_collection",
-							 "Collect current running function in container",
-							 NULL,
-							 &enable_cid,
-							 false,
-							 PGC_SUSET,
-							 0,
-							 NULL,
-							 NULL,
-							 NULL);
-	if (enable_cid)
-		init_plcontainer_shmem();
+	DefineCustomBoolVariable("plcontainer.enable_function_collection", "Collect current running function in container",
+	                         NULL, &enable_cid, false, PGC_SUSET, 0, NULL, NULL, NULL);
+	if (enable_cid) init_plcontainer_shmem();
 
 	on_proc_exit(plcontainer_cleanup, 0);
 	explicit_subtransactions = NIL;
-	inited = true;
+	inited                   = true;
 }
 
 static bool
 PLy_procedure_is_trigger(Form_pg_proc procStruct)
 {
-	return (procStruct->prorettype == TRIGGEROID ||
-			(procStruct->prorettype == OPAQUEOID &&
-			 procStruct->pronargs == 0));
+	return (procStruct->prorettype == TRIGGEROID || (procStruct->prorettype == OPAQUEOID && procStruct->pronargs == 0));
 }
 
 Datum
 plcontainer_validator(PG_FUNCTION_ARGS)
 {
-	Oid			funcoid = PG_GETARG_OID(0);
-	HeapTuple	tuple;
+	Oid          funcoid = PG_GETARG_OID(0);
+	HeapTuple    tuple;
 	Form_pg_proc procStruct;
-	bool		is_trigger;
+	bool         is_trigger;
 
-	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
-		PG_RETURN_VOID();
+	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid)) PG_RETURN_VOID();
 
 	if (!check_function_bodies)
 	{
@@ -185,11 +168,11 @@ plcontainer_validator(PG_FUNCTION_ARGS)
 
 	/* Get the new function's pg_proc entry */
 	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for function %u", funcoid);
-	procStruct = (Form_pg_proc) GETSTRUCT(tuple);
+	if (!HeapTupleIsValid(tuple)) elog(ERROR, "cache lookup failed for function %u", funcoid);
+	procStruct = (Form_pg_proc)GETSTRUCT(tuple);
 
 	is_trigger = PLy_procedure_is_trigger(procStruct);
+	(void)is_trigger; // TODO add to fix compile error. no idea why need this
 
 	ReleaseSysCache(tuple);
 
@@ -209,27 +192,27 @@ plcontainer_validator(PG_FUNCTION_ARGS)
 static char *
 PLy_procedure_name(plcProcInfo *proc)
 {
-	if (proc == NULL)
-		return "<unknown procedure>";
+	if (proc == NULL) return "<unknown procedure>";
 	return proc->proname;
 }
 
 static void
-plpython_error_callback(void __attribute__((__unused__)) *arg)
+plpython_error_callback(void __attribute__((__unused__)) * arg)
 {
-	if (PLy_curr_procedure)
-		errcontext("PLContainer function \"%s\"",
-				   PLy_procedure_name(PLy_curr_procedure));
+	if (PLy_curr_procedure) errcontext("PLContainer function \"%s\"", PLy_procedure_name(PLy_curr_procedure));
 }
 
-Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
-	Datum datumreturn = (Datum) 0;
-	int ret;
-	plcProcInfo *save_curr_proc;
+Datum
+plcontainer_call_handler(PG_FUNCTION_ARGS)
+{
+	Datum                datumreturn = (Datum)0;
+	int                  ret;
+	plcProcInfo         *save_curr_proc;
 	ErrorContextCallback plerrcontext;
 
 	/* TODO: handle trigger requests as well */
-	if (CALLED_AS_TRIGGER(fcinfo)) {
+	if (CALLED_AS_TRIGGER(fcinfo))
+	{
 		plc_elog(ERROR, "PL/Container does not support triggers");
 		return datumreturn;
 	}
@@ -241,9 +224,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 
 	ret = SPI_connect();
 	if (ret != SPI_OK_CONNECT)
-		plc_elog(ERROR, "[plcontainer] SPI connect error: %d (%s)", ret,
-		     SPI_result_code_string(ret));
-
+		plc_elog(ERROR, "[plcontainer] SPI connect error: %d (%s)", ret, SPI_result_code_string(ret));
 
 	plc_elog(DEBUG1, "Entering call handler with  PLy_curr_procedure");
 
@@ -253,7 +234,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	 */
 	plerrcontext.callback = plpython_error_callback;
 	plerrcontext.previous = error_context_stack;
-	error_context_stack = &plerrcontext;
+	error_context_stack   = &plerrcontext;
 
 	/* We need to cover this in try-catch block to catch the even of user
 	 * requesting the query termination. In this case we should forcefully
@@ -261,8 +242,6 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	 */
 	PG_TRY();
 	{
-
-
 		plcProcInfo *proc;
 		/*TODO By default we return NULL */
 		fcinfo->isnull = true;
@@ -279,16 +258,17 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	PG_CATCH();
 	{
 		/* If the reason is Cancel or Termination or Backend error. */
-		if (InterruptPending || QueryCancelPending || QueryFinishPending ||
-		    DeleteBackendsWhenError) {
-			plc_elog(DEBUG1, "Terminating containers due to user request reason("
-				"Flags for debugging: %d %d %d %d", InterruptPending,
-			     QueryCancelPending, QueryFinishPending, DeleteBackendsWhenError);
+		if (InterruptPending || QueryCancelPending || QueryFinishPending || DeleteBackendsWhenError)
+		{
+			plc_elog(DEBUG1,
+			         "Terminating containers due to user request reason("
+			         "Flags for debugging: %d %d %d %d",
+			         InterruptPending, QueryCancelPending, QueryFinishPending, DeleteBackendsWhenError);
 			delete_containers();
 			DeleteBackendsWhenError = false;
 		}
 		error_context_stack = plerrcontext.previous;
-		PLy_curr_procedure = save_curr_proc;
+		PLy_curr_procedure  = save_curr_proc;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -299,23 +279,22 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	 */
 	ret = SPI_finish();
 	if (ret != SPI_OK_FINISH)
-		plc_elog(ERROR, "[plcontainer] SPI finish error: %d (%s)", ret,
-		     SPI_result_code_string(ret));
+		plc_elog(ERROR, "[plcontainer] SPI finish error: %d (%s)", ret, SPI_result_code_string(ret));
 
 	/* Pop the error context stack */
 	error_context_stack = plerrcontext.previous;
 
 	PLy_curr_procedure = save_curr_proc;
 
-
 	return datumreturn;
 }
 
-static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
-                                             plcProcInfo *proc) {
-	char *runtime_id;
-	plcConn *conn;
-	int message_type;
+static plcProcResult *
+plcontainer_get_result(FunctionCallInfo fcinfo, plcProcInfo *proc)
+{
+	char          *runtime_id;
+	plcConn       *conn;
+	int            message_type;
 	plcMsgCallreq *req = NULL;
 	plcProcResult *result;
 	int volatile save_subxact_level = list_length(explicit_subtransactions);
@@ -323,103 +302,121 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 	PG_TRY();
 	{
 		runtimeConfEntry *runtime_conf_entry = NULL;
-		result = NULL;
+		result                               = NULL;
 
-		req = plcontainer_generate_call_request(fcinfo, proc);
+		req        = plcontainer_generate_call_request(fcinfo, proc);
 		runtime_id = parse_container_meta(req->proc.src);
-		
+
 		runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
 
-		if (runtime_conf_entry == NULL) {
-			plc_elog(ERROR, "Runtime '%s' is not defined in configuration "
-						"and cannot be used", runtime_id);
-		} 
+		if (runtime_conf_entry == NULL)
+		{
+			plc_elog(ERROR,
+			         "Runtime '%s' is not defined in configuration "
+			         "and cannot be used",
+			         runtime_id);
+		}
 		/*
 		 * We need to check the privilege in each run
 		 */
-		if (runtime_conf_entry->useUserControl) {
-			if (!plc_check_user_privilege(runtime_conf_entry->roles)){
+		if (runtime_conf_entry->useUserControl)
+		{
+			if (!plc_check_user_privilege(runtime_conf_entry->roles))
+			{
 				plc_elog(ERROR, "Current user does not have privilege to use runtime %s", runtime_id);
 			}
 		}
 
 		conn = get_container_conn(runtime_id);
-		if (conn == NULL) {
+		if (conn == NULL)
+		{
 			/* TODO: We could only remove this backend when error occurs. */
 			DeleteBackendsWhenError = true;
-			conn = start_backend(runtime_conf_entry);
+			conn                    = start_backend(runtime_conf_entry);
 			add_containerid_entry(get_container_id(runtime_id), PLy_procedure_name(proc));
 			DeleteBackendsWhenError = false;
-		} else {
+		}
+		else
+		{
 			/* Connection existed, only need update the udf name */
 			replace_containerid_entry(get_container_id(runtime_id), PLy_procedure_name(proc));
 		}
 
 		DeleteBackendsWhenError = true;
-		if (conn != NULL) {
+		if (conn != NULL)
+		{
 			int res;
 
-			res = plcontainer_channel_send(conn, (plcMessage *) req);
-#ifndef PLC_PG				
+			res = plcontainer_channel_send(conn, (plcMessage *)req);
+#ifndef PLC_PG
 			SIMPLE_FAULT_INJECTOR("plcontainer_after_send_request");
 #endif
 
-			if (res < 0) {
-				plc_elog(ERROR, "Error sending data to the client. "
-							"Maybe retry later.");
+			if (res < 0)
+			{
+				plc_elog(ERROR,
+				         "Error sending data to the client. "
+				         "Maybe retry later.");
 				return NULL;
 			}
 			free_callreq(req, true, true);
 
-			while (1) {
+			while (1)
+			{
 				plcMessage *answer;
 
 				res = plcontainer_channel_receive(conn, &answer, MT_ALL_BITS);
-#ifndef PLC_PG					
+#ifndef PLC_PG
 				SIMPLE_FAULT_INJECTOR("plcontainer_after_recv_request");
-#endif				
-				if (res < 0) {
-					plc_elog(ERROR, "Error receiving data from the client. "
-								"Maybe retry later.");
+#endif
+				if (res < 0)
+				{
+					plc_elog(ERROR,
+					         "Error receiving data from the client. "
+					         "Maybe retry later.");
 					break;
 				}
 
 				message_type = answer->msgtype;
-				switch (message_type) {
+				switch (message_type)
+				{
 					case MT_RESULT:
-						result = (plcProcResult *) pmalloc(sizeof(plcProcResult));
-						result->resmsg = (plcMsgResult *) answer;
+						result         = (plcProcResult *)pmalloc(sizeof(plcProcResult));
+						result->resmsg = (plcMsgResult *)answer;
 						result->resrow = 0;
 						break;
 					case MT_EXCEPTION:
 						/* For exception, no need to delete containers. */
 						DeleteBackendsWhenError = false;
-						plcontainer_process_exception((plcMsgError *) answer);
+						plcontainer_process_exception((plcMsgError *)answer);
 						break;
 					case MT_SQL:
-						plcontainer_process_sql((plcMsgSQL *) answer, conn, proc);
+						plcontainer_process_sql((plcMsgSQL *)answer, conn, proc);
 						break;
 					case MT_LOG:
-						plcontainer_process_log((plcMsgLog *) answer);
+						plcontainer_process_log((plcMsgLog *)answer);
 						break;
 					case MT_QUOTE:
 						plcontainer_process_quote((plcMsgQuote *)answer, conn);
 						break;
 					case MT_SUBTRANSACTION:
-						plcontainer_process_subtransaction(
-								(plcMsgSubtransaction *) answer, conn);
+						plcontainer_process_subtransaction((plcMsgSubtransaction *)answer, conn);
 						break;
 					default:
-						plc_elog(ERROR, "Received unhandled message with type id %d "
-								"from client", message_type);
+						plc_elog(ERROR,
+						         "Received unhandled message with type id %d "
+						         "from client",
+						         message_type);
 						break;
 				}
 
-				if (message_type != MT_SQL && message_type != MT_LOG
-				    && message_type != MT_SUBTRANSACTION && message_type != MT_QUOTE)
+				if (message_type != MT_SQL && message_type != MT_LOG && message_type != MT_SUBTRANSACTION &&
+				    message_type != MT_QUOTE)
 					break;
 			}
-		} else {
+		}
+		else
+		{
 			/* If conn == NULL, it should have longjump-ed earlier. */
 			plc_elog(ERROR, "Could not create or connect to container.");
 		}
@@ -449,32 +446,35 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 /*
  * Processing client results message
  */
-static Datum plcontainer_process_result(FunctionCallInfo fcinfo,
-                                        plcProcInfo *proc,
-                                        plcProcResult *presult) {
-	Datum result = (Datum) 0;
+static Datum
+plcontainer_process_result(FunctionCallInfo fcinfo, plcProcInfo *proc, plcProcResult *presult)
+{
+	Datum         result = (Datum)0;
 	plcMsgResult *resmsg = presult->resmsg;
 
-	if (resmsg->cols > 1) {
+	if (resmsg->cols > 1)
+	{
 		plc_elog(ERROR, "Functions returning multiple columns are not supported yet");
 		return result;
 	}
 
-	if (resmsg->rows == 0) {
+	if (resmsg->rows == 0)
+	{
 		return result;
 	}
 
-	if (presult->resrow >= resmsg->rows) {
+	if (presult->resrow >= resmsg->rows)
+	{
 		ereport(ERROR,
 		        (errcode(ERRCODE_CARDINALITY_VIOLATION),
-			        errmsg("Trying to access result row %d of the %d-rows result set",
-			               presult->resrow, resmsg->rows)));
+		         errmsg("Trying to access result row %d of the %d-rows result set", presult->resrow, resmsg->rows)));
 		return result;
 	}
 
-	if (resmsg->data[presult->resrow][0].isnull == 0) {
+	if (resmsg->data[presult->resrow][0].isnull == 0)
+	{
 		fcinfo->isnull = false;
-		result = proc->result.infunc(resmsg->data[presult->resrow][0].value, &proc->result);
+		result         = proc->result.infunc(resmsg->data[presult->resrow][0].value, &proc->result);
 	}
 
 	return result;
@@ -483,12 +483,11 @@ static Datum plcontainer_process_result(FunctionCallInfo fcinfo,
 /*
  * Processing client log message
  */
-static void plcontainer_process_log(plcMsgLog *log) {
-	ereport(log->level,
-	        (errcode(ERRCODE_NO_DATA),
-		        errmsg("%s", log->message)));
-	if (log->message != NULL)
-		pfree(log->message);
+static void
+plcontainer_process_log(plcMsgLog *log)
+{
+	ereport(log->level, (errcode(ERRCODE_NO_DATA), errmsg("%s", log->message)));
+	if (log->message != NULL) pfree(log->message);
 }
 
 #if PG_VERSION_NUM <= 80399
@@ -499,8 +498,8 @@ static void plcontainer_process_log(plcMsgLog *log) {
 static char *
 quote_literal_cstr(const char *rawstr)
 {
-	char	   *result;
-	int			len;
+	char       *result;
+	int         len;
 	const char *str;
 
 	len = strlen(rawstr);
@@ -515,65 +514,74 @@ quote_literal_cstr(const char *rawstr)
 #else
 #endif
 
-static void plcontainer_process_quote(plcMsgQuote *msg, plcConn *conn) {
-	int16 res = 0;
+static void
+plcontainer_process_quote(plcMsgQuote *msg, plcConn *conn)
+{
+	int16              res = 0;
 	plcMsgQuoteResult *result;
-	result = palloc(sizeof(plcMsgQuoteResult));
-	result->msgtype = MT_QUOTE_RESULT;
+	result             = palloc(sizeof(plcMsgQuoteResult));
+	result->msgtype    = MT_QUOTE_RESULT;
 	result->quote_type = msg->quote_type;
 
-	if (msg->quote_type == QUOTE_TYPE_LITERAL || msg->quote_type == QUOTE_TYPE_NULLABLE) {
+	if (msg->quote_type == QUOTE_TYPE_LITERAL || msg->quote_type == QUOTE_TYPE_NULLABLE)
+	{
 		char *str;
-		str = quote_literal_cstr(msg->msg);
+		str            = quote_literal_cstr(msg->msg);
 		result->result = PLy_strdup(str);
 		pfree(str);
-	} else if (msg->quote_type == QUOTE_TYPE_IDENT) {
+	}
+	else if (msg->quote_type == QUOTE_TYPE_IDENT)
+	{
 		result->result = PLy_strdup(quote_identifier(msg->msg));
 	}
 
-	res = plcontainer_channel_send(conn, (plcMessage *) result);
-	if (res < 0) {
+	res = plcontainer_channel_send(conn, (plcMessage *)result);
+	if (res < 0)
+	{
 		plc_elog(ERROR, "Error sending data to the client, with errno %d. ", res);
 	}
-	if (msg->msg != NULL)
-		pfree(msg->msg);
+	if (msg->msg != NULL) pfree(msg->msg);
 }
-
 
 /*
  * Processing client SQL query message
  */
-static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *proc) {
-	plcMessage *res;
+static void
+plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *proc)
+{
+	plcMessage            *res;
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
-	int retval;
+	int                    retval;
 
 	oldcontext = CurrentMemoryContext;
-	oldowner = CurrentResourceOwner;
+	oldowner   = CurrentResourceOwner;
 
 	res = handle_sql_message(msg, conn, proc);
-	if (res != NULL) {
+	if (res != NULL)
+	{
 		retval = plcontainer_channel_send(conn, res);
-		if (retval < 0) {
-			plc_elog(ERROR, "Error sending data to the client. "
-				"Maybe retry later.");
+		if (retval < 0)
+		{
+			plc_elog(ERROR,
+			         "Error sending data to the client. "
+			         "Maybe retry later.");
 			return;
 		}
-		switch (res->msgtype) {
+		switch (res->msgtype)
+		{
 			case MT_RESULT:
-				free_result((plcMsgResult *) res, true);
+				free_result((plcMsgResult *)res, true);
 				break;
 			case MT_CALLREQ:
-				free_callreq((plcMsgCallreq *) res, true, true);
+				free_callreq((plcMsgCallreq *)res, true, true);
 				break;
 			case MT_RAW:
-				free_rawmsg((plcMsgRaw *) res);
+				free_rawmsg((plcMsgRaw *)res);
 				break;
 			default:
-				ereport(ERROR,
-				        (errcode(ERRCODE_RAISE_EXCEPTION),
-					        errmsg("Returning message type '%c' from SPI call is not implemented", res->msgtype)));
+				ereport(ERROR, (errcode(ERRCODE_RAISE_EXCEPTION),
+				                errmsg("Returning message type '%c' from SPI call is not implemented", res->msgtype)));
 		}
 	}
 
@@ -590,15 +598,18 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
 /*
  * Processing client exception message
  */
-static void plcontainer_process_exception(plcMsgError *msg) {
-	if (msg->stacktrace != NULL) {
-		ereport(ERROR,
-		        (errcode(ERRCODE_RAISE_EXCEPTION),
-			        errmsg("PL/Container client exception occurred: \n %s \n %s", msg->message, msg->stacktrace)));
-	} else {
-		ereport(ERROR,
-		        (errcode(ERRCODE_RAISE_EXCEPTION),
-			        errmsg("PL/Container client exception occurred: \n %s", msg->message)));
+static void
+plcontainer_process_exception(plcMsgError *msg)
+{
+	if (msg->stacktrace != NULL)
+	{
+		ereport(ERROR, (errcode(ERRCODE_RAISE_EXCEPTION),
+		                errmsg("PL/Container client exception occurred: \n %s \n %s", msg->message, msg->stacktrace)));
+	}
+	else
+	{
+		ereport(ERROR, (errcode(ERRCODE_RAISE_EXCEPTION),
+		                errmsg("PL/Container client exception occurred: \n %s", msg->message)));
 	}
 	free_error(msg);
 }
@@ -607,11 +618,11 @@ static void plcontainer_process_exception(plcMsgError *msg) {
 static Datum
 plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 {
-	Datum						datumreturn;
-	plcProcResult * volatile 	presult = 		NULL;
-	MemoryContext volatile 		oldcontext = 	CurrentMemoryContext;
-	FuncCallContext	* volatile	funcctx =		NULL;
-	bool	 volatile 				bFirstTimeCall = false;
+	Datum datumreturn;
+	plcProcResult *volatile presult   = NULL;
+	MemoryContext volatile oldcontext = CurrentMemoryContext;
+	FuncCallContext *volatile funcctx = NULL;
+	bool volatile bFirstTimeCall      = false;
 
 	PG_TRY();
 	{
@@ -622,7 +633,7 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 			/* First Call setup */
 			if (SRF_IS_FIRSTCALL())
 			{
-				funcctx = SRF_FIRSTCALL_INIT();
+				funcctx        = SRF_FIRSTCALL_INIT();
 				bFirstTimeCall = true;
 
 				plc_elog(DEBUG1, "The funcctx pointer returned by SRF_FIRSTCALL_INIT() is: %p", funcctx);
@@ -639,66 +650,71 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 			 * the SRF result.
 			 */
 			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-		} else {
+		}
+		else
+		{
 			oldcontext = MemoryContextSwitchTo(pl_container_caller_context);
 		}
 
 		/* First time call for SRF or just a call of scalar function */
-		if (!fcinfo->flinfo->fn_retset || bFirstTimeCall) {
+		if (!fcinfo->flinfo->fn_retset || bFirstTimeCall)
+		{
 			presult = plcontainer_get_result(fcinfo, proc);
-			if (!fcinfo->flinfo->fn_retset) {
+			if (!fcinfo->flinfo->fn_retset)
+			{
 				/*
 				 * SETOF function parameters will be deleted when last row is
 				 * returned
 				 */
-				//TODO: delete proc->global when support it.
-				//PLy_function_delete_args(proc);
+				// TODO: delete proc->global when support it.
+				// PLy_function_delete_args(proc);
 			}
 		}
 
-		if (fcinfo->flinfo->fn_retset) {
-			ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+		if (fcinfo->flinfo->fn_retset)
+		{
+			ReturnSetInfo *rsi = (ReturnSetInfo *)fcinfo->resultinfo;
 
-			if (funcctx->user_fctx == NULL) {
+			if (funcctx->user_fctx == NULL)
+			{
 				plc_elog(DEBUG1, "first time call, preparing the result set...");
 
 				/* first time -- do checks and setup */
-				if (!rsi || !IsA(rsi, ReturnSetInfo)
-						|| (rsi->allowedModes & SFRM_ValuePerCall) == 0) {
+				if (!rsi || !IsA(rsi, ReturnSetInfo) || (rsi->allowedModes & SFRM_ValuePerCall) == 0)
+				{
 					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg(
-									"unsupported set function return mode"), errdetail(
-									"PL/Python set-returning functions only support returning only value per call.")));
+					        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("unsupported set function return mode"),
+					         errdetail(
+					                 "PL/Python set-returning functions only support returning only value per call.")));
 				}
 				rsi->returnMode = SFRM_ValuePerCall;
 
-				funcctx->user_fctx = (void *) presult;
+				funcctx->user_fctx = (void *)presult;
 
 				if (funcctx->user_fctx == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH), errmsg(
-									"returned object cannot be iterated"), errdetail(
-									"PL/Python set-returning functions must return an iterable object.")));
+					ereport(ERROR, (errcode(ERRCODE_DATATYPE_MISMATCH), errmsg("returned object cannot be iterated"),
+					                errdetail("PL/Python set-returning functions must return an iterable object.")));
 			}
 
-			presult = (plcProcResult *) funcctx->user_fctx;
+			presult = (plcProcResult *)funcctx->user_fctx;
 
 			if (presult->resrow < presult->resmsg->rows)
 				rsi->isDone = ExprMultipleResult;
-			else {
+			else
+			{
 				rsi->isDone = ExprEndResult;
 			}
 
-			if (rsi->isDone == ExprEndResult) {
+			if (rsi->isDone == ExprEndResult)
+			{
 				free_result(presult->resmsg, false);
 				pfree(presult);
 				MemoryContextSwitchTo(oldcontext);
 
-
 				funcctx->user_fctx = NULL;
 
-				//TODO: delete proc->global when support it.
-				//PLy_function_delete_args(proc);
+				// TODO: delete proc->global when support it.
+				// PLy_function_delete_args(proc);
 
 				SRF_RETURN_DONE(funcctx);
 			}
@@ -708,20 +724,20 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 		datumreturn = plcontainer_process_result(fcinfo, proc, presult);
 		presult->resrow += 1;
 		MemoryContextSwitchTo(oldcontext);
-
 	}
 	PG_CATCH();
 	{
-
 		/*
 		 * If there was an error the iterator might have not been exhausted
 		 * yet. Set it to NULL so the next invocation of the function will
 		 * start the iteration again.
 		 */
-		if (fcinfo->flinfo->fn_retset && funcctx->user_fctx != NULL) {
+		if (fcinfo->flinfo->fn_retset && funcctx->user_fctx != NULL)
+		{
 			funcctx->user_fctx = NULL;
 		}
-		if(presult && presult->resmsg) {
+		if (presult && presult->resmsg)
+		{
 			free_result(presult->resmsg, false);
 			pfree(presult);
 		}
@@ -730,20 +746,19 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 	}
 	PG_END_TRY();
 
-	if (fcinfo->flinfo->fn_retset) {
+	if (fcinfo->flinfo->fn_retset)
+	{
 		SRF_RETURN_NEXT(funcctx, datumreturn);
-	} else {
+	}
+	else
+	{
 		free_result(presult->resmsg, false);
 		pfree(presult);
 	}
 
 #ifndef PLC_PG
-		SIMPLE_FAULT_INJECTOR("plcontainer_before_udf_finish");
+	SIMPLE_FAULT_INJECTOR("plcontainer_before_udf_finish");
 #endif
 
 	return datumreturn;
 }
-
-
-
-

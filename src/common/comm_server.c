@@ -27,34 +27,39 @@
 // init variable
 char *dbUsername;
 char *dbName;
-int dbQePid;
+int   dbQePid;
 char *clientLanguage;
-int client_log_level;
+int   client_log_level;
 
 /*
  * Function binds the socket and starts listening on it: tcp
  */
-static int start_listener_inet() {
+static int
+start_listener_inet()
+{
 	struct sockaddr_in addr;
-	int sock;
+	int                sock;
 
 	/* FIXME: We might want to downgrade from root to normal user in container.*/
 
 	sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock == -1) {
+	if (sock == -1)
+	{
 		plc_elog(ERROR, "system call socket() fails: %s", strerror(errno));
 	}
 
-	addr = (struct sockaddr_in) {
-		.sin_family = AF_INET,
-		.sin_port   = htons(SERVER_PORT),
-		.sin_addr = {.s_addr = INADDR_ANY},
+	addr = (struct sockaddr_in){
+	        .sin_family = AF_INET,
+	        .sin_port   = htons(SERVER_PORT),
+	        .sin_addr   = {.s_addr = INADDR_ANY},
 	};
-	if (bind(sock, (const struct sockaddr *) &addr, sizeof(addr)) == -1) {
+	if (bind(sock, (const struct sockaddr *)&addr, sizeof(addr)) == -1)
+	{
 		plc_elog(ERROR, "Cannot bind the port: %s", strerror(errno));
 	}
 
-	if (listen(sock, 10) == -1) {
+	if (listen(sock, 10) == -1)
+	{
 		plc_elog(ERROR, "Cannot listen the socket: %s", strerror(errno));
 	}
 
@@ -66,27 +71,33 @@ static int start_listener_inet() {
 /*
  * Function binds the socket and starts listening on it: unix domain socket.
  */
-static int start_listener_ipc() {
+static int
+start_listener_ipc()
+{
 	struct sockaddr_un addr;
-	int sock;
-	char *uds_fn;
-	int sz;
-	char *env_str, *endptr;
-	uid_t qe_uid;
-	gid_t qe_gid;
-	long val;
+	int                sock;
+	char              *uds_fn;
+	int                sz;
+	char              *env_str, *endptr;
+	uid_t              qe_uid;
+	gid_t              qe_gid;
+	long               val;
 
 	/* filename: IPC_CLIENT_DIR + '/' + UDS_SHARED_FILE */
-	sz = strlen(IPC_CLIENT_DIR) + 1 + MAX_SHARED_FILE_SZ + 1;
+	sz     = strlen(IPC_CLIENT_DIR) + 1 + MAX_SHARED_FILE_SZ + 1;
 	uds_fn = pmalloc(sz);
 	sprintf(uds_fn, "%s/%s", IPC_CLIENT_DIR, UDS_SHARED_FILE);
-	if (strlen(uds_fn) >= sizeof(addr.sun_path)) {
-		plc_elog(ERROR, "PLContainer: The path for unix domain socket "
-			"connection is too long: %s", uds_fn);
+	if (strlen(uds_fn) >= sizeof(addr.sun_path))
+	{
+		plc_elog(ERROR,
+		         "PLContainer: The path for unix domain socket "
+		         "connection is too long: %s",
+		         uds_fn);
 	}
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock == -1) {
+	if (sock == -1)
+	{
 		plc_elog(ERROR, "system call socket() fails: %s", strerror(errno));
 	}
 
@@ -96,10 +107,13 @@ static int start_listener_ipc() {
 
 	unlink(uds_fn);
 	if (access(uds_fn, F_OK) == 0)
-		plc_elog (ERROR, "Cannot delete the file for unix domain socket "
-			"connection: %s", uds_fn);
+		plc_elog(ERROR,
+		         "Cannot delete the file for unix domain socket "
+		         "connection: %s",
+		         uds_fn);
 
-	if (bind(sock, (const struct sockaddr *) &addr, sizeof(addr)) == -1) {
+	if (bind(sock, (const struct sockaddr *)&addr, sizeof(addr)) == -1)
+	{
 		plc_elog(ERROR, "Cannot bind the addr: %s", strerror(errno));
 	}
 
@@ -111,26 +125,24 @@ static int start_listener_ipc() {
 
 	/* Get executor uid: for permission of the unix domain socket file. */
 	if ((env_str = getenv("EXECUTOR_UID")) == NULL)
-		plc_elog (ERROR, "EXECUTOR_UID is not set, something wrong on QE side");
+		plc_elog(ERROR, "EXECUTOR_UID is not set, something wrong on QE side");
 	errno = 0;
-	val = strtol(env_str, &endptr, 10);
-	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-	    (errno != 0 && val == 0) ||
-	    endptr == env_str ||
-	    *endptr != '\0') {
+	val   = strtol(env_str, &endptr, 10);
+	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) || (errno != 0 && val == 0) || endptr == env_str ||
+	    *endptr != '\0')
+	{
 		plc_elog(ERROR, "EXECUTOR_UID is wrong:'%s'", env_str);
 	}
 	qe_uid = val;
 
 	/* Get executor gid: for permission of the unix domain socket file. */
 	if ((env_str = getenv("EXECUTOR_GID")) == NULL)
-		plc_elog (ERROR, "EXECUTOR_GID is not set, something wrong on QE side");
+		plc_elog(ERROR, "EXECUTOR_GID is not set, something wrong on QE side");
 	errno = 0;
-	val = strtol(env_str, &endptr, 10);
-	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-	    (errno != 0 && val == 0) ||
-	    endptr == env_str ||
-	    *endptr != '\0') {
+	val   = strtol(env_str, &endptr, 10);
+	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) || (errno != 0 && val == 0) || endptr == env_str ||
+	    *endptr != '\0')
+	{
 		plc_elog(ERROR, "EXECUTOR_GID is wrong:'%s'", env_str);
 	}
 	qe_gid = val;
@@ -139,13 +151,15 @@ static int start_listener_ipc() {
 	 * code on the QE side could access it and clean up it later.
 	 */
 	if (chown(uds_fn, qe_uid, qe_gid) < 0)
-		plc_elog (ERROR, "Could not set ownership for file %s with owner %d, "
-			"group %d: %s", uds_fn, qe_uid, qe_gid, strerror(errno));
+		plc_elog(ERROR,
+		         "Could not set ownership for file %s with owner %d, "
+		         "group %d: %s",
+		         uds_fn, qe_uid, qe_gid, strerror(errno));
 	if (chmod(uds_fn, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) < 0) /* 0666*/
-		plc_elog (ERROR, "Could not set permission for file %s: %s",
-			         uds_fn, strerror(errno));
+		plc_elog(ERROR, "Could not set permission for file %s: %s", uds_fn, strerror(errno));
 
-	if (listen(sock, 10) == -1) {
+	if (listen(sock, 10) == -1)
+	{
 		plc_elog(ERROR, "Cannot listen the socket: %s", strerror(errno));
 	}
 
@@ -159,59 +173,79 @@ static int start_listener_ipc() {
 	return sock;
 }
 
-int start_listener() {
-	int sock;
+int
+start_listener()
+{
+	int   sock;
 	char *use_container_network;
 	char *env_str, *endptr;
-	long val;
+	long  val;
 
 	/* Get current db user name and database name and QE PID*/
-	if ((env_str = getenv("DB_USER_NAME")) == NULL) {
+	if ((env_str = getenv("DB_USER_NAME")) == NULL)
+	{
 		dbUsername = "unknown";
-	} else {
+	}
+	else
+	{
 		dbUsername = strdup(env_str);
 	}
 
-	if ((env_str = getenv("DB_NAME")) == NULL) {
+	if ((env_str = getenv("DB_NAME")) == NULL)
+	{
 		dbName = "unknown";
-	} else {
+	}
+	else
+	{
 		dbName = strdup(env_str);
 	}
 
-	if ((env_str = getenv("DB_QE_PID")) == NULL) {
+	if ((env_str = getenv("DB_QE_PID")) == NULL)
+	{
 		dbQePid = -1;
-	} else {
+	}
+	else
+	{
 		val = strtol(env_str, &endptr, 10);
-		if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-		    (errno != 0 && val == 0) ||
-		    endptr == env_str ||
-		    *endptr != '\0') {
+		if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) || (errno != 0 && val == 0) ||
+		    endptr == env_str || *endptr != '\0')
+		{
 			plc_elog(ERROR, "DB_QE_PID is wrong:'%s'", env_str);
 		}
-		dbQePid = (int) val;
+		dbQePid = (int)val;
 	}
 
-	if ((env_str = getenv("CLIENT_LANGUAGE")) == NULL) {
+	if ((env_str = getenv("CLIENT_LANGUAGE")) == NULL)
+	{
 		clientLanguage = "unknown";
-	} else {
+	}
+	else
+	{
 		clientLanguage = strdup(env_str);
 	}
 
 	use_container_network = getenv("USE_CONTAINER_NETWORK");
-	if (use_container_network == NULL) {
+	if (use_container_network == NULL)
+	{
 		use_container_network = "false";
 		plc_elog(WARNING, "USE_CONTAINER_NETWORK is not set, use default value \"no\".");
 	}
 
-	if (strcasecmp("true", use_container_network) == 0) {
+	if (strcasecmp("true", use_container_network) == 0)
+	{
 		sock = start_listener_inet();
-	} else if (strcasecmp("false", use_container_network) == 0){
-		if ((getenv("LOCAL_PROCESS_MODE") == NULL) && (geteuid() != 0 || getuid() != 0)) {
+	}
+	else if (strcasecmp("false", use_container_network) == 0)
+	{
+		if ((getenv("LOCAL_PROCESS_MODE") == NULL) && (geteuid() != 0 || getuid() != 0))
+		{
 			plc_elog(ERROR, "Must run as root and then downgrade to usual user.");
 			return -1;
 		}
 		sock = start_listener_ipc();
-	} else {
+	}
+	else
+	{
 		sock = -1;
 		plc_elog(ERROR, "USE_CONTAINER_NETWORK is set to wrong value '%s'", use_container_network);
 	}
@@ -223,45 +257,54 @@ int start_listener() {
  * Function waits for the socket to accept connection for finite amount of time
  * and errors out when the timeout is reached and no client connected
  */
-void connection_wait(int sock) {
+void
+connection_wait(int sock)
+{
 	struct timeval timeout;
-	int rv;
-	fd_set fdset;
+	int            rv;
+	fd_set         fdset;
 
-	FD_ZERO(&fdset);    /* clear the set */
+	FD_ZERO(&fdset);      /* clear the set */
 	FD_SET(sock, &fdset); /* add our file descriptor to the set */
-	timeout.tv_sec = TIMEOUT_SEC;
+	timeout.tv_sec  = TIMEOUT_SEC;
 	timeout.tv_usec = 0;
 
 	rv = select(sock + 1, &fdset, NULL, NULL, &timeout);
-	if (rv == -1) {
+	if (rv == -1)
+	{
 		plc_elog(ERROR, "Failed to select() socket: %s", strerror(errno));
 	}
-	if (rv == 0) {
-		plc_elog(ERROR, "Socket timeout - no client connected within %d "
-			"seconds", TIMEOUT_SEC);
+	if (rv == 0)
+	{
+		plc_elog(ERROR,
+		         "Socket timeout - no client connected within %d "
+		         "seconds",
+		         TIMEOUT_SEC);
 	}
 }
 
 /*
  * Function accepts the connection and initializes structure for it
  */
-plcConn *connection_init(int sock) {
-	socklen_t raddr_len;
+plcConn *
+connection_init(int sock)
+{
+	socklen_t          raddr_len;
 	struct sockaddr_in raddr;
-	struct timeval tv;
-	int connection;
+	struct timeval     tv;
+	int                connection;
 
-	raddr_len = sizeof(raddr);
-	connection = accept(sock, (struct sockaddr *) &raddr, &raddr_len);
-	if (connection == -1) {
+	raddr_len  = sizeof(raddr);
+	connection = accept(sock, (struct sockaddr *)&raddr, &raddr_len);
+	if (connection == -1)
+	{
 		plc_elog(ERROR, "failed to accept connection: %s", strerror(errno));
 	}
 
 	/* Set socket receive timeout to 500ms */
-	tv.tv_sec = 0;
+	tv.tv_sec  = 0;
 	tv.tv_usec = 500000;
-	setsockopt(connection, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval));
+	setsockopt(connection, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
 	return plcConnInit(connection);
 }
@@ -269,33 +312,39 @@ plcConn *connection_init(int sock) {
 /*
  * The loop of receiving commands from the Greenplum process and processing them
  */
-void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *), plcConn *conn) {
+void
+receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *), plcConn *conn)
+{
 	plcMessage *msg;
-	int res = 0;
+	int         res = 0;
 
 	res = plcontainer_channel_receive(conn, &msg, MT_PING_BIT);
-	if (res < 0) {
+	if (res < 0)
+	{
 		plc_elog(ERROR, "Error receiving data from the backend, %d", res);
 		return;
 	}
 
 	res = plcontainer_channel_send(conn, msg);
-	if (res < 0) {
+	if (res < 0)
+	{
 		plc_elog(ERROR, "Cannot send 'ping' message response");
 		return;
 	}
 	pfree(msg);
 
-	while (1) {
+	while (1)
+	{
 		res = plcontainer_channel_receive(conn, &msg, MT_CALLREQ_BIT);
 
-		if (res < 0) {
-				plc_elog(ERROR, "Error receiving data from the peer: %d", res);
+		if (res < 0)
+		{
+			plc_elog(ERROR, "Error receiving data from the peer: %d", res);
 			break;
 		}
-		plc_elog(DEBUG1, "Client receive a request: called function oid %u", ((plcMsgCallreq *) msg)->objectid);
-		handle_call((plcMsgCallreq *) msg, conn);
-		free_callreq((plcMsgCallreq *) msg, false, false);
+		plc_elog(DEBUG1, "Client receive a request: called function oid %u", ((plcMsgCallreq *)msg)->objectid);
+		handle_call((plcMsgCallreq *)msg, conn);
+		free_callreq((plcMsgCallreq *)msg, false, false);
 	}
 }
 

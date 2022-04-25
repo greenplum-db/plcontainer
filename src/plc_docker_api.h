@@ -11,21 +11,6 @@
 
 #include "plc_configuration.h"
 
-#define CURL_BUFFER_SIZE 8192
-
-typedef enum {
-	PLC_HTTP_GET = 0,
-	PLC_HTTP_POST,
-	PLC_HTTP_DELETE
-} plcCurlCallType;
-
-typedef struct {
-	char *data;
-	size_t bufsize;
-	size_t size;
-	int status;
-} plcCurlBuffer;
-
 int plc_docker_create_container(runtimeConfEntry *conf, char **name, int container_slot, char **uds_dir);
 
 int plc_docker_start_container(const char *name);
