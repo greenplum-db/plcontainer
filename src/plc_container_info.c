@@ -68,7 +68,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		dbid = GpIdentity.segindex;
-		
+
 		res = plc_docker_list_container(&json_result, dbid);
 		if (res < 0) {
 			plc_elog(ERROR, "Docker container list error: %s", backend_error_message);
@@ -140,7 +140,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			char *containerState = NULL;
 			struct json_object *containerObj = NULL;
 			struct json_object *containerStateObj = NULL;
-			
+
             /* Memory Usage */
             struct json_object *memoryObj = NULL;
 			struct json_object *memoryUsageObj = NULL;
@@ -211,7 +211,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				continue;
 			}
 
-			
+
 			if (!json_object_object_get_ex(labelObj, "dbid", &dbidObj)) {
 				funcctx->call_cntr++;
 				call_cntr++;
@@ -219,7 +219,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				continue;
 			}
 			dbidStr = json_object_get_string(dbidObj);
-			
+
 			if (!json_object_object_get_ex(containerObj, "Id", &idObj)) {
 				plc_elog(ERROR, "failed to get json \"Id\" field.");
 			}
@@ -455,7 +455,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			struct json_object *memoryObj = NULL;
 			struct json_object *memoryUsageObj = NULL;
 
-			
+
 			/*
 			 * Process json object by its key, and then get value
 			 */
@@ -488,7 +488,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				continue;
 			}
 
-			
+
 			if (!json_object_object_get_ex(labelObj, "dbid", &dbidObj)) {
 				funcctx->call_cntr++;
 				call_cntr++;
@@ -496,7 +496,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				continue;
 			}
 			dbidStr = json_object_get_string(dbidObj);
-			
+
 			if (!json_object_object_get_ex(containerObj, "Id", &idObj)) {
 				plc_elog(ERROR, "failed to get json \"Id\" field.");
 			}
@@ -680,7 +680,7 @@ find_containerid_entry(const char *dockerid)
     UdfContainerIdMap *cidentry = NULL;
 
     /* Copy the data into hashmap entry */
-    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);   
+    strncpy(cid, dockerid, PREFIX_CONTAINER_ID_LENGTH - 1);
     cid[31] = '\0';
 
     if (udf_container_id_map == NULL)
@@ -710,12 +710,10 @@ collect_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS)
     int	i,j;
     char  *sql = NULL;
     Tuplestorestate	   *tupstore;
-    MemoryContext	per_query_ctx;
 	MemoryContext	oldcontext;
     ReturnSetInfo  *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
     /* Prepare Tuplestore */
-    per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
     tupdesc = CreateTemplateTupleDesc(7, false);
@@ -787,5 +785,5 @@ collect_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS)
     rsinfo->setResult = tupstore;
 	MemoryContextSwitchTo(oldcontext);
 
-	return (Datum) 0;	
+	return (Datum) 0;
 }

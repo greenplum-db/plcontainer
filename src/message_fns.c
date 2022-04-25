@@ -182,8 +182,8 @@ plcProcInfo *plcontainer_procedure_get(FunctionCallInfo fcinfo) {
 				deconstruct_array(DatumGetArrayTypeP(argnamesArray), TEXTOID,
 				                  typeTup->typlen, typeTup->typbyval, typeTup->typalign,
 				                  &argnames, &argnulls, &lenOfArgnames);
-				/* UDF may contain OUT parameter, which is not considered as 
-				 * arguement number. So the length of argname list(container both INPUT and OUTPUT) 
+				/* UDF may contain OUT parameter, which is not considered as
+				 * arguement number. So the length of argname list(container both INPUT and OUTPUT)
 				 * maybe smaller than arguement number. There is no need to pass OUTPUT name to container.
 				 */
 				if (lenOfArgnames < proc->nargs) {

@@ -118,7 +118,7 @@ plcontainer_backend_type_assign_hook(const char *newvalue, void *extra) {
     }
     plc_backend_prepareImplementation(type);
 }
-    
+
 /*
  * _PG_init() - library load-time initialization
  *
@@ -190,6 +190,7 @@ plcontainer_validator(PG_FUNCTION_ARGS)
 	procStruct = (Form_pg_proc) GETSTRUCT(tuple);
 
 	is_trigger = PLy_procedure_is_trigger(procStruct);
+	(void)is_trigger; // TODO add to fix compile error. no idea why need this
 
 	ReleaseSysCache(tuple);
 
@@ -327,7 +328,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 
 		req = plcontainer_generate_call_request(fcinfo, proc);
 		runtime_id = parse_container_meta(req->proc.src);
-		
+
 		runtime_conf_entry = plc_get_runtime_configuration(runtime_id);
 
 		if (runtime_conf_entry == NULL) {
@@ -360,7 +361,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 			int res;
 
 			res = plcontainer_channel_send(conn, (plcMessage *) req);
-#ifndef PLC_PG				
+#ifndef PLC_PG
 			SIMPLE_FAULT_INJECTOR("plcontainer_after_send_request");
 #endif
 
@@ -375,9 +376,9 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 				plcMessage *answer;
 
 				res = plcontainer_channel_receive(conn, &answer, MT_ALL_BITS);
-#ifndef PLC_PG					
+#ifndef PLC_PG
 				SIMPLE_FAULT_INJECTOR("plcontainer_after_recv_request");
-#endif				
+#endif
 				if (res < 0) {
 					plc_elog(ERROR, "Error receiving data from the client. "
 								"Maybe retry later.");
@@ -743,7 +744,3 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 
 	return datumreturn;
 }
-
-
-
-

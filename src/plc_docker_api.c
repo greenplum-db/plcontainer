@@ -247,7 +247,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	plcCurlBuffer *response = NULL;
 	int res = 0;
 	int createStringSize = 0;
-	
+
 	const char *username;
 	const char *dbname;
 	char cgroupParent[RES_GROUP_PATH_MAX_LENGTH] = "";
@@ -264,7 +264,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	if (has_error == true) {
 		return -1;
 	}
-	
+
 	username = GetUserNameFromId(GetUserId());
 	dbname = MyProcPort->database_name;
 
@@ -275,7 +275,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	 * this is important (security concern) we simply use "nobody" by now.
 	 * Note this is used for IPC only at this momement.
 	 * Note: We stop to use user "nobody" currently due to different os has
-	 * different user id for "nobody". Hence simpliy pass the host OS "nobody" 
+	 * different user id for "nobody". Hence simpliy pass the host OS "nobody"
 	 * user id will have some risks.
 	 */
 
@@ -285,7 +285,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	 * and cgroup parent of containers will be 'docker' as default.
 	 * Note that this feature is only for gpdb with resource group enable.
 	 */
-	
+
 	if (conf->resgroupOid != InvalidOid) {
 		snprintf(cgroupParent,RES_GROUP_PATH_MAX_LENGTH,"/gpdb/%d",conf->resgroupOid);
 	}
@@ -309,9 +309,9 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         conf->useContainerNetwork ? "false" : "true",
 	         conf->image,
 	         volumeShare,
-	       	 cgroupParent,
+	         cgroupParent,
 	         ((long long) conf->memoryMb) * 1024 * 1024,
-			 ((long long) conf->cpuShare),
+	         ((long long) conf->cpuShare),
 	         conf->useContainerLogging ? default_log_dirver : "none",
 	         username,
 	         dbid);
@@ -622,7 +622,7 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 			backend_log(WARNING, "failed to get json \"State\" field.");
 			return -1;
 		}
-		
+
 		if (!json_object_object_get_ex(StateObj, "OOMKilled", &OOMKillObj)) {
 			backend_log(WARNING, "failed to get json \"OOMKilled\" field.");
 			return -1;

@@ -24,7 +24,7 @@
   #include "catalog/pg_type.h"
   #include "miscadmin.h"
   #include "utils/guc.h"
-  #include<stdarg.h>  
+  #include <stdarg.h>
 #endif
 #include "storage/ipc.h"
 #include "libpq/pqsignal.h"
@@ -37,8 +37,6 @@
 #include "containers.h"
 #include "plc_container_info.h"
 #include "plc_backend_api.h"
-
-
 
 typedef struct {
 	char *runtimeid;
@@ -58,8 +56,6 @@ static char *dockerid_for_cleanup;
 static void init_containers();
 
 static int check_runtime_id(const char *id);
-
-
 
 #ifndef CONTAINER_DEBUG
 
@@ -305,6 +301,7 @@ static int find_container_slot() {
 			return i;
 		}
 	}
+
 	// Fatal would cause the session to be closed
 	plc_elog(FATAL, "Single session cannot handle more than %d open containers simultaneously", MAX_CONTAINER_NUMBER);
 
@@ -449,7 +446,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 		plc_elog(ERROR, "Backend start error: %s", backend_error_message);
 		return NULL;
 	}
-	
+
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
 	plc_elog(DEBUG1, "container %s has started at %s", dockerid, asctime(timeinfo));
@@ -522,7 +519,7 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 					pfree(mresp);
 				if (res == 0) {
 					break;
-				} else {			
+				} else {
 					plc_elog(DEBUG1, "Failed to receive pong from client. Maybe expected. dockerid: %s", dockerid);
 					plcDisconnect(conn);
 				}
