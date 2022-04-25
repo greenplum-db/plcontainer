@@ -75,15 +75,15 @@ int plc_process_create_container(runtimeConfEntry *conf, char **name, int contai
 
     // parent, continue......
     *name = palloc(64);
-    sprintf(*name, "%d", pid); 
+    sprintf(*name, "%d", pid);
 
-    backend_log(LOG, "create backend process with name:%s", *name); 
+    backend_log(LOG, "create backend process with name:%s", *name);
     return res;
 }
 
 int plc_process_start_container(const char *name) {
     int res = 0;
-    backend_log(LOG, "start backend process with name:%s", name); 
+    backend_log(LOG, "start backend process with name:%s", name);
     return res;
 }
 
@@ -91,15 +91,15 @@ int plc_process_kill_container(const char *name) {
     int res = 0;
     int pid = atoi(name);
     kill(pid, SIGKILL);
-    backend_log(LOG, "kill backend process with name:%s", name); 
+    backend_log(LOG, "kill backend process with name:%s", name);
     return res;
 }
 
 int plc_process_inspect_container(const char *name, char **element, plcInspectionMode type) {
     int res = 0;
     *element = palloc(64);
-    sprintf(*element, "process:%s type:%d", name, type); 
-    backend_log(LOG, "inspect backend process with name:%s", name); 
+    sprintf(*element, "process:%s type:%d", name, type);
+    backend_log(LOG, "inspect backend process with name:%s", name);
     return res;
 }
 
@@ -107,7 +107,7 @@ int plc_process_wait_container(const char *name) {
     int res = 0;
     int pid = atoi(name);
     waitpid(pid, &res, 0);
-    backend_log(LOG, "wait backend process with name:%s", name); 
+    backend_log(LOG, "wait backend process with name:%s", name);
     return res;
 }
 
@@ -115,6 +115,6 @@ int plc_process_delete_container(const char *name) {
     int res = 0;
     int pid = atoi(name);
     kill(pid, SIGKILL);
-    backend_log(LOG, "delete backend process with name:%s", name); 
+    backend_log(LOG, "delete backend process with name:%s", name);
     return res;
 }

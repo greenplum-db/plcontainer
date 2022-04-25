@@ -66,8 +66,8 @@ static plcMsgResult *create_sql_result(bool isSelect) {
 
 	/*
 	* We do not need free this array because the array iterator will reference it.
-	* This function is under SPI_proc Memory Context, when SPI_finish is invoked, 
-	* the array will be freed automatically. 
+	* This function is under SPI_proc Memory Context, when SPI_finish is invoked,
+	* the array will be freed automatically.
 	*/
 	resTypes = palloc(result->cols * sizeof(plcTypeInfo));
 
@@ -255,8 +255,8 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 
 	oldcontext = CurrentMemoryContext;
 	oldowner = CurrentResourceOwner;
-	
-	/* 
+
+	/*
 	 * We need to make sure BeginInternalSubTransaction()
 	 * is called before we enter into PG_TRY block, and the
 	 * memory context is the function's memory context. Otherwise,
@@ -313,7 +313,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 					}
 
 					/*
-					* This invocation will make the CurrentMemoryContext to SPI_proc, 
+					* This invocation will make the CurrentMemoryContext to SPI_proc,
 					* so the memory be alloced via SPI will belong to SPI_proc,
 					* when we invoke SPI_finish() after, those memories will be freed automatically.
 					*/
@@ -417,7 +417,7 @@ plcMessage *handle_sql_message(plcMsgSQL *msg, plcConn *conn, plcProcInfo *pinfo
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-		
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();

@@ -49,9 +49,9 @@ static int16 plcontainer_subtransaction_exit(plcMsgSubtransaction *msg);
  */
 static int16
 plcontainer_subtransaction_enter() {
-	PLySubtransactionData* volatile subxactdata = NULL;	
+	PLySubtransactionData* volatile subxactdata = NULL;
 	MemoryContext oldcontext;
-	
+
 	plc_elog(DEBUG1, "subtransaction enter beigin");
 	oldcontext = CurrentMemoryContext;
 
@@ -93,7 +93,7 @@ plcontainer_subtransaction_enter() {
 static int16 plcontainer_subtransaction_exit(plcMsgSubtransaction *msg) {
 	PLySubtransactionData *subxactdata;
 
-	plc_elog(DEBUG1, "subtransaction exit begin");	
+	plc_elog(DEBUG1, "subtransaction exit begin");
 	if (explicit_subtransactions == NIL) {
 		return NO_SUBTRANSACTION_ERROR;
 	}
@@ -177,4 +177,3 @@ plcontainer_abort_open_subtransactions(int save_subxact_level) {
 		pfree(subtransactiondata);
 	}
 }
-

@@ -82,7 +82,7 @@ static void init_runtime_configurations() {
 		}
 		hash_destroy(rumtime_conf_table);
 	}
-	
+
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = RUNTIME_ID_MAX_LENGTH;
 	hash_ctl.entrysize = sizeof(runtimeConfEntry);
@@ -110,7 +110,7 @@ static void init_runtime_configurations() {
  * plcContainerConf structure that should be already allocated */
 static void parse_runtime_configuration(xmlNode *node) {
 	xmlNode *cur_node = NULL;
-	/* we add some cleanups after longjmp. longjmp may clobber the registers, 
+	/* we add some cleanups after longjmp. longjmp may clobber the registers,
 	 * so we need to add volatile qualifier to pointer. If the pointee is read
 	 * after longjmp, the pointee also need to include volatile qualifier.
 	 * */
@@ -231,7 +231,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					if (value != NULL) {
 						long memorySize = pg_atoi((char *) value, sizeof(int), 0);
 						validSetting = true;
-						
+
 						if (memorySize <= 0) {
 							plc_elog(ERROR, "container memory size couldn't be equal or less than 0, current string is %s", value);
 						} else {
@@ -244,7 +244,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					if (value != NULL) {
 						long cpuShare = pg_atoi((char *) value, sizeof(int), 0);
 						validSetting = true;
-						
+
 						if (cpuShare <= 0) {
 							plc_elog(ERROR, "container cpu share couldn't be equal or less than 0, current string is %s", value);
 						} else {
@@ -265,7 +265,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 							plc_elog(ERROR, "SETTING length of element <resource_group_id> is zero");
 						}
 						resgroupOid = (Oid) pg_atoi((char *) value, sizeof(int), 0);
-#ifndef	PLC_PG							
+#ifndef	PLC_PG
 						if (resgroupOid == InvalidOid || GetResGroupNameForId(resgroupOid) == NULL) {
 							plc_elog(ERROR, "SETTING element <resource_group_id> must be a resource group id in greenplum. " "Current setting is: %s", (char * ) value);
 						}
@@ -486,7 +486,7 @@ static int plc_refresh_container_config(bool verbose) {
  #ifdef PLC_PG
     char data_directory[1024];
 	char *env_str;
- #endif  
+ #endif
 	init_runtime_configurations();
 	/*
 	 * this initialize the library and check potential ABI mismatches
@@ -499,7 +499,7 @@ static int plc_refresh_container_config(bool verbose) {
     if ((env_str = getenv("PGDATA")) == NULL)
         plc_elog (ERROR, "PGDATA is not set");
 	snprintf(data_directory, sizeof(data_directory), "%s", env_str );
- #endif   
+ #endif
 	/* Parse the file and get the DOM */
 	sprintf(filename, "%s/%s", data_directory, PLC_PROPERTIES_FILE);
 
@@ -644,9 +644,10 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 			/* Directory for QE : IPC_GPDB_BASE_DIR + "." + PID + "." + container_slot */
 			int gpdb_dir_sz;
 
-			if (i > 0)
+			if (i > 0) {
 				comma = ',';
-			
+			}
+
 			gpdb_dir_sz = strlen(IPC_GPDB_BASE_DIR) + 1 + 16 + 1 + 16 + 1 + 4 + 1;
 			*uds_dir = pmalloc(gpdb_dir_sz);
 			if (CurrentBackendType == BACKEND_DOCKER) {

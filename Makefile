@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# 
+#
 # Copyright (c) 2016-Present Pivotal Software, Inc
 #
 #------------------------------------------------------------------------------
@@ -104,24 +104,24 @@ else
   override CLIENT_CFLAGS += -O3 -g
 endif
 
-# detected the docker API version, only for centos 6
-RHEL_MAJOR_OS=$(shell cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | awk -F '.' '{print $$1}' )
-ifeq ($(RHEL_MAJOR_OS), 6)
-  override CFLAGS +=  -DDOCKER_API_LOW
-endif
 all: all-lib
 	@echo "Build PL/Container Done."
 
 install: all installdirs install-lib install-extra install-clients
 
-clean: clean-clients clean-coverage
-distclean: distclean-config
+plcclean:
+	find ./src -name '*.o' -delete
 
-installdirs: installdirs-lib
+distclean: clean distclean-config
+clean: clean-clients clean-coverage plcclean
+
+installdirs: installdirs-lib installdirs-plcontainer
+installdirs-plcontainer:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 	$(MKDIR_P) '$(PLCONTAINERDIR)'
 
-uninstall: uninstall-lib
+uninstall: uninstall-lib uninstall-plcontainer
+uninstall-plcontainer:
 	rm -f '$(DESTDIR)$(bindir)/plcontainer'
 	rm -rf '$(PLCONTAINERDIR)'
 
@@ -135,8 +135,8 @@ install-extra: installdirs
 .PHONY: install-clients
 install-clients:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)/plcontainer_clients'
-	cp $(PYCLIENTDIR)/* $(DESTDIR)$(bindir)/plcontainer_clients/
-	cp $(RCLIENTDIR)/*  $(DESTDIR)$(bindir)/plcontainer_clients/
+	cp $(PYCLIENTDIR)/* $(DESTDIR)$(bindir)/plcontainer_clients/ || true
+	cp $(RCLIENTDIR)/*  $(DESTDIR)$(bindir)/plcontainer_clients/ || true
 
 .PHONY: installcheck
 installcheck:
@@ -149,8 +149,8 @@ build-clients:
 
 .PHONY: clean-clients
 clean-clients:
-	$(MAKE) -C $(SRCDIR)/pyclient clean
-	$(MAKE) -C $(SRCDIR)/rclient clean
+	$(MAKE) -C $(SRCDIR)/pyclient clean || true
+	$(MAKE) -C $(SRCDIR)/rclient clean || true
 
 .PHONY: clean-coverage
 clean-coverage:
