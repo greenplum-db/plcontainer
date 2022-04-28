@@ -50,5 +50,7 @@ test: plpy_array_test
 # PL/Container import pkg test
 # test: python_import_module r_import_library
 
+test: test_containernetwork
+
 # Drop the extension - need to be last
 test: drop

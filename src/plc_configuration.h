@@ -9,9 +9,13 @@
 #ifndef PLC_CONFIGURATION_H
 #define PLC_CONFIGURATION_H
 
+#include "postgres.h"
+
 #include "fmgr.h"
-#include <json-c/json.h>
+
 #include "plcontainer.h"
+
+#include <json-c/json.h>
 
 #define PLC_PROPERTIES_FILE "plcontainer_configuration.xml"
 #define RUNTIME_ID_MAX_LENGTH 64
@@ -54,6 +58,7 @@ typedef struct runtimeConfEntry {
 	bool useContainerNetwork;
 	bool useContainerLogging;
 	bool useUserControl;
+	bool enableNetwork;
 } runtimeConfEntry;
 
 /* entrypoint for all plcontainer procedures */
