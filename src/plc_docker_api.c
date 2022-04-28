@@ -305,8 +305,8 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         username,
 	         dbname,
 	         MyProcPid,
-	         conf->useContainerNetwork ? "true" : "false",
-	         conf->useContainerNetwork ? "false" : "true",
+	         conf->useContainerNetwork ? "true" : "false", // .Env.useContainerNetwork
+	         conf->enableNetwork ? "false" : "true", // .NetworkDisabled
 	         conf->image,
 	         volumeShare,
 	         cgroupParent,
