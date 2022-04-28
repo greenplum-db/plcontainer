@@ -944,7 +944,7 @@ def main():
 
         if options.subparser_name == "runtime-edit":
             if options.editor is None:
-                options.editor  = "vi"
+                options.editor  = os.getenv("EDITOR") or "vi" # default editer is 'vi'
             changed = edit_file(tmp_file, options.editor)
             if changed:
                 logger.debug('Preparing the worker pool...')
