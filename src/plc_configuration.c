@@ -174,6 +174,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 		conf_entry->cpuShare = 1024;
 		conf_entry->useContainerLogging = false;
 		conf_entry->useContainerNetwork = false;
+		conf_entry->enableNetwork = false;
 		conf_entry->resgroupOid = InvalidOid;
 		conf_entry->useUserControl = false;
 		conf_entry->roles = NULL;
@@ -253,10 +254,37 @@ static void parse_runtime_configuration(xmlNode *node) {
 						xmlFree((void *) value);
 						value = NULL;
 					}
-					/* Enforce to not use network for connection. In the future
-					 * this should be set by various backend implementation.
-					 */
+
+					// Enforce to not use network for connection. In the future
+					// this should be set by various backend implementation.
 					conf_entry->useContainerNetwork = false;
+
+					// enable or disable network in container. default is no
+					// will be force yes when use_container_network = yes
+					value = xmlGetProp(cur_node, (const xmlChar *) "enable_network");
+					if (value != NULL) {
+						validSetting = true;
+						if (strcasecmp((char *) value, "yes") == 0) {
+							conf_entry->enableNetwork = true;
+						} else if (strcasecmp((char *) value, "no") == 0) {
+							conf_entry->enableNetwork = false;
+						} else {
+							plc_elog(ERROR, "SETTING element <enable_network> only accepted \"yes\" or "
+								"\"no\" only, current string is %s", value);
+						}
+
+						xmlFree((void *) value);
+						value = NULL;
+
+						// force enable when use_container_network = true
+						if (conf_entry->enableNetwork == false && conf_entry->useContainerNetwork == true) {
+							plc_elog(WARNING,
+									"SETTING <enable_network> should be \"yes\" when <use_container_network> is \"yes\". "
+									"changing <enable_network> to \"yes\" automaticly");
+							conf_entry->enableNetwork = true;
+						}
+					}
+
 					value = xmlGetProp(cur_node, (const xmlChar *) "resource_group_id");
 					if (value != NULL) {
 						Oid resgroupOid;
@@ -456,14 +484,16 @@ static void print_runtime_configurations() {
 		{
 			plc_elog(INFO, "Container '%s' configuration", conf_entry->runtimeid);
 			plc_elog(INFO, "    image = '%s'", conf_entry->image);
+			plc_elog(INFO, "    command = '%s'", conf_entry->command);
 			plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
 			plc_elog(INFO, "    cpu_share = '%d'", conf_entry->cpuShare);
-			plc_elog(INFO, "    use container logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
-			if (conf_entry->useUserControl){
+			// skip conf_entry->useContainerNetwork because it is not user settable.
+			plc_elog(INFO, "    use_container_logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
+			plc_elog(INFO, "    enable_network  = '%s'", conf_entry->enableNetwork ? "yes" : "no");
+			if (conf_entry->useUserControl && conf_entry->roles != NULL) {
 				plc_elog(INFO, "    allowed roles list  = '%s'", conf_entry->roles);
 			}
-			if (conf_entry->resgroupOid != InvalidOid)
-			{
+			if (conf_entry->resgroupOid != InvalidOid) {
 				plc_elog(INFO, "    resource group id  = '%u'", conf_entry->resgroupOid);
 			}
 			for (j = 0; j < conf_entry->nSharedDirs; j++) {

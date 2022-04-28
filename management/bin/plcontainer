@@ -593,6 +593,11 @@ def validate_xml(filename):
                     if use_container_logging_str != 'yes' and use_container_logging_str != 'no':
                         logger.error("'use_container_logging' should be 'yes' or 'no' in runtime %s, but now: '%s'", runtime_id, use_container_logging_str)
                         raise Exception("Validation failed")
+                elif 'enable_network' in settings.attrib:
+                    enable_network_str = settings.attrib['enable_network'].lower()
+                    if enable_network_str != 'yes' and enable_network_str != 'no':
+                        logger.error("'enable_network' should be 'yes' or 'no' in runtime %s, but now: '%s'", runtime_id, enable_network_str)
+                        raise Exception("Validation failed")
                 elif 'resource_group_id' in settings.attrib:
                     resource_group_id_str = settings.attrib['resource_group_id']
                     if resource_group_id_str.isdigit() != True:
@@ -760,7 +765,7 @@ def get_conf_settings(options, elements):
         strList = setting.split("=")
         if len(strList) != 2:
             raise Exception("Bad setting format: %s" % setting)
-        if strList[0] != "memory_mb" and strList[0] != "cpu_share" and strList[0] != "use_container_logging" and strList[0] != "resource_group_id" and strList[0] != "roles":
+        if strList[0] not in ("memory_mb", "cpu_share", "use_container_logging", "resource_group_id", "roles", "enable_network"):
             raise Exception("Bad setting key: %s" % strList[0])
         elements['setting'][strList[0]] = strList[1]
 
@@ -944,7 +949,7 @@ def main():
 
         if options.subparser_name == "runtime-edit":
             if options.editor is None:
-                options.editor  = os.getenv("EDITOR") or "vi" # default editer is 'vi'
+                options.editor  = os.getenv("EDITOR", "vi") # default editer is 'vi'
             changed = edit_file(tmp_file, options.editor)
             if changed:
                 logger.debug('Preparing the worker pool...')

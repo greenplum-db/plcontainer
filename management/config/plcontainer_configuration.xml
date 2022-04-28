@@ -24,6 +24,8 @@
                  When not set, the default CPU share is 1024.
             6.3. "use_container_logging" - set to "yes" or "no" for container logging (not for backend)
                  By default, we set "no".
+            6.4. "enable_network" - set to "yes" or "no", default value is "no".
+                 when "enable_network" is "no", the inside UDF did not have network access.
         All the container images not manually defined in this file will not be
         available for use by endusers in PL/Container
     -->
