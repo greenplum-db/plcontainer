@@ -41,6 +41,18 @@ typedef struct plcSharedDir {
 	plcFsAccessMode mode;
 } plcSharedDir;
 
+typedef struct plcDeviceRequest {
+	char *driver; // .Driver in Docker API.
+
+	char **deviceid; // eg: ['1', 'UUID=xxxx'], defined by runtime
+	int ndeviceid;
+
+	char **capabilities; // eg: ['gpu', 'compute', 'utility']
+	int ncapabilities;
+
+	int _count; // field only for docker. fill in when doing serialization
+} plcDeviceRequest;
+
 /*
  * Struct runtimeConfEntry is the entry of hash table.
  * The key of hash table must be the first field of struct.
@@ -59,6 +71,8 @@ typedef struct runtimeConfEntry {
 	bool useContainerLogging;
 	bool useUserControl;
 	bool enableNetwork;
+	int ndevicerequests;
+	plcDeviceRequest *devicerequests;
 } runtimeConfEntry;
 
 /* entrypoint for all plcontainer procedures */

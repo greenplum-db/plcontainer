@@ -30,7 +30,9 @@
 static char *plc_docker_socket = "/var/run/docker.sock";
 
 // URL prefix specifies Docker API version
-static char *plc_docker_url_prefix = "http:/v1.27";
+static char *plc_docker_version_127 = "http:/v1.27";
+static char *plc_docker_version_140 = "http:/v1.40"; // support after moby v19.03
+
 static char *default_log_dirver = "journald";
 
 /* Static functions of the Docker API module */
@@ -40,7 +42,7 @@ static void plcCurlBufferFree(plcCurlBuffer *buf);
 
 static size_t plcCurlCallback(void *contents, size_t size, size_t nmemb, void *userp);
 
-static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType, char *url, char *body);
+static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType, const char *version, char *url, char *body);
 
 static int docker_inspect_string(char *buf, char **element, plcInspectionMode type);
 
@@ -85,6 +87,7 @@ static size_t plcCurlCallback(void *contents, size_t size, size_t nmemb, void *u
 
 /* Function for calling Docker REST API using Curl */
 static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
+                                         const char *version_prefix,
                                          char *url,
                                          char *body) {
 	CURL *curl;
@@ -116,13 +119,13 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 		{
 			char *param = NULL;
 			param = curl_easy_escape(curl, body ,strlen(body));
-			fullurl = palloc(strlen(plc_docker_url_prefix) + strlen(url) + strlen(param) + 2);
-			sprintf(fullurl, "%s%s%s", plc_docker_url_prefix, url, param);
+			fullurl = palloc(strlen(version_prefix) + strlen(url) + strlen(param) + 2);
+			sprintf(fullurl, "%s%s%s", plc_docker_version_127, url, param);
 			curl_easy_setopt(curl, CURLOPT_URL, fullurl);
 			curl_free(param);
 		} else {
-			fullurl = palloc(strlen(plc_docker_url_prefix) + strlen(url) + 2);
-			sprintf(fullurl, "%s%s", plc_docker_url_prefix, url);
+			fullurl = palloc(strlen(version_prefix) + strlen(url) + 2);
+			sprintf(fullurl, "%s%s", version_prefix, url);
 			curl_easy_setopt(curl, CURLOPT_URL, fullurl);
 		}
 
@@ -211,6 +214,67 @@ cleanup:
 	return buffer;
 }
 
+#define __JSON_APPEND_STRING_ARRARY(__bf, __n, __array) \
+	do { \
+		appendStringInfo(__bf, "["); \
+		int __it = 0; \
+		for (; __it < __n; __it++) { \
+			appendStringInfo(__bf, "\"%s\"", __array[__it]); \
+			if (__it != __n -1) { \
+				appendStringInfo(__bf, ","); \
+			} \
+		} \
+		appendStringInfo(__bf, "]"); \
+	} while(0)
+
+#define __JSON_APPEND_OBJECT_ARRAY(__bf, __n, __array, __out_fn) \
+	do { \
+		appendStringInfo(__bf, "["); \
+		int __it = 0; \
+		for (; __it < __n; __it++) { \
+			__out_fn(__bf, &(__array)[__it]); \
+			if (__it != __n -1) { \
+				appendStringInfo(__bf, ","); \
+			} \
+		} \
+		appendStringInfo(__bf, "]"); \
+	} while(0)
+
+#define __JSON_APPEND_WITH_NAME(__bf, __name, __end, __out_fn) \
+	do { \
+		appendStringInfo(__bf, "\""__name"\":"); \
+		__out_fn; \
+		if (!__end) { \
+			appendStringInfo(__bf, ","); \
+		} \
+	} while (0)
+
+static void _req_serialize_devicerequest(StringInfo b, const plcDeviceRequest *req) {
+	appendStringInfo(b, "{");
+
+	__JSON_APPEND_WITH_NAME(b, "Count", false, appendStringInfo(b, "%d", req->_count));
+
+	if (req->driver != NULL) {
+		__JSON_APPEND_WITH_NAME(b, "Driver", false, appendStringInfo(b, "%s", req->driver));
+	}
+
+	if (req->ndeviceid > 0) {
+		__JSON_APPEND_WITH_NAME(b, "DeviceIDs", false, __JSON_APPEND_STRING_ARRARY(b, req->ndeviceid, req->deviceid));
+	}
+
+	if (req->ncapabilities > 0) {
+		__JSON_APPEND_WITH_NAME(b, "Capabilities", true,
+			{
+				appendStringInfo(b, "[");
+				__JSON_APPEND_STRING_ARRARY(b, req->ncapabilities, req->capabilities);
+				appendStringInfo(b, "]");
+			}
+		);
+	}
+
+	appendStringInfo(b, "}");
+}
+
 int plc_docker_create_container(runtimeConfEntry *conf, char **name, int container_id, char **uds_dir) {
 	char *createRequest =
 		"{\n"
@@ -231,8 +295,9 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"        \"Binds\": [%s],\n"
 			"        \"CgroupParent\": \"%s\",\n"
 			"        \"Memory\": %lld,\n"
-			"        \"CpuShares\": %lld, \n"
-			"        \"PublishAllPorts\": true,\n"
+			"        \"CpuShares\": %lld,\n"
+			"        \"PublishAllPorts\": true,"
+			"        %s\n"
 			"        \"LogConfig\":{\"Type\": \"%s\"}\n"
 			"    },\n"
 			"    \"Labels\": {\n"
@@ -254,8 +319,11 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 
 	int16 dbid = 0;
 #ifndef PLC_PG
-	dbid = GpIdentity.segindex;
+	dbid = GpIdentity.segindex; // TODO fix this typo. dibd should = MyDatabaseOid
 #endif
+
+	StringInfoData requestBuffer; // TODO refactor the json serialize with this requestBuffer
+	initStringInfo(&requestBuffer);
 
 	/*
 	 *  no shared volumes should not be treated as an error, so we use has_error to
@@ -287,12 +355,31 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	 */
 
 	if (conf->resgroupOid != InvalidOid) {
-		snprintf(cgroupParent,RES_GROUP_PATH_MAX_LENGTH,"/gpdb/%d",conf->resgroupOid);
+		snprintf(cgroupParent, RES_GROUP_PATH_MAX_LENGTH, "/gpdb/%d",conf->resgroupOid);
 	}
+
+	if (conf->ndevicerequests > 0) {
+		StringInfo b = &requestBuffer;
+
+		int n = conf->ndevicerequests;
+		plcDeviceRequest *req = conf->devicerequests;
+
+		req->_count = req->ndeviceid;
+		if (req->ndeviceid != -1)
+			req->_count = 0; // docker: cannot set both Count and DeviceIDs on device request
+
+		appendStringInfo(b, "\n");
+
+		__JSON_APPEND_WITH_NAME(
+			b, "DeviceRequests", false,
+			__JSON_APPEND_OBJECT_ARRAY(b, n, req, _req_serialize_devicerequest)
+		);
+	}
+
 	/* Get Docket API "create" call JSON message body */
 	createStringSize = 100 + strlen(createRequest) + strlen(conf->command)
 	                   + strlen(conf->image) + strlen(volumeShare) + strlen(username) * 2
-	                   + strlen(dbname);
+	                   + strlen(dbname) + requestBuffer.len;
 	messageBody = (char *) palloc(createStringSize * sizeof(char));
 	snprintf(messageBody,
 	         createStringSize,
@@ -312,15 +399,17 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         cgroupParent,
 	         ((long long) conf->memoryMb) * 1024 * 1024,
 	         ((long long) conf->cpuShare),
+	         requestBuffer.data, // .DeviceRequests
 	         conf->useContainerLogging ? default_log_dirver : "none",
 	         username,
 	         dbid);
 
-	/* Make a call */
-	response = plcCurlRESTAPICall(PLC_HTTP_POST, "/containers/create", messageBody);
-	/* Free up intermediate data */
-	pfree(messageBody);
-	pfree(volumeShare);
+	// to use devicerequests, need docker api version >= 1.40.
+	// resolve version dynamically to compatible with old docker install
+	const char* version_prefix = conf->devicerequests == NULL ? plc_docker_version_127 : plc_docker_version_140;
+
+	response = plcCurlRESTAPICall(PLC_HTTP_POST, version_prefix, "/containers/create", messageBody);
+
 	res = response->status;
 
 	if (res == 201) {
@@ -331,6 +420,10 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 		         "Failed to create container, return code: %d, detail: %s", res, response->data);
 		res = -1;
 	}
+
+	/* Free up intermediate data */
+	pfree(volumeShare);
+	pfree(messageBody);
 
 	if (res < 0) {
 		goto cleanup;
@@ -345,6 +438,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	}
 
 cleanup:
+	pfree(requestBuffer.data);
 	plcCurlBufferFree(response);
 
 	return res;
@@ -359,7 +453,7 @@ int plc_docker_start_container(const char *name) {
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
 
-	response = plcCurlRESTAPICall(PLC_HTTP_POST, url, NULL);
+	response = plcCurlRESTAPICall(PLC_HTTP_POST, plc_docker_version_127, url, NULL);
 	res = response->status;
 
 	if (res == 204 || res == 304) {
@@ -388,7 +482,7 @@ int plc_docker_kill_container(const char *name) {
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
 
-	response = plcCurlRESTAPICall(PLC_HTTP_POST, url, NULL);
+	response = plcCurlRESTAPICall(PLC_HTTP_POST, plc_docker_version_127, url, NULL);
 	res = response->status;
 
 	plcCurlBufferFree(response);
@@ -407,7 +501,7 @@ int plc_docker_inspect_container(const char *name, char **element, plcInspection
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
 
-	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, NULL);
+	response = plcCurlRESTAPICall(PLC_HTTP_GET, plc_docker_version_127, url, NULL);
 	res = response->status;
 
 	/* We will need to handle the "no such container" case specially. */
@@ -450,7 +544,7 @@ int plc_docker_wait_container(const char *name) {
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
 
-	response = plcCurlRESTAPICall(PLC_HTTP_POST, url, NULL);
+	response = plcCurlRESTAPICall(PLC_HTTP_POST, plc_docker_version_127, url, NULL);
 	res = response->status;
 
 	plcCurlBufferFree(response);
@@ -469,7 +563,7 @@ int plc_docker_delete_container(const char *name) {
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
 
-	response = plcCurlRESTAPICall(PLC_HTTP_DELETE, url, NULL);
+	response = plcCurlRESTAPICall(PLC_HTTP_DELETE, plc_docker_version_127, url, NULL);
 	res = response->status;
 
 	/* 204 = deleted success, 404 = container not found, both are OK for delete */
@@ -495,8 +589,8 @@ int plc_docker_list_container(char **result, int dbid) {
 	int res = 0;
 
 	body = (char *) palloc((strlen(param) + 12) * sizeof(char));
-	sprintf(body, param, dbid); 
-	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, body);
+	sprintf(body, param, dbid);
+	response = plcCurlRESTAPICall(PLC_HTTP_GET, plc_docker_version_127, url, body);
 	res = response->status;
 
 	if (res == 200) {
@@ -521,7 +615,7 @@ int plc_docker_get_container_state(const char *name, char **result) {
 
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
-	response = plcCurlRESTAPICall(PLC_HTTP_GET, url, NULL);
+	response = plcCurlRESTAPICall(PLC_HTTP_GET, plc_docker_version_127, url, NULL);
 	res = response->status;
 
 	if (res == 200) {

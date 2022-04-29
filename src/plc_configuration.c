@@ -120,7 +120,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 	int image_num;
 	int command_num;
 	int num_shared_dirs;
-
+	int volatile num_device_request = 0;
 
 	runtimeConfEntry *conf_entry = NULL;
 	bool		foundPtr;
@@ -178,7 +178,6 @@ static void parse_runtime_configuration(xmlNode *node) {
 		conf_entry->resgroupOid = InvalidOid;
 		conf_entry->useUserControl = false;
 		conf_entry->roles = NULL;
-
 
 		for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 			if (cur_node->type == XML_ELEMENT_NODE) {
@@ -330,6 +329,18 @@ static void parse_runtime_configuration(xmlNode *node) {
 					processed = 1;
 				}
 
+				if (xmlStrcmp(cur_node->name, (const xmlChar *) "device_request") == 0) {
+					num_device_request++;
+					processed = 1;
+
+					value = xmlGetProp(cur_node, (const xmlChar *) "type");
+					if (value == NULL) {
+						plc_elog(ERROR, "SETTING <device_request> need \"type\" property");
+					}
+					xmlFree(value);
+					value = NULL;
+				}
+
 				/* If the tag is not known - we raise the related error */
 				if (processed == 0) {
 					plc_elog(ERROR, "Unrecognized element '%s' inside of container specification",
@@ -405,6 +416,82 @@ static void parse_runtime_configuration(xmlNode *node) {
 				}
 			}
 		}
+
+		conf_entry->ndevicerequests = num_device_request;
+		conf_entry->devicerequests = NULL;
+		if (conf_entry->ndevicerequests > 0) {
+			int devicerequests_index = 0;
+			conf_entry->devicerequests = PLy_malloc(conf_entry->ndevicerequests * sizeof(plcDeviceRequest));
+			memset(conf_entry->devicerequests, 0, conf_entry->ndevicerequests * sizeof(plcDeviceRequest));
+
+			for (cur_node = node->children; cur_node != NULL; cur_node = cur_node->next) {
+				if (cur_node->type != XML_ELEMENT_NODE ||
+					xmlStrcmp(cur_node->name, (const xmlChar*)"device_request") != 0) {
+					// skip all not '<device_request />' node
+					continue;
+				}
+
+				plcDeviceRequest *req = &conf_entry->devicerequests[devicerequests_index];
+				devicerequests_index++;
+
+				for (xmlNode *sub = cur_node->children; sub != NULL; sub = sub->next) {
+					if (sub->type != XML_ELEMENT_NODE)
+						continue;
+
+					if (xmlStrcmp(sub->name, (const xmlChar*)"deviceid") == 0)
+						req->ndeviceid++;
+					else if (xmlStrcmp(sub->name, (const xmlChar*)"capacity") == 0)
+						req->ncapabilities++;
+				}
+
+				req->deviceid = PLy_malloc(sizeof(char*) * req->ndeviceid);
+				memset(req->deviceid, 0, sizeof(char*) * req->ndeviceid);
+
+				req->ncapabilities += 1; // add one more default capacity
+				req->capabilities = PLy_malloc(sizeof(char*) * req->ncapabilities);
+				memset(req->capabilities, 0, sizeof(char*) * req->ncapabilities);
+				{ // the default capacity
+					value = xmlGetProp(cur_node, (const xmlChar*)"type");
+					req->capabilities[req->ncapabilities - 1] = plc_top_strdup((const char*)value);
+					xmlFree(value);
+					value = NULL;
+				}
+
+				int c_i = 0, dev_i = 0;
+				for (xmlNode *sub = cur_node->children; sub != NULL; sub = sub->next) {
+					if (sub->type != XML_ELEMENT_NODE)
+						continue;
+
+#define XML_READ_TEXT(to, from) \
+					do { \
+						value = xmlNodeGetContent(from); \
+						to = plc_top_strdup((const char*) value); \
+						xmlFree(value); value = NULL; \
+					} while(0)
+
+					if (xmlStrcmp(sub->name, (const xmlChar*)"deviceid") == 0) {
+						XML_READ_TEXT(req->deviceid[dev_i++], sub);
+					} else if (xmlStrcmp(sub->name, (const xmlChar*)"capacity") == 0) {
+						XML_READ_TEXT(req->capabilities[c_i++], sub);
+					} else if (xmlStrcmp(sub->name, (const xmlChar*)"driver") == 0) {
+						XML_READ_TEXT(req->driver, sub);
+					}
+#undef XML_READ_TEXT
+				}
+
+				// <device_request all="true" /> or empty device list means enable all device
+				// set ndeviceid to -1 means enable all device
+				if (req->ndeviceid == 0 || xmlHasProp(cur_node, (const xmlChar *)"all") != NULL) {
+					for (int i  = 0; i < req->ndeviceid; i ++) {
+						pfree(req->deviceid[i]);
+					}
+					pfree(req->deviceid);
+
+					req->ndeviceid = -1;
+					req->deviceid = NULL;
+				}
+			}
+		}
 	}
 	PG_CATCH();
 	{
@@ -468,43 +555,84 @@ static void free_runtime_conf_entry(runtimeConfEntry *entry) {
 		if (entry->sharedDirs[i].host)
 			pfree(entry->sharedDirs[i].host);
 	}
+
 	if (entry->sharedDirs)
 		pfree(entry->sharedDirs);
+
+	for (i = 0; i < entry->ndevicerequests; i++) {
+		plcDeviceRequest *d = &entry->devicerequests[i];
+
+		if (d->driver)
+			pfree(d->driver);
+
+		for (int j = 0; j < d->ndeviceid; j++)
+			pfree(d->deviceid[j]);
+
+		if (d->deviceid)
+			pfree(d->deviceid);
+
+		for (int j = 0; j < d->ncapabilities; j++)
+			pfree(d->capabilities[j]);
+
+		if (d->capabilities)
+			pfree(d->capabilities);
+	}
+
+	if (entry->devicerequests)
+		pfree(entry->devicerequests);
 }
 
 static void print_runtime_configurations() {
-	int j = 0;
-	if (rumtime_conf_table != NULL) {
-		HASH_SEQ_STATUS hash_status;
-		runtimeConfEntry *conf_entry;
+	if (rumtime_conf_table == NULL) {
+		return;
+	}
 
-		hash_seq_init(&hash_status, rumtime_conf_table);
+	HASH_SEQ_STATUS hash_status;
+	runtimeConfEntry *conf_entry;
 
-		while ((conf_entry = (runtimeConfEntry *) hash_seq_search(&hash_status)) != NULL)
-		{
-			plc_elog(INFO, "Container '%s' configuration", conf_entry->runtimeid);
-			plc_elog(INFO, "    image = '%s'", conf_entry->image);
-			plc_elog(INFO, "    command = '%s'", conf_entry->command);
-			plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
-			plc_elog(INFO, "    cpu_share = '%d'", conf_entry->cpuShare);
-			// skip conf_entry->useContainerNetwork because it is not user settable.
-			plc_elog(INFO, "    use_container_logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
-			plc_elog(INFO, "    enable_network  = '%s'", conf_entry->enableNetwork ? "yes" : "no");
-			if (conf_entry->useUserControl && conf_entry->roles != NULL) {
-				plc_elog(INFO, "    allowed roles list  = '%s'", conf_entry->roles);
-			}
-			if (conf_entry->resgroupOid != InvalidOid) {
-				plc_elog(INFO, "    resource group id  = '%u'", conf_entry->resgroupOid);
-			}
-			for (j = 0; j < conf_entry->nSharedDirs; j++) {
-				plc_elog(INFO, "    shared directory from host '%s' to container '%s'",
-					 conf_entry->sharedDirs[j].host,
-					 conf_entry->sharedDirs[j].container);
-				if (conf_entry->sharedDirs[j].mode == PLC_ACCESS_READONLY) {
-					plc_elog(INFO, "        access = readonly");
-				} else {
-					plc_elog(INFO, "        access = readwrite");
+	hash_seq_init(&hash_status, rumtime_conf_table);
+
+	while ((conf_entry = (runtimeConfEntry *) hash_seq_search(&hash_status)) != NULL)
+	{
+		plc_elog(INFO, "Container '%s' configuration", conf_entry->runtimeid);
+		plc_elog(INFO, "    image = '%s'", conf_entry->image);
+		plc_elog(INFO, "    command = '%s'", conf_entry->command);
+		plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
+		plc_elog(INFO, "    cpu_share = '%d'", conf_entry->cpuShare);
+		// skip conf_entry->useContainerNetwork because it is not user settable.
+		plc_elog(INFO, "    use_container_logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
+		plc_elog(INFO, "    enable_network  = '%s'", conf_entry->enableNetwork ? "yes" : "no");
+		if (conf_entry->ndevicerequests != 0) {
+			for (int i = 0; i < conf_entry->ndevicerequests; i++) {
+				plcDeviceRequest *req = &conf_entry->devicerequests[i];
+				if (req->driver != NULL) {
+					plc_elog(INFO, "    device_request[%d].driver  = '%s'", i, req->driver);
 				}
+				if (req->ndeviceid == -1) {
+					plc_elog(INFO, "    device_request[%d].deviceid  = 'all'", i);
+				}
+				for (int j = 0; j < req->ndeviceid; j++) {
+					plc_elog(INFO, "    device_request[%d].deviceid[%d]  = '%s'", i, j, req->deviceid[j]);
+				}
+				for (int j = 0; j < req->ncapabilities; j++) {
+					plc_elog(INFO, "    device_request[%d].capabilities[%d]  = '%s'", i, j, req->capabilities[j]);
+				}
+			}
+		}
+		if (conf_entry->useUserControl && conf_entry->roles != NULL) {
+			plc_elog(INFO, "    allowed roles list  = '%s'", conf_entry->roles);
+		}
+		if (conf_entry->resgroupOid != InvalidOid) {
+			plc_elog(INFO, "    resource group id  = '%u'", conf_entry->resgroupOid);
+		}
+		for (int j = 0; j < conf_entry->nSharedDirs; j++) {
+			plc_elog(INFO, "    shared directory from host '%s' to container '%s'",
+				 conf_entry->sharedDirs[j].host,
+				 conf_entry->sharedDirs[j].container);
+			if (conf_entry->sharedDirs[j].mode == PLC_ACCESS_READONLY) {
+				plc_elog(INFO, "        access = readonly");
+			} else {
+				plc_elog(INFO, "        access = readwrite");
 			}
 		}
 	}
