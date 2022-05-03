@@ -414,7 +414,10 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	}
 
 	if (res < 0) {
-		plc_elog(ERROR, "Backend create error: %s", backend_error_message);
+		ereport(ERROR,
+			(errmsg("plcontainer: backend create error"),
+			 errdetail("%s", backend_error_message))
+		);
 		return NULL;
 	}
 	plc_elog(DEBUG1, "docker created with id %s.", dockerid);
@@ -443,7 +446,10 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	if (res < 0) {
 		if (!conf->useContainerNetwork)
 			cleanup_uds(uds_fn);
-		plc_elog(ERROR, "Backend start error: %s", backend_error_message);
+		ereport(ERROR,
+			(errmsg("plcontainer: backend start error"),
+			 errdetail("%s", backend_error_message))
+		);
 		return NULL;
 	}
 
@@ -459,7 +465,10 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 			if (!conf->useContainerNetwork)
 				cleanup_uds(uds_fn);
 			PG_SETMASK(&UnBlockSig);
-			plc_elog(ERROR, "Backend inspect error: %s", backend_error_message);
+			ereport(ERROR,
+				(errmsg("plcontainer: backend inspect error"),
+				 errdetail("%s", backend_error_message))
+			);
 			return NULL;
 		}
 		port = (int) strtol(element, NULL, 10);
