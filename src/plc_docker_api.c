@@ -302,7 +302,9 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"    },\n"
 			"    \"Labels\": {\n"
 			"        \"owner\": \"%s\",\n"
-			"        \"dbid\": \"%d\"\n"
+			"        \"dbid\": \"%d\",\n"
+			"        \"databaseid\": \"%d\",\n"
+			"        \"segindex\": \"%d\"\n"
 			"    }\n"
 			"}\n";
 	bool has_error;
@@ -318,8 +320,11 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	char cgroupParent[RES_GROUP_PATH_MAX_LENGTH] = "";
 
 	int16 dbid = 0;
+	int16 database_id = 0, segindex = 0;
 #ifndef PLC_PG
-	dbid = GpIdentity.segindex; // TODO fix this typo. dibd should = MyDatabaseOid
+	dbid = GpIdentity.segindex;
+	database_id = MyDatabaseId;
+	segindex = GpIdentity.segindex;
 #endif
 
 	StringInfoData requestBuffer; // TODO refactor the json serialize with this requestBuffer
@@ -402,7 +407,9 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         requestBuffer.data, // .DeviceRequests
 	         conf->useContainerLogging ? default_log_dirver : "none",
 	         username,
-	         dbid);
+	         dbid,
+	         database_id,
+	         segindex);
 
 	// to use devicerequests, need docker api version >= 1.40.
 	// resolve version dynamically to compatible with old docker install
