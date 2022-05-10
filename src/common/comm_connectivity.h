@@ -51,7 +51,7 @@ typedef struct plcConn {
 
 #ifndef PLC_CLIENT
 
-plcConn *plcConnect_inet(int port);
+plcConn *plcConnect_inet(const char *hostname, int port);
 
 plcConn *plcConnect_ipc(char *uds_fn);
 

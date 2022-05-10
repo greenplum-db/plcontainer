@@ -11,16 +11,38 @@
 
 #include "plc_configuration.h"
 
-int plc_process_create_container(runtimeConfEntry *conf, char **name, int container_slot, char **uds_dir);
+int plc_process_create_container(
+		const runtimeConfEntry *conf,            // input the runtime config
+		const backendConnectionInfo *backend,    // input the backend connection info
+		const int container_slot,                // input the slot id used to generate uds name
+		runtimeConnectionInfo *connection        // output the new process connection info
+);
 
-int plc_process_start_container(const char *name);
+int plc_process_start_container(
+		const backendConnectionInfo *backend,    // input the backend connection info
+		runtimeConnectionInfo *connection        // output the new process connection info
+);
 
-int plc_process_kill_container(const char *name);
+int plc_process_kill_container(
+		const backendConnectionInfo *backend,    // input the backend connection info
+		const runtimeConnectionInfo *connection  // input the new process connection info
+);
 
-int plc_process_inspect_container(const char *name, char **element, plcInspectionMode type);
+int plc_process_inspect_container(
+		const plcInspectionMode type,            // the inspect method
+		const backendConnectionInfo *backend,    // input the backend connection info
+		const runtimeConnectionInfo *connection, // input the new process connection info
+		char **element                           // the output
+);
 
-int plc_process_wait_container(const char *name);
+int plc_process_wait_container(
+		const backendConnectionInfo *backend,    // input the backend connection info
+		const runtimeConnectionInfo *connection  // input the new process connection info
+);
 
-int plc_process_delete_container(const char *name);
+int plc_process_delete_container(
+		const backendConnectionInfo *backend,    // input the backend connection info
+		const runtimeConnectionInfo *connection  // input the new process connection info
+);
 
 #endif /* PLC_PROCESS_API_H */
