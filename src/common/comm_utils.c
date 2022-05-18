@@ -7,6 +7,9 @@
  *------------------------------------------------------------------------------
  */
 #include "comm_utils.h"
+#ifdef __GLIBC__
+#include <execinfo.h> // not exist in musl
+#endif
 
 #ifndef PLC_CLIENT
 
@@ -95,6 +98,7 @@ static void set_signal_handler(int signo, int sigflags, signal_handler func) {
 }
 
 static void sigsegv_handler() {
+#ifdef __GLIBC__
 	void *stack[64];
 	int size;
 
@@ -107,6 +111,8 @@ static void sigsegv_handler() {
 	 */
 	backtrace_symbols_fd(stack, size, STDERR_FILENO);
 	fflush(stderr);
+#endif
+	// FIXME: musl doesn't support execinfo.h. Use libunwind to rewrite this function.
 
 	raise(SIGSEGV);
 }
