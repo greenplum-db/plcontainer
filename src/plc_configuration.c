@@ -439,6 +439,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 		conf_entry->resgroupOid = InvalidOid;
 		conf_entry->useUserControl = false;
 		conf_entry->roles = NULL;
+		conf_entry->backend = NULL;
 
 		for (cur_node = node->children; cur_node; cur_node = cur_node->next) {
 			if (cur_node->type == XML_ELEMENT_NODE) {
