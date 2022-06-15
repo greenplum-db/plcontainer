@@ -18,6 +18,7 @@
 #include "common/comm_utils.h"
 #include "common/comm_connectivity.h"
 #include "common/comm_server.h"
+#include "common/comm_log.h"
 #include "pycall.h"
 #include "pyerror.h"
 
