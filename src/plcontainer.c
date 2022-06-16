@@ -50,6 +50,19 @@ PG_MODULE_MAGIC;
     volatile bool QueryFinishPending = false;
 #endif
 
+#include <sys/mman.h>
+#include <sys/stat.h> /* For mode constants */
+#include <fcntl.h> /* For O_* constants */
+static int shmem_fd = 0;
+static uint8* shmem_mem = NULL;
+
+#include <linux/futex.h>      /* Definition of FUTEX_* constants */
+#include <sys/syscall.h>      /* Definition of SYS_* constants */
+#include <unistd.h>
+static const int S = 8 + 128;
+
+#include <stdatomic.h>
+
 /* exported functions */
 Datum plcontainer_validator(PG_FUNCTION_ARGS);
 
@@ -344,6 +357,43 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 			}
 		}
 
+		if (strcmp(runtime_conf_entry->runtimeid, "check") == 0) {
+			if (shmem_fd == 0) {
+				shmem_fd = shm_open("__plc_check", O_RDWR, 0777);
+				shmem_mem = mmap(NULL, S, PROT_READ | PROT_WRITE, MAP_SHARED, shmem_fd, 0);
+			}
+
+			// [0...4)   futex worker blocking on
+			// [4...8)   futex master blocking on
+			// [8...128) user data
+			_Atomic uint8_t *worker = (_Atomic uint8_t*) &shmem_mem[0];
+			_Atomic uint8_t *master = (_Atomic uint8_t*) &shmem_mem[4];
+			uint8 *usdata = &shmem_mem[8];
+
+			// put data in shmem
+			memset(usdata, 0, 128);
+
+			// wake up worker
+			atomic_store(worker, 1);
+			syscall(SYS_futex, worker, FUTEX_WAKE, INT_MAX, NULL, NULL, 0);
+
+			// wait worker wake me
+			syscall(SYS_futex, master, FUTEX_WAIT, 0, NULL, NULL, 0);
+			atomic_store(master, 0);
+
+			// read data from memory
+			for (int i = 0; i < 128; i++) {
+				Assert(usdata[i] == 1);
+			}
+
+			result = (plcProcResult *) pmalloc(sizeof(plcProcResult));
+			result->resmsg = palloc0(sizeof(plcMsgResult));
+			result->resmsg->msgtype = MT_RESULT;
+			result->resmsg->rows = 0;
+			result->resrow = 0;
+			goto out;
+		}
+
 		conn = get_container_conn(runtime_id);
 		if (conn == NULL) {
 			/* TODO: We could only remove this backend when error occurs. */
@@ -438,6 +488,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 	}
 	PG_END_TRY();
 
+out:
 	plcontainer_abort_open_subtransactions(save_subxact_level);
 
 	DeleteBackendsWhenError = false;
