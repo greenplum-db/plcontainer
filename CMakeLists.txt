@@ -4,7 +4,13 @@ project(plcontainer)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Gpdb.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Git.cmake)
 
+GitAbbRev_Get(PLCONTAINER_GIT_VERSION)
+configure_file (
+    "${PROJECT_SOURCE_DIR}/src/config.h.in"
+    "${PROJECT_BINARY_DIR}/config.h"
+)
 execute_process(
     OUTPUT_VARIABLE my_UID
     COMMAND
@@ -43,7 +49,8 @@ ExternalProject_Add(
     -D LIBXML2_WITH_ICONV=OFF
     -D LIBXML2_WITH_LZMA=OFF
     -D LIBXML2_WITH_PYTHON=OFF
-    -D LIBXML2_WITH_ZLIB=OFF)
+    -D LIBXML2_WITH_ZLIB=OFF
+    -D CMAKE_INSTALL_LIBDIR=lib)
 
 ExternalProject_Add(
     json-c
@@ -61,6 +68,7 @@ ExternalProject_Add(
     -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -D CMAKE_INSTALL_PREFIX=${deps_INSTALL_DIR}
     -D DISABLE_EXTRA_LIBS=ON
+    -D CMAKE_INSTALL_LIBDIR=lib
     )
 
 # Build plcontainer extension
@@ -73,11 +81,19 @@ set_target_properties(plcontainer
     C_STANDARD 99)
 target_include_directories(plcontainer PRIVATE
     ${PG_INCLUDE_DIR_SERVER}
-    ${deps_INSTALL_DIR}/include/libxml2
-    ${deps_INSTALL_DIR}/include/json-c)
+    ${PROJECT_BINARY_DIR}
+    ${deps_INSTALL_DIR}/include
+    ${deps_INSTALL_DIR}/include/libxml2)
 target_link_libraries(plcontainer PRIVATE
     ${deps_INSTALL_DIR}/lib/libxml2.a
     ${deps_INSTALL_DIR}/lib/libjson-c.a)
+add_dependencies(
+     plcontainer
+     libxml
+     json-c
+)
+
+ 
 
 # Build client
 set(PYCLIENT_IMAGE python39.alpine)
