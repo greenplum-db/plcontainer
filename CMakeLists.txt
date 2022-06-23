@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.18)
 
+# error on pipeline https://stackoverflow.com/questions/53633705/cmake-the-c-compiler-is-not-able-to-compile-a-simple-test-program
+set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
+
 project(plcontainer)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Gpdb.cmake)
