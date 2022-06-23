@@ -1,0 +1,4 @@
+Used by pl/container to implement the Remote Procedure calls from Pl/container https://github.com/greenplum-db/plcontainer
+
+Pl/Container is a procedural language for Greenplum/PostgreSQL which allows for untrusted languages to be sandboxed
+into docker containers and run as trusted languages

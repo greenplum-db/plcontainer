@@ -1,0 +1,6 @@
+/rclient
+/*.so
+/bin/rclient
+/bin/*.so
+*.o
+*.d
