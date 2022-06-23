@@ -3,5 +3,9 @@ FROM alpine:latest
 RUN apk add --no-cache gcc g++ cmake make musl-dev R R-dev
 
 RUN mkdir -p /clientdir
+
+ENV R_HOME "/usr/lib64/R"
+ENV LD_LIBRARY_PATH "/clientdir:$LD_LIBRARY_PATH"
+
 WORKDIR /clientdir
 
