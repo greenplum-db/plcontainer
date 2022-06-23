@@ -137,15 +137,33 @@ function install_gpdb() {
     source /home/gpadmin/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
 }
 
+# Dependency installers
+# Ideally all dependencies should exist in the docker image. Use this script to install them only
+# if it is more difficult to change it in the image side.
+# Download the dependencies with concourse resources as much as possible, then we could benifit from
+# concourse's resource cache system.
+install_cmake() {
+    # cmake_new to avoid name collision with the docker image.
+    if [ -e "${CMAKE_HOME}" ]; then
+        echo "cmake might have been installed in ${CMAKE_HOME}"
+        return
+    fi
+    echo "Installing cmake to ${CMAKE_HOME}..."
+    pushd bin_cmake
+    mkdir -p "${CMAKE_HOME}"
+    sh cmake-*-linux-x86_64.sh --skip-license --prefix="${CMAKE_HOME}"
+    popd
+}
+
 function install_extra_build_dependencies() {
     case "$OS_NAME" in
     rhel7)
         yum -y install docker
         ;;
-    rhel8)
-        ;;
-    ubuntu*)
-        ;;
+    rhel8) ;;
+
+    ubuntu*) ;;
+
     *) ;;
     esac
 }
@@ -159,8 +177,9 @@ function setup_gpadmin_bashrc() {
 }
 
 # Setup common environment
-install_extra_build_dependencies
 setup_gpadmin
+install_cmake
+install_extra_build_dependencies
 install_gpdb
 setup_gpadmin_bashrc
 
