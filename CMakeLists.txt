@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
 
-# error on pipeline https://stackoverflow.com/questions/53633705/cmake-the-c-compiler-is-not-able-to-compile-a-simple-test-program
-set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 
 project(plcontainer)
 
@@ -33,6 +31,10 @@ endif()
 set(DOWNLOAD_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/downloads
     CACHE STRING "Directory for downloading external project")
+
+# error on pipeline https://stackoverflow.com/questions/53633705/cmake-the-c-compiler-is-not-able-to-compile-a-simple-test-program
+SET (CMAKE_C_COMPILER_WORKS 1)
+SET (CMAKE_CXX_COMPILER_WORKS 1)
 
 # generate 'compile_commands.json'
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
