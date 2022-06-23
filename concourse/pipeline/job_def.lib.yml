@@ -101,7 +101,7 @@ config:
   platform: linux
   run:
     path: plcontainer_src/concourse/scripts/entry.sh
-      args:
+    args:
       - build_and_test
   inputs:
     - name: bin_gpdb
