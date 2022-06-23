@@ -192,9 +192,11 @@ build_and_test)
     source /home/gpadmin/plcontainer_src/concourse/scripts/docker-lib.sh
     start_docker
 
+    # run the build
+    /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh
+
     su gpadmin -c \
-        "source /home/gpadmin/.bashrc &&\
-        /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh"
+        "source /home/gpadmin/.bashrc && echo Done"
     ;;
 *)
     echo "Unknown target task $1"
