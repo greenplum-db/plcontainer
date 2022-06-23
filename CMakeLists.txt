@@ -11,6 +11,10 @@ configure_file (
     "${PROJECT_SOURCE_DIR}/src/config.h.in"
     "${PROJECT_BINARY_DIR}/config.h"
 )
+configure_file (
+    "${PROJECT_SOURCE_DIR}/src/config.h.in"
+    "${PROJECT_SOURCE_DIR}/src/common/config.h"
+)
 execute_process(
     OUTPUT_VARIABLE my_UID
     COMMAND
