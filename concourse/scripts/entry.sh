@@ -192,6 +192,7 @@ build_and_test)
     start_docker
     # cmake executable
     export PATH=${CMAKE_HOME}/bin:$PATH
+    ln -s /usr/libexec/docker/docker-runc-current /usr/bin/docker-runc
     # run the build need run as root
     /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh
 
