@@ -4,7 +4,7 @@ set -e
 
 workspace=${WORKSPACE:-"$HOME/workspace"}
 fly=${FLY:-"fly"}
-proj_name=gp-data-science-bundle
+proj_name=plcontainer
 echo "'workspace' location: ${workspace}"
 echo "'fly' command: ${fly}"
 echo ""
