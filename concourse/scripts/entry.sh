@@ -168,7 +168,6 @@ setup_gpadmin_bashrc
 # gpadmin. bashrc won't be read by 'su', it needs to be sourced explicitly.
 case "$1" in
 build_and_test)
-    systemctl start docker
     source /home/gpadmin/plcontainer_src/concourse/scripts/docker-lib.sh
     start_docker
 
