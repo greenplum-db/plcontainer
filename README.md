@@ -86,3 +86,11 @@ PL/Container supports various parameters for docker run, and also it supports so
 PL/Container is maintained by a core team of developers with commit rights to the [plcontainer repository](https://github.com/greenplum-db/plcontainer) on GitHub. At the same time, we are very eager to receive contributions and any discussions about it from anybody in the wider community.
 
 Everyone interests PL/Container can [subscribe gpdb-dev](mailto:gpdb-dev+subscribe@greenplum.org) mailist list, send related topics to [gpdb-dev](mailto:gpdb-dev@greenplum.org), create issues or submit PR.
+
+### License
+
+The 'plcontainer' and 'pyclient' are distributed under the [BSD license](BSD LICENSE) and the [license described here](LICENSE).
+
+---
+
+With the exception of the 'rclient' source code is distributed under [GNU GPL v3](src/rclient/COPYING).
