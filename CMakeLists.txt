@@ -102,9 +102,6 @@ add_dependencies(
      json-c
 )
 
-set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
-set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
-
 # Build client
 set(PYCLIENT_IMAGE python39.alpine)
 add_custom_target(pyclient_image

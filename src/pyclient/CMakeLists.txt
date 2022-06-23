@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 project(pyclient)
-
+SET (CMAKE_C_COMPILER_WORKS 1)
+SET (CMAKE_CXX_COMPILER_WORKS 1)
 find_package(Python COMPONENTS Interpreter Development)
 
 file(GLOB pyclient_SRC ../common/*.c *.c)
