@@ -1,6 +1,9 @@
-FROM python:3.9-alpine
+FROM python:3.9-alpine3.13
+# FROM python:3.9-alpine
+# Why we choose alpine3.13 rather than alpine
+# because https://gitlab.alpinelinux.org/alpine/aports/-/issues/12321 
 
-RUN apk add --no-cache gcc g++ cmake make musl-dev build-base
+RUN apk add --no-cache gcc g++ cmake make musl-dev
 
 RUN mkdir -p /clientdir
 WORKDIR /clientdir
