@@ -1,6 +1,6 @@
 FROM python:3.9-alpine
 
-RUN apk add --no-cache gcc g++ cmake make musl-dev
+RUN apk add --no-cache gcc g++ cmake make musl-dev build-base
 
 RUN mkdir -p /clientdir
 WORKDIR /clientdir
