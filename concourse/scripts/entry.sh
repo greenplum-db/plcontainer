@@ -159,7 +159,7 @@ install_cmake() {
 function install_extra_build_dependencies() {
     case "$OS_NAME" in
     rhel7)
-        yum -y install docker
+        yum -y install docker postgresql-devel
         ;;
     rhel8) ;;
 
