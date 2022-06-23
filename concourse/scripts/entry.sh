@@ -45,6 +45,7 @@ _determine_os() {
 }
 
 OS_NAME=$(_determine_os)
+CMAKE_HOME="/opt/cmake_new"
 
 # Global ENV defines
 # /tmp/build/xxxxx. it should not be used in normal conditions. Use /home/gpadmin instead.
@@ -173,6 +174,7 @@ function setup_gpadmin_bashrc() {
         echo "source /usr/local/greenplum-db-devel/greenplum_path.sh"
         echo "source /home/gpadmin/gpdb_src/gpAux/gpdemo/gpdemo-env.sh"
         echo "export OS_NAME=${OS_NAME}"
+        echo "export PATH=${CMAKE_HOME}/bin:\$PATH"
     } >>/home/gpadmin/.bashrc
 }
 
