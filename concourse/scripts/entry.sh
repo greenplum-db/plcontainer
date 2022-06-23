@@ -196,6 +196,7 @@ build_and_test)
     # run the build need run as root
     /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh
 
+    # TODO the plcontainer test and build
     su gpadmin -c \
         "source /home/gpadmin/.bashrc && echo Done"
     ;;
