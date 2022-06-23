@@ -212,6 +212,13 @@ resources:
     regexp: plcontainer/released/gpdb6/plcontainer-(.*).gppkg
 
 # Other dependencies
+- name: bin_cmake
+  type: gcs
+  source:
+    bucket: gpdb-extensions-concourse-resources
+    json_key: ((extensions-gcs-service-account-key))
+    regexp: dependencies/cmake-(.*)-linux-x86_64.sh
+
 - name: slack_notify
   type: slack-alert
   source:

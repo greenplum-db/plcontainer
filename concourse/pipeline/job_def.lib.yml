@@ -107,6 +107,7 @@ config:
     - name: bin_gpdb
     - name: plcontainer_src
     - name: gpdb_src
+    - name: bin_cmake
   outputs:
     - name: plcontainer_src
     - name: plcontainer_artifacts
@@ -122,6 +123,7 @@ input_mapping:
 #@   res_map = param["res_map"]
 #@   trigger = param["trigger"]
 #@   conf = param["conf"]
+#@   add_res_by_name(res_map, "bin_cmake")
 #@   add_res_by_name(res_map, param["gpdb_src"])
 #@   add_res_by_conf(res_map, conf)
 name: #@ build_test_job_name(conf)
@@ -135,6 +137,7 @@ plan:
   _: #@ template.replace(to_get)
 #@   end
 - in_parallel:
+  - get: bin_cmake
   - get: gpdb_src
     resource: #@ param["gpdb_src"]
   - get: #@ conf["res_test_image"]
