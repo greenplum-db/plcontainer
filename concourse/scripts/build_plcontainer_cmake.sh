@@ -5,7 +5,7 @@ set -exo pipefail
 function build_rclient() {
     [ -f /opt/gcc_env.sh ] && source /opt/gcc_env.sh
     pushd /home/gpadmin/plcontainer_src
-    popd 
+    popd
 
     pushd /home/gpadmin/plcontainer_artifacts
 

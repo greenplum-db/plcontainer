@@ -159,7 +159,11 @@ install_cmake() {
 function install_extra_build_dependencies() {
     case "$OS_NAME" in
     rhel7)
-        yum install -y yum-utils  
+        yum install -y yum-utils
+        # because using `yum install docker` did not have the command --data-root
+        # if we do not choose `--data-root` we maybe increase the size
+        # and then cause a `can not create volume` problem
+        # so we add the docker source and install the latest one
         yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
         yum install -y docker-ce docker-ce-cli postgresql-devel
         ;;
