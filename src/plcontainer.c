@@ -253,10 +253,12 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	 * to switch back to the pl_container_caller_context at plcontainer_get_result*/
 	pl_container_caller_context = CurrentMemoryContext;
 
+#if 1
 	ret = SPI_connect();
 	if (ret != SPI_OK_CONNECT)
 		plc_elog(ERROR, "[plcontainer] SPI connect error: %d (%s)", ret,
 		     SPI_result_code_string(ret));
+#endif
 
 
 	plc_elog(DEBUG1, "Entering call handler with  PLy_curr_procedure");
@@ -311,10 +313,12 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	 *  SPI_finish() will clear the old memory context. Upstream code place it at earlier
 	 *  part of code, but we need to place it here.
 	 */
+#if 1
 	ret = SPI_finish();
 	if (ret != SPI_OK_FINISH)
 		plc_elog(ERROR, "[plcontainer] SPI finish error: %d (%s)", ret,
 		     SPI_result_code_string(ret));
+#endif
 
 	/* Pop the error context stack */
 	error_context_stack = plerrcontext.previous;
@@ -358,6 +362,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		}
 
 		if (strcmp(runtime_conf_entry->runtimeid, "check") == 0) {
+#if 1
 			if (shmem_fd == 0) {
 				shmem_fd = shm_open("__plc_check", O_RDWR, 0777);
 				shmem_mem = mmap(NULL, S, PROT_READ | PROT_WRITE, MAP_SHARED, shmem_fd, 0);
@@ -378,14 +383,23 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 			syscall(SYS_futex, worker, FUTEX_WAKE, INT_MAX, NULL, NULL, 0);
 
 			// wait worker wake me
-			syscall(SYS_futex, master, FUTEX_WAIT, 0, NULL, NULL, 0);
+			int count = 1000;
+			while (!atomic_load(master) && count) {
+				count --;
+			}
+			if (!count) {
+				syscall(SYS_futex, master, FUTEX_WAIT, 0, NULL, NULL, 0);
+			}
 			atomic_store(master, 0);
 
 			// read data from memory
+#if 0
 			for (int i = 0; i < 128; i++) {
 				Assert(usdata[i] == 1);
 			}
+#endif
 
+#endif
 			result = (plcProcResult *) pmalloc(sizeof(plcProcResult));
 			result->resmsg = palloc0(sizeof(plcMsgResult));
 			result->resmsg->msgtype = MT_RESULT;

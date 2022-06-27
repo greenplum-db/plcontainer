@@ -715,10 +715,12 @@ char *parse_container_meta(const char *source) {
 
 	runtime_id[last - first + 1] = '\0';
 
+#if 0
 	regt = check_runtime_id(runtime_id);
 	if (regt == -1) {
 		plc_elog(ERROR, "Container id '%s' contains illegal character for container.", runtime_id);
 	}
+#endif
 
 	return runtime_id;
 }

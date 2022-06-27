@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <sys/un.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <libgen.h>
 
 #include "comm_utils.h"
@@ -421,6 +422,8 @@ plcConn *plcConnect_inet(int port) {
 	tv.tv_sec = 0;
 	tv.tv_usec = 500000;
 	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval));
+	int one = 1;
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(int));
 
 	result = plcConnInit(sock);
 	init_pplan_slots(result);

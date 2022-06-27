@@ -37,7 +37,13 @@ int main(void) {
 
 	while(true) {
 		// wait master wake me
-		syscall(SYS_futex, worker, FUTEX_WAIT, 0, NULL, NULL, 0);
+		int count = 1000;
+		while (!atomic_load(worker) && count) {
+			count --;
+		}
+		if (!count) {
+			syscall(SYS_futex, worker, FUTEX_WAIT, 0, NULL, NULL, 0);
+		}
 		atomic_store(worker, 0);
 
 		// read data from memory and process
