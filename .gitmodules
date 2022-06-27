@@ -1,3 +1,0 @@
-[submodule "src/rclient"]
-	path = src/rclient
-	url = https://github.com/greenplum-db/rclient.git
