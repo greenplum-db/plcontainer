@@ -159,7 +159,9 @@ install_cmake() {
 function install_extra_build_dependencies() {
     case "$OS_NAME" in
     rhel7)
-        yum -y install docker postgresql-devel
+        yum install -y yum-utils  
+        yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+        yum install -y docker-ce docker-ce-cli postgresql-devel
         ;;
     rhel8) ;;
 

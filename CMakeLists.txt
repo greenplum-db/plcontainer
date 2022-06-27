@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
 
-
 project(plcontainer)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Gpdb.cmake)
@@ -8,11 +7,11 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Git.cmake)
 
 GitAbbRev_Get(PLCONTAINER_GIT_VERSION)
-configure_file (
+configure_file(
     "${PROJECT_SOURCE_DIR}/src/config.h.in"
     "${PROJECT_BINARY_DIR}/config.h"
 )
-configure_file (
+configure_file(
     "${PROJECT_SOURCE_DIR}/src/config.h.in"
     "${PROJECT_SOURCE_DIR}/src/common/config.h"
 )
@@ -23,18 +22,14 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX
-      "${PG_HOME}"
-      CACHE PATH "default install prefix" FORCE)
+    set(CMAKE_INSTALL_PREFIX
+        "${PG_HOME}"
+        CACHE PATH "default install prefix" FORCE)
 endif()
 
 set(DOWNLOAD_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/downloads
     CACHE STRING "Directory for downloading external project")
-
-# error on pipeline https://stackoverflow.com/questions/53633705/cmake-the-c-compiler-is-not-able-to-compile-a-simple-test-program
-SET (CMAKE_C_COMPILER_WORKS 1)
-SET (CMAKE_CXX_COMPILER_WORKS 1)
 
 # generate 'compile_commands.json'
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -59,7 +54,8 @@ ExternalProject_Add(
     -D LIBXML2_WITH_LZMA=OFF
     -D LIBXML2_WITH_PYTHON=OFF
     -D LIBXML2_WITH_ZLIB=OFF
-    -D CMAKE_INSTALL_LIBDIR=lib)
+    -D CMAKE_INSTALL_LIBDIR=lib
+)
 
 ExternalProject_Add(
     json-c
@@ -78,7 +74,7 @@ ExternalProject_Add(
     -D CMAKE_INSTALL_PREFIX=${deps_INSTALL_DIR}
     -D DISABLE_EXTRA_LIBS=ON
     -D CMAKE_INSTALL_LIBDIR=lib
-    )
+)
 
 # Build plcontainer extension
 file(GLOB plcontainer_SRC src/*.c src/common/*.c)
@@ -97,9 +93,9 @@ target_link_libraries(plcontainer PRIVATE
     ${deps_INSTALL_DIR}/lib/libxml2.a
     ${deps_INSTALL_DIR}/lib/libjson-c.a)
 add_dependencies(
-     plcontainer
-     libxml
-     json-c
+    plcontainer
+    libxml
+    json-c
 )
 
 # Build client
@@ -149,8 +145,8 @@ add_custom_target(rclient
     -u ${my_UID}
     -it ${RCLIENT_IMAGE}
     sh -c 'cmake /src/src/rclient && cmake --build . -v')
-#add_dependencies(rclient rclient_image)
 
+# add_dependencies(rclient rclient_image)
 add_custom_target(clients)
 add_dependencies(clients pyclient rclient)
 
