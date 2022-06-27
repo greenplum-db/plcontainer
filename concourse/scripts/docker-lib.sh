@@ -87,7 +87,7 @@ start_docker() {
   trap stop_docker EXIT
 
   try_start() {
-    dockerd ${server_args} >$LOG_FILE 2>&1 &
+    dockerd --data-root $DOCKER_DATA_ROOT ${server_args} >$LOG_FILE 2>&1 &
     echo $! > /tmp/docker.pid
 
     sleep 1
