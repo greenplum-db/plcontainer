@@ -20,28 +20,28 @@ usage() {
 # Parse command line options
 while getopts ":c:t:p:b:" o; do
     case "${o}" in
-        c)
-            # pipeline type/config. pr/commit/dev/release
-            pipeline_config=${OPTARG}
-            ;;
-        t)
-            # concourse target
-            target=${OPTARG}
-            ;;
-        p)
-            # pipeline name
-            pipeline_name=${OPTARG}
-            ;;
-        b)
-            # branch name
-            branch=${OPTARG}
-            ;;
-        *)
-            usage ""
-            ;;
+    c)
+        # pipeline type/config. pr/commit/dev/release
+        pipeline_config=${OPTARG}
+        ;;
+    t)
+        # concourse target
+        target=${OPTARG}
+        ;;
+    p)
+        # pipeline name
+        pipeline_name=${OPTARG}
+        ;;
+    b)
+        # branch name
+        branch=${OPTARG}
+        ;;
+    *)
+        usage ""
+        ;;
     esac
 done
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 if [ -z "${target}" ] || [ -z "${pipeline_config}" ]; then
     usage ""
@@ -49,44 +49,44 @@ fi
 
 # Decide ytt options to generate pipeline
 case ${pipeline_config} in
-  pr)
-      if [ -z "${pipeline_name}" ]; then
-          pipeline_name="PR:${proj_name}"
-      fi
-      config_file="pr.yml"
-      hook_res="${proj_name}_pr"
+pr)
+    if [ -z "${pipeline_name}" ]; then
+        pipeline_name="PR:${proj_name}"
+    fi
+    config_file="pr.yml"
+    hook_res="${proj_name}_pr"
     ;;
-  commit)
-      if [ -z "${pipeline_name}" ]; then
-          pipeline_name="COMMIT:${proj_name}:main"
-      fi
-      # Default branch
-      if [ -z "${branch}" ]; then
-          branch="main"
-      fi
-      config_file="commit.yml"
-      hook_res="${proj_name}_commit"
+commit)
+    if [ -z "${pipeline_name}" ]; then
+        pipeline_name="COMMIT:${proj_name}:6X_STABLE"
+    fi
+    # Default branch
+    if [ -z "${branch}" ]; then
+        branch="main"
+    fi
+    config_file="commit.yml"
+    hook_res="${proj_name}_commit"
     ;;
-  dev)
-      if [ -z "${pipeline_name}" ]; then
-          usage "'-p' needs to be supplied to specify the pipeline name for flying a 'dev' pipeline."
-      fi
-      pipeline_name="DEV:${pipeline_name}"
-      config_file="dev.yml"
+dev)
+    if [ -z "${pipeline_name}" ]; then
+        usage "'-p' needs to be supplied to specify the pipeline name for flying a 'dev' pipeline."
+    fi
+    pipeline_name="DEV:${pipeline_name}"
+    config_file="dev.yml"
     ;;
-  release)
-      # Default branch is 'gpdb' as it is our main branch
-      if [ -z "${branch}" ]; then
-          branch="gpdb"
-      fi
-      if [ -z "${pipeline_name}" ]; then
-          pipeline_name="RELEASE:${proj_name}:${branch}"
-      fi
-      config_file="release.yml"
-      hook_res="${proj_name}_commit"
+release)
+    # Default branch is 'gpdb' as it is our main branch
+    if [ -z "${branch}" ]; then
+        branch="gpdb"
+    fi
+    if [ -z "${pipeline_name}" ]; then
+        pipeline_name="RELEASE:${proj_name}:${branch}"
+    fi
+    config_file="release.yml"
+    hook_res="${proj_name}_commit"
     ;;
-  *)
-      usage ""
+*)
+    usage ""
     ;;
 esac
 
@@ -98,7 +98,7 @@ ytt --data-values-file "${ytt_base}/res_def.yml" \
     -f "${ytt_base}/base.lib.yml" \
     -f "${ytt_base}/job_def.lib.yml" \
     -f "${ytt_base}/trigger_def.lib.yml" \
-    -f "${ytt_base}/${config_file}" > "${yml_path}"
+    -f "${ytt_base}/${config_file}" >"${yml_path}"
 echo "Generated pipeline yaml '${yml_path}'."
 
 echo ""
