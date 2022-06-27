@@ -48,7 +48,6 @@ interpreted as representing official policies, either expressed or implied, of t
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
-#include <execinfo.h>
 
 #include "comm_log.h"
 

@@ -1,0 +1,10 @@
+FROM python:3.9-alpine3.13
+# apline >=3.14 has a problem with cmake which will report an error:
+#     make: /usr/bin/make: Operation not permitted
+# That happens with the docker on CentOS7.
+# See more details on https://gitlab.alpinelinux.org/alpine/aports/-/issues/12321
+
+RUN apk add --no-cache gcc g++ cmake make musl-dev
+
+RUN mkdir -p /clientdir
+WORKDIR /clientdir
