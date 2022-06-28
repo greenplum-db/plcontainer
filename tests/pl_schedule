@@ -51,6 +51,7 @@ test: plpy_array_test
 # test: python_import_module r_import_library
 
 test: test_containernetwork
+test: test_config_gpu
 
 # Drop the extension - need to be last
 test: drop

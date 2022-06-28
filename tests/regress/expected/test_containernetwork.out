@@ -1,4 +1,4 @@
-\! plcontainer runtime-add -r plc_python_shared_net -i pivotaldata/plcontainer_python3_shared:devel -l python3 --setting enable_network=yes
+\! plcontainer runtime-add -r plc_python_shared_net -i python39.alpine -l python3 --setting enable_network=yes
 20220519:10:46:32:036380 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20220519:10:46:32:036380 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 CREATE FUNCTION access_network_err() RETURNS int AS $$
