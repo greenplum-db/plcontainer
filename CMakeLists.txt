@@ -146,7 +146,7 @@ add_custom_target(rclient
     -it ${RCLIENT_IMAGE}
     sh -c 'cmake /src/src/rclient && cmake --build . -v')
 
-# add_dependencies(rclient rclient_image)
+add_dependencies(rclient rclient_image)
 add_custom_target(clients)
 add_dependencies(clients pyclient rclient)
 
