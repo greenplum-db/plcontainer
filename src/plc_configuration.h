@@ -170,7 +170,4 @@ int generate_sharing_options_and_uds_address(const runtimeConfEntry *conf, const
 						const int container_slot, runtimeConnectionInfo *connection,
 						char **docekr_sharing_options);
 
-
-#define pfree_null(x) do { if (x) pfree(x); } while(0)
-
 #endif /* PLC_CONFIGURATION_H */

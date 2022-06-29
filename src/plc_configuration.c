@@ -48,6 +48,8 @@
 #include "plc_docker_api.h"
 #include "plc_configuration.h"
 
+#define pfree_null(x) do { if (x) pfree(x); } while(0)
+
 // we just want to avoid cleanup process to remove previous domain
 // socket file, so int32 is sufficient
 static int domain_socket_no = 0;
@@ -69,6 +71,9 @@ PG_FUNCTION_INFO_V1(refresh_plcontainer_config);
 PG_FUNCTION_INFO_V1(show_plcontainer_config);
 
 static HTAB *rumtime_conf_table;
+
+// runtime_backend_table is a session level in-process static variable
+// [0] is the default runtime backend with name 'default' fill in by parse_runtime_backend_configuration()
 static plcBackend *runtime_backend_table = NULL;
 static int nruntime_backend_table = 0;
 

@@ -587,7 +587,7 @@ void delete_containers() {
 		 * different - QE is not responsbile for container deletion.
 		 */
 		if (res < 0)
-		plc_elog(LOG, "Backend delete error: %s", backend_error_message);
+			plc_elog(LOG, "Backend delete error: %s", backend_error_message);
 
 		runtime_conf_free_backend_connection_info(backend);
 		runtime_conf_free_runtime_connection_info(connection);
