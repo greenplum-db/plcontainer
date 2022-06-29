@@ -12,4 +12,5 @@ src/common/config.h
 src/pyclient/bin/py3client
 build*/
 downloads*/
-
+# for test
+tests/regress/results

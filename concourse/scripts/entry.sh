@@ -183,28 +183,48 @@ function setup_gpadmin_bashrc() {
     } >>/home/gpadmin/.bashrc
 }
 
+function start_docker_server() {
+    source /home/gpadmin/plcontainer_src/concourse/scripts/docker-lib.sh
+    ln -s /usr/libexec/docker/docker-runc-current /usr/bin/docker-runc
+    start_docker
+}
+
 # Setup common environment
 setup_gpadmin
 install_cmake
 install_extra_build_dependencies
 install_gpdb
 setup_gpadmin_bashrc
+# cmake executable
+export PATH=${CMAKE_HOME}/bin:$PATH
 
 # Do the special setup with root permission for the each task, then run the real task script with
 # gpadmin. bashrc won't be read by 'su', it needs to be sourced explicitly.
 case "$1" in
-build_and_test)
-    source /home/gpadmin/plcontainer_src/concourse/scripts/docker-lib.sh
-    start_docker
-    # cmake executable
-    export PATH=${CMAKE_HOME}/bin:$PATH
-    ln -s /usr/libexec/docker/docker-runc-current /usr/bin/docker-runc
+build)
+    start_docker_server
     # run the build need run as root
     /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh
-
-    # TODO the plcontainer test and build
+    # save doker file
+    docker save python39.alpine -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
+    # rimages
+    docker save r.alpine -o plcontainer_artifacts/plcontainer_r_shared.tar.gz
+    ;;
+test)
+    start_docker_server
+    # gpadmin docker permission
+    usermod -aG docker gpadmin
+    # we need to this permission without reboot
+    chown gpadmin /var/run/docker.sock
+    # test python39
     su gpadmin -c \
-        "source /home/gpadmin/.bashrc && echo Done"
+        "source /home/gpadmin/.bashrc &&\
+            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py39.sh"
+
+    # test r
+    su gpadmin -c \
+        "source /home/gpadmin/.bashrc &&\
+            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_r.sh"
     ;;
 *)
     echo "Unknown target task $1"

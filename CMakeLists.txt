@@ -169,19 +169,23 @@ install(
     DESTINATION bin)
 
 # Install clients
+# user may only use pyclient or rclient so make the install optional
 install(
     PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/pyclient/pyclient
     RENAME py3client
-    DESTINATION bin/plcontainer_clients/)
+    DESTINATION bin/plcontainer_clients/ OPTIONAL)
 install(
     PROGRAMS src/pyclient/bin/py3client.sh
-    DESTINATION bin/plcontainer_clients/)
+    DESTINATION bin/plcontainer_clients/ OPTIONAL)
 install(
     PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/rclient/rclient
-    DESTINATION bin/plcontainer_clients/)
+    DESTINATION bin/plcontainer_clients/ OPTIONAL)
 install(
     PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/rclient/librcall.so
-    DESTINATION bin/plcontainer_clients/)
+    DESTINATION bin/plcontainer_clients/ OPTIONAL)
 install(
     PROGRAMS src/rclient/bin/rclient.sh
-    DESTINATION bin/plcontainer_clients/)
+    DESTINATION bin/plcontainer_clients/ OPTIONAL)
+
+# Add tests targets
+add_subdirectory(tests)

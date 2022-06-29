@@ -102,7 +102,7 @@ config:
   run:
     path: plcontainer_src/concourse/scripts/entry.sh
     args:
-      - build_and_test
+      - build
   inputs:
     - name: bin_gpdb
     - name: plcontainer_src
@@ -114,6 +114,30 @@ config:
 image: #@ conf["res_test_image"]
 input_mapping:
   bin_gpdb: #@ conf["res_gpdb_bin"]
+#@ end
+
+#@ def _test_task(conf):
+task: #@ "test_" + conf["os"]
+privileged: true
+timeout: 2h
+config:
+  platform: linux
+  run:
+    path: plcontainer_src/concourse/scripts/entry.sh
+    args:
+      - test
+  inputs:
+    - name: bin_gpdb
+    - name: gpdb_src
+    - name: plcontainer_src
+    - name: bin_cmake
+    - name: plcontainer_artifacts
+  outputs:
+    - name: plcontainer_artifacts
+image: #@ conf["res_test_image"]
+input_mapping:
+  bin_gpdb: #@ conf["res_gpdb_bin"]
+params:
 #@ end
 
 #@ def build_test_job_name(conf):
@@ -143,7 +167,8 @@ plan:
   - get: #@ conf["res_test_image"]
   - get: #@ conf["res_gpdb_bin"]
 - #@ _build_task(conf)
+- #@ _test_task(conf)
 - put: #@ conf["res_intermediates_bin"]
   params:
-    file: plcontainer_artifacts/plccontainer*.gppkg
+    file: plcontainer_artifacts/plcontainer_python3_shared.tar.gz
 #@ end
