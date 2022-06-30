@@ -742,17 +742,16 @@ static int check_runtime_id(const char *id) {
 				continue;
 		}
 
-		if (d < '0')
-			return -1;
+		if ('0' < d && d <= '9')
+			continue;
 
-		if (d > '9' && d < 'A')
-			return -1;
+		if ('a' < d && d <= 'z')
+			continue;
 
-		if (d > 'Z' && d < 'a')
-			return -1;
+		if ('A' < d && d <= 'Z')
+			continue;
 
-		if (d > 'z')
-			return -1;
+		return -1;
 	}
 
 	return i != 0 ? 0 : -1;
