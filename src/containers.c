@@ -728,15 +728,34 @@ char *parse_container_meta(const char *source) {
  * satisfy the regex which follow docker container/image naming conventions.
  */
 static int check_runtime_id(const char *id) {
-	int status;
-	regex_t re;
-	if (regcomp(&re, "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$", REG_EXTENDED | REG_NOSUB | REG_NEWLINE) != 0) {
+	int i = 0;
+
+	// test if match with "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$"
+	for (i = 0; id[i] != '\0'; i++) {
+		char d = id[i];
+
+		if (d == '_' || d == '-' || d == '.') {
+			// . and - can not at start
+			if (i == 0)
+				return -1;
+			else
+				continue;
+		}
+
+		if ('0' <= d && d <= '9')
+			continue;
+
+		if ('a' <= d && d <= 'z')
+			continue;
+
+		if ('A' <= d && d <= 'Z')
+			continue;
+
+		if (d == '.' || d == '_' || d == '-')
+			continue;
+
 		return -1;
 	}
-	status = regexec(&re, id, (size_t) 0, NULL, 0);
-	regfree(&re);
-	if (status != 0) {
-		return -1;
-	}
-	return 0;
+
+	return i != 0 ? 0 : -1;
 }
