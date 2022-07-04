@@ -491,38 +491,35 @@ static int plc_pyobject_as_array(PyObject *input, char **output, plcPyType *type
 
 static int plc_pyobject_as_udt(PyObject *input, char **output, plcPyType *type) {
 	int res = 0;
-
 	*output = NULL;
-	if (!PyDict_Check(input)) {
-		raise_execution_error("Only 'dict' object can be converted to UDT \"%s\"", type->typeName);
-		res = -1;
+
+	// PyDict or PyObject can be converted to PostgreSQL UDT
+	typeof(PyDict_GetItemString) *py_get = NULL;
+	if (PyDict_Check(input) == true) {
+		py_get = PyDict_GetItemString;
 	} else {
-		int i = 0;
-		plcUDT *udt;
-
-		udt = pmalloc(sizeof(plcUDT));
-		udt->data = pmalloc(type->nSubTypes * sizeof(rawdata));
-		for (i = 0; i < type->nSubTypes && res == 0; i++) {
-			PyObject *value = NULL;
-			value = PyDict_GetItemString(input, type->subTypes[i].typeName);
-			if (value == NULL) {
-				udt->data[i].isnull = true;
-				udt->data[i].value = NULL;
-				raise_execution_error("Cannot find key '%s' in result dictionary for converting "
-					                      "it into UDT", type->subTypes[i].typeName);
-				res = -1;
-			} else if (value == Py_None) {
-				udt->data[i].isnull = true;
-				udt->data[i].value = NULL;
-			} else {
-				udt->data[i].isnull = false;
-				res = type->subTypes[i].conv.outputfunc(value, &udt->data[i].value, &type->subTypes[i]);
-			}
-		}
-
-		*output = (char *) udt;
+		py_get = PyObject_GetAttrString;
 	}
 
+	plcUDT *udt = pmalloc(sizeof(plcUDT));
+	udt->data = pmalloc(type->nSubTypes * sizeof(rawdata));
+	for (int i = 0; i < type->nSubTypes && res == 0; i++) {
+		PyObject *value = py_get(input, type->subTypes[i].typeName);
+		if (value == NULL) {
+			udt->data[i].isnull = true;
+			udt->data[i].value = NULL;
+			raise_execution_error("Cannot find key or attribute '%s' in result", type->subTypes[i].typeName);
+			res = -1;
+		} else if (value == Py_None) {
+			udt->data[i].isnull = true;
+			udt->data[i].value = NULL;
+		} else {
+			udt->data[i].isnull = false;
+			res = type->subTypes[i].conv.outputfunc(value, &udt->data[i].value, &type->subTypes[i]);
+		}
+	}
+
+	*output = (char *) udt;
 	return res;
 }
 
