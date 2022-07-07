@@ -9,6 +9,9 @@ function _main() {
     source gpdb_src/gpAux/gpdemo/gpdemo-env.sh
     # Run testing
     pushd plcontainer_artifacts
+    # FIXME tricky to solve problem for now.
+    # \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();" 
+    export PL_TESTDB=contrib_regression
     time cmake --build . --target install
     time plcontainer image-add -f plcontainer_python3_shared.tar.gz
     # TODO for now drop logging for test maybe bring it back in the future
