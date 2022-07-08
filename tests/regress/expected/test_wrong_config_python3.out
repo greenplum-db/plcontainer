@@ -109,7 +109,7 @@ INFO:  plcontainer:         access = readonly
 (1 row)
 
 select pyint(0);
-ERROR:  plcontainer: Runtime 'plc_python3_shared' is not defined in configuration and cannot be used (plcontainer.c:316)
+ERROR:  plcontainer: Runtime 'plc_python_shared' is not defined in configuration and cannot be used (plcontainer.c:316)
 CONTEXT:  PLContainer function "pyint"
 select plcontainer_show_local_config();
 INFO:  plcontainer: Container 'plc_python_shared' configuration

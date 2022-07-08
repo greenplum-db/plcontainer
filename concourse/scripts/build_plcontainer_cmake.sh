@@ -12,6 +12,8 @@ function build_rclient() {
     cmake /home/gpadmin/plcontainer_src
     cmake --build .
     cmake --build . --target pyclient
+    # for make install
+    cmake --build . --target rclient
     popd
 }
 
