@@ -8,6 +8,7 @@ function _main() {
     source /usr/local/greenplum-db-devel/greenplum_path.sh
     source gpdb_src/gpAux/gpdemo/gpdemo-env.sh
     # Run testing
+    export PL_TESTDB=contrib_regression
     pushd plcontainer_artifacts
     time cmake --build . --target install
     time plcontainer image-add -f plcontainer_r_shared.tar.gz
