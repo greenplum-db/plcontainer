@@ -62,7 +62,7 @@ commit)
     fi
     # Default branch
     if [ -z "${branch}" ]; then
-        branch="main"
+        branch="6X_STABLE"
     fi
     config_file="commit.yml"
     hook_res="${proj_name}_commit"
