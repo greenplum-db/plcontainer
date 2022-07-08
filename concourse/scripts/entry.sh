@@ -168,6 +168,7 @@ function install_extra_build_dependencies() {
         yum install -y docker-ce docker-ce-cli postgresql-devel
         ;;
     ubuntu*)
+        # ubuntu also need to install latest docker
         apt update
         apt install -y apt-transport-https ca-certificates curl software-properties-common
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
