@@ -6,6 +6,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Gpdb.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Git.cmake)
 
+include_directories(${PG_INCLUDE_DIR}) # for libpq
+
 GitAbbRev_Get(PLCONTAINER_GIT_VERSION)
 configure_file(
     "${PROJECT_SOURCE_DIR}/src/config.h.in"
