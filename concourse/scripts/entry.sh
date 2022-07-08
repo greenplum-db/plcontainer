@@ -158,7 +158,7 @@ install_cmake() {
 
 function install_extra_build_dependencies() {
     case "$OS_NAME" in
-    rhel7)
+    rhel*)
         yum install -y yum-utils
         # because using `yum install docker` did not have the command --data-root
         # if we do not choose `--data-root` we maybe increase the size
@@ -167,9 +167,13 @@ function install_extra_build_dependencies() {
         yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
         yum install -y docker-ce docker-ce-cli postgresql-devel
         ;;
-    rhel8) ;;
-
-    ubuntu*) ;;
+    ubuntu*)
+        apt update
+        apt install -y apt-transport-https ca-certificates curl software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+        add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+        apt install docker-ce
+        ;;
 
     *) ;;
     esac
