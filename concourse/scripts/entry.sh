@@ -182,10 +182,12 @@ function install_extra_build_dependencies() {
 }
 
 function setup_gpadmin_bashrc() {
-    {
+    {   
+        # ubuntu need to source PATH
         echo "source /usr/local/greenplum-db-devel/greenplum_path.sh"
         echo "source /home/gpadmin/gpdb_src/gpAux/gpdemo/gpdemo-env.sh"
         echo "export OS_NAME=${OS_NAME}"
+        echo "export PATH=${CMAKE_HOME}/bin:\$PATH"
     } >>/home/gpadmin/.bashrc
 }
 
