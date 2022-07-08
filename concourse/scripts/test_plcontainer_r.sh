@@ -3,10 +3,6 @@
 set -exo pipefail
 
 function _main() {
-    # Start gpdb cluster
-    export MASTER_DATA_DIRECTORY=/data/gpdata/master/gpseg-1
-    source /usr/local/greenplum-db-devel/greenplum_path.sh
-    source gpdb_src/gpAux/gpdemo/gpdemo-env.sh
     # Run testing
     export PL_TESTDB=contrib_regression
     pushd plcontainer_artifacts
