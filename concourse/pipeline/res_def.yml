@@ -25,9 +25,10 @@ resources:
   check_every: 24h
   source:
     disable_forks: false
-    repository: pivotal/plcontainer
+    repository: greenplum-db/plcontainer
     access_token: ((github-access-token))
-    base_branch: main
+    base_branch: 6X_STABLE
+
 # Commit trigger
 - name: plcontainer_commit
   type: git

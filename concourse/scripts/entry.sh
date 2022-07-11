@@ -165,7 +165,7 @@ function install_extra_build_dependencies() {
         # and then cause a `can not create volume` problem
         # so we add the docker source and install the latest one
         yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-        yum install -y docker-ce docker-ce-cli postgresql-devel
+        yum install -y docker-ce docker-ce-cli
         ;;
     ubuntu*)
         # ubuntu also need to install latest docker
