@@ -14,6 +14,8 @@ function _main() {
     time plcontainer runtime-add -r plc_python_shared -i python39.alpine -l python3
     time plcontainer runtime-add -r plc_python_shared_oom -i python39.alpine -l python3 -s memory_mb=100
     time cmake --build . --target testpy39
+    # make gppkg
+    time cmake --build . --target gppkg
 
     popd
 }

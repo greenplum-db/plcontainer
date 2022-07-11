@@ -1,0 +1,11 @@
+Pkgname: @CMAKE_PROJECT_NAME@
+Architecture: @CMAKE_SYSTEM_PROCESSOR@
+OS: @DISTRO_NAME@
+Version: @VERSION@
+GPDBVersion: gpdb@GP_MAJOR_VERSION@
+Description:  @CPACK_PACKAGE_DESCRIPTION@
+PostInstall:
+- Master: "echo '-';
+          echo '==========================================================================';
+          echo 'FIXME: Add something here'
+          echo '==========================================================================';"
