@@ -181,6 +181,11 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 				type->infunc = plc_datum_from_bytea_ptr;
 			}
 			break;
+		case ANYTABLEOID: /* GPDB special: support anytable type */
+			type->type = PLC_DATA_ANYTABLE;
+			type->outfunc = NULL;
+			// QQQ TODO AnytableDataName to int64 and send to client
+			break;
 			/* All the other types are passed through in-out functions to translate
 			 * them to text before sending and after receiving */
 		default:

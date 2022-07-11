@@ -38,6 +38,7 @@ typedef enum {
 	PLC_DATA_ARRAY,        // Array - array type specification should follow
 	PLC_DATA_UDT,          // User-defined type, specification to follow
 	PLC_DATA_BYTEA,        // Arbitrary set of bytes, stored and transferred as length + data
+	PLC_DATA_ANYTABLE,     // Greenplum special, the anytable type used in TableFunctionScan
 	PLC_DATA_INVALID,      // Invalid data type
 	PLC_DATA_MAX
 } plcDatatype;

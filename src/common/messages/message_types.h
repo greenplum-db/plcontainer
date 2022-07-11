@@ -22,23 +22,28 @@
 #define MT_RAW            'W'
 #define MT_SUBTRANSACTION 'N'
 #define MT_SUBTRAN_RESULT 'Z'
+// TODO QQQ server to client: send 'A': 1byte + AnyTable: 8byte + N: 4byte + N*TypeInfo
+// TODO QQQ client to server: send 'A': 1byte + AnyTable: 8byte + method
+//                         receive 'A': 1byte + N: 4byte + N*Tuple
+#define MT_GP_ANYTABLE    'A'
 #define MT_EOF            0
 
-#define MT_CALLREQ_BIT        0x1LL
-#define MT_EXCEPTION_BIT      0x2LL
-#define MT_LOG_BIT            0x4LL
-#define MT_PING_BIT           0x8LL
-#define MT_RESULT_BIT         0x10LL
-#define MT_SQL_BIT            0x20LL
-#define MT_TRIGREQ_BIT        0x40LL
-#define MT_TUPLRES_BIT        0x80LL
-#define MT_TRANSEVENT_BIT     0x100LL
-#define MT_RAW_BIT            0x200LL
-#define MT_SUBTRANSACTION_BIT 0x400LL
-#define MT_SUBTRAN_RESULT_BIT 0x800LL
-#define MT_EOF_BIT            0x1000LL
-#define MT_QUOTE_BIT          0x2000LL
-#define MT_QUOTE_RESULT_BIT   0x4000LL
+#define MT_CALLREQ_BIT        (1LL << 0)
+#define MT_EXCEPTION_BIT      (1LL << 1)
+#define MT_LOG_BIT            (1LL << 2)
+#define MT_PING_BIT           (1LL << 3)
+#define MT_RESULT_BIT         (1LL << 4)
+#define MT_SQL_BIT            (1LL << 5)
+#define MT_TRIGREQ_BIT        (1LL << 6)
+#define MT_TUPLRES_BIT        (1LL << 7)
+#define MT_TRANSEVENT_BIT     (1LL << 8)
+#define MT_RAW_BIT            (1LL << 9)
+#define MT_SUBTRANSACTION_BIT (1LL << 10)
+#define MT_SUBTRAN_RESULT_BIT (1LL << 11)
+#define MT_EOF_BIT            (1LL << 12)
+#define MT_QUOTE_BIT          (1LL << 13)
+#define MT_QUOTE_RESULT_BIT   (1LL << 14)
+#define MT_GP_ANYTABLE_BIT    (1LL << 15)
 
 #define MT_ALL_BITS        0xFFFFffffFFFFffffLL
 

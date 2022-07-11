@@ -72,6 +72,8 @@ static void plcontainer_process_sql(plcMsgSQL *msg, plcConn *conn, plcProcInfo *
 
 static void plcontainer_process_log(plcMsgLog *log);
 
+static void plcontainer_process_gp_anytable(FunctionCallInfo fcinfo, plcMsgAnytable *msg, plcConn *conn);
+
 #if PG_VERSION_NUM <= 80399
 static char * quote_literal_cstr(const char *rawstr);
 #else
@@ -410,14 +412,20 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 						plcontainer_process_subtransaction(
 								(plcMsgSubtransaction *) answer, conn);
 						break;
+					case MT_GP_ANYTABLE:
+						plcontainer_process_gp_anytable(fcinfo, (plcMsgAnytable *)answer, conn);
+						break;
 					default:
 						plc_elog(ERROR, "Received unhandled message with type id %d "
 								"from client", message_type);
 						break;
 				}
 
+				// those message need C/S communication more than once
+				// control flow jump to 'plcontainer_channel_receive()'
 				if (message_type != MT_SQL && message_type != MT_LOG
-				    && message_type != MT_SUBTRANSACTION && message_type != MT_QUOTE)
+				    && message_type != MT_SUBTRANSACTION && message_type != MT_QUOTE
+					&& message_type != MT_GP_ANYTABLE)
 					break;
 			}
 		} else {
@@ -490,6 +498,15 @@ static void plcontainer_process_log(plcMsgLog *log) {
 		        errmsg("%s", log->message)));
 	if (log->message != NULL)
 		pfree(log->message);
+}
+
+// client want to access AnyTable type
+static void plcontainer_process_gp_anytable(FunctionCallInfo fcinfo, plcMsgAnytable *msg, plcConn *conn) {
+	(void)fcinfo;
+	(void)msg;
+	(void)conn;
+	// TODO QQQ get anytable pointer, anytable next, send back to client
+	return;
 }
 
 #if PG_VERSION_NUM <= 80399
