@@ -171,7 +171,6 @@ function install_extra_build_dependencies() {
         # ubuntu also need to install latest docker
         apt update
         apt install -y apt-transport-https ca-certificates curl software-properties-common
-        apt install -y libpq-dev # for libpq
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
         add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
         apt install -y docker-ce
