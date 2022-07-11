@@ -9,6 +9,17 @@ set(CPACK_PACKAGE_CONTACT "VMware")
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/19244
 # Workaround
 set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
+# %define _build_id_links none
+# Don't add 'build-id' into the rpm.
+# %global _python_bytecompile_errors_terminate_build 0
+# %global __python %{_bindir}/python${PYTHON3_VERSION_SHORT}
+# Solve rpm's quirk -- always want to build pyc when it see a python file.
+# See https://git.centos.org/rpms/python3/blob/c7/f/SPECS/python3.spec#_155
+set(CPACK_RPM_SPEC_MORE_DEFINE
+"%define _build_id_links none
+%global _python_bytecompile_errors_terminate_build 0
+%global __python %{_bindir}/python${PYTHON3_VERSION_SHORT}"
+)
 
 include(CPack)
 
