@@ -85,6 +85,7 @@ set_target_properties(plcontainer
     PREFIX ""
     C_STANDARD 99)
 target_include_directories(plcontainer PRIVATE
+    ${PG_INCLUDE_DIR}
     ${PG_INCLUDE_DIR_SERVER}
     ${PROJECT_BINARY_DIR}
     ${deps_INSTALL_DIR}/include
