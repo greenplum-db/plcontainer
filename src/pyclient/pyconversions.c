@@ -489,22 +489,29 @@ static int plc_pyobject_as_array(PyObject *input, char **output, plcPyType *type
 	return res;
 }
 
+static PyObject* __dict_get(PyObject *o, const char *key, Py_ssize_t t) { return PyDict_GetItemString(o, key); }
+static PyObject* __sequence_get(PyObject *o, const char *key, Py_ssize_t t) { return PySequence_GetItem(o, t); }
+static PyObject* __object_get(PyObject *o, const char *key, Py_ssize_t t) { return PyObject_GetAttrString(o, key); }
+
 static int plc_pyobject_as_udt(PyObject *input, char **output, plcPyType *type) {
 	int res = 0;
 	*output = NULL;
 
-	// PyDict or PyObject can be converted to PostgreSQL UDT
-	typeof(PyDict_GetItemString) *py_get = NULL;
+	// PyDict 'foo["bar"]' or PySequence 'foo[0]' or PyObject 'foo.bar'
+	// can be converted to PostgreSQL UDT
+	typeof(__dict_get) *py_get = NULL;
 	if (PyDict_Check(input) == true) {
-		py_get = PyDict_GetItemString;
+		py_get = __dict_get;
+	} else if (PySequence_Check(input) == true){
+		py_get = __sequence_get;
 	} else {
-		py_get = PyObject_GetAttrString;
+		py_get = __object_get;
 	}
 
 	plcUDT *udt = pmalloc(sizeof(plcUDT));
 	udt->data = pmalloc(type->nSubTypes * sizeof(rawdata));
 	for (int i = 0; i < type->nSubTypes && res == 0; i++) {
-		PyObject *value = py_get(input, type->subTypes[i].typeName);
+		PyObject *value = py_get(input, type->subTypes[i].typeName, i);
 		if (value == NULL) {
 			udt->data[i].isnull = true;
 			udt->data[i].value = NULL;
