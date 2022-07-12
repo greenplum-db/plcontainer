@@ -74,7 +74,7 @@ select * from pytestudt15( array[(1,1,'a'), (2,2,'b'), (3,3,'c')]::test_type3[] 
 
 select pybadudtarr();
 ERROR:  PL/Container client exception occurred: 
- Cannot find key 'c' in result dictionary for converting it into UDT
+ Cannot find key or attribute 'c' in result
 CONTEXT:  PLContainer function "pybadudtarr"
 select pybadudtarr2();
 ERROR:  PL/Container client exception occurred: 
