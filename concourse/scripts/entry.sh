@@ -223,6 +223,8 @@ test)
     usermod -aG docker gpadmin
     # we need to this permission without reboot
     chown gpadmin /var/run/docker.sock
+    # print the test diff to stdout in our CI
+    export SHOW_REGRESS_DIFF=1
     # test python39
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
