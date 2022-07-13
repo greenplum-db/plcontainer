@@ -194,4 +194,4 @@ install(
 add_subdirectory(tests)
 
 # Packing
-include(${CMAKE_CURRENT_SOURCE_DIR}/Pack.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/package/Pack.cmake)
