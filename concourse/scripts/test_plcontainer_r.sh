@@ -6,7 +6,6 @@ function _main() {
     # Run testing
     export PL_TESTDB=contrib_regression
     pushd plcontainer_artifacts
-    gppkg -i plcontainer*.gppkg
     time plcontainer image-add -f plcontainer_r_shared.tar.gz
     # TODO for now drop logging for test maybe bring it back in the future
     time plcontainer runtime-add -r plc_r_shared -i r.alpine -l r
