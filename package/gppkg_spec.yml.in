@@ -1,9 +1,9 @@
-Pkgname: plcontainer
-Architecture: #arch
-OS: #os
-Version: #plcver
-GPDBVersion: #gpver
-Description: Provides PL/Container procedural language implementation for the Greenplum Database.
+Pkgname: @CMAKE_PROJECT_NAME@
+Architecture: @CMAKE_SYSTEM_PROCESSOR@
+OS: @DISTRO_NAME@
+Version: @VERSION@
+GPDBVersion: gpdb@GP_MAJOR_VERSION@
+Description: @CPACK_PACKAGE_DESCRIPTION@
 PostInstall:
 - Master: "echo '-';
           echo '==========================================================================';
@@ -11,5 +11,5 @@ PostInstall:
           echo '1. Source your new $GPHOME/greenplum_path.sh file and restart the database.';
           echo '2. Enable PL/Container language in one of your databases by running \"CREATE EXTENSION plcontainer;\" directly in your database';
           echo '3. Add docker images on master node, for example add a python image by running \"plcontainer image-add -f plcontainer-python-images.tar.gz;\"';
-          echo '4. Add container runtimes on master node, for example add a runtime by running \"plcontainer runtime-add -r plc_python_shared -i pivotaldata/plcontainer_python_shared:devel -l python;\" Refer to the installation guide for options';
+          echo '4. Add container runtimes on master node, for example add a runtime by running \"plcontainer runtime-add -r plc_python_shared -i ${image_name} -l python3;\" Refer to the installation guide for options';
           echo '==========================================================================';"

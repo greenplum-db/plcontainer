@@ -28,7 +28,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         CACHE PATH "default install prefix" FORCE)
 endif()
 # for gppkg
-set(VERSION 0.0.0)
+set(VERSION ${PLCONTAINER_GIT_VERSION})
 set(DOWNLOAD_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/downloads
     CACHE STRING "Directory for downloading external project")
@@ -193,5 +193,5 @@ install(
 # Add tests targets
 add_subdirectory(tests)
 
-# # Packing
+# Packing
 include(${CMAKE_CURRENT_SOURCE_DIR}/Pack.cmake)

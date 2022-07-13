@@ -1,6 +1,6 @@
 # Set package information
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Greenplum-plcontainer")
-set(CPACK_PACKAGE_DESCRIPTION "plcontainer for Greenplum Database.")
+set(CPACK_PACKAGE_DESCRIPTION "Provides PL/Container procedural language implementation for the Greenplum Database.")
 set(CPACK_RPM_PACKAGE_LICENSE "VMware Software EULA")
 set(CPACK_PACKAGE_CONTACT "VMware")
 
@@ -30,7 +30,7 @@ set(RPM_NAME ${CMAKE_PROJECT_NAME}-${VERSION}.${CMAKE_SYSTEM_PROCESSOR})
 set(DEB_NAME ${CMAKE_PROJECT_NAME}-${VERSION}-${CMAKE_SYSTEM_PROCESSOR})
 set(PACK_GPPKG_FILE_NAME gppython3)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gppkg_spec.yml.in gppkg_spec.yml @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/package/gppkg_spec.yml.in gppkg_spec.yml @ONLY)
 
 add_custom_target(gppkg_rpm
     COMMAND

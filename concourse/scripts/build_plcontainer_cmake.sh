@@ -14,6 +14,8 @@ function build_rclient() {
     cmake --build . --target pyclient
     # for make install
     cmake --build . --target rclient
+    # build gppkg
+    cmake --build . --target gppkg
     popd
 }
 
