@@ -14,6 +14,7 @@ test: function_python3 function_python3_gpdb5
 test: test_python3
 test: plpython_quote
 test: test_python3_gpdb5 subtransaction_python
+test: test_python_udf_return
 ### TODO ### test: spi_python3 
 ### TODO ### test: test_python3_error 
 test: exception_py
