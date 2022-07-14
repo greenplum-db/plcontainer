@@ -170,5 +170,5 @@ plan:
 - #@ _test_task(conf)
 - put: #@ conf["res_intermediates_bin"]
   params:
-    file: plcontainer_artifacts/plcontainer_python3_shared.tar.gz
+    file: plcontainer_artifacts/plcontainer*.gppkg
 #@ end

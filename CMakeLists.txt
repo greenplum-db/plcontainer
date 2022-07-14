@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.18)
 project(plcontainer)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Gpdb.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Distro.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Git.cmake)
 
@@ -26,7 +27,8 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         "${PG_HOME}"
         CACHE PATH "default install prefix" FORCE)
 endif()
-
+# for gppkg
+set(VERSION ${PLCONTAINER_GIT_VERSION})
 set(DOWNLOAD_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/downloads
     CACHE STRING "Directory for downloading external project")
@@ -190,3 +192,6 @@ install(
 
 # Add tests targets
 add_subdirectory(tests)
+
+# Packing
+include(${CMAKE_CURRENT_SOURCE_DIR}/package/Pack.cmake)
