@@ -117,6 +117,7 @@ function(RegressTarget_Add name)
     if (arg_DATA_DIR)
         get_filename_component(data_DIR ${arg_DATA_DIR} ABSOLUTE)
         set(ln_data_dir_CMD ln -s ${data_DIR} data)
+        set(mv_data_shells_CMD cp ${data_DIR}/* ${working_DIR})
     endif()
 
     set(regress_command
@@ -143,6 +144,7 @@ function(RegressTarget_Add name)
         COMMAND ln -s ${results_DIR} results
         COMMAND rm -f data
         COMMAND ${ln_data_dir_CMD}
+        COMMAND ${mv_data_shells_CMD}
         COMMAND
         ${test_command}
         ||

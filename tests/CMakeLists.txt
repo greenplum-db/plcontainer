@@ -6,7 +6,7 @@ RegressTarget_Add(testpy39
     SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/sql
     EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/expected
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
-    DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
+    DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py39
     REGRESS_OPTS
     --dbname=contrib_regression)
@@ -17,7 +17,7 @@ RegressTarget_Add(testr
     SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/sql
     EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/expected
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
-    DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
+    DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_r
     REGRESS_OPTS
     --dbname=contrib_regression)

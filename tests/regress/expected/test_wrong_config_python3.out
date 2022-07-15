@@ -109,7 +109,8 @@ INFO:  plcontainer:         access = readonly
 (1 row)
 
 select pyint(0);
-ERROR:  plcontainer: Runtime 'plc_python_shared' is not defined in configuration and cannot be used (plcontainer.c:316)
+ERROR:  plcontainer: backend create error (containers.c:xxx
+DETAIL:  Failed to create container, return code: 404, detail: {"message":"No such image: not_exist_pivotaldata/plcontainer_python:0.1"}
 CONTEXT:  PLContainer function "pyint"
 select plcontainer_show_local_config();
 INFO:  plcontainer: Container 'plc_python_shared' configuration
