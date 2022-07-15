@@ -24,13 +24,14 @@ test: test_wrong_config_python3
 # PL/Container UDA test
 test: uda_python3
 
-# # Out of memory test
-# test: oom_test_prepare_pyhthon
-# test: oom_test_python_killed oom_test_python_killed_p oom_test_python_normal oom_test_python_normal_1 oom_test_python_normal_2
+# Out of memory test
+test: oom_test_prepare_pyhthon
+test: oom_test_python_killed oom_test_python_killed_p oom_test_python_normal oom_test_python_normal_1 oom_test_python_normal_2
 
 # Miscellaneous test
 test: misc
-test: user_control_py3
+### log problem
+### TODO ### test: user_control_py3
 
 # PL/Container parallel test (io & cpu)
 test: parallel_prepare
