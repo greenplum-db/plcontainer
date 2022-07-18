@@ -1,6 +1,15 @@
-\! plcontainer runtime-add -r plc_python_shared_net -i python39.alpine -l python3 --setting enable_network=yes
-20220519:10:46:32:036380 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
-20220519:10:46:32:036380 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+\! plcontainer runtime-add -r plc_python_shared_net -i python39.alpine:latest -l python3 --setting enable_network=yes -s roles=$USER
+20220718:16:25:26:178095 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20220718:16:25:26:178095 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+select * from plcontainer_refresh_config;
+ gp_segment_id | plcontainer_refresh_local_config 
+---------------+----------------------------------
+             1 | ok
+             0 | ok
+             2 | ok
+            -1 | ok
+(4 rows)
+
 CREATE FUNCTION access_network_err() RETURNS int AS $$
   # container: plc_python_shared
   import urllib.request
@@ -26,8 +35,30 @@ select * from access_network_ok();
                200
 (1 row)
 
+\! plcontainer runtime-delete -r plc_python_shared_net
+20220718:16:25:40:179535 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20220718:16:25:40:179535 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+-- strict permission check, except error
+\! plcontainer runtime-add -r plc_python_shared_net -i python39.alpine:latest -l python3 --setting enable_network=yes
+20220718:16:25:40:179832 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20220718:16:25:40:179832 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+select * from plcontainer_refresh_config;
+ gp_segment_id | plcontainer_refresh_local_config 
+---------------+----------------------------------
+             2 | ok
+             1 | ok
+             0 | ok
+            -1 | ok
+(4 rows)
+
+select * from access_network_ok();
+WARNING:  plcontainer: To access network or physical device, user permission needs to be granted explicitly in the runtime config.
+HINT:  set user name in <roles>
+CONTEXT:  PLContainer function "access_network_ok"
+ERROR:  plcontainer: Current user does not have privilege to use runtime plc_python_shared_net (plcontainer.c:343)
+CONTEXT:  PLContainer function "access_network_ok"
 drop function access_network_err();
 drop function access_network_ok();
 \! plcontainer runtime-delete -r plc_python_shared_net
-20220519:10:46:34:036830 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
-20220519:10:46:35:036830 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+20220718:16:25:41:180141 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20220718:16:25:41:180141 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
