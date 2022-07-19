@@ -35,6 +35,11 @@ set(DOWNLOAD_DIR
 
 # generate 'compile_commands.json'
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CONTAINER_ENV "" CACHE STRING "The container image env for plcontainer")
+
+if("${CONTAINER_ENV}" STREQUAL "")
+    set(CONTAINER_ENV "alpine")
+endif()
 
 # Build dependencies
 set(deps_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/external_deps)
@@ -102,7 +107,8 @@ add_dependencies(
 )
 
 # Build client
-set(PYCLIENT_IMAGE python39.alpine)
+# set(PYCLIENT_IMAGE python39.alpine)
+set(PYCLIENT_IMAGE python39.${CONTAINER_ENV})
 add_custom_target(pyclient_image
     COMMAND
     PYTHONPATH=

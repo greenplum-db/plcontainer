@@ -1,5 +1,5 @@
 -- start_ignore
-\! plcontainer runtime-add -r plc_python3_shared_gpu -i python39.alpine -l python3
+\! plcontainer runtime-add -r plc_python3_shared_gpu -i python39.${IMAGE_ENV} -l python3
 \! plcontainer runtime-backup -f test_config_gpu.xml
 \! ./test_assign_gpu.py --file ./test_config_gpu.xml -i --runtime plc_python3_shared_gpu --action all
 \! plcontainer runtime-restore -f test_config_gpu.xml

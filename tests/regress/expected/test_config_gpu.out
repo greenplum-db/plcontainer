@@ -1,5 +1,5 @@
 -- start_ignore
-\! plcontainer runtime-add -r plc_python3_shared_gpu -i python39.alpine -l python3
+\! plcontainer runtime-add -r plc_python3_shared_gpu -i python39.${IMAGE_ENV} -l python3
 20220628:18:21:44:133476 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20220628:18:21:44:133476 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 \! plcontainer runtime-backup -f test_config_gpu.xml

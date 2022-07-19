@@ -9,7 +9,7 @@ function build_rclient() {
 
     pushd /home/gpadmin/plcontainer_artifacts
 
-    cmake /home/gpadmin/plcontainer_src
+    cmake /home/gpadmin/plcontainer_src -DCONTAINER_ENV="$1"
     cmake --build .
     cmake --build . --target pyclient
     # for make install
@@ -20,7 +20,7 @@ function build_rclient() {
 }
 
 function _main() {
-    time build_rclient
+    time build_rclient "$@" 
 }
 
 _main "$@"

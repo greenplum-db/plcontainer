@@ -211,10 +211,12 @@ case "$1" in
 build)
     start_docker_server
     # run the build need run as root
-    /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh
+    # for now $2 means alpine or ubuntu
+    export IMAGE_ENV="$2"
+    /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh "$2"
     # save doker file
-    docker save python39.alpine -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
-    # rimages
+    docker save python39."${IMAGE_ENV}" -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
+    # r-image
     docker save r.alpine -o plcontainer_artifacts/plcontainer_r_shared.tar.gz
     ;;
 test)
@@ -228,7 +230,7 @@ test)
     # test python39
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
-            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py39.sh"
+            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py39.sh $2" 
 
     # test r
     su gpadmin -c \

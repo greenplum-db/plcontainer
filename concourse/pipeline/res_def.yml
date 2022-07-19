@@ -190,6 +190,27 @@ resources:
     json_key: ((extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_ubuntu18_gpdb6.gppkg
 
+- name: tar_plcontainer_python3_docker_intermediates
+  type: gcs
+  source:
+    bucket: gpdb-extensions-concourse-resources
+    json_key: ((extensions-gcs-service-account-key))
+    versioned_file: intermediates/plcontainer/plcontainer_python3_shared.tar.gz
+
+- name: tar_plcontainer_python3_docker_intermediates_dsb
+  type: gcs
+  source:
+    bucket: gpdb-extensions-concourse-resources
+    json_key: ((extensions-gcs-service-account-key))
+    versioned_file: intermediates/plcontainer/plcontainer_python3_dsb_shared.tar.gz
+
+- name: tar_plcontainer_r_docker_intermediates
+  type: gcs
+  source:
+    bucket: gpdb-extensions-concourse-resources
+    json_key: ((extensions-gcs-service-account-key))
+    versioned_file: intermediates/plcontainer/plcontainer_r_shared.tar.gz
+
 # For uploading to the release bucket
 - name: bin_plcontainer_gpdb6_rhel7_release
   type: gcs
