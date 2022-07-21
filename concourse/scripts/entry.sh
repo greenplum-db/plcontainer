@@ -217,7 +217,7 @@ build)
     # save doker file
     docker save python39."${CONTAINER_NAME_SUFFIX}" -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
     # r-image
-    docker save r.alpine -o plcontainer_artifacts/plcontainer_r_shared.tar.gz
+    docker save r."${CONTAINER_NAME_SUFFIX}" -o plcontainer_artifacts/plcontainer_r_shared.tar.gz
     ;;
 test)
     start_docker_server
@@ -228,8 +228,8 @@ test)
     # print the test diff to stdout in our CI
     export SHOW_REGRESS_DIFF=1
     # test python39
-    # $3 is test r schedule
-    # $4 is test py schedule
+    # $3 is test py schedule
+    # $4 is test r schedule
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
             /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py39.sh $2 $3" 

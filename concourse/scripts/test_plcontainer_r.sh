@@ -8,7 +8,7 @@ function _main() {
     pushd plcontainer_artifacts
     time plcontainer image-add -f plcontainer_r_shared.tar.gz
     # TODO for now drop logging for test maybe bring it back in the future
-    time plcontainer runtime-add -r plc_r_shared -i r.alpine -l r
+    time plcontainer runtime-add -r plc_r_shared -i r."${CONTAINER_NAME_SUFFIX}" -l r
     time cmake --build . --target testr
     # Test gppkg uninstall
     gppkg -q --all
