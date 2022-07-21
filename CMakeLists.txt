@@ -35,11 +35,12 @@ set(DOWNLOAD_DIR
 
 # generate 'compile_commands.json'
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CONTAINER_ENV "" CACHE STRING "The container image env for plcontainer")
+set(CONTAINER_NAME_SUFFIX "" CACHE STRING "The container python/r image env for plcontainer")
 
-if("${CONTAINER_ENV}" STREQUAL "")
-    set(CONTAINER_ENV "alpine")
+if("${CONTAINER_NAME_SUFFIX}" STREQUAL "")
+    set(CONTAINER_NAME_SUFFIX "alpine")
 endif()
+
 
 # Build dependencies
 set(deps_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/external_deps)
@@ -108,7 +109,7 @@ add_dependencies(
 
 # Build client
 # set(PYCLIENT_IMAGE python39.alpine)
-set(PYCLIENT_IMAGE python39.${CONTAINER_ENV})
+set(PYCLIENT_IMAGE python39.${CONTAINER_NAME_SUFFIX})
 add_custom_target(pyclient_image
     COMMAND
     PYTHONPATH=
@@ -118,7 +119,7 @@ add_custom_target(pyclient_image
     WORKING_DIRECTORY
     ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
 
-set(RCLIENT_IMAGE r.alpine)
+set(RCLIENT_IMAGE r.${CONTAINER_NAME_SUFFIX})
 add_custom_target(rclient_image
     COMMAND
     PYTHONPATH=

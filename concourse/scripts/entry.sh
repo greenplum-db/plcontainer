@@ -211,11 +211,11 @@ case "$1" in
 build)
     start_docker_server
     # run the build need run as root
-    # for now $2 means alpine or ubuntu
-    export IMAGE_ENV="$2"
+    # for build task $2 means the container name suffix
+    export CONTAINER_NAME_SUFFIX="$2"
     /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh "$2"
     # save doker file
-    docker save python39."${IMAGE_ENV}" -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
+    docker save python39."${CONTAINER_NAME_SUFFIX}" -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
     # r-image
     docker save r.alpine -o plcontainer_artifacts/plcontainer_r_shared.tar.gz
     ;;
@@ -228,14 +228,16 @@ test)
     # print the test diff to stdout in our CI
     export SHOW_REGRESS_DIFF=1
     # test python39
+    # $3 is test r schedule
+    # $4 is test py schedule
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
-            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py39.sh $2" 
+            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py39.sh $2 $4" 
 
     # test r
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
-            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_r.sh"
+            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_r.sh $2 $3"
     ;;
 *)
     echo "Unknown target task $1"

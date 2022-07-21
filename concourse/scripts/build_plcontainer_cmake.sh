@@ -9,7 +9,7 @@ function build_rclient() {
 
     pushd /home/gpadmin/plcontainer_artifacts
 
-    cmake /home/gpadmin/plcontainer_src -DCONTAINER_ENV="$1"
+    cmake /home/gpadmin/plcontainer_src -DCONTAINER_NAME_SUFFIX="$1"
     cmake --build .
     cmake --build . --target pyclient
     # for make install

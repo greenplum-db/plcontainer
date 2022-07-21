@@ -3,15 +3,17 @@
 
 #! Use bin_gpdb_postfix="" to use a release version of gpdb binary
 #! Job config for centos7
-#@ def centos7_gpdb6_conf(release_build=False, container_env="alpine"):
+#@ def centos7_gpdb6_conf(release_build=False, task_target="alpine", schedule=schedule={"py": "testpy39", "r": "testr"}):
 res_test_image: centos7-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_centos7" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
 res_intermediates_bin: bin_plcontainer_gpdb6_rhel7_intermediates
-os: #@ "rhel7" + ("" if container_env=="alpine" else "_dsb")
-container_env: #@ container_env 
-res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" + ("" if container_env=="alpine" else "_dsb")
-res_intermediates_tar_r: tar_plcontainer_r_docker_intermediates
+os: #@ "rhel7" + ("" if container_name_suffix=="alpine" else "_bundle")
+task_target: #@ task_target 
+res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" + ("" if task_target=="alpine" else "_bundle")
+res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if task_target=="alpine" else "_bundle")
+schedule_py: #@ schedule["py"]
+schedule_r: #@ schedule["r"]
 #@ end
 
 #! Job config for centos6
@@ -26,27 +28,31 @@ build_type: #@ "Release" if release_build else "Debug"
 #@ end
 
 #! Job config for rhel8
-#@ def rhel8_gpdb6_conf(release_build=False, container_env="alpine"):
+#@ def rhel8_gpdb6_conf(release_build=False, task_target="alpine", schedule={"py": "testpy39", "r": "testr"}):
 res_test_image: rhel8-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_rhel8" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
 res_intermediates_bin: bin_plcontainer_gpdb6_rhel8_intermediates
-os: #@ "rhel8" + ("" if container_env=="alpine" else "_dsb")
-container_env: #@ container_env 
-res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" + ("" if container_env=="alpine" else "_dsb")
-res_intermediates_tar_r: tar_plcontainer_r_docker_intermediates
+os: #@ "rhel8" + ("" if container_name_suffix=="alpine" else "_bundle")
+task_target: #@ task_target 
+res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" + ("" if task_target=="alpine" else "_bundle")
+res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if task_target=="alpine" else "_bundle")
+schedule_py: #@ schedule["py"]
+schedule_r: #@ schedule["r"]
 #@ end
 
 #! Job config for ubuntu18
-#@ def ubuntu18_gpdb6_conf(release_build=False, container_env="alpine"):
+#@ def ubuntu18_gpdb6_conf(release_build=False, task_target="alpine", schedule={"py": "testpy39", "r": "testr"}):
 res_test_image: ubuntu18-gpdb6-image-test
 res_gpdb_src: gpdb6_src
 res_gpdb_bin: #@ "bin_gpdb6_ubuntu18" + ("" if release_build else "_debug")
 res_intermediates_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
-os: #@ "ubuntu18.04" + ("" if container_env=="alpine" else "_dsb")
-container_env: #@ container_env
-res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" + ("" if container_env=="alpine" else "_dsb")
-res_intermediates_tar_r: tar_plcontainer_r_docker_intermediates
+os: #@ "ubuntu18.04" + ("" if task_target=="alpine" else "_bundle")
+task_target: #@ task_target
+res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" + ("" if task_target=="alpine" else "_bundle")
+res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if task_target=="alpine" else "_bundle")
+schedule_py: #@ schedule["py"]
+schedule_r: #@ schedule["r"]
 #@ end
 
 #! The entry point of a pipeline. The job name must be 'entrance'.
@@ -112,7 +118,7 @@ config:
     path: plcontainer_src/concourse/scripts/entry.sh
     args:
       - build
-      - #@ conf["container_env"]
+      - #@ conf["container_name_suffix"]
   inputs:
     - name: bin_gpdb
     - name: plcontainer_src
@@ -136,7 +142,9 @@ config:
     path: plcontainer_src/concourse/scripts/entry.sh
     args:
       - test
-      - #@ conf["container_env"]
+      - #@ conf["task_target"]
+      - #@ conf["schedule_py"] 
+      - #@ conf["schedule_r"] 
   inputs:
     - name: bin_gpdb
     - name: gpdb_src
