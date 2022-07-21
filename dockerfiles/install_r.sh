@@ -1,7 +1,9 @@
 #!/bin/bash
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get -y install gnupg2 apt-utils
+DEBIAN_FRONTEND=noninteractive apt-get -y install gnupg2 apt-utils python3-pip
 DEBIAN_FRONTEND=noninteractive apt-get -y install --reinstall ca-certificates
+# ubuntu20.04 cmake version < 3.18 use pip install to make it easy 
+pip install cmake
 
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
 echo 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/' >> /etc/apt/sources.list

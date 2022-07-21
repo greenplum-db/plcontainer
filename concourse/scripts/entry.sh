@@ -232,12 +232,12 @@ test)
     # $4 is test py schedule
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
-            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py39.sh $2 $4" 
+            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py39.sh $2 $3" 
 
     # test r
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
-            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_r.sh $2 $3"
+            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_r.sh $2 $4"
     ;;
 *)
     echo "Unknown target task $1"
