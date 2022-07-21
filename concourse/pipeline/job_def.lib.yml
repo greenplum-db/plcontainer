@@ -3,12 +3,12 @@
 
 #! Use bin_gpdb_postfix="" to use a release version of gpdb binary
 #! Job config for centos7
-#@ def centos7_gpdb6_conf(release_build=False, task_target="alpine", schedule=schedule={"py": "testpy39", "r": "testr"}):
+#@ def centos7_gpdb6_conf(release_build=False, task_target="alpine", schedule={"py": "testpy39", "r": "testr"}):
 res_test_image: centos7-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_centos7" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
 res_intermediates_bin: bin_plcontainer_gpdb6_rhel7_intermediates
-os: #@ "rhel7" + ("" if container_name_suffix=="alpine" else "_bundle")
+os: #@ "rhel7" + ("" if task_target=="alpine" else "_bundle")
 task_target: #@ task_target 
 res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" + ("" if task_target=="alpine" else "_bundle")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if task_target=="alpine" else "_bundle")
@@ -33,7 +33,7 @@ res_test_image: rhel8-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_rhel8" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
 res_intermediates_bin: bin_plcontainer_gpdb6_rhel8_intermediates
-os: #@ "rhel8" + ("" if container_name_suffix=="alpine" else "_bundle")
+os: #@ "rhel8" + ("" if task_target=="alpine" else "_bundle")
 task_target: #@ task_target 
 res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" + ("" if task_target=="alpine" else "_bundle")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if task_target=="alpine" else "_bundle")
@@ -118,7 +118,7 @@ config:
     path: plcontainer_src/concourse/scripts/entry.sh
     args:
       - build
-      - #@ conf["container_name_suffix"]
+      - #@ conf["task_target"]
   inputs:
     - name: bin_gpdb
     - name: plcontainer_src

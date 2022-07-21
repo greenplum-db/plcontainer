@@ -211,7 +211,7 @@ resources:
     json_key: ((extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_r_shared.tar.gz
 
-- name: tar_plcontainer_python3_docker_intermediates_bundle
+- name: tar_plcontainer_r_docker_intermediates_bundle
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
