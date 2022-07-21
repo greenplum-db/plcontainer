@@ -5,11 +5,13 @@ set -exo pipefail
 function _main() {
     # Run testing
     export PL_TESTDB=contrib_regression
+    export CONTAINER_NAME_SUFFIX="$1"
     pushd plcontainer_artifacts
+    local test_target_r="$2"
     time plcontainer image-add -f plcontainer_r_shared.tar.gz
     # TODO for now drop logging for test maybe bring it back in the future
     time plcontainer runtime-add -r plc_r_shared -i r."${CONTAINER_NAME_SUFFIX}" -l r
-    time cmake --build . --target testr
+    time cmake --build . --target "${test_target_r}"
     # Test gppkg uninstall
     gppkg -q --all
     # Find the package name
@@ -22,4 +24,4 @@ function _main() {
     popd
 }
 
-_main
+_main "$@"

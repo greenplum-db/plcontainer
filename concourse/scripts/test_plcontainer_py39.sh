@@ -8,6 +8,7 @@ function _main() {
     # FIXME tricky to solve problem for now.
     # \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
     export PL_TESTDB=contrib_regression
+    export CONTAINER_NAME_SUFFIX="$1"
     local test_target_py="$2"
     gppkg -i plcontainer*.gppkg
     time plcontainer image-add -f plcontainer_python3_shared.tar.gz
