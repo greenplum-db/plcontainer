@@ -218,6 +218,7 @@ build)
     docker save python39."${CONTAINER_NAME_SUFFIX}" -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
     # r-image
     docker save r."${CONTAINER_NAME_SUFFIX}" -o plcontainer_artifacts/plcontainer_r_shared.tar.gz
+    docker volume ls
     ;;
 test)
     start_docker_server
@@ -238,6 +239,7 @@ test)
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
             /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_r.sh $2 $4"
+    docker volume ls
     ;;
 *)
     echo "Unknown target task $1"
