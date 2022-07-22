@@ -2,12 +2,16 @@ FROM ubuntu:20.04
 
 RUN apt-get update && apt-get install -y software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
-RUN EBIAN_FRONTEND=noninteractive apt-get install -y python3.9 python3.9-dev python3-pip default-libmysqlclient-dev libssl-dev libpq-dev
+RUN EBIAN_FRONTEND=noninteractive apt-get install -y \
+    python3.9 python3.9-dev python3-pip \
+    default-libmysqlclient-dev libssl-dev \
+    libpq-dev && \ 
+rm -rf /var/lib/apt/lists/*
 
 ADD requirements-py39.txt .
 RUN ln -sf /usr/bin/python3.9 /usr/bin/python3
 RUN pip3 install --no-cache -r requirements-py39.txt
-# ubuntu20.04 cmake version < 3.18 use pip install to make it easy 
+# ubuntu20.04 cmake version < 3.18 use pip install to make it easy
 RUN pip3 install cmake
 
 ENV PATH "${PATH:+:${PATH}}"

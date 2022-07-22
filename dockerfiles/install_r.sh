@@ -1,7 +1,7 @@
 #!/bin/bash
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get -y install gnupg2 apt-utils python3-pip
-DEBIAN_FRONTEND=noninteractive apt-get -y install --reinstall ca-certificates
+DEBIAN_FRONTEND=noninteractive apt-get -y install --reinstall ca-certificates && rm -rf /var/lib/apt/lists/*
 # ubuntu20.04 cmake version < 3.18 use pip install to make it easy 
 pip install cmake
 

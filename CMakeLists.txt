@@ -108,7 +108,6 @@ add_dependencies(
 )
 
 # Build client
-# set(PYCLIENT_IMAGE python39.alpine)
 set(PYCLIENT_IMAGE python39.${CONTAINER_NAME_SUFFIX})
 add_custom_target(pyclient_image
     COMMAND
