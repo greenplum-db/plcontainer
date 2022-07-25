@@ -1,8 +1,9 @@
 FROM ubuntu:20.04
 
 RUN apt-get update && apt-get install -y software-properties-common
+# for install python3.9
 RUN add-apt-repository ppa:deadsnakes/ppa
-RUN EBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN apt-get install -y \
     python3.9 python3.9-dev python3-pip \
     default-libmysqlclient-dev libssl-dev \
     libpq-dev && \ 
@@ -14,7 +15,6 @@ RUN pip3 install --no-cache -r requirements-py39.txt
 # ubuntu20.04 cmake version < 3.18 use pip install to make it easy
 RUN pip3 install cmake
 
-ENV PATH "${PATH:+:${PATH}}"
 ENV LD_LIBRARY_PATH "/usr/lib/python3.9${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 ENV MANPATH "${MANPATH}"
 ENV XDG_DATA_DIRS "${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
