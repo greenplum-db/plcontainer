@@ -2,16 +2,15 @@ FROM ubuntu:20.04
 
 EXPOSE 8080
 
-RUN mkdir -p /opt 
+# RUN mkdir -p /opt 
 
-ADD ./install_r.sh /opt/
-ADD ./r_env.sh /opt/
+# ADD ./install_r.sh /opt/
+# ADD ./r_env.sh /opt/
 # TODO for now test r import disable, so comments these two lines
 # ADD rlibs /opt/
 # ADD rlibs.higher_gcc /opt/
-ADD install_r_package.R /opt/
-
-RUN /opt/install_r.sh
+# ADD install_r_package.R /opt/
+# RUN /opt/install_r.sh
 
 ENV R_HOME "/usr/lib/R"
 ENV PATH "/usr/lib/R/bin:$PATH"

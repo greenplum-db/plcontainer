@@ -18,6 +18,7 @@
 #@   centos7_gpdb6_conf(release_build=False),
 #@   rhel8_gpdb6_conf(release_build=False),
 #@   ubuntu18_gpdb6_conf(release_build=False),
+#@   centos7_gpdb6_conf(release_build=False, task_target="ubuntu2004_b", schedule={"py": "testpy39_bundle", "r": "testr"}),
 #@ ]
 jobs:
 #@ param = {
