@@ -13,7 +13,7 @@ ADD requirements-py39.txt .
 RUN ln -sf /usr/bin/python3.9 /usr/bin/python3
 RUN pip3 install --no-cache -r requirements-py39.txt
 # ubuntu20.04 cmake version < 3.18 use pip install to make it easy
-RUN pip3 install --no-cache cmake
+RUN pip3 install cmake
 
 # old logic will cost 4GB space so I comment it for now.
 # RUN python3 -m pip install nltk
