@@ -1,8 +1,8 @@
 FROM ubuntu:20.04
 
 EXPOSE 8080
-RUN apt-get update && apt-get install -y python3-pip
-RUN pip3 --no-cache install cmake
+RUN apt-get update && apt-get install -y python3-pip gcc g++ cmake make R R-dev
+RUN pip3 --no-cache install 
 # ubuntu20.04 cmake version < 3.18 use pip install to make it easy 
 
 # RUN mkdir -p /opt 
@@ -18,3 +18,4 @@ RUN pip3 --no-cache install cmake
 ENV R_HOME "/usr/lib/R"
 ENV PATH "/usr/lib/R/bin:$PATH"
 ENV LD_LIBRARY_PATH "/clientdir:/usr/lib/R/lib:/usr/lib/R/extlib:$LD_LIBRARY_PATH"
+
