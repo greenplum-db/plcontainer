@@ -628,7 +628,7 @@ select * from pytestudt13( (1,2,'a')::test_type3 );
 
 select pytestudt16();
 ERROR:  PL/Container client exception occurred: 
- Only 'dict' object can be converted to UDT "test_type3"
+ Exception occurred transforming result object to int8
 select * from pytestudtrecord1() as t(a int, b int, c varchar);
  a | b |  c  
 ---+---+-----

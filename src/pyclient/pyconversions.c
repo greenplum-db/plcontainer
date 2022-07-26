@@ -489,40 +489,44 @@ static int plc_pyobject_as_array(PyObject *input, char **output, plcPyType *type
 	return res;
 }
 
+static PyObject* __dict_get(PyObject *o, const char *key, Py_ssize_t t) { return PyDict_GetItemString(o, key); }
+static PyObject* __sequence_get(PyObject *o, const char *key, Py_ssize_t t) { return PySequence_GetItem(o, t); }
+static PyObject* __object_get(PyObject *o, const char *key, Py_ssize_t t) { return PyObject_GetAttrString(o, key); }
+
 static int plc_pyobject_as_udt(PyObject *input, char **output, plcPyType *type) {
 	int res = 0;
-
 	*output = NULL;
-	if (!PyDict_Check(input)) {
-		raise_execution_error("Only 'dict' object can be converted to UDT \"%s\"", type->typeName);
-		res = -1;
+
+	// PyDict 'foo["bar"]' or PySequence 'foo[0]' or PyObject 'foo.bar'
+	// can be converted to PostgreSQL UDT
+	typeof(__dict_get) *py_get = NULL;
+	if (PyDict_Check(input) == true) {
+		py_get = __dict_get;
+	} else if (PySequence_Check(input) == true){
+		py_get = __sequence_get;
 	} else {
-		int i = 0;
-		plcUDT *udt;
-
-		udt = pmalloc(sizeof(plcUDT));
-		udt->data = pmalloc(type->nSubTypes * sizeof(rawdata));
-		for (i = 0; i < type->nSubTypes && res == 0; i++) {
-			PyObject *value = NULL;
-			value = PyDict_GetItemString(input, type->subTypes[i].typeName);
-			if (value == NULL) {
-				udt->data[i].isnull = true;
-				udt->data[i].value = NULL;
-				raise_execution_error("Cannot find key '%s' in result dictionary for converting "
-					                      "it into UDT", type->subTypes[i].typeName);
-				res = -1;
-			} else if (value == Py_None) {
-				udt->data[i].isnull = true;
-				udt->data[i].value = NULL;
-			} else {
-				udt->data[i].isnull = false;
-				res = type->subTypes[i].conv.outputfunc(value, &udt->data[i].value, &type->subTypes[i]);
-			}
-		}
-
-		*output = (char *) udt;
+		py_get = __object_get;
 	}
 
+	plcUDT *udt = pmalloc(sizeof(plcUDT));
+	udt->data = pmalloc(type->nSubTypes * sizeof(rawdata));
+	for (int i = 0; i < type->nSubTypes && res == 0; i++) {
+		PyObject *value = py_get(input, type->subTypes[i].typeName, i);
+		if (value == NULL) {
+			udt->data[i].isnull = true;
+			udt->data[i].value = NULL;
+			raise_execution_error("Cannot find key or attribute '%s' in result", type->subTypes[i].typeName);
+			res = -1;
+		} else if (value == Py_None) {
+			udt->data[i].isnull = true;
+			udt->data[i].value = NULL;
+		} else {
+			udt->data[i].isnull = false;
+			res = type->subTypes[i].conv.outputfunc(value, &udt->data[i].value, &type->subTypes[i]);
+		}
+	}
+
+	*output = (char *) udt;
 	return res;
 }
 

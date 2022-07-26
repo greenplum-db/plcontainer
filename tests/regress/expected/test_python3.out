@@ -653,7 +653,7 @@ select * from pytestudt13( (1,2,'a')::test_type3 );
 
 select pytestudt16();
 ERROR:  PL/Container client exception occurred: 
- Only 'dict' object can be converted to UDT "test_type3"
+ Exception occurred transforming result object to int8
 CONTEXT:  PLContainer function "pytestudt16"
 select * from pytestudtrecord1() as t(a int, b int, c varchar);
  a | b |  c  
@@ -692,7 +692,7 @@ ERROR:  PL/Container client exception occurred:
 CONTEXT:  PLContainer function "pybadfloat8"
 select pybadudt();
 ERROR:  PL/Container client exception occurred: 
- Cannot find key 'c' in result dictionary for converting it into UDT
+ Cannot find key or attribute 'c' in result
 CONTEXT:  PLContainer function "pybadudt"
 select pybadudt2();
 ERROR:  PL/Container client exception occurred: 
