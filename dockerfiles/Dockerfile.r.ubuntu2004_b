@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 EXPOSE 8080
-RUN apt-get update && apt-get install -y python3-pip gcc g++ cmake make R R-dev
+RUN apt-get update && apt-get install -y python3-pip gcc g++ cmake make r-base r-base-dev
 RUN pip3 --no-cache install cmake
 # ubuntu20.04 cmake version < 3.18 use pip install to make it easy 
 
