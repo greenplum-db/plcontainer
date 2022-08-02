@@ -17,7 +17,6 @@
 # 4. Bash functions should be idempotent as much as possible to make fly hijack debugging easier.
 
 set -eox
-
 if [[ ! ${PWD} =~ /tmp/build/[0-9a-z]* ]]; then
     echo "This script should always be started from concourse WORKDIR."
 fi
@@ -186,6 +185,8 @@ function setup_gpadmin_bashrc() {
         echo "source /usr/local/greenplum-db-devel/greenplum_path.sh"
         echo "source /home/gpadmin/gpdb_src/gpAux/gpdemo/gpdemo-env.sh"
         echo "export OS_NAME=${OS_NAME}"
+        echo "export CONTAINER_NAME_SUFFIX_PYTHON=${CONTAINER_NAME_SUFFIX_PYTHON}"
+        echo "export CONTAINER_NAME_SUFFIX_R=${CONTAINER_NAME_SUFFIX_R}"
         echo "export PATH=${CMAKE_HOME}/bin:\$PATH"
     } >>/home/gpadmin/.bashrc
 }
@@ -212,12 +213,11 @@ build)
     start_docker_server
     # run the build need run as root
     # for build task $2 means the container name suffix
-    export CONTAINER_NAME_SUFFIX="$2"
     /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh "$2"
     # save doker file
-    docker save python39."${CONTAINER_NAME_SUFFIX}" -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
+    docker save "${CONTAINER_NAME_SUFFIX_PYTHON}" -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
     # r-image
-    docker save r."${CONTAINER_NAME_SUFFIX}" -o plcontainer_artifacts/plcontainer_r_shared.tar.gz
+    docker save "${CONTAINER_NAME_SUFFIX_R}" -o plcontainer_artifacts/plcontainer_r_shared.tar.gz
     ;;
 test)
     start_docker_server
@@ -227,17 +227,15 @@ test)
     chown gpadmin /var/run/docker.sock
     # print the test diff to stdout in our CI
     export SHOW_REGRESS_DIFF=1
-    # test python39
-    # $3 is test py schedule
-    # $4 is test r schedule
+    # test python3
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
-            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py39.sh $2 $3" 
+            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py3.sh" 
 
     # test r
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
-            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_r.sh $2 $4"
+            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_r.sh"
     ;;
 *)
     echo "Unknown target task $1"

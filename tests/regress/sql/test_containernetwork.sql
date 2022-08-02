@@ -1,4 +1,4 @@
-\! plcontainer runtime-add -r plc_python_shared_net -i python39.${CONTAINER_NAME_SUFFIX} -l python3 --setting enable_network=yes
+\! plcontainer runtime-add -r plc_python_shared_net -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 --setting enable_network=yes
 
 CREATE FUNCTION access_network_err() RETURNS int AS $$
   # container: plc_python_shared
