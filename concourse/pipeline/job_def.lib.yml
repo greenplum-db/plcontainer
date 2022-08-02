@@ -8,8 +8,9 @@ res_test_image: centos7-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_centos7" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
 res_intermediates_bin: bin_plcontainer_gpdb6_rhel7_intermediates
-os: #@ "rhel7" + ("" if task_target=="alpine" else "_bundle")
-task_target: #@ task_target 
+os: #@ "rhel7" + ("" if container_name_suffix_python.startswith("python39.alpine") else "_bundle")
+container_name_suffix_python: #@ container_name_suffix_python
+container_name_suffix_r: #@ container_name_suffix_r
 res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" + ("" if container_name_suffix_python=="python39.alpine" else "_bundle")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
 #@ end
@@ -31,8 +32,9 @@ res_test_image: rhel8-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_rhel8" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
 res_intermediates_bin: bin_plcontainer_gpdb6_rhel8_intermediates
-os: #@ "rhel8" + ("" if task_target=="alpine" else "_bundle")
-task_target: #@ task_target 
+os: #@ "rhel8" + ("" if container_name_suffix_python.startswith("python39.alpine") else "_bundle")
+container_name_suffix_python: #@ container_name_suffix_python
+container_name_suffix_r: #@ container_name_suffix_r
 res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" +  ("" if container_name_suffix_python=="python39.alpine" else "_bundle")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
 #@ end
@@ -43,8 +45,9 @@ res_test_image: ubuntu18-gpdb6-image-test
 res_gpdb_src: gpdb6_src
 res_gpdb_bin: #@ "bin_gpdb6_ubuntu18" + ("" if release_build else "_debug")
 res_intermediates_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
-os: #@ "ubuntu18.04" + ("" if task_target=="alpine" else "_bundle")
-task_target: #@ task_target
+os: #@ "ubuntu18.04" +  ("" if container_name_suffix_python.startswith("python39.alpine") else "_bundle")
+container_name_suffix_python: #@ container_name_suffix_python
+container_name_suffix_r: #@ container_name_suffix_r
 res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates" + ("" if container_name_suffix_python=="python39.alpine" else "_bundle")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
 #@ end
@@ -110,11 +113,11 @@ config:
   platform: linux
   run:
     path: plcontainer_src/concourse/scripts/entry.sh
-    args:
-      - build
     params:
       CONTAINER_NAME_SUFFIX_PYTHON: #@ conf["container_name_suffix_python"]
       CONTAINER_NAME_SUFFIX_R: #@ conf["container_name_suffix_r"]
+    args:
+      - build
   inputs:
     - name: bin_gpdb
     - name: plcontainer_src
@@ -134,13 +137,13 @@ privileged: true
 timeout: 2h
 config:
   platform: linux
+  params:
+    CONTAINER_NAME_SUFFIX_PYTHON: #@ conf["container_name_suffix_python"]
+    CONTAINER_NAME_SUFFIX_R: #@ conf["container_name_suffix_r"]
   run:
     path: plcontainer_src/concourse/scripts/entry.sh
     args:
       - test
-    params:
-      CONTAINER_NAME_SUFFIX_PYTHON: #@ conf["container_name_suffix_python"]
-      CONTAINER_NAME_SUFFIX_R: #@ conf["container_name_suffix_r"]
   inputs:
     - name: bin_gpdb
     - name: gpdb_src

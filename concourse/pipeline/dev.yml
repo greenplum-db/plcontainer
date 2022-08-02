@@ -18,7 +18,8 @@
 #@   centos7_gpdb6_conf(release_build=False),
 #@   rhel8_gpdb6_conf(release_build=False),
 #@   ubuntu18_gpdb6_conf(release_build=False),
-#@   centos7_gpdb6_conf(release_build=False, task_target="ubuntu2004_b", schedule={"py": "testpy3_bundle", "r": "testr"}),
+#@   centos7_gpdb6_conf(release_build=False, container_name_suffix_python="python37.ubuntu1804_b", container_name_suffix_r="r.alpine"),
+#@   ubuntu18_gpdb6_conf(release_build=False, container_name_suffix_python="python39.ubuntu2004_b", container_name_suffix_r="r.alpine"),
 #@ ]
 jobs:
 #@ param = {
