@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
 RUN mkdir -p /clientdir
-RUN apt update && apt install -y python3.7 python3.7-dev python3.7-distutils wget default-libmysqlclient-dev libssl-dev libpq-dev
+RUN apt update && apt install -y python3.7 python3.7-dev python3.7-distutils wget default-libmysqlclient-dev libssl-dev libpq-dev gcc g++
 RUN wget https://bootstrap.pypa.io/get-pip.py
 RUN ln -sf /usr/bin/python3.7 /usr/bin/python3
 RUN python3 get-pip.py
