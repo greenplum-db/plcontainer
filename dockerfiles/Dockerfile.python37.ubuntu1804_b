@@ -1,8 +1,5 @@
 FROM ubuntu:18.04
 
-ENV http_proxy http://proxy.vmware.com:3128
-ENV https_proxy http://proxy.vmware.com:3128
-
 RUN mkdir -p /clientdir
 RUN apt update && apt install -y python3.7 python3.7-dev python3.7-distutils wget default-libmysqlclient-dev libssl-dev libpq-dev
 RUN wget https://bootstrap.pypa.io/get-pip.py
