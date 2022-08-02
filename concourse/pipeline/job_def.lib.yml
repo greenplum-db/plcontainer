@@ -111,11 +111,11 @@ task: #@ "build_" + conf["os"]
 privileged: true
 config:
   platform: linux
+  params:
+    CONTAINER_NAME_SUFFIX_PYTHON: #@ conf["container_name_suffix_python"]
+    CONTAINER_NAME_SUFFIX_R: #@ conf["container_name_suffix_r"]
   run:
     path: plcontainer_src/concourse/scripts/entry.sh
-    params:
-      CONTAINER_NAME_SUFFIX_PYTHON: #@ conf["container_name_suffix_python"]
-      CONTAINER_NAME_SUFFIX_R: #@ conf["container_name_suffix_r"]
     args:
       - build
   inputs:
