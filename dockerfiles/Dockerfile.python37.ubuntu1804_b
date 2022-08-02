@@ -3,11 +3,16 @@ FROM ubuntu:18.04
 RUN mkdir -p /clientdir
 RUN apt update && apt install -y python3.7 python3.7-dev python3-pip
 
-ENV PATH "${PATH:+:${PATH}}"
+ADD requirements-py37.txt .
+RUN pip3 install --no-cache -r requirements-py37.txt
+# ubuntu20.04 cmake version < 3.18 use pip install to make it easy
+RUN pip3 --no-cache install cmake
+
 ENV LD_LIBRARY_PATH "/usr/lib/python3.7${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 ENV MANPATH "${MANPATH}"
 ENV XDG_DATA_DIRS "${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"
-RUN python3.7 -m pip install nltk
-RUN python3.7 -m nltk.downloader all
+RUN python3 -m spacy download en_core_web_sm
+# RUN python3.7 -m pip install nltk
+# RUN python3.7 -m nltk.downloader all
 WORKDIR /clientdir
