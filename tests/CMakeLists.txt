@@ -35,6 +35,6 @@ if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
         DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
         SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py3_bundle
         REGRESS_OPTS
-        --dbname=contrib_regression)
+        --dbname=contrib_regression_bundle)
     add_dependencies(installcheck testpy3_bundle)
 endif()
