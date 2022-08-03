@@ -25,6 +25,7 @@ RegressTarget_Add(testr
 add_custom_target(installcheck)
 add_dependencies(installcheck testpy3 testr)
 
+# for _b means for data-science-bundle include the packages and import tests
 if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
     RegressTarget_Add(testpy3_bundle
         INIT_FILE

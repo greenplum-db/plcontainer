@@ -22,4 +22,4 @@ function _main() {
     popd
 }
 
-_main "$@"
+_main 
