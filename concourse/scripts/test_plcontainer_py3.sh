@@ -14,7 +14,8 @@ function _main() {
     time plcontainer runtime-add -r plc_python_shared -i "${CONTAINER_NAME_SUFFIX_PYTHON}" -l python3
     time plcontainer runtime-add -r plc_python_shared_oom -i "${CONTAINER_NAME_SUFFIX_PYTHON}" -l python3 -s memory_mb=100
     time cmake --build . --target testpy3 
-    if [[ ${CONTAINER_NAME_SUFFIX_PYTHON} == *_b ]]; then 
+    if [[ ${CONTAINER_NAME_SUFFIX_PYTHON} == *_b ]]; then
+        time gpstop -ar
         time cmake --build . --target testpy3_bundle 
     fi
     # Test gppkg uninstall

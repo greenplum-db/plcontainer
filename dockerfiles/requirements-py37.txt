@@ -142,6 +142,7 @@ xgboost==1.6.1
 xmltodict==0.13.0
 zc.lockfile==2.0
 zipp==3.8.0
+gluonts==0.8.1
 tensorflow==2.9.1
 keras==2.9.0
 
