@@ -213,7 +213,7 @@ resources:
     json_key: ((extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_ubuntu18_gpdb6.gppkg
 
-- name: tar_plcontainer_python3_docker_intermediates
+- name: tar_plcontainer_python3_docker_intermediates_python39_alpine
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
