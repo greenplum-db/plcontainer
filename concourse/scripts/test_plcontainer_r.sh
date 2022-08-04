@@ -9,6 +9,8 @@ function _main() {
     time plcontainer image-add -f plcontainer_r_shared.tar.gz
     # TODO for now drop logging for test maybe bring it back in the future
     time plcontainer runtime-add -r plc_r_shared -i "${CONTAINER_NAME_SUFFIX_R}" -l r
+    # restart 
+    time gpstop -ar
     time cmake --build . --target testr 
     # Test gppkg uninstall
     gppkg -q --all
