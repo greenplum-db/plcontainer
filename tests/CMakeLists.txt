@@ -6,7 +6,7 @@ RegressTarget_Add(testpy3
     SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/sql
     EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/expected
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
-    DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
+    DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py3
     REGRESS_OPTS
     --dbname=contrib_regression)
@@ -33,7 +33,7 @@ if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
         SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/sql
         EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/expected
         RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
-        DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
+        DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
         SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py3_bundle
         REGRESS_OPTS
         --dbname=contrib_regression)
