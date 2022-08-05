@@ -5,7 +5,7 @@ return math.log10(100)
 $$ LANGUAGE plcontainer;
 
 -- start_ignore
-\! plcontainer runtime-add -r plc_python_user -i pivotaldata/plcontainer_python3_shared:devel -l python3 -s use_container_logging=yes -s roles=gpadmin;
+\! plcontainer runtime-add -r plc_python_user -i python39.alpine -l python3 -s use_container_logging=yes -s roles=gpadmin;
 SELECT plcontainer_refresh_local_config(false);
 -- end_ignore
 
@@ -13,7 +13,7 @@ SELECT plcontainer_refresh_local_config(false);
 SELECT pylog100();
 
 -- start_ignore
-\! plcontainer runtime-replace -r plc_python_user -i pivotaldata/plcontainer_python3_shared:devel -l python3 -s use_container_logging=yes -s roles=plc1;
+\! plcontainer runtime-replace -r plc_python_user -i python39.alpine -l python3 -s use_container_logging=yes -s roles=plc1;
 SELECT plcontainer_refresh_local_config(false);
 -- end_ignore
 
@@ -21,7 +21,7 @@ SELECT plcontainer_refresh_local_config(false);
 SELECT pylog100();
 
 -- start_ignore
-\! plcontainer runtime-replace -r plc_python_user -i pivotaldata/plcontainer_python3_shared:devel -l python3 -s use_container_logging=yes -s roles=plc1,gpadmin;
+\! plcontainer runtime-replace -r plc_python_user -i python39.alpine -l python3 -s use_container_logging=yes -s roles=plc1,gpadmin;
 SELECT plcontainer_refresh_local_config(false);
 -- end_ignore
 
@@ -29,7 +29,7 @@ SELECT plcontainer_refresh_local_config(false);
 SELECT pylog100();
 
 -- start_ignore
-\! plcontainer runtime-replace -r plc_python_user -i pivotaldata/plcontainer_python3_shared:devel -l python3 -s use_container_logging=yes -s roles=plc1;
+\! plcontainer runtime-replace -r plc_python_user -i python39.alpine -l python3 -s use_container_logging=yes -s roles=plc1;
 SELECT plcontainer_refresh_local_config(false);
 -- end_ignore
 
@@ -54,7 +54,7 @@ SELECT pylog100();
 SET ROLE gpadmin;
 
 -- start_ignore
-\! plcontainer runtime-replace -r plc_python_user -i pivotaldata/plcontainer_python3_shared:devel -l python3 -s use_container_logging=yes -s roles=gpadmin;
+\! plcontainer runtime-replace -r plc_python_user -i python39.alpine -l python3 -s use_container_logging=yes -s roles=gpadmin;
 SELECT plcontainer_refresh_local_config(false);
 -- end_ignore
 
