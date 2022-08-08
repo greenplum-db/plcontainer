@@ -3,12 +3,16 @@
 
 #! Use bin_gpdb_postfix="" to use a release version of gpdb binary
 #! Job config for centos7
-#@ def centos7_gpdb6_conf(release_build=False):
+#@ def centos7_gpdb6_conf(release_build=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
 res_test_image: centos7-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_centos7" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
 res_intermediates_bin: bin_plcontainer_gpdb6_rhel7_intermediates
-os: rhel7
+os: #@ "rhel7_" + container_name_suffix_python + "_" + container_name_suffix_r 
+container_name_suffix_python: #@ container_name_suffix_python
+container_name_suffix_r: #@ container_name_suffix_r
+res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
+res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
 #@ end
 
 #! Job config for centos6
@@ -23,21 +27,29 @@ build_type: #@ "Release" if release_build else "Debug"
 #@ end
 
 #! Job config for rhel8
-#@ def rhel8_gpdb6_conf(release_build=False):
+#@ def rhel8_gpdb6_conf(release_build=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
 res_test_image: rhel8-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_rhel8" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
 res_intermediates_bin: bin_plcontainer_gpdb6_rhel8_intermediates
-os: rhel8
+os: #@ "rhel8_" + container_name_suffix_python + "_" + container_name_suffix_r 
+container_name_suffix_python: #@ container_name_suffix_python
+container_name_suffix_r: #@ container_name_suffix_r
+res_intermediates_tar_python3:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
+res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
 #@ end
 
 #! Job config for ubuntu18
-#@ def ubuntu18_gpdb6_conf(release_build=False):
+#@ def ubuntu18_gpdb6_conf(release_build=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
 res_test_image: ubuntu18-gpdb6-image-test
 res_gpdb_src: gpdb6_src
 res_gpdb_bin: #@ "bin_gpdb6_ubuntu18" + ("" if release_build else "_debug")
 res_intermediates_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
-os: ubuntu18.04
+os: #@ "ubuntu18.04_" +  container_name_suffix_python + "_" + container_name_suffix_r
+container_name_suffix_python: #@ container_name_suffix_python
+container_name_suffix_r: #@ container_name_suffix_r
+res_intermediates_tar_python3:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
+res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
 #@ end
 
 #! The entry point of a pipeline. The job name must be 'entrance'.
@@ -99,6 +111,9 @@ task: #@ "build_" + conf["os"]
 privileged: true
 config:
   platform: linux
+  params:
+    CONTAINER_NAME_SUFFIX_PYTHON: #@ conf["container_name_suffix_python"]
+    CONTAINER_NAME_SUFFIX_R: #@ conf["container_name_suffix_r"]
   run:
     path: plcontainer_src/concourse/scripts/entry.sh
     args:
@@ -122,6 +137,9 @@ privileged: true
 timeout: 2h
 config:
   platform: linux
+  params:
+    CONTAINER_NAME_SUFFIX_PYTHON: #@ conf["container_name_suffix_python"]
+    CONTAINER_NAME_SUFFIX_R: #@ conf["container_name_suffix_r"]
   run:
     path: plcontainer_src/concourse/scripts/entry.sh
     args:
@@ -171,4 +189,10 @@ plan:
 - put: #@ conf["res_intermediates_bin"]
   params:
     file: plcontainer_artifacts/plcontainer*.gppkg
+- put: #@ conf["res_intermediates_tar_python3"]
+  params:
+    file: plcontainer_artifacts/plcontainer_python3_shared.tar.gz
+- put: #@ conf["res_intermediates_tar_r"]
+  params:
+    file: plcontainer_artifacts/plcontainer_r_shared.tar.gz
 #@ end

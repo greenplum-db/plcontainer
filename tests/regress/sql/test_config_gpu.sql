@@ -1,5 +1,5 @@
 -- start_ignore
-\! plcontainer runtime-add -r plc_python3_shared_gpu -i python39.alpine:latest -l python3 -s roles=$USER
+\! plcontainer runtime-add -r plc_python3_shared_gpu -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 -s roles=$USER
 \! plcontainer runtime-backup -f test_config_gpu.xml
 \! ./data/test_assign_gpu.py --file ./test_config_gpu.xml -i --runtime plc_python3_shared_gpu --action all
 \! plcontainer runtime-restore -f test_config_gpu.xml
@@ -24,7 +24,7 @@ select * from with_conf_gpu();
 -- end_ignore
 
 -- start_ignore
-\! plcontainer runtime-add -r plc_python3_shared_gpu -i python39.alpine:latest -l python3
+\! plcontainer runtime-add -r plc_python3_shared_gpu -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3
 \! plcontainer runtime-backup -f test_config_gpu.xml
 \! ./data/test_assign_gpu.py --file ./test_config_gpu.xml -i --runtime plc_python3_shared_gpu --action all
 \! plcontainer runtime-restore -f test_config_gpu.xml
