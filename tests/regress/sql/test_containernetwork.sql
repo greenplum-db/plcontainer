@@ -22,7 +22,7 @@ select * from access_network_ok();
 
 \! plcontainer runtime-delete -r plc_python_shared_net
 
--- strict permission check, except error
+-- strict permission check, expect error
 \! plcontainer runtime-add -r plc_python_shared_net -i python39.alpine:latest -l python3 --setting enable_network=yes
 select * from plcontainer_refresh_config;
 select * from access_network_ok();

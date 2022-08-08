@@ -58,7 +58,7 @@ select * from plcontainer_refresh_config;
             -1 | ok
 (4 rows)
 
--- strict permission check, except error
+-- strict permission check, expect error
 select * from with_conf_gpu();
 WARNING:  plcontainer: To access network or physical device, user permission needs to be granted explicitly in the runtime config.
 HINT:  set user name in <setting roles="<user name>" />

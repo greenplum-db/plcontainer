@@ -32,7 +32,7 @@ select * from with_conf_gpu();
 -- end_ignore
 select * from plcontainer_refresh_config;
 
--- strict permission check, except error
+-- strict permission check, expect error
 select * from with_conf_gpu();
 
 drop function with_conf_gpu();
