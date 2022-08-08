@@ -282,6 +282,11 @@ static void parse_runtime_configuration(xmlNode *node) {
 									"changing <enable_network> to \"yes\" automaticly");
 							conf_entry->enableNetwork = true;
 						}
+
+						// network will a new attack surface. enable strict permission check
+						if (conf_entry->enableNetwork == true) {
+							conf_entry->useUserControl = true;
+						}
 					}
 
 					value = xmlGetProp(cur_node, (const xmlChar *) "resource_group_id");
@@ -490,6 +495,11 @@ static void parse_runtime_configuration(xmlNode *node) {
 					req->ndeviceid = -1;
 					req->deviceid = NULL;
 				}
+
+				// when assign a GPU, may need extra permissions. enable strict permission check
+				if (req->ndeviceid != 0) {
+					conf_entry->useUserControl = true;
+				}
 			}
 		}
 	}
@@ -548,6 +558,8 @@ static void free_runtime_conf_entry(runtimeConfEntry *entry) {
 		pfree(entry->image);
 	if (entry->command)
 		pfree(entry->command);
+	if (entry->roles)
+		pfree(entry->roles);
 
 	for (i = 0; i < entry->nSharedDirs; i++) {
 		if (entry->sharedDirs[i].container)
@@ -600,30 +612,33 @@ static void print_runtime_configurations() {
 		plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
 		plc_elog(INFO, "    cpu_share = '%d'", conf_entry->cpuShare);
 		// skip conf_entry->useContainerNetwork because it is not user settable.
-		plc_elog(INFO, "    use_container_logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
-		plc_elog(INFO, "    enable_network  = '%s'", conf_entry->enableNetwork ? "yes" : "no");
+		plc_elog(INFO, "    use_container_logging = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
+		plc_elog(INFO, "    enable_network = '%s'", conf_entry->enableNetwork ? "yes" : "no");
 		if (conf_entry->ndevicerequests != 0) {
 			for (int i = 0; i < conf_entry->ndevicerequests; i++) {
 				plcDeviceRequest *req = &conf_entry->devicerequests[i];
 				if (req->driver != NULL) {
-					plc_elog(INFO, "    device_request[%d].driver  = '%s'", i, req->driver);
+					plc_elog(INFO, "    device_request[%d].driver = '%s'", i, req->driver);
 				}
 				if (req->ndeviceid == -1) {
-					plc_elog(INFO, "    device_request[%d].deviceid  = 'all'", i);
+					plc_elog(INFO, "    device_request[%d].deviceid = 'all'", i);
 				}
 				for (int j = 0; j < req->ndeviceid; j++) {
-					plc_elog(INFO, "    device_request[%d].deviceid[%d]  = '%s'", i, j, req->deviceid[j]);
+					plc_elog(INFO, "    device_request[%d].deviceid[%d] = '%s'", i, j, req->deviceid[j]);
 				}
 				for (int j = 0; j < req->ncapabilities; j++) {
-					plc_elog(INFO, "    device_request[%d].capabilities[%d]  = '%s'", i, j, req->capabilities[j]);
+					plc_elog(INFO, "    device_request[%d].capabilities[%d] = '%s'", i, j, req->capabilities[j]);
 				}
 			}
 		}
-		if (conf_entry->useUserControl && conf_entry->roles != NULL) {
-			plc_elog(INFO, "    allowed roles list  = '%s'", conf_entry->roles);
+		if (conf_entry->useUserControl) {
+			plc_elog(INFO, "    useUserControl = 'true'");
+		}
+		if (conf_entry->roles != NULL) {
+			plc_elog(INFO, "    allowed roles list = '%s'", conf_entry->roles);
 		}
 		if (conf_entry->resgroupOid != InvalidOid) {
-			plc_elog(INFO, "    resource group id  = '%u'", conf_entry->resgroupOid);
+			plc_elog(INFO, "    resource group id = '%u'", conf_entry->resgroupOid);
 		}
 		for (int j = 0; j < conf_entry->nSharedDirs; j++) {
 			plc_elog(INFO, "    shared directory from host '%s' to container '%s'",
@@ -848,15 +863,24 @@ char *get_sharing_options(runtimeConfEntry *conf, int container_slot, bool *has_
 }
 
 bool plc_check_user_privilege(char *roles){
-
 	List *elemlist;
 	ListCell *l;
 	Oid currentUserOid;
+
+	if (roles == NULL) {
+		ereport(WARNING,
+				(errmsg("plcontainer: To access network or physical device, user permission needs to be granted explicitly in the runtime config."),
+				errhint("set user name in <setting roles=\"<user name>\" />")));
+
+		return false;
+	}
 
 	if (!SplitIdentifierString(roles, ',', &elemlist))
 	{
 		list_free(elemlist);
 		elog(ERROR, "Could not get role list from %s, please check it again", roles);
+
+		return false;
 	}
 
 	currentUserOid = GetUserId();
@@ -875,5 +899,4 @@ bool plc_check_user_privilege(char *roles){
 	}
 
 	return false;
-
 }
