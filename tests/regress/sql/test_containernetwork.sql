@@ -1,4 +1,4 @@
-\! plcontainer runtime-add -r plc_python_shared_net -i python39.alpine:latest -l python3 --setting enable_network=yes -s roles=$USER
+\! plcontainer runtime-add -r plc_python_shared_net -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 --setting enable_network=yes -s roles=$USER
 
 select * from plcontainer_refresh_config;
 
@@ -23,7 +23,7 @@ select * from access_network_ok();
 \! plcontainer runtime-delete -r plc_python_shared_net
 
 -- strict permission check, expect error
-\! plcontainer runtime-add -r plc_python_shared_net -i python39.alpine:latest -l python3 --setting enable_network=yes
+\! plcontainer runtime-add -r plc_python_shared_net -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 --setting enable_network=yes
 select * from plcontainer_refresh_config;
 select * from access_network_ok();
 

@@ -39,7 +39,7 @@ select * from with_conf_gpu();
 20220718:17:27:11:264623 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -- end_ignore
 -- start_ignore
-\! plcontainer runtime-add -r plc_python3_shared_gpu -i python39.alpine:latest -l python3
+\! plcontainer runtime-add -r plc_python3_shared_gpu -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3
 20220718:17:27:11:264858 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20220718:17:27:12:264858 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 \! plcontainer runtime-backup -f test_config_gpu.xml
