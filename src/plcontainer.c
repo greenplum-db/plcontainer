@@ -334,7 +334,7 @@ static plcProcResult *plcontainer_get_result(FunctionCallInfo fcinfo,
 		if (runtime_conf_entry == NULL) {
 			plc_elog(ERROR, "Runtime '%s' is not defined in configuration "
 						"and cannot be used", runtime_id);
-		} 
+		}
 		/*
 		 * We need to check the privilege in each run
 		 */
