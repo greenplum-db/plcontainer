@@ -18,4 +18,5 @@ RUN pip3 --no-cache install cmake
 ENV R_HOME "/usr/lib/R"
 ENV PATH "/usr/lib/R/bin:$PATH"
 ENV LD_LIBRARY_PATH "/clientdir:/usr/lib/R/lib:/usr/lib/R/extlib:$LD_LIBRARY_PATH"
-
+RUN mkdir -p /clientdir
+WORKDIR /clientdir

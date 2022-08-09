@@ -13,9 +13,9 @@
 #@ res_type_map = {}
 #@ trigger = release_trigger(res_map)
 #@ confs = [
-#@   centos7_gpdb6_conf(release_build=True, is_bundle_release=False, container_name_suffix_python="python37.ubuntu1804", container_name_suffix_r="r.alpine"),
-#@   rhel8_gpdb6_conf(release_build=True, is_bundle_release=False, container_name_suffix_python="python37.ubuntu1804", container_name_suffix_r="r.alpine"),
-#@   ubuntu18_gpdb6_conf(release_build=True, is_bundle_release=False, container_name_suffix_python="python37.ubuntu1804", container_name_suffix_r="r.alpine"),
+#@   centos7_gpdb6_conf(release_build=True, is_bundle_release=False, container_name_suffix_python="python37.ubuntu1804", container_name_suffix_r="r.ubuntu1804"),
+#@   rhel8_gpdb6_conf(release_build=True, is_bundle_release=False, container_name_suffix_python="python37.ubuntu1804", container_name_suffix_r="r.ubuntu1804"),
+#@   ubuntu18_gpdb6_conf(release_build=True, is_bundle_release=False, container_name_suffix_python="python37.ubuntu1804", container_name_suffix_r="r.ubuntu1804"),
 #@ ]
 jobs:
 #@ param = {

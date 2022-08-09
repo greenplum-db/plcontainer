@@ -1,0 +1,10 @@
+FROM ubuntu:18.04
+
+EXPOSE 8080
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip gcc g++ cmake make r-base r-base-dev
+
+ENV R_HOME "/usr/lib/R"
+ENV PATH "/usr/lib/R/bin:$PATH"
+ENV LD_LIBRARY_PATH "/clientdir:/usr/lib/R/lib:/usr/lib/R/extlib:$LD_LIBRARY_PATH"
+RUN mkdir -p /clientdir
+WORKDIR /clientdir
