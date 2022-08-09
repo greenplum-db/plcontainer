@@ -2,6 +2,8 @@ FROM ubuntu:18.04
 
 EXPOSE 8080
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip gcc g++ make r-base r-base-dev
+# solve No module named 'skbuild'
+RUN pip3 install --upgrade pip
 RUN pip3 --no-cache install cmake
 
 ENV R_HOME "/usr/lib/R"
