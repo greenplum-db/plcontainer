@@ -36,7 +36,7 @@ resources:
   webhook_token: ((extension/extensions-webhook-token))
   check_every: 1h
   source:
-    branch: ((plcontainer-branch))
+    branch: {{plcontainer-branch}}
     uri: https://github.com/greenplum-db/plcontainer
     username: ((extension/github-access-token))
     password: x-oauth-basic
@@ -48,7 +48,7 @@ resources:
   type: git
   check_every: 1m
   source:
-    branch: ((plcontainer-branch))
+    branch: {{plcontainer-branch}}
     uri: https://github.com/greenplum-db/plcontainer
     username: ((extension/github-access-token))
     password: x-oauth-basic

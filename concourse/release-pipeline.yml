@@ -145,10 +145,10 @@ resources:
 
 - name: terraform.d
   source:
-    access_key_id: {{aws-bucket-access-key-id}}
+    access_key_id: ((aws-bucket-access-key-id))
     bucket: ccp-terraform-provider-plugins
     region_name: us-west-2
-    secret_access_key: {{aws-bucket-secret-access-key}}
+    secret_access_key: ((aws-bucket-secret-access-key))
     versioned_file: plugin-cache.tgz
   type: s3
 
