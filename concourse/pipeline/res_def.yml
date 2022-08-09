@@ -36,7 +36,7 @@ resources:
   webhook_token: ((extensions-webhook-token))
   check_every: 1h
   source:
-    branch: ((plcontainer-branch))
+    branch: hy/release-pipeline
     uri: https://github.com/greenplum-db/plcontainer
     username: ((github-access-token))
     password: x-oauth-basic
