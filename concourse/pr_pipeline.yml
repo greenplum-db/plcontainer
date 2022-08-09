@@ -25,7 +25,7 @@ resources:
   type: pull_request
   source:
     repo: greenplum-db/plcontainer
-    access_token: {{extension/github-access-token}}
+    access_token: ((extension/github-access-token))
     uri: https://github.com/greenplum-db/plcontainer.git
 
 - name: gpdb_src
@@ -58,43 +58,43 @@ resources:
   source:
     bucket: procedural-languages-concourse-gpdb-master
     region_name: us-west-2
-    access_key_id: {{aws-bucket-access-key-id}}
-    secret_access_key: {{aws-bucket-secret-access-key}}
+    access_key_id: ((aws-bucket-access-key-id))
+    secret_access_key: ((aws-bucket-secret-access-key))
     versioned_file: build/gpdb5/plr/centos6/plr-devel.gppkg
 - name: plr_gpdb5_centos7_build
   type: s3
   source:
     bucket: procedural-languages-concourse-gpdb-master
     region_name: us-west-2
-    access_key_id: {{aws-bucket-access-key-id}}
-    secret_access_key: {{aws-bucket-secret-access-key}}
+    access_key_id: ((aws-bucket-access-key-id))
+    secret_access_key: ((aws-bucket-secret-access-key))
     versioned_file: build/gpdb5/plr/centos7/plr-devel.gppkg
 
 - name: bin_gpdb_centos7
   type: s3
   source:
-    access_key_id: {{aws-bucket-access-key-id}}
+    access_key_id: ((aws-bucket-access-key-id))
     bucket: gpdb5-assert-concourse-builds
     region_name: us-west-2
-    secret_access_key: {{aws-bucket-secret-access-key}}
+    secret_access_key: ((aws-bucket-secret-access-key))
     versioned_file: bin_gpdb_centos7/bin_gpdb.tar.gz
 
 - name: bin_gpdb_centos6
   type: s3
   source:
-    access_key_id: {{aws-bucket-access-key-id}}
+    access_key_id: ((aws-bucket-access-key-id))
     bucket: gpdb5-assert-concourse-builds
     region_name: us-west-2
-    secret_access_key: {{aws-bucket-secret-access-key}}
-    versioned_file: {{bin_gpdb_centos/bin_gpdb.tar.gz}}
+    secret_access_key: ((aws-bucket-secret-access-key))
+    versioned_file: ((bin_gpdb_centos/bin_gpdb.tar.gz))
 
 - name: plcontainer_gpdb_centos7_build
   type: s3
   source:
     bucket: procedural-languages-concourse-gpdb-master
     region_name: us-west-2
-    access_key_id: {{aws-bucket-access-key-id}}
-    secret_access_key: {{aws-bucket-secret-access-key}}
+    access_key_id: ((aws-bucket-access-key-id))
+    secret_access_key: ((aws-bucket-secret-access-key))
     versioned_file: build/gpdb5/plcontainer/plcontainer-concourse-centos7.gppkg
 
 - name: plcontainer_gpdb_centos6_build
@@ -102,8 +102,8 @@ resources:
   source:
     bucket: procedural-languages-concourse-gpdb-master
     region_name: us-west-2
-    access_key_id: {{aws-bucket-access-key-id}}
-    secret_access_key: {{aws-bucket-secret-access-key}}
+    access_key_id: ((aws-bucket-access-key-id))
+    secret_access_key: ((aws-bucket-secret-access-key))
     versioned_file: build/gpdb5/plcontainer/plcontainer-concourse-centos6.gppkg
 
 

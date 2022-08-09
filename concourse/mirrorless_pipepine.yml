@@ -35,8 +35,8 @@ ccp_vars_anchor: &ccp_default_vars
   platform: centos6
 
 ccp_gen_cluster_default_params_anchor: &ccp_gen_cluster_default_params
-  AWS_ACCESS_KEY_ID: {{tf-machine-access-key-id}}
-  AWS_SECRET_ACCESS_KEY: {{tf-machine-secret-access-key}}
+  AWS_ACCESS_KEY_ID: ((tf-machine-access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((tf-machine-secret-access-key))
   AWS_DEFAULT_REGION: us-west-2
   BUCKET_PATH: clusters-google/
   BUCKET_NAME: gpdb5-pipeline-dynamic-terraform
@@ -77,12 +77,12 @@ set_failed_anchor: &set_failed
       run:
         path: 'ccp_src/google/ccp_failed_test.sh'
       params:
-        GOOGLE_CREDENTIALS: {{google-service-account-key/prod}}
+        GOOGLE_CREDENTIALS: ((google-service-account-key/prod))
         GOOGLE_PROJECT_ID: data-gpdb-ci
         GOOGLE_ZONE: us-central1-a
-        GOOGLE_SERVICE_ACCOUNT: {{google-service-account/prod}}
-        AWS_ACCESS_KEY_ID: {{tf-machine-access-key-id}}
-        AWS_SECRET_ACCESS_KEY: {{tf-machine-secret-access-key}}
+        GOOGLE_SERVICE_ACCOUNT: ((google-service-account/prod))
+        AWS_ACCESS_KEY_ID: ((tf-machine-access-key-id))
+        AWS_SECRET_ACCESS_KEY: ((tf-machine-secret-access-key))
         AWS_DEFAULT_REGION: us-west-2
         BUCKET_PATH: clusters-google/
         BUCKET_NAME: gpdb5-pipeline-dynamic-terraform
@@ -110,7 +110,7 @@ resources:
   type: git
   source:
     branch: gpdb6
-    private_key: {{extension/plpkg-git-key}}
+    private_key: ((extension/plpkg-git-key))
     uri: git@github.com:greenplum-db/data-science-bundle.git
 
 # ccp_src tag_filter is not maintained by gpdb_common-ci-secrets.yml
@@ -119,12 +119,12 @@ resources:
   type: git
   source:
     branch: master
-    private_key: {{gp-concourse-cluster-provisioner-git-key}}
+    private_key: ((gp-concourse-cluster-provisioner-git-key))
     uri: git@github.com:pivotal/gp-concourse-cluster-provisioner.git
 
 - name: terraform.d
   source:
-    access_key_id: {{aws-bucket-access-key-id}}
+    access_key_id: ((aws-bucket-access-key-id))
     bucket: ccp-terraform-provider-plugins
     region_name: us-west-2
     secret_access_key: ((aws-bucket-secret-access-key))
@@ -150,14 +150,14 @@ resources:
   type: terraform
   source:
     env:
-      AWS_ACCESS_KEY_ID: {{tf-machine-access-key-id}}
-      AWS_SECRET_ACCESS_KEY: {{tf-machine-secret-access-key}}
-      GOOGLE_CREDENTIALS: {{google-service-account-key/prod}}
+      AWS_ACCESS_KEY_ID: ((tf-machine-access-key-id))
+      AWS_SECRET_ACCESS_KEY: ((tf-machine-secret-access-key))
+      GOOGLE_CREDENTIALS: ((google-service-account-key/prod))
     vars:
       project_id: data-gpdb-ci
     storage:
-      access_key_id: {{tf-machine-access-key-id}}
-      secret_access_key: {{tf-machine-secret-access-key}}
+      access_key_id: ((tf-machine-access-key-id))
+      secret_access_key: ((tf-machine-secret-access-key))
       region_name: us-west-2
       # This is not parameterized, on purpose. All tfstates will go to this spot,
       # and different teams will place there clusters' tfstate files under different paths
@@ -178,7 +178,7 @@ resources:
     repository: gcr.io/data-gpdb-private-images/gpdb6-rhel8-test
     tag: latest
     username: _json_key
-    password: {{data-gpdb-private-images-container-registry-readonly-service-account-key}}
+    password: ((data-gpdb-private-images-container-registry-readonly-service-account-key))
 
 - name: rhel-image-build-8
   type: registry-image
@@ -186,7 +186,7 @@ resources:
     repository: gcr.io/data-gpdb-private-images/gpdb6-rhel8-build
     tag: latest
     username: _json_key
-    password: {{data-gpdb-private-images-container-registry-readonly-service-account-key}}
+    password: ((data-gpdb-private-images-container-registry-readonly-service-account-key))
 
 - name: ubuntu18-image
   type: docker-image
@@ -206,70 +206,70 @@ resources:
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: {{concourse-gcs-resources-service-account-key}}
+    json_key: ((concourse-gcs-resources-service-account-key))
     versioned_file: plcontainer/published/gpdb6/plcontainer-python-images-devel.tar.gz
 
 - name: plcontainer_docker_image_python3
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: {{concourse-gcs-resources-service-account-key}}
+    json_key: ((concourse-gcs-resources-service-account-key))
     versioned_file: plcontainer/published/gpdb6/plcontainer-python3-images-devel.tar.gz
 
 - name: plcontainer_docker_image_r
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: {{concourse-gcs-resources-service-account-key}}
+    json_key: ((concourse-gcs-resources-service-account-key))
     versioned_file: plcontainer/published/gpdb6/plcontainer-r-images-devel.tar.gz
 
 - name: bin_gpdb_centos7
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: {{concourse-gcs-resources-service-account-key}}
+    json_key: ((concourse-gcs-resources-service-account-key))
     versioned_file: 6X_STABLE/bin_gpdb_centos7/bin_gpdb.tar.gz
 
 - name: bin_gpdb_rhel8
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: {{concourse-gcs-resources-service-account-key}}
+    json_key: ((concourse-gcs-resources-service-account-key))
     versioned_file: 6X_STABLE/bin_gpdb_rhel8/bin_gpdb.tar.gz
 
 - name: bin_gpdb_ubuntu18
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: {{concourse-gcs-resources-service-account-key}}
+    json_key: ((concourse-gcs-resources-service-account-key))
     versioned_file: 6X_STABLE/bin_gpdb_ubuntu18.04/bin_gpdb.tar.gz
 
 - name: plcontainer_gpdb_ubuntu18_build
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: {{concourse-gcs-resources-service-account-key}}
+    json_key: ((concourse-gcs-resources-service-account-key))
     versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-ubuntu18.gppkg
 
 - name: plcontainer_client_ubuntu18_build
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: {{concourse-gcs-resources-service-account-key}}
+    json_key: ((concourse-gcs-resources-service-account-key))
     versioned_file: plcontainer/published/gpdb6/plcontainer_client.tar.gz
 
 - name: plcontainer_gpdb_centos7_build
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: {{concourse-gcs-resources-service-account-key}}
+    json_key: ((concourse-gcs-resources-service-account-key))
     versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-centos7.gppkg
 
 - name: plcontainer_gpdb_rhel8_build
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: {{concourse-gcs-resources-service-account-key}}
+    json_key: ((concourse-gcs-resources-service-account-key))
     versioned_file: plcontainer/published/gpdb6/plcontainer-concourse-rhel8.gppkg
 
 ##################################### JOBS #####################################
