@@ -61,7 +61,7 @@ resources:
   type: git
   check_every: 2h
   source:
-    branch: hy/ubuntu_test 
+    branch: hy/release-pipeline
     uri: https://github.com/greenplum-db/plcontainer
     username: ((github-access-token))
     password: x-oauth-basic
