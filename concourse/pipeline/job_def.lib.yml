@@ -20,6 +20,7 @@ res_intermediates_bin: bin_plcontainer_gpdb6_rhel7_intermediates
 os: #@ "rhel7_" + container_name_suffix_python + "_" + container_name_suffix_r 
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
+release_bin: bin_plcontainer_gpdb6_rhel7_intermediates
 #@   if is_bundle_release:
 res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
@@ -47,6 +48,7 @@ res_intermediates_bin: bin_plcontainer_gpdb6_rhel8_intermediates
 os: #@ "rhel8_" + container_name_suffix_python + "_" + container_name_suffix_r 
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
+release_bin: bin_plcontainer_gpdb6_rhel8_intermediates 
 #@   if is_bundle_release:
 res_intermediates_tar_python3:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
@@ -63,6 +65,7 @@ res_intermediates_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
 os: #@ "ubuntu18.04_" +  container_name_suffix_python + "_" + container_name_suffix_r
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
+release_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
 #@   if is_bundle_release:
 res_intermediates_tar_python3:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
