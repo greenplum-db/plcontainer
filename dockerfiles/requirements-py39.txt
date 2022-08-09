@@ -61,7 +61,7 @@ langcodes==3.3.0
 libclang==14.0.1
 lifelines==0.27.0
 llvmlite==0.38.1
-lxml==4.9.0
+lxml==4.9.1
 Markdown==3.3.7
 MarkupSafe==2.1.1
 matplotlib==3.5.2
