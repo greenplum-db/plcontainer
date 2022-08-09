@@ -36,7 +36,7 @@ resources:
   webhook_token: ((extension/extensions-webhook-token))
   check_every: 1h
   source:
-    branch: {{plcontainer-branch}}
+    branch: ((plcontainer-branch))
     uri: https://github.com/greenplum-db/plcontainer
     username: ((extension/github-access-token))
     password: x-oauth-basic
@@ -48,7 +48,7 @@ resources:
   type: git
   check_every: 1m
   source:
-    branch: {{plcontainer-branch}}
+    branch: ((plcontainer-branch))
     uri: https://github.com/greenplum-db/plcontainer
     username: ((extension/github-access-token))
     password: x-oauth-basic
@@ -217,35 +217,35 @@ resources:
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extensions-gcs-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_python3_shared.tar.gz
 
 - name: tar_plcontainer_python3_docker_intermediates_python39_ubuntu2004_b
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extensions-gcs-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_python39_ubuntu2004_bundle_shared.tar.gz
 
 - name: tar_plcontainer_python3_docker_intermediates_python37_ubuntu1804_b
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extensions-gcs-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_python37_ubuntu1804_bundle_shared.tar.gz
 
 - name: tar_plcontainer_r_docker_intermediates
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extensions-gcs-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_r_shared.tar.gz
 
 - name: tar_plcontainer_r_docker_intermediates_bundle
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extensions-gcs-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_r_bundle_shared.tar.gz
 
 # For uploading to the release bucket

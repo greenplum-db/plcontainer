@@ -145,10 +145,10 @@ resources:
 
 - name: terraform.d
   source:
-    access_key_id: ((aws-bucket-access-key-id))
+    access_key_id: {{aws-bucket-access-key-id}}
     bucket: ccp-terraform-provider-plugins
     region_name: us-west-2
-    secret_access_key: ((aws-bucket-secret-access-key))
+    secret_access_key: {{aws-bucket-secret-access-key}}
     versioned_file: plugin-cache.tgz
   type: s3
 
@@ -206,7 +206,7 @@ resources:
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-intermediates-prod
-    json_key: ((concourse-gcs-resources-service-account-key))
+    json_key: ((concourse-gcs-resources-service-account-key))git
     versioned_file: plcontainer/published/gpdb6/plcontainer-python3-images-devel.tar.gz
 
 - name: plcontainer_docker_image_build_r
