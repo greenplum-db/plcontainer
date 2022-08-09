@@ -166,28 +166,28 @@ resources:
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extension/concourse-gcs-resources-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_rhel7_gpdb6.gppkg
 
 - name: bin_plcontainer_gpdb6_rhel6_intermediates
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extension/concourse-gcs-resources-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_rhel6_gpdb6.gppkg
 
 - name: bin_plcontainer_gpdb6_rhel8_intermediates
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extension/concourse-gcs-resources-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_rhel8_gpdb6.gppkg
 
 - name: bin_plcontainer_gpdb6_ubuntu18_intermediates
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extension/concourse-gcs-resources-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_ubuntu18_gpdb6.gppkg
 
 # For uploading to the release bucket
@@ -217,7 +217,7 @@ resources:
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extension/concourse-gcs-resources-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     regexp: dependencies/cmake-(.*)-linux-x86_64.sh
 
 - name: slack_notify
