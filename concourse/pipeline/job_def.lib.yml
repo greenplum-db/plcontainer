@@ -1,6 +1,14 @@
 #@ load("base.lib.yml", "add_res_by_conf", "add_res_by_name")
 #@ load("@ytt:template", "template")
 
+#@ def inter_bin_name(base_name, release_build):
+#@   if release_build:
+#@     return base_name + "_rel"
+#@   end
+#@
+#@   return base_name
+#@ end
+
 #! Use bin_gpdb_postfix="" to use a release version of gpdb binary
 #! Job config for centos7
 #@ def centos7_gpdb6_conf(release_build=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
@@ -195,4 +203,41 @@ plan:
 - put: #@ conf["res_intermediates_tar_r"]
   params:
     file: plcontainer_artifacts/plcontainer_r_shared.tar.gz
+#@ end
+
+#! The final release job
+#! 1. Push the artifacts to the release bucket
+#! 2. Push the git tag
+#@ def exit_release_job(param):
+#@   trigger = param["trigger"]
+#@   confs = param["confs"]
+#@   passed_jobs = []
+#@   res_map = param["res_map"]
+#@   for conf in confs:
+#@     passed_jobs.append(build_test_job_name(conf))
+#@     add_res_by_name(res_map, conf["release_bin"])
+#@   end
+name: exit_release
+on_failure: #@ trigger["on_failure"]
+on_error: #@ trigger["on_error"]
+on_success: #@ trigger["on_success"]
+plan:
+#@   for to_get in trigger["to_get"]:
+- passed: #@ passed_jobs
+  _: #@ template.replace(to_get)
+#@   end
+- in_parallel:
+    steps:
+#@   for conf in confs:
+      - do:
+        - get: #@ conf["res_intermediates_bin"]
+          params:
+            unpack: true
+        - put: #@ conf["release_bin"]
+          params:
+            file: #@ conf["res_intermediates_bin"] + "/plcontainer-*-*.gppkg"
+#@   end
+#@   for to_put in trigger["to_put_post"]:
+- #@ to_put
+#@   end
 #@ end
