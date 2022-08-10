@@ -10,7 +10,7 @@ echo "'fly' command: ${fly}"
 echo ""
 
 usage() {
-    echo "Usage: $0 -t <concourse_target> -c <pr|commit|dev> [-p <pipeline_name>] [-b branch]" 1>&2
+    echo "Usage: $0 -t <concourse_target> -c <pr|commit|dev|release|release_bundle> [-p <pipeline_name>] [-b branch]" 1>&2
     if [ -n "$1" ]; then
         echo "$1"
     fi
@@ -21,7 +21,7 @@ usage() {
 while getopts ":c:t:p:b:" o; do
     case "${o}" in
     c)
-        # pipeline type/config. pr/commit/dev/release
+        # pipeline type/config. pr/commit/dev/release/release_bundle
         pipeline_config=${OPTARG}
         ;;
     t)
@@ -83,6 +83,17 @@ release)
         pipeline_name="RELEASE:${proj_name}:${branch}"
     fi
     config_file="release.yml"
+    hook_res="${proj_name}_commit"
+    ;;
+release_bundle)
+    # Default branch is 'gpdb' as it is our main branch
+    if [ -z "${branch}" ]; then
+        branch="gpdb"
+    fi
+    if [ -z "${pipeline_name}" ]; then
+        pipeline_name="RELEASE_BUNDLE:${proj_name}:${branch}"
+    fi
+    config_file="release_bundle.yml"
     hook_res="${proj_name}_commit"
     ;;
 *)

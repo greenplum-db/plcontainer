@@ -89,7 +89,6 @@ on_error:
 #@ end
 
 #! Commit trigger. For release pipelines
-#! version_file for choose the version file for Python or R
 #@ def release_trigger(res_map):
 #@   add_res_by_name(res_map, "plcontainer_commit")
 #@   add_res_by_name(res_map, "slack_notify")
@@ -103,7 +102,7 @@ to_put_post:
   params:
     repository: plcontainer_src
     tag: plcontainer_src/VERSION
-on_success:
+on_suess:
   put: slack_notify
   params:
     alert_type: success
