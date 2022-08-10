@@ -17,4 +17,8 @@ ENV LD_LIBRARY_PATH "/usr/lib/python3.7:${LD_LIBRARY_PATH}"
 # ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"
 RUN python3 -m spacy download en_core_web_sm
 # RUN python3 -m nltk.downloader all
+
+# add the version to the image
+ADD VERSION .
+
 WORKDIR /clientdir
