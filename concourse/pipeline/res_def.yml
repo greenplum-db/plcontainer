@@ -270,6 +270,22 @@ resources:
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: plcontainer/released/gpdb6/plcontainer-(.*).gppkg
 
+# Rel docker images tar
+- name: tar_plcontainer_python37_ubuntu1804_bundle_rel
+  type: gcs
+  source:
+    bucket: gpdb-extensions-concourse-resources
+    json_key: ((extensions-gcs-service-account-key))
+    versioned_file: intermediates_release/plcontainer/plcontainer_python37_ubuntu1804_bundle_shared.tar.gz
+
+# for R
+- name: tar_plcontainer_r_ubuntu1804_bundle_rel
+  type: gcs
+  source:
+    bucket: gpdb-extensions-concourse-resources
+    json_key: ((extensions-gcs-service-account-key))
+    versioned_file: intermediates_release/plcontainer/plcontainer_r_bundle_shared.tar.gz
+
 # Other dependencies
 - name: bin_cmake
   type: gcs

@@ -24,6 +24,8 @@ release_bin: bin_plcontainer_gpdb6_rhel7_intermediates
 #@   if is_bundle_release:
 res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
+res_docker_image_python3: tar_plcontainer_python37_ubuntu1804_bundle_rel
+res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_rel
 #@   end
 #@ end
 
@@ -52,6 +54,8 @@ release_bin: bin_plcontainer_gpdb6_rhel8_intermediates
 #@   if is_bundle_release:
 res_intermediates_tar_python3:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
+res_docker_image_python3: tar_plcontainer_python37_ubuntu1804_bundle_rel
+res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_rel
 #@   end
 #@ end
 
@@ -69,6 +73,8 @@ release_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
 #@   if is_bundle_release:
 res_intermediates_tar_python3:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
+res_docker_image_python3: tar_plcontainer_python37_ubuntu1804_bundle_rel
+res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_rel
 #@   end
 #@ end
 
@@ -242,6 +248,23 @@ plan:
 #@   end
 - in_parallel:
     steps:
+
+#@ if conf["is_bundle_release"]: 
+#@   for conf in confs:
+      - do:
+        - get: #@ conf["res_intermediates_tar_python3"]
+          params:
+            unpack: true
+        - put: #@ conf["res_docker_image_python3"]
+          params:
+            file: #@ conf["res_intermediates_tar_r"] + "/plcontainer.*.tar.gz" 
+        - put: #@ conf["res_docker_image_r"]
+          params:
+            file: #@ conf["res_intermediates_tar_r"] + "/plcontainer.*.tar.gz" 
+          #@ break
+#@   end
+
+#@ else:
 #@   for conf in confs:
       - do:
         - get: #@ conf["res_intermediates_bin"]
@@ -249,8 +272,9 @@ plan:
             unpack: true
         - put: #@ conf["release_bin"]
           params:
-            file: #@ conf["res_intermediates_bin"] + "/plcontainer-*-*.gppkg"
+            file: #@ conf["res_intermediates_bin"] + "/plcontainer-*-*.gppkg" 
 #@   end
+#@ end
 #@   for to_put in trigger["to_put_post"]:
 - #@ to_put
 #@   end
