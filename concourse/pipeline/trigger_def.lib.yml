@@ -102,7 +102,7 @@ to_put_post:
   params:
     repository: plcontainer_src
     tag: plcontainer_src/VERSION
-on_suess:
+on_success:
   put: slack_notify
   params:
     alert_type: success
