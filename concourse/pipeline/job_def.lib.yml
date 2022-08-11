@@ -236,6 +236,8 @@ plan:
 #@   for conf in confs:
 #@     passed_jobs.append(build_test_job_name(conf))
 #@     add_res_by_name(res_map, conf["release_bin"])
+#@     add_res_by_name(res_map, conf["res_docker_image_python3"])
+#@     add_res_by_name(res_map, conf["res_docker_image_r"])
 #@   end
 name: exit_release
 on_failure: #@ trigger["on_failure"]
@@ -257,10 +259,14 @@ plan:
             unpack: true
         - put: #@ conf["res_docker_image_python3"]
           params:
-            file: #@ conf["res_intermediates_tar_r"] + "/plcontainer.*.tar.gz" 
+            file: #@ conf["res_intermediates_tar_python3"] + "/plcontainer*.tar.gz" 
+        - get: #@ conf["res_intermediates_tar_r"]
+          params:
+            unpack: true
         - put: #@ conf["res_docker_image_r"]
           params:
-            file: #@ conf["res_intermediates_tar_r"] + "/plcontainer.*.tar.gz" 
+            file: #@ conf["res_intermediates_tar_r"] + "/plcontainer*tar.gz" 
+          #! first one is enough
           #@ break
 #@   end
 
