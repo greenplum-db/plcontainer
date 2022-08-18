@@ -36,9 +36,10 @@ jobs:
 #@ param = {
 #@     "res_map": res_map,
 #@     "trigger": trigger,
-#@     "confs": confs
+#@     "confs": confs,
 #@ }
-- #@ exit_release_job(param)
+- #@ exit_release_job(param, "exit_release_python37")
+- #@ exit_release_job(param, "exit_release_r")
 
 resources: #@ declare_res(res_type_map, res_map)
 

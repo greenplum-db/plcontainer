@@ -22,9 +22,9 @@ container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_rhel7_intermediates
 #@   if is_bundle_release:
-res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
+res_intermediates_tar_python37: #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
-res_docker_image_python3: tar_plcontainer_python37_ubuntu1804_bundle_rel
+res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_rel
 res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_rel
 #@   end
 #@ end
@@ -52,9 +52,9 @@ container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_rhel8_intermediates 
 #@   if is_bundle_release:
-res_intermediates_tar_python3:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
+res_intermediates_tar_python37:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
-res_docker_image_python3: tar_plcontainer_python37_ubuntu1804_bundle_rel
+res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_rel
 res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_rel
 #@   end
 #@ end
@@ -71,9 +71,9 @@ container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
 #@   if is_bundle_release:
-res_intermediates_tar_python3:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
+res_intermediates_tar_python37:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
-res_docker_image_python3: tar_plcontainer_python37_ubuntu1804_bundle_rel
+res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_rel
 res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_rel
 #@   end
 #@ end
@@ -216,7 +216,7 @@ plan:
   params:
     file: plcontainer_artifacts/plcontainer*.gppkg
 #@   if conf["is_bundle_release"]:
-- put: #@ conf["res_intermediates_tar_python3"]
+- put: #@ conf["res_intermediates_tar_python37"]
   params:
     file: plcontainer_artifacts/plcontainer_python3_shared.tar.gz
 - put: #@ conf["res_intermediates_tar_r"]
@@ -228,18 +228,28 @@ plan:
 #! The final release job
 #! 1. Push the artifacts to the release bucket
 #! 2. Push the git tag
-#@ def exit_release_job(param):
+#@ def exit_release_job(param, exit_release_name="exit_release"):
 #@   trigger = param["trigger"]
 #@   confs = param["confs"]
 #@   passed_jobs = []
 #@   res_map = param["res_map"]
+#@   exit_release_res_dict = {
+#@      "exit_release_python37": ["res_intermediates_tar_python37", "res_docker_image_python37", "VERSION_bundle_ubuntu1804_py37"],
+#@      "exit_release_r": ["res_intermediates_tar_r", "res_docker_image_r", "VERSION_bundle_ubuntu1804_r"],
+#@   }
 #@   for conf in confs:
 #@     passed_jobs.append(build_test_job_name(conf))
 #@     add_res_by_name(res_map, conf["release_bin"])
-#@     add_res_by_name(res_map, conf["res_docker_image_python3"])
-#@     add_res_by_name(res_map, conf["res_docker_image_r"])
+#@     if conf["is_bundle_release"]: 
+#@        add_res_by_name(res_map, conf["res_docker_image_r"])
+#@        add_res_by_name(res_map, conf["res_docker_image_python37"])
+#@        get_tar_file = conf[exit_release_res_dict[exit_release_name][0]]
+#@        put_tar_file = conf[exit_release_res_dict[exit_release_name][1]]
+#@        version_file = exit_release_res_dict[exit_release_name][2] 
+#@     end
 #@   end
-name: exit_release
+
+name: #@ exit_release_name
 on_failure: #@ trigger["on_failure"]
 on_error: #@ trigger["on_error"]
 on_success: #@ trigger["on_success"]
@@ -254,18 +264,12 @@ plan:
 #@ if conf["is_bundle_release"]: 
 #@   for conf in confs:
       - do:
-        - get: #@ conf["res_intermediates_tar_python3"]
+        - get: #@ get_tar_file 
           params:
             unpack: true
-        - put: #@ conf["res_docker_image_python3"]
+        - put: #@ put_tar_file
           params:
-            file: #@ conf["res_intermediates_tar_python3"] + "/plcontainer*.tar.gz" 
-        - get: #@ conf["res_intermediates_tar_r"]
-          params:
-            unpack: true
-        - put: #@ conf["res_docker_image_r"]
-          params:
-            file: #@ conf["res_intermediates_tar_r"] + "/plcontainer*tar.gz" 
+            file: #@ get_tar_file + "/plcontainer*.tar.gz" 
           #! first one is enough
           #@ break
 #@   end
@@ -282,6 +286,9 @@ plan:
 #@   end
 #@ end
 #@   for to_put in trigger["to_put_post"]:
-- #@ to_put
+- put: plcontainer_commit
+  params:
+    repository: plcontainer_src
+    tag: #@ "plcontainer_src/" + version_file 
 #@   end
 #@ end

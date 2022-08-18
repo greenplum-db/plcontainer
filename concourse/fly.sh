@@ -30,7 +30,7 @@ while getopts ":c:t:p:b:" o; do
         ;;
     p)
         # pipeline name
-        pipeline_name=${OPTARG}
+        pipeline_name=${OPTARG//\//\-}
         ;;
     b)
         # branch name
@@ -50,7 +50,7 @@ fi
 # Decide ytt options to generate pipeline
 case ${pipeline_config} in
 pr)
-    if [ -z "${pipeline_name}" ]; then
+    if [ -z "${pipeline_name//\//\-}" ]; then
         pipeline_name="PR:${proj_name}"
     fi
     config_file="pr.yml"
@@ -79,7 +79,7 @@ release)
     if [ -z "${branch}" ]; then
         branch="gpdb"
     fi
-    if [ -z "${pipeline_name}" ]; then
+    if [ -z "${pipeline_name//\//\-}" ]; then
         pipeline_name="RELEASE:${proj_name}:${branch}"
     fi
     config_file="release.yml"
@@ -115,10 +115,11 @@ echo "Generated pipeline yaml '${yml_path}'."
 echo ""
 echo "Fly the pipeline..."
 set -v
+# replace pipeline_name `/` to `-` because pipeline name can not have ''  
 "${fly}" \
     -t "${target}" \
     sp \
-    -p "${pipeline_name}" \
+    -p "${pipeline_name////-}" \
     -c "${yml_path}" \
     -v "${proj_name}-branch=${branch}"
 set +v
