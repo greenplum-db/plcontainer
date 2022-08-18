@@ -275,7 +275,7 @@ resources:
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((extensions-gcs-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates_release/plcontainer/plcontainer_python37_ubuntu1804_bundle_shared.tar.gz
 
 # for R
