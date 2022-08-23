@@ -8,6 +8,6 @@ RUN pip3.7 --no-cache install cmake
 
 ENV LD_LIBRARY_PATH "/usr/lib/python3.7:${LD_LIBRARY_PATH}"
 # add the version to the image
-ADD VERSION .
+ADD VERSION_bundle_ubuntu1804_py37 VERSION
 RUN mkdir -p /clientdir
 WORKDIR /clientdir

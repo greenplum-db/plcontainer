@@ -1,14 +1,6 @@
 #@ load("base.lib.yml", "add_res_by_conf", "add_res_by_name")
 #@ load("@ytt:template", "template")
 
-#@ def inter_bin_name(base_name, release_build):
-#@   if release_build:
-#@     return base_name + "_rel"
-#@   end
-#@
-#@   return base_name
-#@ end
-
 #! Use bin_gpdb_postfix="" to use a release version of gpdb binary
 #! Job config for centos7
 #@ def centos7_gpdb6_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
@@ -24,8 +16,8 @@ release_bin: bin_plcontainer_gpdb6_rhel7_intermediates
 #@   if is_bundle_release:
 res_intermediates_tar_python37: #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
-res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_rel
-res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_rel
+res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_release
+res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_release
 #@   end
 #@ end
 
@@ -54,8 +46,8 @@ release_bin: bin_plcontainer_gpdb6_rhel8_intermediates
 #@   if is_bundle_release:
 res_intermediates_tar_python37:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
-res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_rel
-res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_rel
+res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_release
+res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_release
 #@   end
 #@ end
 
@@ -73,8 +65,8 @@ release_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
 #@   if is_bundle_release:
 res_intermediates_tar_python37:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
 res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
-res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_rel
-res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_rel
+res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_release
+res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_release
 #@   end
 #@ end
 
@@ -240,6 +232,7 @@ plan:
 #@   for conf in confs:
 #@     passed_jobs.append(build_test_job_name(conf))
 #@     add_res_by_name(res_map, conf["release_bin"])
+#@     version_file = "VERSION"
 #@     if conf["is_bundle_release"]: 
 #@        add_res_by_name(res_map, conf["res_docker_image_r"])
 #@        add_res_by_name(res_map, conf["res_docker_image_python37"])
