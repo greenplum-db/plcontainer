@@ -209,10 +209,10 @@ plan:
 #@   if conf["is_bundle_release"]:
 - put: #@ conf["res_intermediates_tar_python37"]
   params:
-    file: plcontainer_artifacts/plcontainer_python3_shared.tar.gz
+    file: plcontainer_artifacts/plcontainer-python-image*.tgz
 - put: #@ conf["res_intermediates_tar_r"]
   params:
-    file: plcontainer_artifacts/plcontainer_r_shared.tar.gz
+    file: plcontainer_artifacts/plcontainer-r-image*.tgz
 #@   end
 #@ end
 
