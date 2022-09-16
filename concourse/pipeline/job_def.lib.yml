@@ -281,12 +281,13 @@ plan:
 - in_parallel:
     steps:
     - do:
-      - get: #@ rel_conf["res_intermediates_tar"]
+      - get: intermediates
+        resource: #@ rel_conf["res_intermediates_tar"]
         params:
           unpack: true
       - put: #@ rel_conf["res_release_bin_image"]
         params:
-          file: #@ rel_conf["rel_tar_file_name"]
+          file: #@ "intermediates/" + rel_conf["rel_tar_file_name"]
 #@   for to_put in trigger["to_put_post"]:
 - put: plcontainer_commit
   params:
