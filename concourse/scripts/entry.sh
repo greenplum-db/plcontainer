@@ -212,8 +212,7 @@ case "$1" in
 build)
     start_docker_server
     # run the build need run as root
-    # for build task $2 means the container name suffix
-    /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh "$2"
+    /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh
     # save doker file
     docker save "${CONTAINER_NAME_SUFFIX_PYTHON}" -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
     # r-image

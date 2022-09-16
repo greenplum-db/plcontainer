@@ -5,7 +5,6 @@ set -e
 fly=${FLY:-"fly"}
 echo "'fly' command: ${fly}"
 echo ""
-proj_name="plcontainer"
 
 usage() {
     if [ -n "$1" ]; then
@@ -52,6 +51,7 @@ if [ -z "${target}" ] || [ -z "${pipeline_config}" ]; then
     usage ""
 fi
 
+proj_name="plcontainer"
 pipeline_type=""
 # Decide ytt options to generate pipeline
 case ${pipeline_config} in
@@ -93,7 +93,8 @@ case ${pipeline_config} in
       if [ -z "${branch}" ]; then
           branch="6X_STABLE"
       fi
-      pipeline_type="rel_bundle"
+      pipeline_type="rel"
+      pipeline_name="plcontainer_bundle"
       config_file="release_bundle.yml"
       hook_res="${proj_name}_commit"
     ;;

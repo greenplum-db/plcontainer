@@ -2,7 +2,7 @@
 # TODO when PR merge replace it with build_plcontainer.sh
 set -exo pipefail
 
-function build_rclient() {
+function build_all() {
     [ -f /opt/gcc_env.sh ] && source /opt/gcc_env.sh
     pushd /home/gpadmin/plcontainer_src
     popd
@@ -20,7 +20,7 @@ function build_rclient() {
 }
 
 function _main() {
-    time build_rclient "$@" 
+    time build_all
 }
 
-_main "$@"
+_main
