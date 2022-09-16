@@ -9,7 +9,7 @@ res_test_image: centos7-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_centos7" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
 res_intermediates_bin: bin_plcontainer_gpdb6_rhel7_intermediates
-os: #@ "rhel7_" + container_name_suffix_python + "_" + container_name_suffix_r 
+os: rhel7
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_rhel7_intermediates
@@ -21,17 +21,6 @@ res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_release
 #@   end
 #@ end
 
-#! Job config for centos6
-#! Use bin_gpdb_postfix="" to use a release version of gpdb binary
-#@ def centos6_gpdb6_conf(release_build=False):
-res_test_image: centos6-gpdb6-image-test
-res_gpdb_bin: #@ "bin_gpdb6_centos6" + ("" if release_build else "_debug")
-res_gpdb_src: gpdb6_src
-res_intermediates_bin: bin_plcontainer_gpdb6_rhel6_intermediates
-os: rhel6
-build_type: #@ "Release" if release_build else "Debug"
-#@ end
-
 #! Job config for rhel8
 #@ def rhel8_gpdb6_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
 res_test_image: rhel8-gpdb6-image-test
@@ -39,7 +28,7 @@ res_gpdb_bin: #@ "bin_gpdb6_rhel8" + ("" if release_build else "_debug")
 is_bundle_release: #@ is_bundle_release 
 res_gpdb_src: gpdb6_src
 res_intermediates_bin: bin_plcontainer_gpdb6_rhel8_intermediates
-os: #@ "rhel8_" + container_name_suffix_python + "_" + container_name_suffix_r 
+os: rhel8
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_rhel8_intermediates 
@@ -58,7 +47,7 @@ res_gpdb_src: gpdb6_src
 res_gpdb_bin: #@ "bin_gpdb6_ubuntu18" + ("" if release_build else "_debug")
 is_bundle_release: #@ is_bundle_release 
 res_intermediates_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
-os: #@ "ubuntu18.04_" +  container_name_suffix_python + "_" + container_name_suffix_r
+os: ubuntu18.04 
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates

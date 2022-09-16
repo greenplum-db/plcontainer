@@ -81,17 +81,6 @@ resources:
     uri: https://github.com/greenplum-db/gpdb.git
 
 # Image Resources
-# centos6
-- name: centos6-gpdb6-image-build
-  type: registry-image
-  source:
-    repository: gcr.io/data-gpdb-public-images/gpdb6-centos6-build
-    tag: latest
-- name: centos6-gpdb6-image-test
-  type: registry-image
-  source:
-    repository: gcr.io/data-gpdb-public-images/gpdb6-centos6-test
-    tag: latest
 # centos7
 - name: centos7-gpdb6-image-build
   type: registry-image
@@ -133,12 +122,6 @@ resources:
 # gpdb binary on gcs is located as different folder for different version
 # Latest build with assertion enabled:
 # --enable-cassert --enable-tap-tests --enable-debug-extensions
-- name: bin_gpdb6_centos6_debug
-  type: gcs
-  source:
-    bucket: pivotal-gpdb-concourse-resources-prod
-    json_key: ((concourse-gcs-resources-service-account-key))
-    regexp: server/published/gpdb6/server-rc-(.*)-rhel6_x86_64.debug.tar.gz
 - name: bin_gpdb6_centos7_debug
   type: gcs
   source:
@@ -159,12 +142,6 @@ resources:
     regexp: server/published/gpdb6/server-rc-(.*)-ubuntu18.04_x86_64.debug.tar.gz
 # Latest release candidates, no fault-injector, no assertion:
 # --disable-debug-extensions --disable-tap-tests --enable-ic-proxy
-- name: bin_gpdb6_centos6
-  type: gcs
-  source:
-    bucket: pivotal-gpdb-concourse-resources-prod
-    json_key: ((concourse-gcs-resources-service-account-key))
-    regexp: server/published/gpdb6/server-rc-(.*)-rhel6_x86_64.tar.gz
 - name: bin_gpdb6_centos7
   type: gcs
   source:
