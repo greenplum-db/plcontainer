@@ -1,6 +1,14 @@
 #@ load("base.lib.yml", "add_res_by_conf", "add_res_by_name")
 #@ load("@ytt:template", "template")
 
+#@ def inter_bin_name(base_name, release_build):
+#@   if release_build:
+#@     return base_name + "_rel"
+#@   end
+#@
+#@   return base_name
+#@ end
+
 #! Use bin_gpdb_postfix="" to use a release version of gpdb binary
 #! Job config for centos7
 #@ def centos7_gpdb6_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
@@ -14,10 +22,10 @@ container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_rhel7_intermediates
 #@   if is_bundle_release:
-res_intermediates_tar_python37: #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
-res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
-res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_release
-res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_release
+res_intermediates_tar_python37: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", release_build)
+res_intermediates_tar_r: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", release_build)
+release_bin_image_python37: bin_python37_ubuntu1804_bundle_release
+release_bin_image_r: bin_r_ubuntu1804_bundle_release
 #@   end
 #@ end
 
@@ -32,12 +40,6 @@ os: rhel8
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_rhel8_intermediates 
-#@   if is_bundle_release:
-res_intermediates_tar_python37:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
-res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
-res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_release
-res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_release
-#@   end
 #@ end
 
 #! Job config for ubuntu18
@@ -51,12 +53,6 @@ os: ubuntu18.04
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
-#@   if is_bundle_release:
-res_intermediates_tar_python37:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
-res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
-res_docker_image_python37: tar_plcontainer_python37_ubuntu1804_bundle_release
-res_docker_image_r: tar_plcontainer_r_ubuntu1804_bundle_release
-#@   end
 #@ end
 
 #! The entry point of a pipeline. The job name must be 'entrance'.
@@ -215,16 +211,16 @@ plan:
 #@   passed_jobs = []
 #@   res_map = param["res_map"]
 #@   exit_release_res_dict = {
-#@      "exit_release_python37": ["res_intermediates_tar_python37", "res_docker_image_python37", "VERSION_bundle_ubuntu1804_py37"],
-#@      "exit_release_r": ["res_intermediates_tar_r", "res_docker_image_r", "VERSION_bundle_ubuntu1804_r"],
+#@      "exit_release_python37": ["res_intermediates_tar_python37", "release_bin_image_python37", "VERSION_bundle_ubuntu1804_py37"],
+#@      "exit_release_r": ["res_intermediates_tar_r", "release_bin_image_r", "VERSION_bundle_ubuntu1804_r"],
 #@   }
 #@   for conf in confs:
 #@     passed_jobs.append(build_test_job_name(conf))
 #@     add_res_by_name(res_map, conf["release_bin"])
 #@     version_file = "VERSION"
 #@     if conf["is_bundle_release"]: 
-#@        add_res_by_name(res_map, conf["res_docker_image_r"])
-#@        add_res_by_name(res_map, conf["res_docker_image_python37"])
+#@        add_res_by_name(res_map, conf["release_bin_image_r"])
+#@        add_res_by_name(res_map, conf["release_bin_image_python37"])
 #@        get_tar_file = conf[exit_release_res_dict[exit_release_name][0]]
 #@        put_tar_file = conf[exit_release_res_dict[exit_release_name][1]]
 #@        version_file = exit_release_res_dict[exit_release_name][2] 

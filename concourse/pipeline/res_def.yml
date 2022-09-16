@@ -243,19 +243,19 @@ resources:
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: plcontainer/released/gpdb6/plcontainer-(.*).gppkg
 
-- name: tar_plcontainer_python37_ubuntu1804_bundle_release
+- name: bin_python37_ubuntu1804_bundle_release
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
-    regexp: plcontainer/released/gpdb6/plcontainer_python(.*)_(.*)_(.*)_bundle_shared.tar.gz
+    regexp: plcontainer/released/gpdb6/plcontainer-python3-image-(.*)-gp6.tar.gz
 
-- name: tar_plcontainer_r_ubuntu1804_bundle_release
+- name: bin_r_ubuntu1804_bundle_release
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
-    regexp: plcontainer/released/gpdb6/plcontainer_r_bundle_shared.tar.gz
+    regexp: plcontainer/released/gpdb6/plcontainer-r-image-(.*)-gp6.tar.gz
 
 # Other dependencies
 - name: bin_cmake
