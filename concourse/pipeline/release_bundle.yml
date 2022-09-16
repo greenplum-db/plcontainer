@@ -1,10 +1,11 @@
 #@ load("job_def.lib.yml",
 #@   "entrance_job",
-#@   "exit_release_job",
+#@   "image_release_job",
 #@   "build_test_job",
 #@   "centos7_gpdb6_conf",
-#@   "rhel8_gpdb6_conf",
-#@   "ubuntu18_gpdb6_conf")
+#@   "python_image_release_conf",
+#@   "r_image_release_conf"
+#@ )
 #@ load("trigger_def.lib.yml",
 #@   "release_trigger",
 #@ )
@@ -13,33 +14,19 @@
 #@ res_map = {}
 #@ res_type_map = {}
 #@ trigger = release_trigger(res_map)
-#@ confs = [
-#@   centos7_gpdb6_conf(release_build=False, is_bundle_release=True, container_name_suffix_python="python37.ubuntu1804_b", container_name_suffix_r="r.alpine"),
-#@   ubuntu18_gpdb6_conf(release_build=False, is_bundle_release=True, container_name_suffix_python="python37.ubuntu1804_b", container_name_suffix_r="r.alpine"),
-#@   rhel8_gpdb6_conf(release_build=False, is_bundle_release=True, container_name_suffix_python="python37.ubuntu1804_b", container_name_suffix_r="r.alpine"),
-#@ ]
 jobs:
 #@ param = {
 #@     "res_map": res_map,
 #@     "trigger": trigger,
+#@     "gpdb_src": "gpdb6_src",
+#@     "conf": centos7_gpdb6_conf(release_build=True, is_bundle_release=True, container_name_suffix_python="python37.ubuntu1804_b", container_name_suffix_r="r.alpine")
 #@ }
 - #@ entrance_job(param)
-#@ for conf in confs:
-#@   param = {
-#@     "res_map": res_map,
-#@     "trigger": trigger,
-#@     "gpdb_src": "gpdb6_src",
-#@     "conf": conf
-#@   }
 - #@ build_test_job(param)
-#@ end
-#@ param = {
-#@     "res_map": res_map,
-#@     "trigger": trigger,
-#@     "confs": confs,
-#@ }
-- #@ exit_release_job(param, "exit_release_python37")
-- #@ exit_release_job(param, "exit_release_r")
+#@ param["rel_conf"] = python_image_release_conf()
+- #@ image_release_job(param)
+#@ param["rel_conf"] = r_image_release_conf()
+- #@ image_release_job(param)
 
 resources: #@ declare_res(res_type_map, res_map)
 
