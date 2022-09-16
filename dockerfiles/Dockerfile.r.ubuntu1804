@@ -11,7 +11,4 @@ ENV PATH "/usr/lib/R/bin:$PATH"
 ENV LD_LIBRARY_PATH "/clientdir:/usr/lib/R/lib:/usr/lib/R/extlib:$LD_LIBRARY_PATH"
 RUN mkdir -p /clientdir
 
-# add the version to the image
-ADD VERSION .
-
 WORKDIR /clientdir
