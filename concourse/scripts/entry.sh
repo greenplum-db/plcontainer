@@ -213,10 +213,6 @@ build)
     start_docker_server
     # run the build need run as root
     /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh
-    # save doker file
-    docker save "${CONTAINER_NAME_SUFFIX_PYTHON}" -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
-    # r-image
-    docker save "${CONTAINER_NAME_SUFFIX_R}" -o plcontainer_artifacts/plcontainer_r_shared.tar.gz
     ;;
 test)
     start_docker_server

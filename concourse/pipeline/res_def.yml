@@ -190,41 +190,37 @@ resources:
     json_key: ((extension/extensions-gcs-service-account-key))
     versioned_file: intermediates/plcontainer/plcontainer_ubuntu18_gpdb6.gppkg
 
-- name: tar_plcontainer_python3_docker_intermediates_python39_alpine
+########## IMAGE INTERMEDIATES BUCKET #########
+- name: bin_python_image_gpdb6_intermediates
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
     json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_python3_shared.tar.gz
+    versioned_file: intermediates/plcontainer_images/plcontainer-python-image-gp6.tgz
 
-- name: tar_plcontainer_python3_docker_intermediates_python39_ubuntu2004_b
+- name: bin_r_image_gpdb6_intermediates
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
     json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_python39_ubuntu2004_bundle_shared.tar.gz
-
-- name: tar_plcontainer_python3_docker_intermediates_python37_ubuntu1804_b
+    versioned_file: intermediates/plcontainer_images/plcontainer-r-image-gp6.tgz
+###############################################
+########## IMAGE INTERMEDIATES RELEASE BUCKET #########
+- name: bin_python_image_gpdb6_intermediates_rel
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
     json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_python37_ubuntu1804_bundle_shared.tar.gz
+    versioned_file: intermediates_release/plcontainer_images/plcontainer-python-image-gp6.tgz
 
-- name: tar_plcontainer_r_docker_intermediates
+- name: bin_r_image_gpdb6_intermediates_rel
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
     json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_r_shared.tar.gz
-
-- name: tar_plcontainer_r_docker_intermediates_bundle
-  type: gcs
-  source:
-    bucket: gpdb-extensions-concourse-resources
-    json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_r_bundle_shared.tar.gz
-
+    versioned_file: intermediates_release/plcontainer_images/plcontainer-r-image-gp6.tgz
+########################################################
+  
 # For uploading to the release bucket
 - name: bin_plcontainer_gpdb6_rhel7_release
   type: gcs
