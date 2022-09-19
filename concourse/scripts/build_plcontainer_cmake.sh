@@ -14,8 +14,8 @@ function build_all() {
     cmake --build . --target pyclient
     # for make install
     cmake --build . --target rclient
-    # build gppkg
-    cmake --build . --target gppkg
+    # build gppkg and gppkg_artifact
+    cmake --build . --target gppkg_artifact
     # build image artifact
     cmake --build . --target pyclient_image_artifact
     cmake --build . --target rclient_image_artifact

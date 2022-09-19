@@ -23,7 +23,7 @@ set(CPACK_RPM_SPEC_MORE_DEFINE
 
 include(CPack)
 
-set(PACK_NAME ${CMAKE_PROJECT_NAME}-${VERSION}-${DISTRO_NAME}.${CMAKE_SYSTEM_PROCESSOR})
+set(PACK_NAME ${CMAKE_PROJECT_NAME}-${VERSION}-${DISTRO_NAME}-${CMAKE_SYSTEM_PROCESSOR})
 # expecting filename of form %{name}-%{version}-%{release}.%{arch}.rpm
 # See gppkg's package.py
 set(RPM_NAME ${CMAKE_PROJECT_NAME}-${VERSION}.${CMAKE_SYSTEM_PROCESSOR})
@@ -54,7 +54,6 @@ add_custom_target(gppkg_deb
     ${CMAKE_COMMAND} -E copy gppkg_spec.yml ${DEB_NAME}.deb gppkg_deb &&
     ${PG_BIN_DIR}/gppkg --build gppkg_deb)
 
-
 # Build the specific package only for our supported platform
 if(${DISTRO_NAME} MATCHES "rhel.*")
     add_custom_target(gppkg DEPENDS gppkg_rpm)
@@ -67,3 +66,9 @@ else()
         ${CMAKE_COMMAND} -E false
         VERBATIM)
 endif()
+add_custom_target(gppkg_artifact
+    COMMAND
+    ${CMAKE_COMMAND} -E tar czvf
+    plcontainer-gppkg-${DISTRO_NAME}-gp${GP_MAJOR_VERSION}.tar.gz
+    ${PACK_NAME}.gppkg
+DEPENDS gppkg)

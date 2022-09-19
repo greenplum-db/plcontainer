@@ -14,12 +14,11 @@ function _main() {
     time plcontainer image-add -f plcontainer-r-image-*-gp6.tar.gz
 
     time cmake --build . --target prepare_runtime
-    time cmake --build . --target testpy3 
+    time cmake --build . --target installcheck
     if [[ ${CONTAINER_NAME_SUFFIX_PYTHON} == *_b ]]; then
         time gpstop -ar
         time cmake --build . --target testpy3_bundle 
     fi
-    time cmake --build . --target testr
     # Test gppkg uninstall
     gppkg -q --all
     # Find the package name
