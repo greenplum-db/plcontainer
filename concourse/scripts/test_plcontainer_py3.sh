@@ -9,15 +9,17 @@ function _main() {
     # \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
     export PL_TESTDB=contrib_regression
     gppkg -i plcontainer*.gppkg
-    time plcontainer image-add -f plcontainer_python3_shared.tar.gz
-    # TODO for now drop logging for test maybe bring it back in the future
-    time plcontainer runtime-add -r plc_python_shared -i "${CONTAINER_NAME_SUFFIX_PYTHON}" -l python3
-    time plcontainer runtime-add -r plc_python_shared_oom -i "${CONTAINER_NAME_SUFFIX_PYTHON}" -l python3 -s memory_mb=100
+    # image add for both python and r
+    time plcontainer image-add -f plcontainer-python-image-*-gp6.tar.gz
+    time plcontainer image-add -f plcontainer-r-image-*-gp6.tar.gz
+
+    time cmake --build . --target prepare_runtime
     time cmake --build . --target testpy3 
     if [[ ${CONTAINER_NAME_SUFFIX_PYTHON} == *_b ]]; then
         time gpstop -ar
         time cmake --build . --target testpy3_bundle 
     fi
+    time cmake --build . --target testr
     # Test gppkg uninstall
     gppkg -q --all
     # Find the package name

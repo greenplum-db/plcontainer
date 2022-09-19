@@ -178,7 +178,6 @@ add_custom_target(pyclient_image_artifact
     ${PYTHON_IMAGE_TARBALL_NAME}
     DEPENDS pyclient_image_tarball)
 
-
 add_custom_target(pyclient
     ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/pyclient
     COMMAND
@@ -246,6 +245,12 @@ install(
 install(
     PROGRAMS src/rclient/bin/rclient.sh
     DESTINATION bin/plcontainer_clients/ OPTIONAL)
+
+add_custom_target(prepare_runtime
+    COMMAND
+    CONTAINER_NAME_SUFFIX_PYTHON=${CONTAINER_NAME_SUFFIX_PYTHON}
+    CONTAINER_NAME_SUFFIX_R=${CONTAINER_NAME_SUFFIX_R}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/prepare_runtime.sh)
 
 # Add tests targets
 add_subdirectory(tests)

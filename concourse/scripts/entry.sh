@@ -222,15 +222,10 @@ test)
     chown gpadmin /var/run/docker.sock
     # print the test diff to stdout in our CI
     export SHOW_REGRESS_DIFF=1
-    # test python3
+    # test python3 and r
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
             /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py3.sh" 
-
-    # test r
-    su gpadmin -c \
-        "source /home/gpadmin/.bashrc &&\
-            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_r.sh"
     ;;
 *)
     echo "Unknown target task $1"
