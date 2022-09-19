@@ -15,10 +15,6 @@ function _main() {
 
     time cmake --build . --target prepare_runtime
     time cmake --build . --target installcheck
-    if [[ ${CONTAINER_NAME_SUFFIX_PYTHON} == *_b ]]; then
-        time gpstop -ar
-        time cmake --build . --target testpy3_bundle 
-    fi
     # Test gppkg uninstall
     gppkg -q --all
     # Find the package name

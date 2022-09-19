@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ex
 
 # prepare for plcontainer tests
 # this script is for local install

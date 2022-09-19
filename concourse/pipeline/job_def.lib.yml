@@ -16,11 +16,11 @@ is_bundle_release: #@ is_bundle_release
 res_test_image: centos7-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_centos7" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
-res_intermediates_bin: bin_plcontainer_gpdb6_rhel7_intermediates
+res_intermediates_bin: #@ inter_bin_name("bin_plcontainer_gpdb6_rhel7_intermediates", release_build)
 os: rhel7
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
-release_bin: bin_plcontainer_gpdb6_rhel7_intermediates
+release_bin: bin_plcontainer_gpdb6_rhel7_release
 #@   if is_bundle_release:
 res_intermediates_tar_python37: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", release_build)
 res_intermediates_tar_r: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", release_build)
@@ -33,11 +33,11 @@ res_test_image: rhel8-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_rhel8" + ("" if release_build else "_debug")
 is_bundle_release: #@ is_bundle_release
 res_gpdb_src: gpdb6_src
-res_intermediates_bin: bin_plcontainer_gpdb6_rhel8_intermediates
+res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb6_rhel8_intermediates", release_build)
 os: rhel8
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
-release_bin: bin_plcontainer_gpdb6_rhel8_intermediates
+release_bin: bin_plcontainer_gpdb6_rhel8_release
 #@ end
 
 #! Job config for ubuntu18
@@ -46,7 +46,7 @@ res_test_image: ubuntu18-gpdb6-image-test
 res_gpdb_src: gpdb6_src
 res_gpdb_bin: #@ "bin_gpdb6_ubuntu18" + ("" if release_build else "_debug")
 is_bundle_release: #@ is_bundle_release
-res_intermediates_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
+res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb6_ubuntu18_intermediates", release_build)
 os: ubuntu18.04
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
@@ -205,7 +205,7 @@ plan:
 - #@ _test_task(conf)
 - put: #@ conf["res_intermediates_bin"]
   params:
-    file: plcontainer_artifacts/plcontainer*.gppkg
+    file: plcontainer_artifacts/plcontainer-gppkg-*-gp6.tar.gz
 #@   if conf["is_bundle_release"]:
 - put: #@ conf["res_intermediates_tar_python37"]
   params:
@@ -249,7 +249,7 @@ plan:
           unpack: true
       - put: #@ conf["release_bin"]
         params:
-          file: #@ conf["res_intermediates_bin"] + "/plcontainer-*-*.gppkg"
+          file: #@ conf["res_intermediates_bin"] + "/plcontainer-*-*-*.gppkg"
 #@ end
 #@ for to_put in trigger["to_put_post"]:
 - put: plcontainer_commit
