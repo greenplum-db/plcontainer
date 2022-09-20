@@ -15,13 +15,13 @@ test: test_python3
 test: plpython_quote
 test: test_python3_gpdb5 subtransaction_python
 test: spi_python3
-### TODO ### test: test_python3_error
+test: test_python3_error
 test: exception_py
 
 # test wrong configuration validation in pl/container C code
 test: test_wrong_config_python3
 # PL/Container UDA test
-### TODO ### test: uda_python3
+test: uda_python3
 
 # Out of memory test
 test: oom_test_prepare_pyhthon
