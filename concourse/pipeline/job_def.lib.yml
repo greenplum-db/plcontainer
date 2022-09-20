@@ -249,7 +249,7 @@ plan:
           unpack: true
       - put: #@ conf["release_bin"]
         params:
-          file: #@ conf["res_intermediates_bin"] + "/plcontainer-*-*-*.gppkg"
+          file: #@ conf["res_intermediates_bin"] + "/plcontainer*.gppkg"
 #@ end
 #@ for to_put in trigger["to_put_post"]:
 - put: plcontainer_commit

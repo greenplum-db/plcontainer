@@ -88,7 +88,7 @@ case ${pipeline_config} in
       config_file="release.yml"
       hook_res="${proj_name}_commit"
     ;;
-  release_bundle)
+  release_bundle|rel_bundle)
       # Default branch is 'gpdb' as it is our main branch
       if [ -z "${branch}" ]; then
           branch="6X_STABLE"
