@@ -4,7 +4,7 @@ test: schema
 # configuration function tests
 test: test_configuration
 
-test: python3_import_module 
+test: python3_import_module
 
 # Drop the extension - need to be last
 test: drop

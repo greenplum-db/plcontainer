@@ -15,19 +15,19 @@ test: test_python3
 test: plpython_quote
 test: test_python3_gpdb5 subtransaction_python
 test: spi_python3
-test: test_python3_error
+### TODO ### test: test_python3_error
 test: exception_py
-### TODO ### test: faultinject_python
+test: faultinject_python
 
 # test wrong configuration validation in pl/container C code
 test: test_wrong_config_python3
 # PL/Container UDA test
-test: uda_python3
+### TODO ### test: uda_python3
 
 ### FIXME we use docker in docker for test on CI which can not use container log when
 ### use_container_logging=yes. so we comment out this `user_control_py3` for now.
 ### if we can find a better solution for this case we will bring this test back.
-### test: user_control_py3
+## test: user_control_py3
 
 # Out of memory test
 test: oom_test_prepare_pyhthon
@@ -50,5 +50,5 @@ test: memory_parallel_python_1 memory_parallel_python_2 memory_parallel_python_3
 test: test_containernetwork
 test: test_config_gpu
 
-# # Drop the extension - need to be last
+# Drop the extension - need to be last
 test: drop
