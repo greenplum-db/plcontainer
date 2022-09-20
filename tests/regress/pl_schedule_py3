@@ -17,7 +17,7 @@ test: test_python3_gpdb5 subtransaction_python
 test: spi_python3
 ### TODO ### test: test_python3_error
 test: exception_py
-test: faultinject_python
+### TODO ### test: faultinject_python
 
 # test wrong configuration validation in pl/container C code
 test: test_wrong_config_python3
