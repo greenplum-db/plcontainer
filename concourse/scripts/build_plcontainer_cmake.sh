@@ -2,7 +2,7 @@
 # TODO when PR merge replace it with build_plcontainer.sh
 set -exo pipefail
 
-function build_rclient() {
+function build_all() {
     [ -f /opt/gcc_env.sh ] && source /opt/gcc_env.sh
     pushd /home/gpadmin/plcontainer_src
     popd
@@ -14,13 +14,16 @@ function build_rclient() {
     cmake --build . --target pyclient
     # for make install
     cmake --build . --target rclient
-    # build gppkg
-    cmake --build . --target gppkg
+    # build gppkg and gppkg_artifact
+    cmake --build . --target gppkg_artifact
+    # build image artifact
+    cmake --build . --target pyclient_image_artifact
+    cmake --build . --target rclient_image_artifact
     popd
 }
 
 function _main() {
-    time build_rclient "$@" 
+    time build_all
 }
 
-_main "$@"
+_main

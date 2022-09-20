@@ -2,103 +2,132 @@
 
 set -e
 
-workspace=${WORKSPACE:-"$HOME/workspace"}
 fly=${FLY:-"fly"}
-proj_name=plcontainer
-echo "'workspace' location: ${workspace}"
 echo "'fly' command: ${fly}"
 echo ""
 
 usage() {
-    echo "Usage: $0 -t <concourse_target> -c <pr|commit|dev> [-p <pipeline_name>] [-b branch]" 1>&2
     if [ -n "$1" ]; then
-        echo "$1"
+        echo "$1" 1>&2
+        echo "" 1>&2
     fi
+
+    echo "Usage: $0 -t <concourse_target> -c <pr|rel|merge|dev> [-p <postfix>] [-b branch] [-T]"
+    echo "Options:"
+    echo "       '-T' adds '_test' suffix to the pipeline type. Useful for pipeline debugging."
     exit 1
 }
 
 # Parse command line options
-while getopts ":c:t:p:b:" o; do
+while getopts ":c:t:p:b:T" o; do
     case "${o}" in
-    c)
-        # pipeline type/config. pr/commit/dev/release
-        pipeline_config=${OPTARG}
-        ;;
-    t)
-        # concourse target
-        target=${OPTARG}
-        ;;
-    p)
-        # pipeline name
-        pipeline_name=${OPTARG}
-        ;;
-    b)
-        # branch name
-        branch=${OPTARG}
-        ;;
-    *)
-        usage ""
-        ;;
+        c)
+            # pipeline type/config. pr/merge/dev/rel
+            pipeline_config=${OPTARG}
+            ;;
+        t)
+            # concourse target
+            target=${OPTARG}
+            ;;
+        p)
+            # pipeline name
+            postfix=${OPTARG}
+            ;;
+        b)
+            # branch name
+            branch=${OPTARG}
+            ;;
+        T)
+            test_suffix="_test"
+            ;;
+        *)
+            usage ""
+            ;;
     esac
 done
-shift $((OPTIND - 1))
+shift $((OPTIND-1))
 
 if [ -z "${target}" ] || [ -z "${pipeline_config}" ]; then
     usage ""
 fi
 
+proj_name="plcontainer"
+pipeline_type=""
 # Decide ytt options to generate pipeline
 case ${pipeline_config} in
-pr)
-    if [ -z "${pipeline_name}" ]; then
-        pipeline_name="PR:${proj_name}"
-    fi
-    config_file="pr.yml"
-    hook_res="${proj_name}_pr"
+  pr)
+      pipeline_type="pr"
+      config_file="pr.yml"
+      hook_res="${proj_name}_pr"
     ;;
-commit)
-    if [ -z "${pipeline_name}" ]; then
-        pipeline_name="COMMIT:${proj_name}:6X_STABLE"
-    fi
-    # Default branch
-    if [ -z "${branch}" ]; then
-        branch="6X_STABLE"
-    fi
-    config_file="commit.yml"
-    hook_res="${proj_name}_commit"
+  merge|commit)
+      # Default branch is 'gpdb' as it is our main branch
+      if [ -z "${branch}" ]; then
+          branch="gpdb"
+      fi
+      pipeline_type="merge"
+      config_file="commit.yml"
+      hook_res="${proj_name}_commit"
     ;;
-dev)
-    if [ -z "${pipeline_name}" ]; then
-        usage "'-p' needs to be supplied to specify the pipeline name for flying a 'dev' pipeline."
-    fi
-    pipeline_name="DEV:${pipeline_name}"
-    config_file="dev.yml"
+  dev)
+      if [ -z "${postfix}" ]; then
+          usage "'-p' needs to be supplied to specify the pipeline name postfix for flying a 'dev' pipeline."
+      fi
+      if [ -z "${branch}" ]; then
+          usage "'-b' needs to be supplied to specify the branch for flying a 'dev' pipeline."
+      fi
+      pipeline_type="dev"
+      config_file="dev.yml"
     ;;
-release)
-    # Default branch is 'gpdb' as it is our main branch
-    if [ -z "${branch}" ]; then
-        branch="gpdb"
-    fi
-    if [ -z "${pipeline_name}" ]; then
-        pipeline_name="RELEASE:${proj_name}:${branch}"
-    fi
-    config_file="release.yml"
-    hook_res="${proj_name}_commit"
+  release|rel)
+      # Default branch is 'gpdb' as it is our main branch
+      if [ -z "${branch}" ]; then
+          branch="6X_STABLE"
+      fi
+      pipeline_type="rel"
+      config_file="release.yml"
+      hook_res="${proj_name}_commit"
     ;;
-*)
-    usage ""
+  release_bundle|rel_bundle)
+      # Default branch is 'gpdb' as it is our main branch
+      if [ -z "${branch}" ]; then
+          branch="6X_STABLE"
+      fi
+      pipeline_type="rel"
+      pipeline_name="plcontainer_bundle"
+      config_file="release_bundle.yml"
+      hook_res="${proj_name}_commit"
+    ;;
+  *)
+      usage ""
     ;;
 esac
 
-yml_path="/tmp/${proj_name}_pipeline.yml"
+yml_path="/tmp/${proj_name}.yml"
 my_path=$(realpath "${BASH_SOURCE[0]}")
 ytt_base=$(dirname "${my_path}")/pipeline
+# pipeline cannot contain '/'
+pipeline_name=${pipeline_name/\//"_"}
+
+# Generate pipeline name
+if [ -n "${test_suffix}" ]; then
+    pipeline_type="${pipeline_type}_test"
+fi
+pipeline_name="${pipeline_type}.${proj_name}"
+if [ -n "${branch}" ]; then
+    pipeline_name="${pipeline_name}.${branch}"
+fi
+if [ -n "${postfix}" ]; then
+    pipeline_name="${pipeline_name}.${postfix}"
+fi
+# pipeline cannot contain '/'
+pipeline_name=${pipeline_name/\//"_"}
 
 ytt --data-values-file "${ytt_base}/res_def.yml" \
     -f "${ytt_base}/base.lib.yml" \
     -f "${ytt_base}/job_def.lib.yml" \
     -f "${ytt_base}/trigger_def.lib.yml" \
-    -f "${ytt_base}/${config_file}" >"${yml_path}"
+    -f "${ytt_base}/${config_file}" > "${yml_path}"
 echo "Generated pipeline yaml '${yml_path}'."
 
 echo ""

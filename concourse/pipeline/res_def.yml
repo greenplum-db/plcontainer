@@ -61,7 +61,7 @@ resources:
   type: git
   check_every: 2h
   source:
-    branch: hy/ubuntu_test 
+    branch: ((plcontainer-branch))
     uri: https://github.com/greenplum-db/plcontainer
     username: ((extension/github-access-token))
     password: x-oauth-basic
@@ -81,17 +81,6 @@ resources:
     uri: https://github.com/greenplum-db/gpdb.git
 
 # Image Resources
-# centos6
-- name: centos6-gpdb6-image-build
-  type: registry-image
-  source:
-    repository: gcr.io/data-gpdb-public-images/gpdb6-centos6-build
-    tag: latest
-- name: centos6-gpdb6-image-test
-  type: registry-image
-  source:
-    repository: gcr.io/data-gpdb-public-images/gpdb6-centos6-test
-    tag: latest
 # centos7
 - name: centos7-gpdb6-image-build
   type: registry-image
@@ -133,12 +122,6 @@ resources:
 # gpdb binary on gcs is located as different folder for different version
 # Latest build with assertion enabled:
 # --enable-cassert --enable-tap-tests --enable-debug-extensions
-- name: bin_gpdb6_centos6_debug
-  type: gcs
-  source:
-    bucket: pivotal-gpdb-concourse-resources-prod
-    json_key: ((concourse-gcs-resources-service-account-key))
-    regexp: server/published/gpdb6/server-rc-(.*)-rhel6_x86_64.debug.tar.gz
 - name: bin_gpdb6_centos7_debug
   type: gcs
   source:
@@ -159,12 +142,6 @@ resources:
     regexp: server/published/gpdb6/server-rc-(.*)-ubuntu18.04_x86_64.debug.tar.gz
 # Latest release candidates, no fault-injector, no assertion:
 # --disable-debug-extensions --disable-tap-tests --enable-ic-proxy
-- name: bin_gpdb6_centos6
-  type: gcs
-  source:
-    bucket: pivotal-gpdb-concourse-resources-prod
-    json_key: ((concourse-gcs-resources-service-account-key))
-    regexp: server/published/gpdb6/server-rc-(.*)-rhel6_x86_64.tar.gz
 - name: bin_gpdb6_centos7
   type: gcs
   source:
@@ -184,71 +161,51 @@ resources:
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: server/published/gpdb6/server-rc-(.*)-ubuntu18.04_x86_64.tar.gz
 
-# For uploading every build to gcs
+# For uploading every build to gcs gppkg
 - name: bin_plcontainer_gpdb6_rhel7_intermediates
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
     json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_rhel7_gpdb6.gppkg
-
-- name: bin_plcontainer_gpdb6_rhel6_intermediates
-  type: gcs
-  source:
-    bucket: gpdb-extensions-concourse-resources
-    json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_rhel6_gpdb6.gppkg
+    versioned_file: intermediates/plcontainer/plcontainer-gppkg-rhel7-gp6.tar.gz
 
 - name: bin_plcontainer_gpdb6_rhel8_intermediates
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
     json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_rhel8_gpdb6.gppkg
+    versioned_file: intermediates/plcontainer/plcontainer-gppkg-rhel8-gp6.tar.gz
 
 - name: bin_plcontainer_gpdb6_ubuntu18_intermediates
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
     json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_ubuntu18_gpdb6.gppkg
+    versioned_file: intermediates/plcontainer/plcontainer-gppkg-ubuntu18-gp6.tar.gz
 
-- name: tar_plcontainer_python3_docker_intermediates_python39_alpine
+# Rel gppkg
+- name: bin_plcontainer_gpdb6_rhel7_intermediates_rel
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
     json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_python3_shared.tar.gz
+    versioned_file: intermediates_release/plcontainer/plcontainer-gppkg-rhel7-gp6.tar.gz
 
-- name: tar_plcontainer_python3_docker_intermediates_python39_ubuntu2004_b
+- name: bin_plcontainer_gpdb6_rhel8_intermediates_rel
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
     json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_python39_ubuntu2004_bundle_shared.tar.gz
+    versioned_file: intermediates_release/plcontainer/plcontainer-gppkg-rhel8-gp6.tar.gz
 
-- name: tar_plcontainer_python3_docker_intermediates_python37_ubuntu1804_b
+- name: bin_plcontainer_gpdb6_ubuntu18_intermediates_rel
   type: gcs
   source:
     bucket: gpdb-extensions-concourse-resources
     json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_python37_ubuntu1804_bundle_shared.tar.gz
+    versioned_file: intermediates_release/plcontainer/plcontainer-gppkg-ubuntu18-gp6.tar.gz
 
-- name: tar_plcontainer_r_docker_intermediates
-  type: gcs
-  source:
-    bucket: gpdb-extensions-concourse-resources
-    json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_r_shared.tar.gz
-
-- name: tar_plcontainer_r_docker_intermediates_bundle
-  type: gcs
-  source:
-    bucket: gpdb-extensions-concourse-resources
-    json_key: ((extension/extensions-gcs-service-account-key))
-    versioned_file: intermediates/plcontainer/plcontainer_r_bundle_shared.tar.gz
-
-# For uploading to the release bucket
+# For uploading to the release bucket gppkg
 - name: bin_plcontainer_gpdb6_rhel7_release
   type: gcs
   source:
@@ -269,6 +226,49 @@ resources:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: plcontainer/released/gpdb6/plcontainer-(.*).gppkg
+
+########## IMAGE INTERMEDIATES BUCKET #########
+- name: bin_python_image_gpdb6_intermediates
+  type: gcs
+  source:
+    bucket: gpdb-extensions-concourse-resources
+    json_key: ((extension/extensions-gcs-service-account-key))
+    versioned_file: intermediates/plcontainer_images/plcontainer-python-image-gp6.tgz
+
+- name: bin_r_image_gpdb6_intermediates
+  type: gcs
+  source:
+    bucket: gpdb-extensions-concourse-resources
+    json_key: ((extension/extensions-gcs-service-account-key))
+    versioned_file: intermediates/plcontainer_images/plcontainer-r-image-gp6.tgz
+########## IMAGE INTERMEDIATES RELEASE BUCKET #########
+- name: bin_python_image_gpdb6_intermediates_rel
+  type: gcs
+  source:
+    bucket: gpdb-extensions-concourse-resources
+    json_key: ((extension/extensions-gcs-service-account-key))
+    versioned_file: intermediates_release/plcontainer_images/plcontainer-python-image-gp6.tgz
+
+- name: bin_r_image_gpdb6_intermediates_rel
+  type: gcs
+  source:
+    bucket: gpdb-extensions-concourse-resources
+    json_key: ((extension/extensions-gcs-service-account-key))
+    versioned_file: intermediates_release/plcontainer_images/plcontainer-r-image-gp6.tgz
+
+- name: bin_python37_ubuntu1804_bundle_release
+  type: gcs
+  source:
+    bucket: pivotal-gpdb-concourse-resources-prod
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: plcontainer/released/gpdb6/plcontainer-python3-image-(.*)-gp6.tar.gz
+
+- name: bin_r_ubuntu1804_bundle_release
+  type: gcs
+  source:
+    bucket: pivotal-gpdb-concourse-resources-prod
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: plcontainer/released/gpdb6/plcontainer-r-image-(.*)-gp6.tar.gz
 
 # Other dependencies
 - name: bin_cmake

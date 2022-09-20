@@ -20,4 +20,5 @@ RUN pip3 --no-cache install cmake
 # RUN python3 -m nltk.downloader all
 RUN python3 -m spacy download en_core_web_sm
 RUN mkdir -p /clientdir
+
 WORKDIR /clientdir

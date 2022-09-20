@@ -1,55 +1,72 @@
 #@ load("base.lib.yml", "add_res_by_conf", "add_res_by_name")
 #@ load("@ytt:template", "template")
 
+#@ def inter_bin_name(base_name, release_build):
+#@   if release_build:
+#@     return base_name + "_rel"
+#@   end
+#@
+#@   return base_name
+#@ end
+
 #! Use bin_gpdb_postfix="" to use a release version of gpdb binary
 #! Job config for centos7
-#@ def centos7_gpdb6_conf(release_build=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
+#@ def centos7_gpdb6_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
+is_bundle_release: #@ is_bundle_release
 res_test_image: centos7-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_centos7" + ("" if release_build else "_debug")
 res_gpdb_src: gpdb6_src
-res_intermediates_bin: bin_plcontainer_gpdb6_rhel7_intermediates
-os: #@ "rhel7_" + container_name_suffix_python + "_" + container_name_suffix_r 
+res_intermediates_bin: #@ inter_bin_name("bin_plcontainer_gpdb6_rhel7_intermediates", release_build)
+os: rhel7
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
-res_intermediates_tar_python3: #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
-res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
-#@ end
-
-#! Job config for centos6
-#! Use bin_gpdb_postfix="" to use a release version of gpdb binary
-#@ def centos6_gpdb6_conf(release_build=False):
-res_test_image: centos6-gpdb6-image-test
-res_gpdb_bin: #@ "bin_gpdb6_centos6" + ("" if release_build else "_debug")
-res_gpdb_src: gpdb6_src
-res_intermediates_bin: bin_plcontainer_gpdb6_rhel6_intermediates
-os: rhel6
-build_type: #@ "Release" if release_build else "Debug"
+release_bin: bin_plcontainer_gpdb6_rhel7_release
+#@   if is_bundle_release:
+res_intermediates_tar_python37: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", release_build)
+res_intermediates_tar_r: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", release_build)
+#@   end
 #@ end
 
 #! Job config for rhel8
-#@ def rhel8_gpdb6_conf(release_build=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
+#@ def rhel8_gpdb6_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
 res_test_image: rhel8-gpdb6-image-test
 res_gpdb_bin: #@ "bin_gpdb6_rhel8" + ("" if release_build else "_debug")
+is_bundle_release: #@ is_bundle_release
 res_gpdb_src: gpdb6_src
-res_intermediates_bin: bin_plcontainer_gpdb6_rhel8_intermediates
-os: #@ "rhel8_" + container_name_suffix_python + "_" + container_name_suffix_r 
+res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb6_rhel8_intermediates", release_build)
+os: rhel8
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
-res_intermediates_tar_python3:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
-res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
+release_bin: bin_plcontainer_gpdb6_rhel8_release
 #@ end
 
 #! Job config for ubuntu18
-#@ def ubuntu18_gpdb6_conf(release_build=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
+#@ def ubuntu18_gpdb6_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
 res_test_image: ubuntu18-gpdb6-image-test
 res_gpdb_src: gpdb6_src
 res_gpdb_bin: #@ "bin_gpdb6_ubuntu18" + ("" if release_build else "_debug")
-res_intermediates_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
-os: #@ "ubuntu18.04_" +  container_name_suffix_python + "_" + container_name_suffix_r
+is_bundle_release: #@ is_bundle_release
+res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb6_ubuntu18_intermediates", release_build)
+os: ubuntu18.04
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
-res_intermediates_tar_python3:  #@ "tar_plcontainer_python3_docker_intermediates_" + container_name_suffix_python.replace(".", "_")
-res_intermediates_tar_r: #@ "tar_plcontainer_r_docker_intermediates" + ("" if container_name_suffix_r=="r.alpine" else "_bundle")
+release_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
+#@ end
+
+#! Job config for bundle release
+#@ def python_image_release_conf():
+job_name: push_python_image_release
+res_intermediates_tar: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", True)
+res_release_bin_image: bin_python37_ubuntu1804_bundle_release
+rel_tar_file_name: plcontainer-python-image-*-gp6.tar.gz
+version_file: VERSION_bundle_ubuntu1804_py37
+#@ end
+#@ def r_image_release_conf():
+job_name: push_r_image_release
+res_intermediates_tar: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", True)
+res_release_bin_image: bin_r_ubuntu1804_bundle_release
+rel_tar_file_name: plcontainer-r-image-*-gp6.tar.gz
+version_file: VERSION_bundle_ubuntu1804_r
 #@ end
 
 #! The entry point of a pipeline. The job name must be 'entrance'.
@@ -188,11 +205,93 @@ plan:
 - #@ _test_task(conf)
 - put: #@ conf["res_intermediates_bin"]
   params:
-    file: plcontainer_artifacts/plcontainer*.gppkg
-- put: #@ conf["res_intermediates_tar_python3"]
+    file: plcontainer_artifacts/plcontainer-gppkg-*-gp6.tar.gz
+#@   if conf["is_bundle_release"]:
+- put: #@ conf["res_intermediates_tar_python37"]
   params:
-    file: plcontainer_artifacts/plcontainer_python3_shared.tar.gz
+    file: plcontainer_artifacts/plcontainer-python-image*.tgz
 - put: #@ conf["res_intermediates_tar_r"]
   params:
-    file: plcontainer_artifacts/plcontainer_r_shared.tar.gz
+    file: plcontainer_artifacts/plcontainer-r-image*.tgz
+#@   end
+#@ end
+
+#! The final release job
+#! 1. Push the artifacts to the release bucket
+#! 2. Push the git tag
+#@ def exit_release_job(param, exit_release_name="exit_release"):
+#@   trigger = param["trigger"]
+#@   confs = param["confs"]
+#@   passed_jobs = []
+#@   res_map = param["res_map"]
+#@   version_file = "VERSION"
+#@   for conf in confs:
+#@     passed_jobs.append(build_test_job_name(conf))
+#@     add_res_by_name(res_map, conf["release_bin"])
+#@   end
+
+name: #@ exit_release_name
+on_failure: #@ trigger["on_failure"]
+on_error: #@ trigger["on_error"]
+on_success: #@ trigger["on_success"]
+plan:
+#@   for to_get in trigger["to_get"]:
+- passed: #@ passed_jobs
+  _: #@ template.replace(to_get)
+#@   end
+- in_parallel:
+    steps:
+
+#@ for conf in confs:
+    - do:
+      - get: #@ conf["res_intermediates_bin"]
+        params:
+          unpack: true
+      - put: #@ conf["release_bin"]
+        params:
+          file: #@ conf["res_intermediates_bin"] + "/plcontainer*.gppkg"
+#@ end
+#@ for to_put in trigger["to_put_post"]:
+- put: plcontainer_commit
+  params:
+    repository: plcontainer_src
+    tag: #@ "plcontainer_src/" + version_file
+#@   end
+#@ end
+
+#! Image release job
+#@ def image_release_job(param):
+#@   trigger = param["trigger"]
+#@   conf = param["conf"]
+#@   res_map = param["res_map"]
+#@   rel_conf = param["rel_conf"]
+#@   passed_jobs = []
+#@   passed_jobs.append(build_test_job_name(conf))
+#@   version_file = rel_conf["version_file"]
+#@   add_res_by_conf(res_map, rel_conf)
+name: #@ rel_conf["job_name"]
+on_failure: #@ trigger["on_failure"]
+on_error: #@ trigger["on_error"]
+on_success: #@ trigger["on_success"]
+plan:
+#@   for to_get in trigger["to_get"]:
+- passed: #@ passed_jobs
+  _: #@ template.replace(to_get)
+#@   end
+- in_parallel:
+    steps:
+    - do:
+      - get: intermediates
+        resource: #@ rel_conf["res_intermediates_tar"]
+        params:
+          unpack: true
+      - put: #@ rel_conf["res_release_bin_image"]
+        params:
+          file: #@ "intermediates/" + rel_conf["rel_tar_file_name"]
+#@   for to_put in trigger["to_put_post"]:
+- put: plcontainer_commit
+  params:
+    repository: plcontainer_src
+    tag: #@ "plcontainer_src/" + version_file
+#@   end
 #@ end

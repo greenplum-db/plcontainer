@@ -87,3 +87,32 @@ on_success:
 on_failure:
 on_error:
 #@ end
+
+#! Commit trigger. For release pipelines
+#@ def release_trigger(res_map):
+#@   add_res_by_name(res_map, "plcontainer_commit")
+#@   add_res_by_name(res_map, "slack_notify")
+auto_trigger: true
+to_get:
+- get: plcontainer_src
+  resource: plcontainer_commit
+to_put_pre: #@ []
+to_put_post:
+- put: plcontainer_commit
+  params:
+    repository: plcontainer_src
+    tag: plcontainer_src/VERSION
+on_success:
+  put: slack_notify
+  params:
+    alert_type: success
+    text: A new plcontainer release has been pushed!
+on_failure:
+  put: slack_notify
+  params:
+    alert_type: failed
+on_error:
+  put: slack_notify
+  params:
+    alert_type: errored
+#@ end

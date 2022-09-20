@@ -212,12 +212,7 @@ case "$1" in
 build)
     start_docker_server
     # run the build need run as root
-    # for build task $2 means the container name suffix
-    /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh "$2"
-    # save doker file
-    docker save "${CONTAINER_NAME_SUFFIX_PYTHON}" -o plcontainer_artifacts/plcontainer_python3_shared.tar.gz
-    # r-image
-    docker save "${CONTAINER_NAME_SUFFIX_R}" -o plcontainer_artifacts/plcontainer_r_shared.tar.gz
+    /home/gpadmin/plcontainer_src/concourse/scripts/build_plcontainer_cmake.sh
     ;;
 test)
     start_docker_server
@@ -227,15 +222,10 @@ test)
     chown gpadmin /var/run/docker.sock
     # print the test diff to stdout in our CI
     export SHOW_REGRESS_DIFF=1
-    # test python3
+    # test python3 and r
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
             /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py3.sh" 
-
-    # test r
-    su gpadmin -c \
-        "source /home/gpadmin/.bashrc &&\
-            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_r.sh"
     ;;
 *)
     echo "Unknown target task $1"

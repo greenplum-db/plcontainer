@@ -7,7 +7,19 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Distro.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Git.cmake)
 
-GitAbbRev_Get(PLCONTAINER_GIT_VERSION)
+# generate version
+if(NOT DEFINED PLCONTAINER_VERSION)
+  file(STRINGS VERSION PLCONTAINER_VERSION)
+endif()
+if(NOT DEFINED PYTHON_IMAGE_VERSION)
+  file(STRINGS VERSION_bundle_ubuntu1804_py37 PYTHON_IMAGE_VERSION)
+  string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" PYTHON_IMAGE_VERSION ${PYTHON_IMAGE_VERSION})
+endif()
+if(NOT DEFINED R_IMAGE_VERSION)
+  file(STRINGS VERSION_bundle_ubuntu1804_r R_IMAGE_VERSION)
+  string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" R_IMAGE_VERSION ${R_IMAGE_VERSION})
+endif()
+
 configure_file(
     "${PROJECT_SOURCE_DIR}/src/config.h.in"
     "${PROJECT_BINARY_DIR}/config.h"
@@ -28,7 +40,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         CACHE PATH "default install prefix" FORCE)
 endif()
 # for gppkg
-set(VERSION ${PLCONTAINER_GIT_VERSION})
+set(VERSION ${PLCONTAINER_VERSION})
 set(DOWNLOAD_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/downloads
     CACHE STRING "Directory for downloading external project")
@@ -113,15 +125,6 @@ add_dependencies(
 
 # Build client
 set(PYCLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_PYTHON})
-add_custom_target(pyclient_image
-    COMMAND
-    PYTHONPATH=
-    docker build .
-    -t ${PYCLIENT_IMAGE}
-    -f Dockerfile.${PYCLIENT_IMAGE}
-    WORKING_DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
-
 set(RCLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_R})
 add_custom_target(rclient_image
     COMMAND
@@ -131,6 +134,49 @@ add_custom_target(rclient_image
     -f Dockerfile.${RCLIENT_IMAGE}
     WORKING_DIRECTORY
     ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+add_custom_target(pyclient_image
+    COMMAND
+    PYTHONPATH=
+    docker build .
+    -t ${PYCLIENT_IMAGE}
+    -f Dockerfile.${PYCLIENT_IMAGE}
+    WORKING_DIRECTORY
+    ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+
+# tarball name
+set(R_IMAGE_TARBALL_NAME
+    plcontainer-r-image-${R_IMAGE_VERSION}-gp${GP_MAJOR_VERSION}.tar.gz)
+set(PYTHON_IMAGE_TARBALL_NAME
+    plcontainer-python-image-${PYTHON_IMAGE_VERSION}-gp${GP_MAJOR_VERSION}.tar.gz)
+
+add_custom_target(rclient_image_tarball
+    COMMAND
+    PYTHONPATH=
+    docker save ${RCLIENT_IMAGE}
+    -o ${R_IMAGE_TARBALL_NAME}
+    DEPENDS rclient_image)
+
+add_custom_target(pyclient_image_tarball
+    COMMAND
+    PYTHONPATH=
+    docker save ${PYCLIENT_IMAGE}
+    -o ${PYTHON_IMAGE_TARBALL_NAME}
+    DEPENDS pyclient_image)
+
+# for version-less tarball which will be uploaded to intermediate bucket
+add_custom_target(rclient_image_artifact
+    COMMAND
+    ${CMAKE_COMMAND} -E tar czvf
+    plcontainer-r-image-gp${GP_MAJOR_VERSION}.tgz
+    ${R_IMAGE_TARBALL_NAME}
+    DEPENDS rclient_image_tarball)
+
+add_custom_target(pyclient_image_artifact
+    COMMAND
+    ${CMAKE_COMMAND} -E tar czvf
+    plcontainer-python-image-gp${GP_MAJOR_VERSION}.tgz
+    ${PYTHON_IMAGE_TARBALL_NAME}
+    DEPENDS pyclient_image_tarball)
 
 add_custom_target(pyclient
     ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/pyclient
@@ -199,6 +245,12 @@ install(
 install(
     PROGRAMS src/rclient/bin/rclient.sh
     DESTINATION bin/plcontainer_clients/ OPTIONAL)
+
+add_custom_target(prepare_runtime
+    COMMAND
+    CONTAINER_NAME_SUFFIX_PYTHON=${CONTAINER_NAME_SUFFIX_PYTHON}
+    CONTAINER_NAME_SUFFIX_R=${CONTAINER_NAME_SUFFIX_R}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/prepare_runtime.sh)
 
 # Add tests targets
 add_subdirectory(tests)

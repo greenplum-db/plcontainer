@@ -15,9 +15,9 @@ build_plcontainer() {
   # source greenplum
   source /usr/local/greenplum-db/greenplum_path.sh
   source ${TOP_DIR}/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
-  
+
   [ -f 'opt/gcc_env.sh' ] && source /opt/gcc_env.sh
- 
+
   # build plcontainer
   pushd plcontainer_src
   if [ "${DEV_RELEASE}" == "release" ]; then
@@ -45,12 +45,12 @@ build_plcontainer() {
   PLCONTAINER_VERSION=${PLCONTAINER_VERSION} PLCONTAINER_RELEASE=${PLCONTAINER_RELEASE} make
   popd
   popd
-  
+
   if [ "${DEV_RELEASE}" == "devel" ]; then
       cp plcontainer_src/package/plcontainer-*.gppkg $OUTPUT/plcontainer-concourse.gppkg
   else
       cp plcontainer_src/package/plcontainer-*.gppkg $OUTPUT/
   fi
-}  
+}
 
 build_plcontainer

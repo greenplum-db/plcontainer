@@ -40,13 +40,13 @@ test: parallel_prepare
 test: parallel_1_py parallel_2_py parallel_3_py parallel_4_py parallel_5_py parallel_6_py parallel_7_py parallel_8_py 
 
 # PL/Container memory test
-test: memory_consuming_python 
-test: memory_parallel_python 
+test: memory_consuming_python
+test: memory_parallel_python
 test: memory_parallel_python_1 memory_parallel_python_2 memory_parallel_python_3 memory_parallel_python_4 memory_parallel_python_5 
 
 
 # PL/Container import pkg test
-#test: python3_import_module 
+#test: python3_import_module
 
 # Drop the extension - need to be last
 test: drop
