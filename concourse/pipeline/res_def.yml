@@ -211,7 +211,8 @@ resources:
   source:
     # bucket: pivotal-gpdb-concourse-resources-prod
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((concourse-gcs-resources-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
+    # json_key: ((concourse-gcs-resources-service-account-key))
     regexp: plcontainer/released/gpdb6/plcontainer-(.*).gppkg
 
 - name: bin_plcontainer_gpdb6_rhel8_release
@@ -219,7 +220,8 @@ resources:
   source:
     # bucket: pivotal-gpdb-concourse-resources-prod
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((concourse-gcs-resources-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
+    # json_key: ((concourse-gcs-resources-service-account-key))
     regexp: plcontainer/released/gpdb6/plcontainer-(.*).gppkg
 
 - name: bin_plcontainer_gpdb6_ubuntu18_release
@@ -227,7 +229,8 @@ resources:
   source:
     # bucket: pivotal-gpdb-concourse-resources-prod
     bucket: gpdb-extensions-concourse-resources
-    json_key: ((concourse-gcs-resources-service-account-key))
+    json_key: ((extension/extensions-gcs-service-account-key))
+    # json_key: ((concourse-gcs-resources-service-account-key))
     regexp: plcontainer/released/gpdb6/plcontainer-(.*).gppkg
 
 ########## IMAGE INTERMEDIATES BUCKET #########
