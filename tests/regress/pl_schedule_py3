@@ -11,7 +11,7 @@ test: runtimeid_declaration
 test: function_python3 function_python3_gpdb5
 
 # test PL/Container normal function
-# test: test_python3
+test: test_python3
 test: plpython_quote
 test: test_python3_gpdb5 subtransaction_python
 # test: spi_python3

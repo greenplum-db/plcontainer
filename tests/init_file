@@ -19,6 +19,10 @@ m/^and \d+ other objects (see server log for list)*/
 
 # match plcontainer command outputs: startswith timestamp: 20170906:14:06:03
 m/^[0-9]{8}:[0-9]{2}:[0-9]{2}:[0-9]{2}.*/
+# match different python version error with an 19-22 spaces for different python versions
+m/^\s+this is invalid python program/
+m/^\s+return \(float\)3.4/
+m/^\s{19,22}/
 -- end_matchignore
 -- start_matchsubs
 m/ls: cannot access '.*'.*/
