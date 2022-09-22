@@ -11,12 +11,12 @@
 
 ### PR Pipeline
 
-https://extensions.ci.gpdb.pivotal.io/teams/main/pipelines/pr.plcontainer
+https://dev2.ci.gpdb.pivotal.io/teams/gp-extensions/pipelines/pr.plcontainer
 
 ### Main Branch Pipeline
 
 The development happens on the `6X_STABLE` branch. The merge pipeline for the `6X_STABLE`
-https://extensions.ci.gpdb.pivotal.io/teams/main/pipelines/merge.plcontainer.6X_STABLE
+https://dev2.ci.gpdb.pivotal.io/teams/gp-extensions/pipelines/merge.plcontainer.6X_STABLE
 
 # Fly a pipeline
 
@@ -24,24 +24,25 @@ https://extensions.ci.gpdb.pivotal.io/teams/main/pipelines/merge.plcontainer.6X_
 
 - Install [ytt](https://carvel.dev/ytt/). It's written in go. So just download the executable for your platform from the [release page](https://github.com/vmware-tanzu/carvel-ytt/releases).
 - Make the `fly` command in the `PATH` or export its location to `FLY` env.
-- Clone the `gp-continuous-integration` repo to `$HOME/workspace` or set its parent directory to `WORKSPACE` env.
-- Login with the `fly` command. Assume we are using `extension` as the target name.
+- Login with the `fly` command. Assume we are using `dev2` as the target name.
 
-  ```
-  fly -t extension login -c https://extensions.ci.gpdb.pivotal.io
-  ```
+```
+# -n gp-extensions is to set the concourse team
+fly -t dev2 login -c https://dev2.ci.gpdb.pivotal.io -n gp-extensions
+```
+
 - `cd` to the `concourse` directory.
 
 ## Fly the PR pipeline
 
 ```
-./fly.sh -t extension -c pr -l <bundle_language>
+./fly.sh -t dev2 -c pr
 ```
 
 ## Fly the merge pipeline
 
 ```
-./fly.sh -t extension -c merge -l <bundle_language>
+./fly.sh -t dev2 -c merge
 ```
 
 ## Fly the release pipeline
@@ -60,7 +61,7 @@ fly -t prod login -c https://prod.ci.gpdb.pivotal.io
 To fly a release(gppkg) pipeline from a specific branch:
 
 ```
-./fly.sh -t <target> -c rel -b release/<major>.<minor> 
+./fly.sh -t <target> -c rel -b release/<major>.<minor>
 ```
 To fly a release(image) pipeline from a specific branch:
 
@@ -72,7 +73,7 @@ To fly a release(image) pipeline from a specific branch:
 ## Fly the dev pipeline
 
 ```
-./fly.sh -t extension -c dev -p <your_postfix> -b <your_branch>
+./fly.sh -t dev2 -c dev -p <your_postfix> -b <your_branch>
 ```
 
 ## Webhook
@@ -89,6 +90,6 @@ curl --data-raw "foo" <hook_url>
 
 ## PR pipeline is not triggered.
 
-The PR pipeline relies on the webhook to detect the new PR. However, due the the limitation of the webhook implemention of concourse, we rely on the push hook for this. It means if the PR is from a forked repo, the PR pipeline won't be triggered immediately. To manually trigger the pipeline, go to https://extensions.ci.gpdb.pivotal.io/teams/main/pipelines/pr.plcontainer/resources/plcontainer_pr and click ⟳ button there.
+The PR pipeline relies on the webhook to detect the new PR. However, due to the the limitation of the webhook implemention of concourse, we rely on the push hook for this. It means if the PR is from a forked repo, the PR pipeline won't be triggered immediately. To manually trigger the pipeline, go to https://dev2.ci.gpdb.pivotal.io/teams/gp-extensions/pipelines/pr.plcontainer/resources/plcontainer_pr and click ⟳ button there.
 
 TIPS: Just don't fork, name your branch as `<your_id>/<branch_name>` and push it here to create PR.
