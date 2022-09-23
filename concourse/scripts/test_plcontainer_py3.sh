@@ -19,6 +19,8 @@ function _main() {
     gppkg -q --all
     # Find the package name
     local pkg_name
+    # for test
+    exit 1
     pkg_name=$(gppkg -q --all | awk -F"[-]+" '/plcontainer/{print $1}')
     # Uninstall it
     gppkg -r "${pkg_name}"
