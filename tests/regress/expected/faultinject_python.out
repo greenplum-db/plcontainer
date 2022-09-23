@@ -243,7 +243,7 @@ SELECT pg_sleep(10);
 (1 row)
 
 -- end_ignore
-\! docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
+\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
 1
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
@@ -269,7 +269,7 @@ SELECT pg_sleep(10);
 (1 row)
 
 -- end_ignore
-\! docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
+\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
 1
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
@@ -281,8 +281,8 @@ SELECT pyint(3);
 
 -- Detect for the process name change (from "plcontainer cleaner" to other).
 -- In such case, above cases will still succeed as unexpected.
-\! docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
-1
+\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
+2
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 1
 -- reset the injection points
