@@ -15,14 +15,14 @@ test: test_python3
 test: plpython_quote
 test: test_python3_gpdb5 subtransaction_python
 test: spi_python3
-### TODO ### test: test_python3_error
+test: test_python3_error
 test: exception_py
-### TODO ### test: faultinject_python
+test: faultinject_python
 
 # test wrong configuration validation in pl/container C code
 test: test_wrong_config_python3
 # PL/Container UDA test
-### TODO ### test: uda_python3
+test: uda_python3
 
 ### FIXME we use docker in docker for test on CI which can not use container log when
 ### use_container_logging=yes. so we comment out this `user_control_py3` for now.

@@ -188,7 +188,7 @@ static void cleanup(char *dockerid, char *uds_fn) {
 		atexit(cleanup_atexit_callback);
 #else
    #ifdef PLC_PG
-        on_exit(cleanup_atexit_callback, NULL);   
+        on_exit(cleanup_atexit_callback, NULL);
    #else
 		on_exit(cleanup_atexit_callback, NULL);
    #endif

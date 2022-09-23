@@ -27,7 +27,7 @@ SELECT pyint(i) from tbl;
 SELECT pg_sleep(10);
 -- end_ignore
 
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a </dev/null | wc -l
+\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT sum(pyint(i)) from tbl;
 
@@ -40,7 +40,7 @@ SELECT pyint(i) from tbl;
 SELECT pg_sleep(10);
 -- end_ignore
 
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a </dev/null | wc -l
+\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT sum(pyint(i)) from tbl;
 
@@ -50,7 +50,7 @@ SELECT pyint(i) from tbl;
 SELECT pg_sleep(10);
 -- end_ignore
 
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a </dev/null | wc -l
+\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT sum(pyint(i)) from tbl;
 
@@ -60,7 +60,7 @@ SELECT pyint(i) from tbl;
 SELECT pg_sleep(10);
 -- end_ignore
 
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a </dev/null | wc -l
+\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT sum(pyint(i)) from tbl;
 
@@ -70,7 +70,7 @@ SELECT pyint(i) from tbl;
 SELECT pg_sleep(10);
 -- end_ignore
 
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a </dev/null | wc -l
+\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 
 -- reset the injection points
@@ -95,7 +95,7 @@ SELECT pyint(0);
 SELECT pg_sleep(10);
 -- end_ignore
 
-\! docker ps -a </dev/null | wc -l
+\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT pyint(1);
 
@@ -105,12 +105,12 @@ SELECT pyint(2);
 SELECT pg_sleep(10);
 -- end_ignore
 
-\! docker ps -a </dev/null | wc -l
+\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT pyint(3);
 -- Detect for the process name change (from "plcontainer cleaner" to other).
 -- In such case, above cases will still succeed as unexpected.
-\! docker ps -a </dev/null | wc -l
+\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 
 -- reset the injection points
