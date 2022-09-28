@@ -481,10 +481,10 @@ import scipy
 import pandas
 return 1.0
 $$ LANGUAGE plcontainer;
-CREATE OR REPLACE FUNCTION pyversion() RETURNS varchar AS $$
+CREATE OR REPLACE FUNCTION pyversion_major() RETURNS varchar AS $$
 # container : plc_python_shared
 import sys
-return str(sys.version_info)
+return str(sys.version_info.major)
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pykillself() RETURNS integer AS $$
 # container: plc_python_shared

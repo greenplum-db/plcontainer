@@ -1,0 +1,24 @@
+# setup - need to be first
+test: schema
+
+# configuration function tests
+test: test_configuration
+
+# test declaration combinations in function definitions.
+test: runtimeid_declaration
+
+# set R and Python function - need before "test PL/Container normal function"
+test: function_python function_python_gpdb5
+
+# test PL/Container normal function
+test: test_python
+test: test_python_gpdb5 subtransaction_python
+test: spi_python
+test: test_python_error
+test: exception_py
+
+# PL/Container UDA test
+test: uda_python
+
+# Drop the extension - need to be last
+test: drop

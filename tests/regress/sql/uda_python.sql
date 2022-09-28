@@ -2,7 +2,7 @@
 CREATE FUNCTION sfunc_sum_cols(state numeric, col_a numeric, col_b numeric) 
 RETURNS numeric AS 
 $$
-# container: plc_python_shared
+# container: plc_python2_shared
    return state + col_a + col_b
 $$ language plcontainer;
 
@@ -10,14 +10,14 @@ $$ language plcontainer;
 CREATE FUNCTION prefunc_sum_cols(state_a numeric, state_b numeric) 
 RETURNS numeric AS 
 $$
-# container: plc_python_shared
+# container: plc_python2_shared
    return state_a + state_b
 $$ language plcontainer;
 
 CREATE FUNCTION final_func_sum_cols(state_a numeric)
 RETURNS numeric AS
 $$
-# container: plc_python_shared
+# container: plc_python2_shared
    return state_a*10
 $$ language plcontainer;
 
@@ -37,7 +37,7 @@ drop table t;
 CREATE or replace FUNCTION pystack(state text, groupid text, vec text)
 RETURNS text AS
 $$
-# container: plc_python_shared
+# container: plc_python2_shared
     import ast
 
     if not (GD.has_key(groupid)):
@@ -52,7 +52,7 @@ $$ language plcontainer;
 CREATE FUNCTION pystack_ffunc(groupid text)
 RETURNS text AS
 $$
-# container: plc_python_shared
+# container: plc_python2_shared
    import cPickle
    serialized_array = cPickle.dumps(GD[groupid])
    return serialized_array

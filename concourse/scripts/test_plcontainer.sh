@@ -10,7 +10,9 @@ function _main() {
     export PL_TESTDB=contrib_regression
     gppkg -i plcontainer*.gppkg
     # image add for both python and r
+    # python3
     time plcontainer image-add -f plcontainer-python-image-*-gp6.tar.gz
+    # for r
     time plcontainer image-add -f plcontainer-r-image-*-gp6.tar.gz
 
     time cmake --build . --target prepare_runtime

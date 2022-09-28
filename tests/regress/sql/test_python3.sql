@@ -1,4 +1,5 @@
 set log_min_messages='DEBUG1';
+select pyversion_major();
 select pylog100();
 select pylog(10000, 10);
 select pybool('f');

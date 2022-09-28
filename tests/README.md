@@ -10,4 +10,3 @@ make tests
 
 Parallel tests reqiure at least 6GB free memory (Recommend 8GB memory).
 Memory tests reqiure at least 2GB free memory (Recommend 4GB memory).
- 

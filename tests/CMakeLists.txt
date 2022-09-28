@@ -11,6 +11,17 @@ RegressTarget_Add(testpy3
     REGRESS_OPTS
     --dbname=contrib_regression)
 
+RegressTarget_Add(testpy2
+    INIT_FILE
+    ${CMAKE_CURRENT_SOURCE_DIR}/init_file
+    SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/sql
+    EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/expected
+    RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
+    DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
+    SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py2
+    REGRESS_OPTS
+    --dbname=contrib_regression)
+
 RegressTarget_Add(testr
     INIT_FILE
     ${CMAKE_CURRENT_SOURCE_DIR}/init_file
@@ -23,7 +34,7 @@ RegressTarget_Add(testr
     --dbname=contrib_regression)
 
 add_custom_target(installcheck)
-add_dependencies(installcheck testpy3 testr)
+add_dependencies(installcheck testpy2 testpy3 testr)
 
 # for _b means for data-science-bundle include the packages and import tests
 if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")

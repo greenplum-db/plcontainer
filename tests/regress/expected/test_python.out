@@ -1,4 +1,10 @@
 set log_min_messages='DEBUG1';
+select pyversion_major();
+ pyversion_major 
+-----------------
+ 2
+(1 row)
+
 select pylog100();
  pylog100 
 ----------
