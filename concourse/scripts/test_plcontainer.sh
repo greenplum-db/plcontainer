@@ -12,6 +12,8 @@ function _main() {
     # image add for both python and r
     # python3
     time plcontainer image-add -f plcontainer-python-image-*-gp6.tar.gz
+    # python2
+    time plcontainer image-add -f plcontainer-python2-image-*-gp6.tar.gz
     # for r
     time plcontainer image-add -f plcontainer-r-image-*-gp6.tar.gz
 
