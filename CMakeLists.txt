@@ -260,7 +260,7 @@ add_custom_target(rclient
     -w /build
     -u ${my_UID}
     -it ${RCLIENT_IMAGE}
-    sh -c 'cmake /src/src/rclient && cmake --build . -v')
+    sh -c 'cmake /src/src/rclient && cmake --build .')
 
 add_dependencies(rclient rclient_image)
 add_custom_target(clients)
