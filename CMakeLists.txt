@@ -259,7 +259,13 @@ add_custom_target(rclient
 
 add_dependencies(rclient rclient_image)
 add_custom_target(clients)
-add_dependencies(clients pyclient rclient)
+add_dependencies(clients pyclient py2client rclient)
+add_custom_target(images_artifact)
+add_dependencies(images_artifact
+    pyclient_image_artifact
+    py2client_image_artifact
+    rclient_image_artifact)
+
 
 # Install
 install(

@@ -11,19 +11,12 @@ function build_all() {
 
     cmake /home/gpadmin/plcontainer_src -DCONTAINER_NAME_SUFFIX_PYTHON="${CONTAINER_NAME_SUFFIX_PYTHON}" -DCONTAINER_NAME_SUFFIX_R="${CONTAINER_NAME_SUFFIX_R}"
     cmake --build .
-    # for make install
-    # for python3
-    cmake --build . --target pyclient
-    # for python2
-    cmake --build . --target py2client
-    # for r
-    cmake --build . --target rclient
+    # for make install and build python3 python2 and r clients
+    cmake --build . --target clients
     # build gppkg and gppkg_artifact
     cmake --build . --target gppkg_artifact
     # build image artifact
-    cmake --build . --target pyclient_image_artifact
-    cmake --build . --target py2client_image_artifact
-    cmake --build . --target rclient_image_artifact
+    cmake --build . --target images_artifact
     popd
 }
 
