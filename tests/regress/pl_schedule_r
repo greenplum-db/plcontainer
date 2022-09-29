@@ -2,11 +2,11 @@
 test: schema
 
 # set R function - need before "test PL/Container normal function"
-test: function_r function_r_gpdb5 
+test: function_r function_r_gpdb6
 
 # test PL/Container normal function
-test: test_r 
-test: test_r_gpdb5 
+test: test_r
+test: test_r_gpdb6
 
 test: uda_r
 

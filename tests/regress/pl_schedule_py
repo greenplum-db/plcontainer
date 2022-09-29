@@ -8,26 +8,26 @@ test: test_configuration
 test: runtimeid_declaration
 
 # set R and Python function - need before "test PL/Container normal function"
-test: function_python3 function_python3_gpdb5
+test: function_python function_python_gpdb6
 
 # test PL/Container normal function
-test: test_python3
+test: test_python
 test: plpython_quote
-test: test_python3_gpdb5 subtransaction_python
-test: spi_python3
-test: test_python3_error
+test: test_python_gpdb6 subtransaction_python
+test: spi_python
+test: test_python_error
 test: exception_py
 test: faultinject_python
 
 # test wrong configuration validation in pl/container C code
-test: test_wrong_config_python3
+test: test_wrong_config_python
 # PL/Container UDA test
-test: uda_python3
+test: uda_python
 
 ### FIXME we use docker in docker for test on CI which can not use container log when
 ### use_container_logging=yes. so we comment out this `user_control_py3` for now.
 ### if we can find a better solution for this case we will bring this test back.
-## test: user_control_py3
+## test: user_control_py
 
 # Out of memory test
 test: oom_test_prepare_pyhthon

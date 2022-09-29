@@ -2,7 +2,7 @@ set log_min_messages='DEBUG1';
 select pyversion_major();
  pyversion_major 
 -----------------
- 3
+ 2
 (1 row)
 
 select pylog100();
@@ -403,7 +403,7 @@ select pywriteFile();
 (1 row)
 
 \! ls -l /tmp/foo
-ls: cannot access '/tmp/foo': No such file or directory
+ls: cannot access /tmp/foo: No such file or directory
 select pyconcat(fname, lname) from users order by 1;
  pyconcat  
 -----------
@@ -511,7 +511,6 @@ select pygdgetall();
 
 select pysdset('a','000');
 INFO:  SD a -> 000
-CONTEXT:  PLContainer function "pysdset"
  pysdset 
 ---------
  ok
@@ -674,9 +673,6 @@ select * from pytestudtrecord2() as t(a int, b int, c varchar);
  3 | 4 | bar
 (2 rows)
 
-select exec_prepare_array_error(array[1,2,3]);
-ERROR:  plcontainer: Array and Udt are not supported for execute with plan (sqlhandler.c:306)
-CONTEXT:  PLContainer function "exec_prepare_array_error"
 select pyreturnsetofint8(2), pyreturnsetofint8(3);
  pyreturnsetofint8 | pyreturnsetofint8 
 -------------------+-------------------
@@ -717,7 +713,7 @@ ERROR:  PL/Container client exception occurred:
  Exception occurred in Python during function execution 
  Traceback (most recent call last):
   File "<string>", line 5, in pyinvalid_function
-AttributeError: module 'math' has no attribute 'foobar'
+AttributeError: 'module' object has no attribute 'foobar'
 CONTEXT:  PLContainer function "pyinvalid_function"
 select pysubtransaction('t');
  pysubtransaction 
@@ -740,7 +736,7 @@ select unicode_test_return();
 select multiout_simple_setof();
 ERROR:  plcontainer: argname list containers OUT parameter, will not support. (message_fns.c:193)
 SELECT nnint_test(null, 3);
-ERROR:  plcontainer: plcontainer does not support domain type (plc_typeio.c:110)
+ERROR:  plcontainer: plcontainer does not support domain type (plc_typeio.c:107)
 select nested_error_raise();
 ERROR:  PL/Container client exception occurred: 
  Exception occurred in Python during function execution 
@@ -749,7 +745,7 @@ ERROR:  PL/Container client exception occurred:
   File "<string>", line 11, in fun3
   File "<string>", line 8, in fun2
   File "<string>", line 5, in fun1
-AttributeError: module 'plpy' has no attribute 'Error'
+Error: boom
 CONTEXT:  PLContainer function "nested_error_raise"
 select nested_fatal_raise();
 ERROR:  PL/Container client exception occurred: 
@@ -759,7 +755,7 @@ ERROR:  PL/Container client exception occurred:
   File "<string>", line 11, in fun3
   File "<string>", line 8, in fun2
   File "<string>", line 5, in fun1
-AttributeError: module 'plpy' has no attribute 'Fatal'
+Fatal: boom
 CONTEXT:  PLContainer function "nested_fatal_raise"
 select pseudotype_result(1);
 ERROR:  PLContainer functions cannot return type anyarray

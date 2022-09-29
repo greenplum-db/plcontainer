@@ -153,7 +153,7 @@ import sys
 if not hasattr(sys, 'argv'):
     sys.argv  = ['']
 import spacy
-nlp = spacy.load('en_core_web_sm')
+nlp = spacy.load('en')
 doc = nlp(u'this is a spacy tokenizer test.')
 
 return "Success!"
@@ -292,16 +292,3 @@ $$ LANGUAGE plcontainer;
 SELECT tensorflow_test();
 
 DROP FUNCTION tensorflow_test();
-
--- import gluonts
---
-create or replace function gluonts_test() RETURNS TEXT AS $$
-# container: plc_python_shared
-from gluonts.dataset.repository.datasets import get_dataset, dataset_recipes
-from gluonts.dataset.util import to_pandas
-return "Success!"
-$$ LANGUAGE plcontainer;
-
-SELECT gluonts_test();
-
-DROP FUNCTION gluonts_test();

@@ -8,17 +8,16 @@ test: test_configuration
 test: runtimeid_declaration
 
 # set R and Python function - need before "test PL/Container normal function"
-test: function_python function_python_gpdb5
+test: function_python2 function_python2_gpdb6
 
 # test PL/Container normal function
-test: test_python
-test: test_python_gpdb5 subtransaction_python
-test: spi_python
-test: test_python_error
-test: exception_py
+test: test_python2
+test: test_python2_gpdb6
+test: spi_python2
+test: test_python2_error
 
 # PL/Container UDA test
-test: uda_python
+test: uda_python2
 
 # Drop the extension - need to be last
 test: drop

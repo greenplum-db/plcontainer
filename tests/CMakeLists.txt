@@ -1,15 +1,16 @@
 include(${CMAKE_SOURCE_DIR}/cmake/Regress.cmake)
 
-RegressTarget_Add(testpy3
+RegressTarget_Add(testpy
     INIT_FILE
     ${CMAKE_CURRENT_SOURCE_DIR}/init_file
     SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/sql
     EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/expected
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
-    SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py3
+    SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py
     REGRESS_OPTS
-    --dbname=contrib_regression)
+    --dbname=${TEST_DB_NAME}
+    REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
 
 RegressTarget_Add(testpy2
     INIT_FILE
@@ -20,7 +21,8 @@ RegressTarget_Add(testpy2
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py2
     REGRESS_OPTS
-    --dbname=contrib_regression)
+    --dbname=${TEST_DB_NAME}
+    REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
 
 RegressTarget_Add(testr
     INIT_FILE
@@ -31,10 +33,11 @@ RegressTarget_Add(testr
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_r
     REGRESS_OPTS
-    --dbname=contrib_regression)
+    --dbname=${TEST_DB_NAME}
+    REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
 
 add_custom_target(installcheck)
-add_dependencies(installcheck testpy2 testpy3 testr)
+add_dependencies(installcheck testpy2 testpy testr)
 
 # for _b means for data-science-bundle include the packages and import tests
 if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
@@ -45,8 +48,9 @@ if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
         EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/expected
         RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
         DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
-        SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py3_bundle
+        SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py_bundle
         REGRESS_OPTS
-        --dbname=contrib_regression)
-    add_dependencies(installcheck testpy3_bundle)
+        --dbname=${TEST_DB_NAME}
+        REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
+    add_dependencies(installcheck testpy_bundle)
 endif()

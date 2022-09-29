@@ -54,6 +54,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CONTAINER_NAME_SUFFIX_PYTHON "" CACHE STRING "The container python image env for plcontainer")
 set(CONTAINER_NAME_SUFFIX_PYTHON2 "" CACHE STRING "The container python2 image env for plcontainer")
 set(CONTAINER_NAME_SUFFIX_R "" CACHE STRING "The container r image env for plcontainer")
+set(TEST_DB_NAME "" CACHE STRING "The name of regress test db")
 
 if("${CONTAINER_NAME_SUFFIX_PYTHON}" STREQUAL "")
     set(CONTAINER_NAME_SUFFIX_PYTHON "python39.alpine")
@@ -65,6 +66,10 @@ endif()
 
 if("${CONTAINER_NAME_SUFFIX_R}" STREQUAL "")
     set(CONTAINER_NAME_SUFFIX_R "r.alpine")
+endif()
+
+if("${TEST_DB_NAME}" STREQUAL "")
+    set(TEST_DB_NAME "contrib_regression")
 endif()
 
 # Build dependencies
