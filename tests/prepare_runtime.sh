@@ -11,10 +11,15 @@ set -ex
 plcontainer runtime-delete -r plc_python_shared
 plcontainer runtime-delete -r plc_python_shared_oom
 plcontainer runtime-delete -r plc_r_shared
+# python2
+plcontainer runtime-delete -r plc_python2_shared
 
 # then add the python and r container image
 plcontainer runtime-add -r plc_python_shared -i "${CONTAINER_NAME_SUFFIX_PYTHON}:latest" -l python3
 plcontainer runtime-add -r plc_python_shared_oom -i "${CONTAINER_NAME_SUFFIX_PYTHON}:latest" -l python3 -s memory_mb=100
+
+# python2 oom for python2 or python3 just test one version is enough
+plcontainer runtime-add -r plc_python2_shared -i "${CONTAINER_NAME_SUFFIX_PYTHON2}:latest" -l python
 plcontainer runtime-add -r plc_r_shared -i "${CONTAINER_NAME_SUFFIX_R}:latest" -l r
 
 # for test faultinject_python we rm all the container first

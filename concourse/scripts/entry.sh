@@ -225,7 +225,7 @@ test)
     # test python3 and r
     su gpadmin -c \
         "source /home/gpadmin/.bashrc &&\
-            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer_py3.sh" 
+            /home/gpadmin/plcontainer_src/concourse/scripts/test_plcontainer.sh"
     ;;
 *)
     echo "Unknown target task $1"

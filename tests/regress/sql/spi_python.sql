@@ -405,7 +405,7 @@ SELECT pyspi_exec_exception();
 
 CREATE FUNCTION invalid_type_uncaught(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("plan"):
+if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	SD["plan"] = plpy.prepare(q, [ "test" ])
 rv = plpy.execute(SD["plan"], [ a ])
@@ -418,11 +418,11 @@ $$ LANGUAGE plcontainer;
 -- the typo, and return None
 CREATE FUNCTION invalid_type_caught(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("plan"):
+if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	try:
 		SD["plan"] = plpy.prepare(q, [ "test" ])
-	except plpy.SPIError, ex:
+	except plpy.SPIError as ex:
 		plpy.notice(str(ex))
 		return None
 rv = plpy.execute(SD["plan"], [ a ])
@@ -436,11 +436,11 @@ $$ LANGUAGE plcontainer;
 
 CREATE FUNCTION invalid_type_reraised(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("plan"):
+if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	try:
 		SD["plan"] = plpy.prepare(q, [ "test" ])
-	except plpy.SPIError, ex:
+	except plpy.SPIError as ex:
 		plpy.error(str(ex))
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
@@ -453,7 +453,7 @@ $$ LANGUAGE plcontainer;
 
 CREATE FUNCTION valid_type(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("plan"):
+if "plan" not in SD:
 	SD["plan"] = plpy.prepare("SELECT fname FROM users WHERE lname = $1", [ "text" ])
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
@@ -484,27 +484,27 @@ $$ LANGUAGE plcontainer ;
 
 CREATE FUNCTION spi_prepared_plan_test_one(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("myplan"):
+if "myplan" not in SD:
 	q = "SELECT count(*) FROM users WHERE lname = $1"
 	SD["myplan"] = plpy.prepare(q, [ "text" ])
 try:
 	rv = plpy.execute(SD["myplan"], [a])
 	return "there are " + str(rv[0]["count"]) + " " + str(a) + "s"
-except Exception, ex:
+except Exception as ex:
 	plpy.error(str(ex))
 return None
 $$ LANGUAGE plcontainer;
 
 CREATE FUNCTION spi_prepared_plan_test_nested(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("myplan"):
+if "myplan" not in SD:
 	q = "SELECT spi_prepared_plan_test_one('%s') as count" % a
 	SD["myplan"] = plpy.prepare(q)
 try:
 	rv = plpy.execute(SD["myplan"])
 	if len(rv):
 		return rv[0]["count"]
-except Exception, ex:
+except Exception as ex:
 	plpy.error(str(ex))
 return None
 $$ LANGUAGE plcontainer;

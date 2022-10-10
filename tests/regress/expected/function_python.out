@@ -481,10 +481,10 @@ import scipy
 import pandas
 return 1.0
 $$ LANGUAGE plcontainer;
-CREATE OR REPLACE FUNCTION pyversion() RETURNS varchar AS $$
+CREATE OR REPLACE FUNCTION pyversion_major() RETURNS varchar AS $$
 # container : plc_python_shared
 import sys
-return str(sys.version_info)
+return str(sys.version_info.major)
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pykillself() RETURNS integer AS $$
 # container: plc_python_shared
@@ -575,4 +575,10 @@ $$ LANGUAGE plcontainer;
 create function pseudotype_result(anyelement) returns anyarray as $$
 # container: plc_python_shared
 pass;
+$$ language plcontainer;
+create function exec_prepare_array_error(x int4[]) RETURNS text AS $$
+# container: plc_python_shared
+plan = plpy.prepare("SELECT ($1)", ["int4[]"])
+plpy.execute(plan, [x])
+return "should not reach here"
 $$ language plcontainer;

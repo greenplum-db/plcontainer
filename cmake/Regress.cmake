@@ -7,6 +7,7 @@
 #   RESULTS_DIR <results_dir>
 #   [INIT_FILE <init_file_1> <init_file_2> ...]
 #   [SCHEDULE_FILE <schedule_file_1> <schedule_file_2> ...]
+#   [REGRESS_ENV env1 env2] the env varibles pass pg regress test
 #   [REGRESS <test1> <test2> ...]
 #   [EXCLUDE <test1> <test2> ...]
 #   [REGRESS_OPTS <opt1> <opt2> ...]
@@ -56,7 +57,7 @@ function(RegressTarget_Add name)
         arg
         ""
         "SQL_DIR;EXPECTED_DIR;RESULTS_DIR;DATA_DIR;REGRESS_TYPE;RUN_TIMES"
-        "REGRESS;EXCLUDE;REGRESS_OPTS;INIT_FILE;SCHEDULE_FILE"
+        "REGRESS;EXCLUDE;REGRESS_OPTS;INIT_FILE;SCHEDULE_FILE;REGRESS_ENV"
         ${ARGN})
     if (NOT arg_EXPECTED_DIR)
         message(FATAL_ERROR
@@ -89,6 +90,10 @@ function(RegressTarget_Add name)
     foreach(r IN LISTS arg_REGRESS)
         set(regress_arg ${regress_arg} ${r})
     endforeach()
+    foreach(r IN LISTS arg_REGRESS_ENV)
+        set(env_arg ${r})
+    endforeach()
+
 
     # Set REGRESS options
     foreach(o IN LISTS arg_INIT_FILE)
@@ -130,7 +135,6 @@ function(RegressTarget_Add name)
     else()
         set(test_command ${regress_command})
     endif()
-
     # Create the target
     add_custom_target(
         ${name}
@@ -146,6 +150,7 @@ function(RegressTarget_Add name)
         COMMAND ${ln_data_dir_CMD}
         COMMAND ${mv_data_shells_CMD}
         COMMAND
+        ${env_arg}
         ${test_command}
         ||
         ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/regress_show_diff.sh ${working_DIR}

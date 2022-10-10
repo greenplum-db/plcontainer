@@ -5,12 +5,14 @@ set -exo pipefail
 function _main() {
     # Run testing
     pushd plcontainer_artifacts
-    # FIXME tricky to solve problem for now.
-    # \! psql -d ${PL_TESTDB} -c "select rlogging_fatal();"
-    export PL_TESTDB=contrib_regression
+    # Install gppkg
     gppkg -i plcontainer*.gppkg
-    # image add for both python and r
+    # Image add for both python and r
+    # Python3
     time plcontainer image-add -f plcontainer-python-image-*-gp6.tar.gz
+    # Python2
+    time plcontainer image-add -f plcontainer-python2-image-*-gp6.tar.gz
+    # R
     time plcontainer image-add -f plcontainer-r-image-*-gp6.tar.gz
 
     time cmake --build . --target prepare_runtime
@@ -20,9 +22,9 @@ function _main() {
     # Find the package name
     local pkg_name
     pkg_name=$(gppkg -q --all | awk -F"[-]+" '/plcontainer/{print $1}')
-    # Uninstall it
+    # Uninstall gppkg test if it can uninstall or not
     gppkg -r "${pkg_name}"
-    # Install again
+    # Install gppkg again
     gppkg -i plcontainer*.gppkg
     popd
 }

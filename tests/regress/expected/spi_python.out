@@ -76,103 +76,103 @@ $$ LANGUAGE plcontainer;
 select py_spi_pexecute1();
 NOTICE:  Test query execution
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test query targetlist containing NULL
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test text
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  True
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 9000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test bool
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 1001, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1001}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 9000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9001, 'sex': 'f', 'name': 'bob2', 'online': 1}
+NOTICE:  {'name': 'bob2', 'online': 1, 'sex': 'f', 'id': 9001}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
+NOTICE:  {'name': 'alice3', 'online': 1, 'sex': 'm', 'id': 9005}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test int4
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9002, 'sex': 'm', 'name': 'bob3', 'online': 0}
+NOTICE:  {'name': 'bob3', 'online': 0, 'sex': 'm', 'id': 9002}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9003, 'sex': 'm', 'name': 'alice1', 'online': 0}
+NOTICE:  {'name': 'alice1', 'online': 0, 'sex': 'm', 'id': 9003}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9004, 'sex': 'f', 'name': 'alice2', 'online': 0}
+NOTICE:  {'name': 'alice2', 'online': 0, 'sex': 'f', 'id': 9004}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
+NOTICE:  {'name': 'alice3', 'online': 1, 'sex': 'm', 'id': 9005}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test char
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 1001, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1001}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 9000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9002, 'sex': 'm', 'name': 'bob3', 'online': 0}
+NOTICE:  {'name': 'bob3', 'online': 0, 'sex': 'm', 'id': 9002}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9003, 'sex': 'm', 'name': 'alice1', 'online': 0}
+NOTICE:  {'name': 'alice1', 'online': 0, 'sex': 'm', 'id': 9003}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
+NOTICE:  {'name': 'alice3', 'online': 1, 'sex': 'm', 'id': 9005}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test text+bool+char+int4
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test results containing NULL
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 1001, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1001}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test insert NULL
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 1000, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 1001, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1001}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 1002, 'sex': 'm', 'name': None, 'online': 1}
+NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1002}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 7000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 8000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9000, 'sex': 'm', 'name': 'bob1', 'online': 1}
+NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 9000}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9001, 'sex': 'f', 'name': 'bob2', 'online': 1}
+NOTICE:  {'name': 'bob2', 'online': 1, 'sex': 'f', 'id': 9001}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9002, 'sex': 'm', 'name': 'bob3', 'online': 0}
+NOTICE:  {'name': 'bob3', 'online': 0, 'sex': 'm', 'id': 9002}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9003, 'sex': 'm', 'name': 'alice1', 'online': 0}
+NOTICE:  {'name': 'alice1', 'online': 0, 'sex': 'm', 'id': 9003}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9004, 'sex': 'f', 'name': 'alice2', 'online': 0}
+NOTICE:  {'name': 'alice2', 'online': 0, 'sex': 'f', 'id': 9004}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'id': 9005, 'sex': 'm', 'name': 'alice3', 'online': 1}
+NOTICE:  {'name': 'alice3', 'online': 1, 'sex': 'm', 'id': 9005}
 CONTEXT:  PLContainer function "py_spi_pexecute1"
  py_spi_pexecute1 
 ------------------
@@ -216,19 +216,19 @@ $$ LANGUAGE plcontainer;
 select py_spi_pexecute2();
 NOTICE:  Test int2
 CONTEXT:  PLContainer function "py_spi_pexecute2"
-NOTICE:  {'age': 20, 'name': 'bob1', 'id': 8000L}
+NOTICE:  {'name': 'bob1', 'age': 20, 'id': 8000}
 CONTEXT:  PLContainer function "py_spi_pexecute2"
-NOTICE:  {'age': 20, 'name': 'bob0', 'id': 9000L}
+NOTICE:  {'name': 'bob0', 'age': 20, 'id': 9000}
 CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  Test int8
 CONTEXT:  PLContainer function "py_spi_pexecute2"
-NOTICE:  {'age': 40, 'name': 'alice1', 'id': 6000L}
+NOTICE:  {'name': 'alice1', 'age': 40, 'id': 6000}
 CONTEXT:  PLContainer function "py_spi_pexecute2"
-NOTICE:  {'age': 50, 'name': 'alice2', 'id': 6000L}
+NOTICE:  {'name': 'alice2', 'age': 50, 'id': 6000}
 CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  Test text + int8
 CONTEXT:  PLContainer function "py_spi_pexecute2"
-NOTICE:  {'age': 20, 'name': 'bob0', 'id': 9000L}
+NOTICE:  {'name': 'bob0', 'age': 20, 'id': 9000}
 CONTEXT:  PLContainer function "py_spi_pexecute2"
  py_spi_pexecute2 
 ------------------
@@ -279,33 +279,33 @@ $$ LANGUAGE plcontainer;
 select py_spi_pexecute3();
 NOTICE:  Test bytea
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  Test float4
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob1', 'score2': 16.75, 'score1': 8.75}
+NOTICE:  {'name': b'bob1', 'score1': 8.75, 'score2': 16.75}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob2', 'score2': 16.875, 'score1': 8.875}
+NOTICE:  {'name': b'bob2', 'score1': 8.875, 'score2': 16.875}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  Test float8
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob1', 'score2': 16.75, 'score1': 8.75}
+NOTICE:  {'name': b'bob1', 'score1': 8.75, 'score2': 16.75}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob3', 'score2': 16.125, 'score1': 9.125}
+NOTICE:  {'name': b'bob3', 'score1': 9.125, 'score2': 16.125}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob4', 'score2': 16.25, 'score1': 9.25}
+NOTICE:  {'name': b'bob4', 'score1': 9.25, 'score2': 16.25}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  Test float4+float8
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob1', 'score2': 16.75, 'score1': 8.75}
+NOTICE:  {'name': b'bob1', 'score1': 8.75, 'score2': 16.75}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': 'bob3', 'score2': 16.125, 'score1': 9.125}
+NOTICE:  {'name': b'bob3', 'score1': 9.125, 'score2': 16.125}
 CONTEXT:  PLContainer function "py_spi_pexecute3"
  py_spi_pexecute3 
 ------------------
@@ -369,7 +369,7 @@ for r in rv:
 
 $$ LANGUAGE plcontainer;
 select py_spi_simple_t4();
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -391,7 +391,7 @@ HINT:  No operator matches the given name and argument type(s). You might need t
 QUERY:  select * from t4 where score1<$1 order by score1
 CONTEXT:  PLContainer function "py_spi_illegal_pexecute2"
 select py_spi_simple_t4();
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -407,7 +407,7 @@ ERROR:  PL/Container client exception occurred:
  Exception occurred transforming result object to float8
 CONTEXT:  PLContainer function "py_spi_illegal_pexecute4"
 select py_spi_simple_t4();
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -415,15 +415,15 @@ CONTEXT:  PLContainer function "py_spi_simple_t4"
 (1 row)
 
 SELECT py_spi_simple_num();
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_simple_num"
-NOTICE:  {'name': 'bob1', 'score2': 16.75, 'score1': 8.75}
+NOTICE:  {'name': b'bob1', 'score1': 8.75, 'score2': 16.75}
 CONTEXT:  PLContainer function "py_spi_simple_num"
-NOTICE:  {'name': 'bob2', 'score2': 16.875, 'score1': 8.875}
+NOTICE:  {'name': b'bob2', 'score1': 8.875, 'score2': 16.875}
 CONTEXT:  PLContainer function "py_spi_simple_num"
-NOTICE:  {'name': 'bob3', 'score2': 16.125, 'score1': 9.125}
+NOTICE:  {'name': b'bob3', 'score1': 9.125, 'score2': 16.125}
 CONTEXT:  PLContainer function "py_spi_simple_num"
-NOTICE:  {'name': 'bob4', 'score2': 16.25, 'score1': 9.25}
+NOTICE:  {'name': b'bob4', 'score1': 9.25, 'score2': 16.25}
 CONTEXT:  PLContainer function "py_spi_simple_num"
  py_spi_simple_num 
 -------------------
@@ -471,7 +471,7 @@ for r in rv:
 return 0
 $$ LANGUAGE plcontainer IMMUTABLE;
 select py_spi_simple_t4();
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -491,10 +491,10 @@ LINE 1: select datname from pg_database_invalid
 QUERY:  select datname from pg_database_invalid
 CONTEXT:  PLContainer function "pyspi_illegal_sql_pexecute"
 select pyspi_bad_limit();
-ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:330)
+ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:339)
 CONTEXT:  PLContainer function "pyspi_bad_limit"
 select py_spi_simple_t4();
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -509,13 +509,13 @@ ERROR:  PL/Container client exception occurred:
 TypeError: second argument of plpy.prepare must be a sequence
 CONTEXT:  PLContainer function "pyspi_bad_limit_pexecute"
 select pyspi_bad_limit_immutable();
-ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:330)
+ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:339)
 CONTEXT:  PLContainer function "pyspi_bad_limit_immutable"
 select pyspi_bad_limit_stable();
-ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:330)
+ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:339)
 CONTEXT:  PLContainer function "pyspi_bad_limit_stable"
 select py_spi_simple_t4();
-NOTICE:  {'name': 'bob0', 'score2': 16.5, 'score1': 8.5}
+NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -704,7 +704,7 @@ except Exception as e:
 return 0
 $$ LANGUAGE plcontainer;
 SELECT pyspi_exec_exception();
-NOTICE:  <type 'exceptions.SystemError'>
+NOTICE:  <class 'SystemError'>
 CONTEXT:  PLContainer function "pyspi_exec_exception"
  pyspi_exec_exception 
 ----------------------
@@ -717,7 +717,7 @@ CONTEXT:  PLContainer function "pyspi_exec_exception"
 -- which in turn means it can't be part of a primary key
 CREATE FUNCTION invalid_type_uncaught(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("plan"):
+if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	SD["plan"] = plpy.prepare(q, [ "test" ])
 rv = plpy.execute(SD["plan"], [ a ])
@@ -729,11 +729,11 @@ $$ LANGUAGE plcontainer;
 -- the typo, and return None
 CREATE FUNCTION invalid_type_caught(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("plan"):
+if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	try:
 		SD["plan"] = plpy.prepare(q, [ "test" ])
-	except plpy.SPIError, ex:
+	except plpy.SPIError as ex:
 		plpy.notice(str(ex))
 		return None
 rv = plpy.execute(SD["plan"], [ a ])
@@ -745,11 +745,11 @@ $$ LANGUAGE plcontainer;
 -- the typo, and reraise it as a plain error
 CREATE FUNCTION invalid_type_reraised(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("plan"):
+if "plan" not in SD:
 	q = "SELECT fname FROM users WHERE lname = $1"
 	try:
 		SD["plan"] = plpy.prepare(q, [ "test" ])
-	except plpy.SPIError, ex:
+	except plpy.SPIError as ex:
 		plpy.error(str(ex))
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
@@ -759,7 +759,7 @@ $$ LANGUAGE plcontainer;
 -- no typo no messing about
 CREATE FUNCTION valid_type(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("plan"):
+if "plan" not in SD:
 	SD["plan"] = plpy.prepare("SELECT fname FROM users WHERE lname = $1", [ "text" ])
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
@@ -785,26 +785,26 @@ $$ LANGUAGE plcontainer ;
 -- some spi stuff
 CREATE FUNCTION spi_prepared_plan_test_one(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("myplan"):
+if "myplan" not in SD:
 	q = "SELECT count(*) FROM users WHERE lname = $1"
 	SD["myplan"] = plpy.prepare(q, [ "text" ])
 try:
 	rv = plpy.execute(SD["myplan"], [a])
 	return "there are " + str(rv[0]["count"]) + " " + str(a) + "s"
-except Exception, ex:
+except Exception as ex:
 	plpy.error(str(ex))
 return None
 $$ LANGUAGE plcontainer;
 CREATE FUNCTION spi_prepared_plan_test_nested(a text) RETURNS text AS $$
 # container: plc_python_shared
-if not SD.has_key("myplan"):
+if "myplan" not in SD:
 	q = "SELECT spi_prepared_plan_test_one('%s') as count" % a
 	SD["myplan"] = plpy.prepare(q)
 try:
 	rv = plpy.execute(SD["myplan"])
 	if len(rv):
 		return rv[0]["count"]
-except Exception, ex:
+except Exception as ex:
 	plpy.error(str(ex))
 return None
 $$ LANGUAGE plcontainer;
