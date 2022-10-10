@@ -72,7 +72,10 @@ netCDF4==1.5.8
 nltk==3.7
 numba==0.55.2
 numexpr==2.8.1
-numpy==1.22
+# for the  Dependabot alerts because numpy==1.23
+# do not suport python3.7 we keep that 1.21.6 and ignre the alert which is fine.
+# see https://github.com/zauberzeug/nicegui/issues/67
+numpy==1.21.6
 oauthlib==3.2.1
 opt-einsum==3.3.0
 packaging==21.3
@@ -84,7 +87,7 @@ pdfminer.six==20220524
 Pillow==9.1.1
 portend==3.1.0
 preshed==3.0.6
-protobuf==3.19.5
+protobuf==3.19.6
 psycopg2==2.9.3
 psycopg2-binary==2.9.3
 pyasn1==0.4.8
