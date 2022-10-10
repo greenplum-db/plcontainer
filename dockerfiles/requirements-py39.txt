@@ -52,7 +52,7 @@ jaraco.context==4.1.1
 jaraco.functools==3.5.0
 jaraco.text==3.8.0
 Jinja2==3.1.2
-joblib==1.1.0
+joblib==1.2.0
 keras==2.9.0
 Keras-Preprocessing==1.1.2
 kiwisolver==1.4.2
@@ -73,8 +73,8 @@ netCDF4==1.5.8
 nltk==3.7
 numba==0.55.2
 numexpr==2.8.1
-numpy==1.22.1
-oauthlib==3.2.0
+numpy==1.22
+oauthlib==3.2.1
 opt-einsum==3.3.0
 packaging==21.3
 pandas==1.4.2
@@ -85,7 +85,7 @@ pdfminer.six==20220524
 Pillow==9.1.1
 portend==3.1.0
 preshed==3.0.6
-protobuf==3.19.4
+protobuf==3.19.5
 psycopg2==2.9.3
 psycopg2-binary==2.9.3
 pyasn1==0.4.8
