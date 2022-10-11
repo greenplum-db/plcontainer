@@ -1,0 +1,40 @@
+-- This file contains global patterns of messages that should be ignored or
+-- masked out, when comparing test results with the expected output.
+-- Individual tests can contain additional patterns specific to the test.
+
+-- start_matchignore
+# match ignore docker api WARNING message
+m/^WARNING:  Docker API.*/
+# ignore due to docker in centos 6 could not detect OOM accurately 
+m/^WARNING:  plcontainer: docker reports container*/
+# ingnore due to master new notice msg
+m/^NOTICE:  CREATE TABLE will*/
+
+# for drop extension
+m/^NOTICE:  drop cascades to \d+ other objects*/
+m/^NOTICE:  drop cascades to function*/
+m/^DETAIL:  drop cascades to function*/
+m/^drop cascades to function*/
+m/^and \d+ other objects (see server log for list)*/
+
+# match plcontainer command outputs: startswith timestamp: 20170906:14:06:03
+m/^[0-9]{8}:[0-9]{2}:[0-9]{2}:[0-9]{2}.*/
+# match different python version error with an 19-22 spaces for different python versions
+m/^\s+this is invalid python program/
+m/^\s+return \(float\)3.4/
+m/^\s{19,22}/
+-- end_matchignore
+-- start_matchsubs
+m/ls: cannot access '.*'.*/
+s/ls: cannot access '(.*)'(.*)/ls: cannot access $1$2/
+m/plcontainer.c:\d+\)/
+s/plcontainer.c:\d+\)/plcontainer.c:xxx/
+m/containers.c:\d+\)/
+s/containers.c:\d+\)/containers.c:xxx/
+m/plc_configuration.c:\d+\)/
+s/plc_configuration.c:\d+\)/plc_configuration.c:xxx/
+m/sqlhandler.c:\d+\)/
+s/sqlhandler.c:\d+\)/sqlhandler.c:xxx/
+m/plc_typeio.c:\d+\)/
+s/plc_typeio.c:\d+\)/plc_typeio.c:xxx/
+-- end_matchsubs
