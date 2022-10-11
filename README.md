@@ -22,9 +22,12 @@ git clone https://github.com/greenplum-db/plcontainer.git
 You can build PL/Container in the following way:
 
 1. Go to the PL/Container directory: `cd plcontainer`
-1. PL/Container needs libcurl >=7.40. If the libcurl version on your system is low, you need to upgrade at first. For example, you could download source code and then compile and install, following this page: [Install libcurl from source](https://curl.haxx.se/docs/install.html). Note you should make sure the libcurl library path is in the list for library lookup. Typically you might want to add the path into LD_LIBRARY_PATH and export them in shell configuration or greenplum_path.sh on all nodes (Note you need to restart the Greenplum cluster).
-1. Make and install it: `make clean && make && make install`
-1. Make with code coverage enabled (For dev and test only): `make clean && make ENABLE_COVERAGE=yes && make install`. After running test, generate code coverage report: `make coverage-report`
+2. mkdir build && cd build
+3. make
+4. if you want make python3 client, `make pyclient`
+5. install `plcontainer cli command` use `make install`
+
+PL/Container needs libcurl >=7.40. If the libcurl version on your system is low, you need to upgrade at first. For example, you could download source code and then compile and install, following this page: [Install libcurl from source](https://curl.haxx.se/docs/install.html). Note you should make sure the libcurl library path is in the list for library lookup. Typically you might want to add the path into LD_LIBRARY_PATH and export them in shell configuration or greenplum_path.sh on all nodes (Note you need to restart the Greenplum cluster).
 
 
 ### Configuring PL/Container
@@ -38,7 +41,7 @@ To configure PL/Container environment, you need to enable PL/Container for speci
 
 1. Prepare docker images for R & Python environment.
    Refer [How to build docker image](https://github.com/greenplum-db/plcontainer/wiki/How-to-build-docker-image) for docker file examples.
- You can also download PLContainer images from [pivotal networks](https://network.pivotal.io) 
+ You can also download PLContainer images from [pivotal networks](https://network.pivotal.io)
 
 1. Tests require some images and runtime configurations are installed.
 
@@ -54,13 +57,13 @@ To configure PL/Container environment, you need to enable PL/Container for speci
    plcontainer runtime-add -r plc_python_shared -i pivotaldata/plcontainer_python_shared:devel -l python
    ```
 
-1. Go to the PL/Container test directory: `cd plcontainer/tests`
-1. Make it: `make tests`
+1. Go to the PL/Container build directory: `cd plcontainer/build`
+1. Make it: for python3: `make testpy` for python2: `make testpy2` for r: `make testr`
 
 Note that if you just want to test or run your own R or Python code, you do just need to install the image and runtime for that language.
 
 ### Unsupported feature
-There some features PLContainer doesn't support. For unsupported feature list and their corresponding issue, 
+There some features PLContainer doesn't support. For unsupported feature list and their corresponding issue,
 please refer to [Unsupported Feature](https://github.com/greenplum-db/plcontainer/wiki/PLContainer-Unsupported-Features)
 
 ### Design
@@ -80,7 +83,7 @@ There are a couple of things you need to pay attention to:
 
 1. The function definition starts with the line `# container: plc_python_shared` which defines the name of runtime that will be used for running this function. To check the list of runtimes defined in the system you can run the command `plcontainer runtime-show`. Each runtime is mapped to a single docker image, you can list the ones available in your system with command `docker images`
 
-PL/Container supports various parameters for docker run, and also it supports some useful UDFs for monitoring or debugging. Please read the official document for details. 
+PL/Container supports various parameters for docker run, and also it supports some useful UDFs for monitoring or debugging. Please read the official document for details.
 
 ### Contributing
 PL/Container is maintained by a core team of developers with commit rights to the [plcontainer repository](https://github.com/greenplum-db/plcontainer) on GitHub. At the same time, we are very eager to receive contributions and any discussions about it from anybody in the wider community.

@@ -57,7 +57,7 @@ SELECT gp_inject_fault('plcontainer_before_container_started', 'fatal', 2);
 
 SELECT pyint(i) from tbl;
 ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3066)
-SELECT pg_sleep(10);
+SELECT pg_sleep(30);
  pg_sleep 
 ----------
  
@@ -85,7 +85,7 @@ SELECT gp_inject_fault('plcontainer_before_container_connected', 'fatal', 2);
 
 SELECT pyint(i) from tbl;
 ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3254)
-SELECT pg_sleep(10);
+SELECT pg_sleep(30);
  pg_sleep 
 ----------
  
@@ -111,7 +111,7 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'fatal', 2);
 
 SELECT pyint(i) from tbl;
 ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3434)
-SELECT pg_sleep(10);
+SELECT pg_sleep(30);
  pg_sleep 
 ----------
  
@@ -137,7 +137,7 @@ SELECT gp_inject_fault('plcontainer_after_recv_request', 'fatal', 2);
 
 SELECT pyint(i) from tbl;
 ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3612)
-SELECT pg_sleep(10);
+SELECT pg_sleep(30);
  pg_sleep 
 ----------
  
@@ -163,7 +163,7 @@ SELECT gp_inject_fault('plcontainer_before_udf_finish', 'fatal', 2);
 
 SELECT pyint(i) from tbl;
 ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3797)
-SELECT pg_sleep(10);
+SELECT pg_sleep(30);
  pg_sleep 
 ----------
  
@@ -236,7 +236,7 @@ SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
 
 SELECT pyint(0);
 ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'error'
-SELECT pg_sleep(10);
+SELECT pg_sleep(30);
  pg_sleep 
 ----------
  
@@ -262,7 +262,7 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'error', 1);
 
 SELECT pyint(2);
 ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'error'
-SELECT pg_sleep(10);
+SELECT pg_sleep(30);
  pg_sleep 
 ----------
  

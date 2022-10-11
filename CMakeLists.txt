@@ -316,13 +316,6 @@ install(
     PROGRAMS src/rclient/bin/rclient.sh
     DESTINATION bin/plcontainer_clients/ OPTIONAL)
 
-add_custom_target(prepare_runtime
-    COMMAND
-    CONTAINER_NAME_SUFFIX_PYTHON=${CONTAINER_NAME_SUFFIX_PYTHON}
-    CONTAINER_NAME_SUFFIX_PYTHON2=${CONTAINER_NAME_SUFFIX_PYTHON2}
-    CONTAINER_NAME_SUFFIX_R=${CONTAINER_NAME_SUFFIX_R}
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/prepare_runtime.sh)
-
 # Add tests targets
 add_subdirectory(tests)
 
