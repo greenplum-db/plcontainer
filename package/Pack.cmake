@@ -15,10 +15,13 @@ set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
 # %global __python %{_bindir}/python${PYTHON3_VERSION_SHORT}
 # Solve rpm's quirk -- always want to build pyc when it see a python file.
 # See https://git.centos.org/rpms/python3/blob/c7/f/SPECS/python3.spec#_155
+# add undefine __brp_mangle_shebangs because
+# rpm changes #!/usr/bin/env python2 to #!/usr/bin/python2 automatically in rhel8
 set(CPACK_RPM_SPEC_MORE_DEFINE
 "%define _build_id_links none
 %global _python_bytecompile_errors_terminate_build 0
-%global __python %{_bindir}/python${PYTHON3_VERSION_SHORT}"
+%global __python %{_bindir}/python${PYTHON3_VERSION_SHORT}
+%undefine __brp_mangle_shebangs"
 )
 
 include(CPack)
