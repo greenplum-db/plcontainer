@@ -242,9 +242,11 @@ plan:
 - in_parallel:
     steps:
 
-#@ for conf in confs:
+#@ for i, conf in enumerate(confs):
     - do:
       - get: #@ conf["res_intermediates_bin"]
+        passed:
+          - #@ passed_jobs[i]
         params:
           unpack: true
       - put: #@ conf["release_bin"]
