@@ -50,7 +50,7 @@ res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb6_ubuntu18_interm
 os: ubuntu18.04
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
-release_bin: bin_plcontainer_gpdb6_ubuntu18_intermediates
+release_bin: bin_plcontainer_gpdb6_ubuntu18_release
 #@ end
 
 #! Job config for bundle release

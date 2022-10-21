@@ -26,7 +26,7 @@ set(CPACK_RPM_SPEC_MORE_DEFINE
 
 include(CPack)
 
-set(PACK_NAME ${CMAKE_PROJECT_NAME}-${VERSION}-${DISTRO_NAME}_${CMAKE_SYSTEM_PROCESSOR})
+set(PACK_NAME ${CMAKE_PROJECT_NAME}-${VERSION}-gp${GP_MAJOR_VERSION}-${DISTRO_NAME}_${CMAKE_SYSTEM_PROCESSOR})
 # expecting filename of form %{name}-%{version}-%{release}.%{arch}.rpm
 # See gppkg's package.py
 set(RPM_NAME ${CMAKE_PROJECT_NAME}-${VERSION}.${CMAKE_SYSTEM_PROCESSOR})
