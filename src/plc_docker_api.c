@@ -23,11 +23,9 @@
 #include <string.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
-
-// Default location of the Docker API unix socket
-static char *plc_docker_socket = "/var/run/docker.sock";
 
 // URL prefix specifies Docker API version
 static char *plc_docker_version_127 = "http:/v1.27";
@@ -49,6 +47,23 @@ static size_t plcCurlCallback(void *contents, size_t size, size_t nmemb, void *u
 static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType, const char *version, char *url, char *body);
 
 static int docker_inspect_string(char *buf, char **element, plcInspectionMode type);
+
+static const inline char* _get_docker_socket_path() {
+	// Default location of the Docker API unix socket
+	static char *plc_docker_socket = "/var/run/docker.sock";
+
+	static char *path = NULL;
+
+	if (path == NULL) {
+		path = getenv("PLC_DOCKER_SOCKET_PATH");
+	}
+
+	if (path == NULL) {
+		path = plc_docker_socket;
+	}
+
+	return path;
+}
 
 /* Initialize Curl response receiving buffer */
 static plcCurlBuffer *plcCurlBufferInit() {
@@ -116,7 +131,7 @@ static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
 			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
 		/* Setting Docker API endpoint */
-		curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, plc_docker_socket);
+		curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, _get_docker_socket_path());
 
 		/* Setting up request URL */
 		if (cType == PLC_HTTP_GET && body != NULL)
