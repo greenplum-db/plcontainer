@@ -72,7 +72,11 @@ static plcMsgResult *create_sql_result(bool isSelect) {
 	resTypes = palloc(result->cols * sizeof(plcTypeInfo));
 
 	for (j = 0; j < result->cols; j++) {
+#if PG_VERSION_NUM >= 120000
+		fill_type_info(NULL, SPI_tuptable->tupdesc->attrs[j].atttypid, &resTypes[j]);
+#else
 		fill_type_info(NULL, SPI_tuptable->tupdesc->attrs[j]->atttypid, &resTypes[j]);
+#endif
 		copy_type_info(&result->types[j], &resTypes[j]);
 		result->names[j] = SPI_fname(SPI_tuptable->tupdesc, j + 1);
 	}

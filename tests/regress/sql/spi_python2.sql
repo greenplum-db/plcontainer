@@ -19,57 +19,57 @@ CREATE OR REPLACE FUNCTION py_spi_pexecute1() RETURNS void AS $$
 plpy.notice("Test query execution")
 rv = plpy.execute("select * from t2 where name='bob1' and online=True and sex='m' order by id limit 2")
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test query targetlist containing NULL")
 rv = plpy.execute("select * from t2 where id = 1000")
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test text")
 plan = plpy.prepare("select * from t2 where name=$1 order by id", ["text"])
 plpy.notice(plan.status())
 rv = plpy.execute(plan, ["bob1"])
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test bool")
 plan = plpy.prepare("select * from t2 where online=$1 order by id", ["boolean"])
 rv = plpy.execute(plan, [True])
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plan1 = plpy.prepare("select * from t2 where sex=$1 order by id", ["char"])
 plan2 = plpy.prepare("select * from t2 where id>$1 order by id", ["int4"])
 plpy.notice("Test int4")
 rv = plpy.execute(plan2, [9001])
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 plpy.notice("Test char")
 rv = plpy.execute(plan1, ['m'])
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test text+bool+char+int4")
 plan = plpy.prepare("select * from t2 where name=$1 and online=$2 and sex=$3 order by id limit $4", ["text", "bool", "char", "int4"])
 rv = plpy.execute(plan, ["bob1", True, 'm', 2]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test results containing NULL")
 plan = plpy.prepare("select * from t2 where name is null limit $1", ["int4"])
 rv = plpy.execute(plan, [2]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test insert NULL")
 plan = plpy.prepare("insert into t2 values($1, true, 'm', 1002)", ["text"])
 rv = plpy.execute(plan, [None]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 rv = plpy.execute("select * from t2 order by id");
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 $$ LANGUAGE plcontainer;
 
 select py_spi_pexecute1();
@@ -91,19 +91,19 @@ plpy.notice("Test int2")
 plan = plpy.prepare("select * from t3 where age=$1 order by id", ["int2"])
 rv = plpy.execute(plan, [20]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test int8")
 plan = plpy.prepare("select * from t3 where id=$1 order by age", ["int8"])
 rv = plpy.execute(plan, [6000]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test text + int8")
 plan = plpy.prepare("select * from t3 where name=$1 and age=$2 order by id", ["text", "int8"])
 rv = plpy.execute(plan, ["bob0", 20]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 
@@ -131,22 +131,22 @@ plan4 = plpy.prepare("select * from t4 where score1<$1 and score2<$2 order by na
 plpy.notice("Test bytea");
 rv = plpy.execute(plan1, ["bob0"]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test float4");
 rv = plpy.execute(plan2, [8.9]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test float8");
 rv = plpy.execute(plan3, [16.8]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test float4+float8");
 rv = plpy.execute(plan4, [9.18, 16.80]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 
@@ -160,7 +160,7 @@ CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute1() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where name=$1 order by score1", ["integer"])
 rv = plpy.execute(plan1, ["bob0"]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 
@@ -170,7 +170,7 @@ CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute2() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["bytea"])
 rv = plpy.execute(plan1, ["bob0"]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 
@@ -180,7 +180,7 @@ CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute3() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["float4"])
 rv = plpy.execute(plan1, ["bob0"]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 
@@ -190,7 +190,7 @@ CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute4() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where score1<$1 and score2<$2 order by score1", ["float4", "float8"])
 rv = plpy.execute(plan1, [9.5, "bob0"]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 
@@ -201,7 +201,7 @@ CREATE OR REPLACE FUNCTION py_spi_simple_t4() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where name='bob0' order by score1")
 rv = plpy.execute(plan1);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 
@@ -211,7 +211,7 @@ CREATE OR REPLACE FUNCTION py_spi_simple_num() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["numeric"])
 rv = plpy.execute(plan1, [10.5]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 
@@ -241,7 +241,7 @@ CREATE OR REPLACE FUNCTION pyspi_bad_limit() RETURNS integer AS $$
 # container: plc_python2_shared
 rv = plpy.execute("select datname from pg_database order by datname", -2);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -250,7 +250,7 @@ CREATE OR REPLACE FUNCTION pyspi_bad_limit_pexecute() RETURNS integer AS $$
 plan = plpy.prepare("select datname from pg_database order by datname", -2);
 rv = plpy.execute(plan);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -258,7 +258,7 @@ CREATE OR REPLACE FUNCTION pyspi_bad_limit_stable() RETURNS integer AS $$
 # container: plc_python2_shared
 rv = plpy.execute("select datname from pg_database order by datname", -2);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer STABLE;
 
@@ -266,7 +266,7 @@ CREATE OR REPLACE FUNCTION pyspi_bad_limit_immutable() RETURNS integer AS $$
 # container: plc_python2_shared
 rv = plpy.execute("select datname from pg_database order by datname", -2);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer IMMUTABLE;
 
@@ -295,7 +295,7 @@ CREATE OR REPLACE FUNCTION pyspi_insert_exec() RETURNS integer AS $$
 # container: plc_python2_shared
 rv = plpy.execute("insert into t5 values('bob2', 8.5, 16.5)");
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -303,7 +303,7 @@ CREATE OR REPLACE FUNCTION pyspi_update_exec() RETURNS integer AS $$
 # container: plc_python2_shared
 rv = plpy.execute("update t5 set score1=11 where name='bob2'");
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -311,7 +311,7 @@ CREATE OR REPLACE FUNCTION pyspi_delete_exec() RETURNS integer AS $$
 # container: plc_python2_shared
 rv = plpy.execute("delete from t5 where name='bob2'");
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -328,7 +328,7 @@ CREATE OR REPLACE FUNCTION pyspi_insert_execp() RETURNS integer AS $$
 plan = plpy.prepare("insert into t5 values('bob3', 8.5, 16.5)");
 rv = plpy.execute(plan);
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -337,7 +337,7 @@ CREATE OR REPLACE FUNCTION pyspi_update_execp() RETURNS integer AS $$
 plan = plpy.prepare("update t5 set score1=12 where name='bob3'");
 rv = plpy.execute(plan);
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -346,7 +346,7 @@ CREATE OR REPLACE FUNCTION pyspi_delete_execp() RETURNS integer AS $$
 plan = plpy.prepare("delete from t5 where name='bob3'");
 rv = plpy.execute(plan);
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -355,7 +355,7 @@ CREATE OR REPLACE FUNCTION pyspi_select_notexist_execp() RETURNS integer AS $$
 plan = plpy.prepare("select * from t5 where name='bob_notexist'");
 rv = plpy.execute(plan);
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -364,7 +364,7 @@ CREATE OR REPLACE FUNCTION pyspi_delete_notexist_execp() RETURNS integer AS $$
 plan = plpy.prepare("delete from t5 where name='bob3_notexist'");
 rv = plpy.execute(plan);
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -389,9 +389,9 @@ CREATE OR REPLACE FUNCTION pyspi_exec_exception() RETURNS integer AS $$
 # container: plc_python2_shared
 plan = list();
 try:
-	rv = plpy.execute(plan);
+    rv = plpy.execute(plan);
 except Exception as e:
-	plpy.notice(type(e))
+    plpy.notice(type(e))
 return 0
 $$ LANGUAGE plcontainer;
 
@@ -406,11 +406,11 @@ SELECT pyspi_exec_exception();
 CREATE FUNCTION invalid_type_uncaught(a text) RETURNS text AS $$
 # container: plc_python2_shared
 if not SD.has_key("plan"):
-	q = "SELECT fname FROM users WHERE lname = $1"
-	SD["plan"] = plpy.prepare(q, [ "test" ])
+    q = "SELECT fname FROM users WHERE lname = $1"
+    SD["plan"] = plpy.prepare(q, [ "test" ])
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
-	return rv[0]["fname"]
+    return rv[0]["fname"]
 return None
 $$ LANGUAGE plcontainer;
 
@@ -419,15 +419,15 @@ $$ LANGUAGE plcontainer;
 CREATE FUNCTION invalid_type_caught(a text) RETURNS text AS $$
 # container: plc_python2_shared
 if not SD.has_key("plan"):
-	q = "SELECT fname FROM users WHERE lname = $1"
-	try:
-		SD["plan"] = plpy.prepare(q, [ "test" ])
-	except plpy.SPIError, ex:
-		plpy.notice(str(ex))
-		return None
+    q = "SELECT fname FROM users WHERE lname = $1"
+    try:
+        SD["plan"] = plpy.prepare(q, [ "test" ])
+    except plpy.SPIError, ex:
+        plpy.notice(str(ex))
+        return None
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
-	return rv[0]["fname"]
+    return rv[0]["fname"]
 return None
 $$ LANGUAGE plcontainer;
 
@@ -437,14 +437,14 @@ $$ LANGUAGE plcontainer;
 CREATE FUNCTION invalid_type_reraised(a text) RETURNS text AS $$
 # container: plc_python2_shared
 if not SD.has_key("plan"):
-	q = "SELECT fname FROM users WHERE lname = $1"
-	try:
-		SD["plan"] = plpy.prepare(q, [ "test" ])
-	except plpy.SPIError, ex:
-		plpy.error(str(ex))
+    q = "SELECT fname FROM users WHERE lname = $1"
+    try:
+        SD["plan"] = plpy.prepare(q, [ "test" ])
+    except plpy.SPIError, ex:
+        plpy.error(str(ex))
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
-	return rv[0]["fname"]
+    return rv[0]["fname"]
 return None
 $$ LANGUAGE plcontainer;
 
@@ -454,10 +454,10 @@ $$ LANGUAGE plcontainer;
 CREATE FUNCTION valid_type(a text) RETURNS text AS $$
 # container: plc_python2_shared
 if not SD.has_key("plan"):
-	SD["plan"] = plpy.prepare("SELECT fname FROM users WHERE lname = $1", [ "text" ])
+    SD["plan"] = plpy.prepare("SELECT fname FROM users WHERE lname = $1", [ "text" ])
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
-	return rv[0]["fname"]
+    return rv[0]["fname"]
 return None
 $$ LANGUAGE plcontainer;
 
@@ -485,27 +485,27 @@ $$ LANGUAGE plcontainer ;
 CREATE FUNCTION spi_prepared_plan_test_one(a text) RETURNS text AS $$
 # container: plc_python2_shared
 if not SD.has_key("myplan"):
-	q = "SELECT count(*) FROM users WHERE lname = $1"
-	SD["myplan"] = plpy.prepare(q, [ "text" ])
+    q = "SELECT count(*) FROM users WHERE lname = $1"
+    SD["myplan"] = plpy.prepare(q, [ "text" ])
 try:
-	rv = plpy.execute(SD["myplan"], [a])
-	return "there are " + str(rv[0]["count"]) + " " + str(a) + "s"
+    rv = plpy.execute(SD["myplan"], [a])
+    return "there are " + str(rv[0]["count"]) + " " + str(a) + "s"
 except Exception, ex:
-	plpy.error(str(ex))
+    plpy.error(str(ex))
 return None
 $$ LANGUAGE plcontainer;
 
 CREATE FUNCTION spi_prepared_plan_test_nested(a text) RETURNS text AS $$
 # container: plc_python2_shared
 if not SD.has_key("myplan"):
-	q = "SELECT spi_prepared_plan_test_one('%s') as count" % a
-	SD["myplan"] = plpy.prepare(q)
+    q = "SELECT spi_prepared_plan_test_one('%s') as count" % a
+    SD["myplan"] = plpy.prepare(q)
 try:
-	rv = plpy.execute(SD["myplan"])
-	if len(rv):
-		return rv[0]["count"]
+    rv = plpy.execute(SD["myplan"])
+    if len(rv):
+        return rv[0]["count"]
 except Exception, ex:
-	plpy.error(str(ex))
+    plpy.error(str(ex))
 return None
 $$ LANGUAGE plcontainer;
 

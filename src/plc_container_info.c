@@ -1,5 +1,3 @@
-
-
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <unistd.h>
@@ -7,7 +5,6 @@
 
 #include "postgres.h"
 #include "commands/resgroupcmds.h"
-#include "catalog/gp_segment_config.h"
 
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
@@ -31,6 +28,13 @@
 #include "plc_docker_api.h"
 #include "plc_container_info.h"
 
+#if PG_VERSION_NUM >= 120000
+#include "common/hashfn.h"
+#else
+#include "catalog/gp_segment_config.h"
+#endif
+
+
 PG_FUNCTION_INFO_V1(list_running_containers);
 
 static HTAB *udf_container_id_map = NULL;
@@ -50,7 +54,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	int res;
 	TupleDesc tupdesc;
 	AttInMetadata *attinmeta;
-	struct json_object *container_list = NULL;
+	struct jsonc_json_object *container_list = NULL;
 	char *json_result;
 	bool isFirstCall = true;
 
@@ -93,8 +97,11 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		/*
 		 * prepare attribute metadata for next calls that generate the tuple
 		 */
-
+#if PG_VERSION_NUM >= 120000
+		tupdesc = CreateTemplateTupleDesc(7);
+#else
 		tupdesc = CreateTemplateTupleDesc(7, false);
+#endif
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "SEGMENT_ID",
 		                   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "CONTAINER_ID",
@@ -127,7 +134,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	if (isFirstCall) {
 		funcctx->user_fctx = (void *) container_list;
 	} else {
-		container_list = (json_object *) funcctx->user_fctx;
+		container_list = (struct jsonc_json_object *) funcctx->user_fctx;
 	}
 	/*if a record is not suitable, skip it and scan next record*/
 	while (1) {
@@ -138,44 +145,44 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			Datum result;
 			int res;
 			char *containerState = NULL;
-			struct json_object *containerObj = NULL;
-			struct json_object *containerStateObj = NULL;
+			struct jsonc_json_object *containerObj = NULL;
+			struct jsonc_json_object *containerStateObj = NULL;
 
-            /* Memory Usage */
-            struct json_object *memoryObj = NULL;
-			struct json_object *memoryUsageObj = NULL;
-            struct json_object *memoryStateObj = NULL;
-            struct json_object *memoryStateCacheObj = NULL;
-            int64_t containerMemoryTotal = 0;
-            int64_t containerMemoryCache = 0;
-            int64_t containerMemoryUsage = 0;
+			/* Memory Usage */
+			struct jsonc_json_object *memoryObj = NULL;
+			struct jsonc_json_object *memoryUsageObj = NULL;
+			struct jsonc_json_object *memoryStateObj = NULL;
+			struct jsonc_json_object *memoryStateCacheObj = NULL;
+			int64_t containerMemoryTotal = 0;
+			int64_t containerMemoryCache = 0;
+			int64_t containerMemoryUsage = 0;
 
-            /* CPU Usage */
-            struct json_object *cpuObj = NULL;
-            struct json_object *preCpuObj = NULL;
-            struct json_object *cpuStatusObj = NULL;
-            struct json_object *preCpuStatusObj = NULL;
-		struct json_object *cpuStatusUsageObj = NULL;
-            struct json_object *preCpuStatusUsageObj = NULL;
-            struct json_object *cpuSystemUsageObj = NULL;
-            struct json_object *preCpuSystemUsageObj = NULL;
-            struct json_object *numberCpusObj = NULL;
-            int64_t containerCPUDelta = 0;
-            int64_t containerpreCPUDelta = 0;
-            int64_t containerCPUSystemDelta = 0;
-            int64_t containerpreCPUSystemDelta = 0;
-            int containerNumberCPU = 0;
-            double containerCPUUsage = 0;
+			/* CPU Usage */
+			struct jsonc_json_object *cpuObj = NULL;
+			struct jsonc_json_object *preCpuObj = NULL;
+			struct jsonc_json_object *cpuStatusObj = NULL;
+			struct jsonc_json_object *preCpuStatusObj = NULL;
+			struct jsonc_json_object *cpuStatusUsageObj = NULL;
+			struct jsonc_json_object *preCpuStatusUsageObj = NULL;
+			struct jsonc_json_object *cpuSystemUsageObj = NULL;
+			struct jsonc_json_object *preCpuSystemUsageObj = NULL;
+			struct jsonc_json_object *numberCpusObj = NULL;
+			int64_t containerCPUDelta = 0;
+			int64_t containerpreCPUDelta = 0;
+			int64_t containerCPUSystemDelta = 0;
+			int64_t containerpreCPUSystemDelta = 0;
+			int containerNumberCPU = 0;
+			double containerCPUUsage = 0;
 
-			struct json_object *statusObj = NULL;
+			struct jsonc_json_object *statusObj = NULL;
 			const char *statusStr;
-            struct json_object *labelObj = NULL;
-			struct json_object *ownerObj = NULL;
+			struct jsonc_json_object *labelObj = NULL;
+			struct jsonc_json_object *ownerObj = NULL;
 			const char *ownerStr;
 			const char *username;
-			struct json_object *dbidObj = NULL;
+			struct jsonc_json_object *dbidObj = NULL;
 			const char *dbidStr;
-			struct json_object *idObj = NULL;
+			struct jsonc_json_object *idObj = NULL;
 			const char *idStr;
 
             UdfContainerIdMap *cid = NULL;
@@ -202,7 +209,11 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				continue;
 			}
 			ownerStr = json_object_get_string(ownerObj);
+#if PG_VERSION_NUM >= 120000
+			username = GetUserNameFromId(GetUserId(), /*noerr*/ false);
+#else
 			username = GetUserNameFromId(GetUserId());
+#endif
 			if (strcmp(ownerStr, username) != 0 && superuser() == false) {
 				funcctx->call_cntr++;
 				call_cntr++;
@@ -357,7 +368,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	int res;
 	TupleDesc tupdesc;
 	AttInMetadata *attinmeta;
-	struct json_object *container_list = NULL;
+	struct jsonc_json_object *container_list = NULL;
 	char *json_result;
 	bool isFirstCall = true;
 
@@ -397,8 +408,11 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		/*
 		 * prepare attribute metadata for next calls that generate the tuple
 		 */
-
+#if PG_VERSION_NUM >= 120000
+		tupdesc = CreateTemplateTupleDesc(5);
+#else
 		tupdesc = CreateTemplateTupleDesc(5, false);
+#endif
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "SEGMENT_ID",
 		                   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "CONTAINER_ID",
@@ -438,22 +452,22 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			Datum result;
 			int res;
 			char *containerState = NULL;
-			struct json_object *containerObj = NULL;
-			struct json_object *containerStateObj = NULL;
+			struct jsonc_json_object *containerObj = NULL;
+			struct jsonc_json_object *containerStateObj = NULL;
 			int64 containerMemoryUsage = 0;
 
-			struct json_object *statusObj = NULL;
+			struct jsonc_json_object *statusObj = NULL;
 			const char *statusStr;
-            struct json_object *labelObj = NULL;
-			struct json_object *ownerObj = NULL;
+			struct jsonc_json_object *labelObj = NULL;
+			struct jsonc_json_object *ownerObj = NULL;
 			const char *ownerStr;
 			const char *username;
-			struct json_object *dbidObj = NULL;
+			struct jsonc_json_object *dbidObj = NULL;
 			const char *dbidStr;
-			struct json_object *idObj = NULL;
+			struct jsonc_json_object *idObj = NULL;
 			const char *idStr;
-			struct json_object *memoryObj = NULL;
-			struct json_object *memoryUsageObj = NULL;
+			struct jsonc_json_object *memoryObj = NULL;
+			struct jsonc_json_object *memoryUsageObj = NULL;
 
 
 			/*
@@ -479,7 +493,11 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				continue;
 			}
 			ownerStr = json_object_get_string(ownerObj);
+#if PG_VERSION_NUM >= 120000
+			username = GetUserNameFromId(GetUserId(), /*noerr*/ false);
+#else
 			username = GetUserNameFromId(GetUserId());
+#endif
 			if (strcmp(ownerStr, username) != 0 && superuser() == false) {
 				funcctx->call_cntr++;
 				call_cntr++;
@@ -570,8 +588,11 @@ plcontainer_shmem_startup(void)
 	udf_container_id_map = NULL;
 
 	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
-
+#if PG_VERSION_NUM >= 120000
+	LWLockInitialize(plc_lw_lock, LWLockNewTrancheId());
+#else
 	plc_lw_lock = LWLockAssign();
+#endif
 
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = PREFIX_CONTAINER_ID_LENGTH;
@@ -596,7 +617,9 @@ init_plcontainer_shmem(void)
 	 * resources in pgss_shmem_startup().
 	 */
 	RequestAddinShmemSpace(PLContainerShmemSize());
+#if PG_VERSION_NUM < 90600
 	RequestAddinLWLocks(1);
+#endif
 
 	/*
 	 * Install startup hook to initialize our shared memory.
@@ -706,7 +729,7 @@ collect_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS)
     char **values;
 	TupleDesc tupdesc;
 	AttInMetadata *attinmeta;
-    CdbPgResults cdb_pgresults = {NULL, 0};
+    CdbPgResults cdb_pgresults = {};
     int	i,j;
     char  *sql = NULL;
     Tuplestorestate	   *tupstore;
@@ -715,8 +738,11 @@ collect_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS)
 
     /* Prepare Tuplestore */
 	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-
+#if PG_VERSION_NUM >= 120000
+    tupdesc = CreateTemplateTupleDesc(7);
+#else
     tupdesc = CreateTemplateTupleDesc(7, false);
+#endif
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "SEGMENT_ID",
 	                   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "CONTAINER_ID",

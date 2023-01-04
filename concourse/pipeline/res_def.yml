@@ -49,7 +49,7 @@ resources:
   check_every: 1m
   source:
     branch: ((plcontainer-branch))
-    uri: https://github.com/greenplum-db/plcontainer
+    uri: https://github.com/higuoxing/plcontainer
     username: ((extension/github-access-token))
     password: x-oauth-basic
     ignore_paths:
@@ -80,8 +80,14 @@ resources:
     branch: 6X_STABLE
     uri: https://github.com/greenplum-db/gpdb.git
 
+- name: gpdb7_src
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/greenplum-db/gpdb.git
+
 # Image Resources
-# centos7
+# gpdb6 centos7
 - name: centos7-gpdb6-image-build
   type: registry-image
   source:
@@ -92,7 +98,7 @@ resources:
   source:
     repository: gcr.io/data-gpdb-public-images/gpdb6-centos7-test
     tag: latest
-# rhel8
+# gpdb6 rhel8
 - name: rhel8-gpdb6-image-build
   type: registry-image
   source:
@@ -107,7 +113,7 @@ resources:
     tag: latest
     username: _json_key
     password: ((data-gpdb-private-images-container-registry-readonly-service-account-key))
-# Ubuntu18
+# gpdb6 Ubuntu18
 - name: ubuntu18-gpdb6-image-build
   type: registry-image
   source:
@@ -118,6 +124,20 @@ resources:
   source:
     repository: gcr.io/data-gpdb-public-images/gpdb6-ubuntu18.04-test
     tag: latest
+
+# gpdb7 Rocky8
+- name: rocky8-gpdb7-image-build
+  type: docker-image
+  source:
+    repository: gcr.io/data-gpdb-public-images/gpdb7-rocky8-build
+    tag: latest
+    username: _json_key
+- name: rocky8-gpdb7-image-test
+  type: docker-image
+  source:
+    repository: gcr.io/data-gpdb-public-images/gpdb7-rocky8-test
+    tag: latest
+    username: _json_key
 
 # gpdb binary on gcs is located as different folder for different version
 # Latest build with assertion enabled:
@@ -140,6 +160,13 @@ resources:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: server/published/gpdb6/server-rc-(.*)-ubuntu18.04_x86_64.debug.tar.gz
+# gpdb7
+- name: bin_gpdb7_rocky8_debug
+  type: gcs
+  source:
+    bucket: pivotal-gpdb-concourse-resources-prod
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: server/published/main/server-rc-(.*)-rocky8_x86_64.debug.tar.gz
 # Latest release candidates, no fault-injector, no assertion:
 # --disable-debug-extensions --disable-tap-tests --enable-ic-proxy
 - name: bin_gpdb6_centos7
@@ -160,6 +187,13 @@ resources:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: server/published/gpdb6/server-rc-(.*)-ubuntu18.04_x86_64.tar.gz
+# gpdb7
+- name: bin_gpdb7_rocky8
+  type: gcs
+  source:
+    bucket: pivotal-gpdb-concourse-resources-prod
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: server/published/main/server-rc-(.*)-rocky8_x86_64.tar.gz
 
 # For uploading every build to gcs gppkg
 - name: bin_plcontainer_gpdb6_rhel7_intermediates
@@ -182,6 +216,13 @@ resources:
     bucket: gp-extensions-ci
     json_key: ((extension/extensions-gcs-service-account-key-dev2))
     versioned_file: intermediates/plcontainer/plcontainer-gppkg-ubuntu18-gp6.tar.gz
+
+- name: bin_plcontainer_gpdb7_rocky8_intermediates
+  type: gcs
+  source:
+    bucket: gp-extensions-ci
+    json_key: ((extension/extensions-gcs-service-account-key-dev2))
+    versioned_file: intermediates/plcontainer/plcontainer-gppkg-rocky8-gp7.tar.gz
 
 # Rel gppkg
 - name: bin_plcontainer_gpdb6_rhel7_intermediates_rel

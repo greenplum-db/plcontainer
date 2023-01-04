@@ -590,16 +590,16 @@ static int receive_array(plcConn *conn, plcType *type, rawdata *obj) {
 	}
 	if (arr->meta->size > 0) {
 		entrylen = plc_get_type_length(arr->meta->type);
-		arr->nulls = (char *) pmalloc(arr->meta->size * 1);
+		arr->nulls = (bool *) pmalloc(arr->meta->size * 1);
 		arr->data = (char *) pmalloc(arr->meta->size * entrylen);
 		memset(arr->data, 0, arr->meta->size * entrylen);
 
 		for (i = 0; i < arr->meta->size && res == 0; i++) {
 			res |= receive_char(conn, &isnull);
 			if (isnull == 'N') {
-				arr->nulls[i] = 1;
+				arr->nulls[i] = true;
 			} else {
-				arr->nulls[i] = 0;
+				arr->nulls[i] = false;
 				switch (arr->meta->type) {
 					case PLC_DATA_INT1:
 					case PLC_DATA_INT2:

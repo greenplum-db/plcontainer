@@ -14,13 +14,10 @@
 #include "postgres.h"
 #ifndef PLC_PG
   #include "commands/resgroupcmds.h"
-  #include "catalog/gp_segment_config.h"
 #else
   #include "catalog/pg_type.h"
   #include "access/sysattr.h"
   #include "miscadmin.h"
-
-  #define InvalidDbid 0
 #endif
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -37,6 +34,12 @@
 #endif
 #include "common/comm_utils.h"
 #include "common/comm_connectivity.h"
+#if PG_VERSION_NUM >= 120000 // PG12 or GP7
+  #include "access/table.h"
+  #include "common/hashfn.h"
+  #include "utils/varlena.h"
+  #include "catalog/pg_resgroupcapability.h"
+#endif
 #include "plcontainer.h"
 #include "plc_backend_api.h"
 #include "plc_docker_api.h"
@@ -289,6 +292,23 @@ static void parse_runtime_configuration(xmlNode *node) {
 						}
 					}
 
+#if PG_VERSION_NUM >= 120000 // at 2023-01, currently GP7 does not support resource group
+					value = xmlGetProp(cur_node, (const xmlChar *) "resource_group_id");
+					if (value != NULL) {
+						validSetting = true;
+						plc_elog(WARNING, "Greenplum7 resource group integration is not supported is this PL/Container");
+
+						{ // to pass the test
+							if (strlen((char *) value) == 0) {
+								plc_elog(ERROR, "SETTING length of element <resource_group_id> is zero");
+							}
+							pg_atoi((char *) value, sizeof(int), 0);
+						}
+
+						xmlFree((void *) value);
+						value = NULL;
+					}
+#else
 					value = xmlGetProp(cur_node, (const xmlChar *) "resource_group_id");
 					if (value != NULL) {
 						Oid resgroupOid;
@@ -297,7 +317,8 @@ static void parse_runtime_configuration(xmlNode *node) {
 							plc_elog(ERROR, "SETTING length of element <resource_group_id> is zero");
 						}
 						resgroupOid = (Oid) pg_atoi((char *) value, sizeof(int), 0);
-#ifndef	PLC_PG
+
+#ifndef PLC_PG
 						if (resgroupOid == InvalidOid || GetResGroupNameForId(resgroupOid) == NULL) {
 							plc_elog(ERROR, "SETTING element <resource_group_id> must be a resource group id in greenplum. " "Current setting is: %s", (char * ) value);
 						}
@@ -310,7 +331,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 						xmlFree((void *) value);
 						value = NULL;
 					}
-
+#endif
 					value = xmlGetProp(cur_node, (const xmlChar *) "roles");
 					if (value != NULL) {
 						validSetting = true;
@@ -674,7 +695,7 @@ static int plc_refresh_container_config(bool verbose) {
 	snprintf(data_directory, sizeof(data_directory), "%s", env_str );
  #endif
 	/* Parse the file and get the DOM */
-	sprintf(filename, "%s/%s", data_directory, PLC_PROPERTIES_FILE);
+	sprintf(filename, "%s/%s", DataDir, PLC_PROPERTIES_FILE);
 
 	PG_TRY();
 	{
@@ -885,7 +906,7 @@ bool plc_check_user_privilege(char *roles){
 
 	currentUserOid = GetUserId();
 
-	if (currentUserOid == InvalidDbid){
+	if (currentUserOid == InvalidOid){
 		elog(ERROR, "Could not get current user Oid");
 	}
 

@@ -21,158 +21,158 @@ CREATE OR REPLACE FUNCTION py_spi_pexecute1() RETURNS void AS $$
 plpy.notice("Test query execution")
 rv = plpy.execute("select * from t2 where name='bob1' and online=True and sex='m' order by id limit 2")
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test query targetlist containing NULL")
 rv = plpy.execute("select * from t2 where id = 1000")
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test text")
 plan = plpy.prepare("select * from t2 where name=$1 order by id", ["text"])
 plpy.notice(plan.status())
 rv = plpy.execute(plan, ["bob1"])
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test bool")
 plan = plpy.prepare("select * from t2 where online=$1 order by id", ["boolean"])
 rv = plpy.execute(plan, [True])
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plan1 = plpy.prepare("select * from t2 where sex=$1 order by id", ["char"])
 plan2 = plpy.prepare("select * from t2 where id>$1 order by id", ["int4"])
 plpy.notice("Test int4")
 rv = plpy.execute(plan2, [9001])
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 plpy.notice("Test char")
 rv = plpy.execute(plan1, ['m'])
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test text+bool+char+int4")
 plan = plpy.prepare("select * from t2 where name=$1 and online=$2 and sex=$3 order by id limit $4", ["text", "bool", "char", "int4"])
 rv = plpy.execute(plan, ["bob1", True, 'm', 2]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test results containing NULL")
 plan = plpy.prepare("select * from t2 where name is null limit $1", ["int4"])
 rv = plpy.execute(plan, [2]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test insert NULL")
 plan = plpy.prepare("insert into t2 values($1, true, 'm', 1002)", ["text"])
 rv = plpy.execute(plan, [None]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 rv = plpy.execute("select * from t2 order by id");
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 $$ LANGUAGE plcontainer;
 select py_spi_pexecute1();
 NOTICE:  Test query execution
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
+NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
+NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test query targetlist containing NULL
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1000}
+NOTICE:  X [('id', 1000), ('name', None), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test text
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  True
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
+NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
+NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 9000}
+NOTICE:  X [('id', 9000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test bool
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1000}
+NOTICE:  X [('id', 1000), ('name', None), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1001}
+NOTICE:  X [('id', 1001), ('name', None), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
+NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
+NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 9000}
+NOTICE:  X [('id', 9000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob2', 'online': 1, 'sex': 'f', 'id': 9001}
+NOTICE:  X [('id', 9001), ('name', 'bob2'), ('online', 1), ('sex', 'f')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'alice3', 'online': 1, 'sex': 'm', 'id': 9005}
+NOTICE:  X [('id', 9005), ('name', 'alice3'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test int4
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob3', 'online': 0, 'sex': 'm', 'id': 9002}
+NOTICE:  X [('id', 9002), ('name', 'bob3'), ('online', 0), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'alice1', 'online': 0, 'sex': 'm', 'id': 9003}
+NOTICE:  X [('id', 9003), ('name', 'alice1'), ('online', 0), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'alice2', 'online': 0, 'sex': 'f', 'id': 9004}
+NOTICE:  X [('id', 9004), ('name', 'alice2'), ('online', 0), ('sex', 'f')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'alice3', 'online': 1, 'sex': 'm', 'id': 9005}
+NOTICE:  X [('id', 9005), ('name', 'alice3'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test char
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1000}
+NOTICE:  X [('id', 1000), ('name', None), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1001}
+NOTICE:  X [('id', 1001), ('name', None), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
+NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
+NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 9000}
+NOTICE:  X [('id', 9000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob3', 'online': 0, 'sex': 'm', 'id': 9002}
+NOTICE:  X [('id', 9002), ('name', 'bob3'), ('online', 0), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'alice1', 'online': 0, 'sex': 'm', 'id': 9003}
+NOTICE:  X [('id', 9003), ('name', 'alice1'), ('online', 0), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'alice3', 'online': 1, 'sex': 'm', 'id': 9005}
+NOTICE:  X [('id', 9005), ('name', 'alice3'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test text+bool+char+int4
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
+NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
+NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test results containing NULL
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1000}
+NOTICE:  X [('id', 1000), ('name', None), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1001}
+NOTICE:  X [('id', 1001), ('name', None), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test insert NULL
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1000}
+NOTICE:  X [('id', 1000), ('name', None), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1001}
+NOTICE:  X [('id', 1001), ('name', None), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': None, 'online': 1, 'sex': 'm', 'id': 1002}
+NOTICE:  X [('id', 1002), ('name', None), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 7000}
+NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 8000}
+NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob1', 'online': 1, 'sex': 'm', 'id': 9000}
+NOTICE:  X [('id', 9000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob2', 'online': 1, 'sex': 'f', 'id': 9001}
+NOTICE:  X [('id', 9001), ('name', 'bob2'), ('online', 1), ('sex', 'f')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'bob3', 'online': 0, 'sex': 'm', 'id': 9002}
+NOTICE:  X [('id', 9002), ('name', 'bob3'), ('online', 0), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'alice1', 'online': 0, 'sex': 'm', 'id': 9003}
+NOTICE:  X [('id', 9003), ('name', 'alice1'), ('online', 0), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'alice2', 'online': 0, 'sex': 'f', 'id': 9004}
+NOTICE:  X [('id', 9004), ('name', 'alice2'), ('online', 0), ('sex', 'f')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  {'name': 'alice3', 'online': 1, 'sex': 'm', 'id': 9005}
+NOTICE:  X [('id', 9005), ('name', 'alice3'), ('online', 1), ('sex', 'm')]
 CONTEXT:  PLContainer function "py_spi_pexecute1"
  py_spi_pexecute1 
 ------------------
@@ -198,37 +198,37 @@ plpy.notice("Test int2")
 plan = plpy.prepare("select * from t3 where age=$1 order by id", ["int2"])
 rv = plpy.execute(plan, [20]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test int8")
 plan = plpy.prepare("select * from t3 where id=$1 order by age", ["int8"])
 rv = plpy.execute(plan, [6000]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test text + int8")
 plan = plpy.prepare("select * from t3 where name=$1 and age=$2 order by id", ["text", "int8"])
 rv = plpy.execute(plan, ["bob0", 20]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 select py_spi_pexecute2();
 NOTICE:  Test int2
 CONTEXT:  PLContainer function "py_spi_pexecute2"
-NOTICE:  {'name': 'bob1', 'age': 20, 'id': 8000}
+NOTICE:  X [('age', 20), ('id', 8000), ('name', 'bob1')]
 CONTEXT:  PLContainer function "py_spi_pexecute2"
-NOTICE:  {'name': 'bob0', 'age': 20, 'id': 9000}
+NOTICE:  X [('age', 20), ('id', 9000), ('name', 'bob0')]
 CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  Test int8
 CONTEXT:  PLContainer function "py_spi_pexecute2"
-NOTICE:  {'name': 'alice1', 'age': 40, 'id': 6000}
+NOTICE:  X [('age', 40), ('id', 6000), ('name', 'alice1')]
 CONTEXT:  PLContainer function "py_spi_pexecute2"
-NOTICE:  {'name': 'alice2', 'age': 50, 'id': 6000}
+NOTICE:  X [('age', 50), ('id', 6000), ('name', 'alice2')]
 CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  Test text + int8
 CONTEXT:  PLContainer function "py_spi_pexecute2"
-NOTICE:  {'name': 'bob0', 'age': 20, 'id': 9000}
+NOTICE:  X [('age', 20), ('id', 9000), ('name', 'bob0')]
 CONTEXT:  PLContainer function "py_spi_pexecute2"
  py_spi_pexecute2 
 ------------------
@@ -258,54 +258,54 @@ plan4 = plpy.prepare("select * from t4 where score1<$1 and score2<$2 order by na
 plpy.notice("Test bytea");
 rv = plpy.execute(plan1, ["bob0"]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test float4");
 rv = plpy.execute(plan2, [8.9]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test float8");
 rv = plpy.execute(plan3, [16.8]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 plpy.notice("Test float4+float8");
 rv = plpy.execute(plan4, [9.18, 16.80]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 select py_spi_pexecute3();
 NOTICE:  Test bytea
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  Test float4
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob1', 'score1': 8.75, 'score2': 16.75}
+NOTICE:  X [('name', b'bob1'), ('score1', 8.75), ('score2', 16.75)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob2', 'score1': 8.875, 'score2': 16.875}
+NOTICE:  X [('name', b'bob2'), ('score1', 8.875), ('score2', 16.875)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  Test float8
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob1', 'score1': 8.75, 'score2': 16.75}
+NOTICE:  X [('name', b'bob1'), ('score1', 8.75), ('score2', 16.75)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob3', 'score1': 9.125, 'score2': 16.125}
+NOTICE:  X [('name', b'bob3'), ('score1', 9.125), ('score2', 16.125)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob4', 'score1': 9.25, 'score2': 16.25}
+NOTICE:  X [('name', b'bob4'), ('score1', 9.25), ('score2', 16.25)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  Test float4+float8
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob1', 'score1': 8.75, 'score2': 16.75}
+NOTICE:  X [('name', b'bob1'), ('score1', 8.75), ('score2', 16.75)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
-NOTICE:  {'name': b'bob3', 'score1': 9.125, 'score2': 16.125}
+NOTICE:  X [('name', b'bob3'), ('score1', 9.125), ('score2', 16.125)]
 CONTEXT:  PLContainer function "py_spi_pexecute3"
  py_spi_pexecute3 
 ------------------
@@ -320,7 +320,7 @@ CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute1() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where name=$1 order by score1", ["integer"])
 rv = plpy.execute(plan1, ["bob0"]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute2() RETURNS void AS $$
@@ -329,7 +329,7 @@ CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute2() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["bytea"])
 rv = plpy.execute(plan1, ["bob0"]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute3() RETURNS void AS $$
@@ -338,7 +338,7 @@ CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute3() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["float4"])
 rv = plpy.execute(plan1, ["bob0"]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute4() RETURNS void AS $$
@@ -347,7 +347,7 @@ CREATE OR REPLACE FUNCTION py_spi_illegal_pexecute4() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where score1<$1 and score2<$2 order by score1", ["float4", "float8"])
 rv = plpy.execute(plan1, [9.5, "bob0"]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION py_spi_simple_t4() RETURNS void AS $$
@@ -356,7 +356,7 @@ CREATE OR REPLACE FUNCTION py_spi_simple_t4() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where name='bob0' order by score1")
 rv = plpy.execute(plan1);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION py_spi_simple_num() RETURNS void AS $$
@@ -365,11 +365,11 @@ CREATE OR REPLACE FUNCTION py_spi_simple_num() RETURNS void AS $$
 plan1 = plpy.prepare("select * from t4 where score1<$1 order by score1", ["numeric"])
 rv = plpy.execute(plan1, [10.5]);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 
 $$ LANGUAGE plcontainer;
 select py_spi_simple_t4();
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -391,7 +391,7 @@ HINT:  No operator matches the given name and argument type(s). You might need t
 QUERY:  select * from t4 where score1<$1 order by score1
 CONTEXT:  PLContainer function "py_spi_illegal_pexecute2"
 select py_spi_simple_t4();
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -407,7 +407,7 @@ ERROR:  PL/Container client exception occurred:
  Exception occurred transforming result object to float8
 CONTEXT:  PLContainer function "py_spi_illegal_pexecute4"
 select py_spi_simple_t4();
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -415,15 +415,15 @@ CONTEXT:  PLContainer function "py_spi_simple_t4"
 (1 row)
 
 SELECT py_spi_simple_num();
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_simple_num"
-NOTICE:  {'name': b'bob1', 'score1': 8.75, 'score2': 16.75}
+NOTICE:  X [('name', b'bob1'), ('score1', 8.75), ('score2', 16.75)]
 CONTEXT:  PLContainer function "py_spi_simple_num"
-NOTICE:  {'name': b'bob2', 'score1': 8.875, 'score2': 16.875}
+NOTICE:  X [('name', b'bob2'), ('score1', 8.875), ('score2', 16.875)]
 CONTEXT:  PLContainer function "py_spi_simple_num"
-NOTICE:  {'name': b'bob3', 'score1': 9.125, 'score2': 16.125}
+NOTICE:  X [('name', b'bob3'), ('score1', 9.125), ('score2', 16.125)]
 CONTEXT:  PLContainer function "py_spi_simple_num"
-NOTICE:  {'name': b'bob4', 'score1': 9.25, 'score2': 16.25}
+NOTICE:  X [('name', b'bob4'), ('score1', 9.25), ('score2', 16.25)]
 CONTEXT:  PLContainer function "py_spi_simple_num"
  py_spi_simple_num 
 -------------------
@@ -445,7 +445,7 @@ CREATE OR REPLACE FUNCTION pyspi_bad_limit() RETURNS integer AS $$
 # container: plc_python_shared
 rv = plpy.execute("select datname from pg_database order by datname", -2);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pyspi_bad_limit_pexecute() RETURNS integer AS $$
@@ -453,25 +453,25 @@ CREATE OR REPLACE FUNCTION pyspi_bad_limit_pexecute() RETURNS integer AS $$
 plan = plpy.prepare("select datname from pg_database order by datname", -2);
 rv = plpy.execute(plan);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pyspi_bad_limit_stable() RETURNS integer AS $$
 # container: plc_python_shared
 rv = plpy.execute("select datname from pg_database order by datname", -2);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer STABLE;
 CREATE OR REPLACE FUNCTION pyspi_bad_limit_immutable() RETURNS integer AS $$
 # container: plc_python_shared
 rv = plpy.execute("select datname from pg_database order by datname", -2);
 for r in rv:
-    plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer IMMUTABLE;
 select py_spi_simple_t4();
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -494,7 +494,7 @@ select pyspi_bad_limit();
 ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (0) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:339)
 CONTEXT:  PLContainer function "pyspi_bad_limit"
 select py_spi_simple_t4();
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -515,7 +515,7 @@ select pyspi_bad_limit_stable();
 ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order by datname') with fn_readonly (1) and limit (-2). Detail: SPI_ERROR_ARGUMENT (sqlhandler.c:339)
 CONTEXT:  PLContainer function "pyspi_bad_limit_stable"
 select py_spi_simple_t4();
-NOTICE:  {'name': b'bob0', 'score1': 8.5, 'score2': 16.5}
+NOTICE:  X [('name', b'bob0'), ('score1', 8.5), ('score2', 16.5)]
 CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
@@ -537,21 +537,21 @@ CREATE OR REPLACE FUNCTION pyspi_insert_exec() RETURNS integer AS $$
 # container: plc_python_shared
 rv = plpy.execute("insert into t5 values('bob2', 8.5, 16.5)");
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pyspi_update_exec() RETURNS integer AS $$
 # container: plc_python_shared
 rv = plpy.execute("update t5 set score1=11 where name='bob2'");
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pyspi_delete_exec() RETURNS integer AS $$
 # container: plc_python_shared
 rv = plpy.execute("delete from t5 where name='bob2'");
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 SELECT pyspi_insert_exec();
@@ -601,7 +601,7 @@ CREATE OR REPLACE FUNCTION pyspi_insert_execp() RETURNS integer AS $$
 plan = plpy.prepare("insert into t5 values('bob3', 8.5, 16.5)");
 rv = plpy.execute(plan);
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pyspi_update_execp() RETURNS integer AS $$
@@ -609,7 +609,7 @@ CREATE OR REPLACE FUNCTION pyspi_update_execp() RETURNS integer AS $$
 plan = plpy.prepare("update t5 set score1=12 where name='bob3'");
 rv = plpy.execute(plan);
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pyspi_delete_execp() RETURNS integer AS $$
@@ -617,7 +617,7 @@ CREATE OR REPLACE FUNCTION pyspi_delete_execp() RETURNS integer AS $$
 plan = plpy.prepare("delete from t5 where name='bob3'");
 rv = plpy.execute(plan);
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pyspi_select_notexist_execp() RETURNS integer AS $$
@@ -625,7 +625,7 @@ CREATE OR REPLACE FUNCTION pyspi_select_notexist_execp() RETURNS integer AS $$
 plan = plpy.prepare("select * from t5 where name='bob_notexist'");
 rv = plpy.execute(plan);
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 CREATE OR REPLACE FUNCTION pyspi_delete_notexist_execp() RETURNS integer AS $$
@@ -633,7 +633,7 @@ CREATE OR REPLACE FUNCTION pyspi_delete_notexist_execp() RETURNS integer AS $$
 plan = plpy.prepare("delete from t5 where name='bob3_notexist'");
 rv = plpy.execute(plan);
 for r in rv:
-	plpy.notice(str(r))
+    plpy.notice("X " + str(sorted(r.items())))
 return 0
 $$ LANGUAGE plcontainer;
 SELECT pyspi_insert_execp();
@@ -698,9 +698,9 @@ CREATE OR REPLACE FUNCTION pyspi_exec_exception() RETURNS integer AS $$
 # container: plc_python_shared
 plan = list();
 try:
-	rv = plpy.execute(plan);
+    rv = plpy.execute(plan);
 except Exception as e:
-	plpy.notice(type(e))
+    plpy.notice(type(e))
 return 0
 $$ LANGUAGE plcontainer;
 SELECT pyspi_exec_exception();
@@ -718,11 +718,11 @@ CONTEXT:  PLContainer function "pyspi_exec_exception"
 CREATE FUNCTION invalid_type_uncaught(a text) RETURNS text AS $$
 # container: plc_python_shared
 if "plan" not in SD:
-	q = "SELECT fname FROM users WHERE lname = $1"
-	SD["plan"] = plpy.prepare(q, [ "test" ])
+    q = "SELECT fname FROM users WHERE lname = $1"
+    SD["plan"] = plpy.prepare(q, [ "test" ])
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
-	return rv[0]["fname"]
+    return rv[0]["fname"]
 return None
 $$ LANGUAGE plcontainer;
 -- for what it's worth catch the exception generated by
@@ -730,15 +730,15 @@ $$ LANGUAGE plcontainer;
 CREATE FUNCTION invalid_type_caught(a text) RETURNS text AS $$
 # container: plc_python_shared
 if "plan" not in SD:
-	q = "SELECT fname FROM users WHERE lname = $1"
-	try:
-		SD["plan"] = plpy.prepare(q, [ "test" ])
-	except plpy.SPIError as ex:
-		plpy.notice(str(ex))
-		return None
+    q = "SELECT fname FROM users WHERE lname = $1"
+    try:
+        SD["plan"] = plpy.prepare(q, [ "test" ])
+    except plpy.SPIError as ex:
+        plpy.notice(str(ex))
+        return None
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
-	return rv[0]["fname"]
+    return rv[0]["fname"]
 return None
 $$ LANGUAGE plcontainer;
 -- for what it's worth catch the exception generated by
@@ -746,24 +746,24 @@ $$ LANGUAGE plcontainer;
 CREATE FUNCTION invalid_type_reraised(a text) RETURNS text AS $$
 # container: plc_python_shared
 if "plan" not in SD:
-	q = "SELECT fname FROM users WHERE lname = $1"
-	try:
-		SD["plan"] = plpy.prepare(q, [ "test" ])
-	except plpy.SPIError as ex:
-		plpy.error(str(ex))
+    q = "SELECT fname FROM users WHERE lname = $1"
+    try:
+        SD["plan"] = plpy.prepare(q, [ "test" ])
+    except plpy.SPIError as ex:
+        plpy.error(str(ex))
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
-	return rv[0]["fname"]
+    return rv[0]["fname"]
 return None
 $$ LANGUAGE plcontainer;
 -- no typo no messing about
 CREATE FUNCTION valid_type(a text) RETURNS text AS $$
 # container: plc_python_shared
 if "plan" not in SD:
-	SD["plan"] = plpy.prepare("SELECT fname FROM users WHERE lname = $1", [ "text" ])
+    SD["plan"] = plpy.prepare("SELECT fname FROM users WHERE lname = $1", [ "text" ])
 rv = plpy.execute(SD["plan"], [ a ])
 if len(rv):
-	return rv[0]["fname"]
+    return rv[0]["fname"]
 return None
 $$ LANGUAGE plcontainer;
 CREATE FUNCTION nested_call_one(a text) RETURNS text AS $$
@@ -786,26 +786,26 @@ $$ LANGUAGE plcontainer ;
 CREATE FUNCTION spi_prepared_plan_test_one(a text) RETURNS text AS $$
 # container: plc_python_shared
 if "myplan" not in SD:
-	q = "SELECT count(*) FROM users WHERE lname = $1"
-	SD["myplan"] = plpy.prepare(q, [ "text" ])
+    q = "SELECT count(*) FROM users WHERE lname = $1"
+    SD["myplan"] = plpy.prepare(q, [ "text" ])
 try:
-	rv = plpy.execute(SD["myplan"], [a])
-	return "there are " + str(rv[0]["count"]) + " " + str(a) + "s"
+    rv = plpy.execute(SD["myplan"], [a])
+    return "there are " + str(rv[0]["count"]) + " " + str(a) + "s"
 except Exception as ex:
-	plpy.error(str(ex))
+    plpy.error(str(ex))
 return None
 $$ LANGUAGE plcontainer;
 CREATE FUNCTION spi_prepared_plan_test_nested(a text) RETURNS text AS $$
 # container: plc_python_shared
 if "myplan" not in SD:
-	q = "SELECT spi_prepared_plan_test_one('%s') as count" % a
-	SD["myplan"] = plpy.prepare(q)
+    q = "SELECT spi_prepared_plan_test_one('%s') as count" % a
+    SD["myplan"] = plpy.prepare(q)
 try:
-	rv = plpy.execute(SD["myplan"])
-	if len(rv):
-		return rv[0]["count"]
+    rv = plpy.execute(SD["myplan"])
+    if len(rv):
+        return rv[0]["count"]
 except Exception as ex:
-	plpy.error(str(ex))
+    plpy.error(str(ex))
 return None
 $$ LANGUAGE plcontainer;
 SELECT invalid_type_uncaught('rick');

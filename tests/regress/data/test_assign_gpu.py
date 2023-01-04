@@ -1,12 +1,12 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import sys, os
 import argparse
 import xml.etree.ElementTree as ET
 
 def find_runtime(xmltree, runtimeid):
-    for runtime in xmltree.getchildren():
-        for e in runtime.getchildren():
+    for runtime in list(xmltree):
+        for e in list(runtime):
             if e.tag == 'id' and e.text == runtimeid:
                 return runtime
 
@@ -51,7 +51,7 @@ def main():
         with open(args.file, "w+") as f:
             f.write(out_xml)
     else:
-        print out_xml
+        print(out_xml)
 
 if __name__ == '__main__':
     main()

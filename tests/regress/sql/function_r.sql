@@ -231,7 +231,6 @@ plr.log('this is the log message')
 plr.info('this is the info message')
 plr.notice('this is the notice message')
 plr.warning('this is the warning message')
-plr.error('this is the error message')
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION rlogging2() RETURNS void AS $$

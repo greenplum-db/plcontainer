@@ -1,0 +1,72 @@
+-- start_ignore
+\! plcontainer runtime-add -r plc_python3_shared_gpu -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 -s roles=$USER
+20220718:17:27:09:263905 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20220718:17:27:09:263905 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+\! plcontainer runtime-backup -f test_config_gpu.xml
+\! ./data/test_assign_gpu.py --file ./test_config_gpu.xml -i --runtime plc_python3_shared_gpu --action all
+\! plcontainer runtime-restore -f test_config_gpu.xml
+20220718:17:27:10:264208 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20220718:17:27:10:264208 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+\! rm test_config_gpu.xml
+-- end_ignore
+select * from plcontainer_refresh_config;
+ gp_segment_id | plcontainer_refresh_local_config 
+---------------+----------------------------------
+             2 | ok
+             1 | ok
+             0 | ok
+            -1 | ok
+(4 rows)
+
+create function with_conf_gpu() returns int as $$
+  # container: plc_python3_shared_gpu
+  return 0
+$$ LANGUAGE plcontainer;
+-- gpu=all means assign all available to this runtime. and not emit error when the GPU is not exist
+-- start_ignore
+-- TODO
+-- Failed to start container return code: 500, detail: {"message":"could not select device driver \"\" with capabilities: [[gpu]]"}
+select * from with_conf_gpu();
+ with_conf_gpu 
+---------------
+             0
+(1 row)
+
+-- end_ignore
+-- start_ignore
+\! plcontainer runtime-delete -r plc_python3_shared_gpu
+20220718:17:27:11:264623 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20220718:17:27:11:264623 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+-- end_ignore
+-- start_ignore
+\! plcontainer runtime-add -r plc_python3_shared_gpu -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3
+20220718:17:27:11:264858 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20220718:17:27:12:264858 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+\! plcontainer runtime-backup -f test_config_gpu.xml
+\! ./data/test_assign_gpu.py --file ./test_config_gpu.xml -i --runtime plc_python3_shared_gpu --action all
+\! plcontainer runtime-restore -f test_config_gpu.xml
+20220718:17:27:12:265187 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20220718:17:27:12:265187 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+\! rm test_config_gpu.xml
+-- end_ignore
+select * from plcontainer_refresh_config;
+ gp_segment_id | plcontainer_refresh_local_config 
+---------------+----------------------------------
+             2 | ok
+             1 | ok
+             0 | ok
+            -1 | ok
+(4 rows)
+
+-- strict permission check, expect error
+select * from with_conf_gpu();
+ERROR:  plcontainer: Current user does not have privilege to use runtime plc_python3_shared_gpu (plcontainer.c:343)
+WARNING:  plcontainer: To access network or physical device, user permission needs to be granted explicitly in the runtime config.
+HINT:  set user name in <setting roles="<user name>" />
+CONTEXT:  PLContainer function "with_conf_gpu"
+drop function with_conf_gpu();
+-- start_ignore
+\! plcontainer runtime-delete -r plc_python3_shared_gpu
+20220718:17:27:13:265451 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20220718:17:27:13:265451 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+-- end_ignore

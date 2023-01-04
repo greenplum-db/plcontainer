@@ -268,12 +268,24 @@ fill_type_info_inner(FunctionCallInfo fcinfo, Oid typeOid, plcTypeInfo *type, bo
 
 			// Fill all the subtypes
 			for (i = 0; i < desc->natts; i++) {
+#if PG_VERSION_NUM >= 120000
+			  	type->subTypes[i].attisdropped = desc->attrs[i].attisdropped;
+#else
 				type->subTypes[i].attisdropped = desc->attrs[i]->attisdropped;
+#endif
 				if (!type->subTypes[i].attisdropped) {
 					/* We support the case with array of UDTs, each of which contains another array */
+#if PG_VERSION_NUM >= 120000
+				  	fill_type_info_inner(fcinfo, desc->attrs[i].atttypid, &type->subTypes[i], false, true);
+#else
 					fill_type_info_inner(fcinfo, desc->attrs[i]->atttypid, &type->subTypes[i], false, true);
+#endif
 				}
+#if PG_VERSION_NUM >= 120000
+				type->subTypes[i].typeName = plc_top_strdup(NameStr(desc->attrs[i].attname));
+#else
 				type->subTypes[i].typeName = plc_top_strdup(NameStr(desc->attrs[i]->attname));
+#endif
 			}
 
 			ReleaseTupleDesc(desc);
@@ -587,7 +599,7 @@ static Datum plc_datum_from_array(char *input, plcTypeInfo *type) {
 	ptr = arr->data;
 	len = plc_get_type_length(subType->type);
 	for (i = 0; i < arr->meta->size; i++) {
-		if (arr->nulls[i] == 0) {
+		if (!arr->nulls[i]) {
 			elems[i] = subType->infunc(ptr, subType);
 		} else {
 			elems[i] = (Datum) 0;

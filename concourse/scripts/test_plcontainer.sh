@@ -9,13 +9,21 @@ function _main() {
     gppkg -i plcontainer*.gppkg
     # Image add for both python and r
     # Python3
-    time plcontainer image-add -f plcontainer-python-image-*-gp6.tar.gz
+    time plcontainer image-add -f plcontainer-python-image-*.tar.gz
     # Python2
-    time plcontainer image-add -f plcontainer-python2-image-*-gp6.tar.gz
+    time plcontainer image-add -f plcontainer-python2-image-*.tar.gz
     # R
-    time plcontainer image-add -f plcontainer-r-image-*-gp6.tar.gz
+    time plcontainer image-add -f plcontainer-r-image-*.tar.gz
+
+    # create a empty database to run metadata query
+    createdb contrib_regression || true
 
     time cmake --build . --target prepare_runtime
+
+    docker images
+    docker ps -a
+    plcontainer runtime-show
+
     time cmake --build . --target installcheck
     # Test gppkg uninstall
     gppkg -q --all
