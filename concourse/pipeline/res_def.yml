@@ -1,6 +1,6 @@
 resource_types:
 - name: gcs
-  type: registry-image
+  type: docker-image
   check_every: 1h
   source:
     repository: frodenas/gcs-resource
@@ -27,7 +27,7 @@ resources:
     disable_forks: false
     repository: greenplum-db/plcontainer
     access_token: ((extension/github-access-token))
-    base_branch: 6X_STABLE
+    base_branch: main
 
 # Commit trigger
 - name: plcontainer_commit

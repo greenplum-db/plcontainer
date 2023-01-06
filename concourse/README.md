@@ -15,8 +15,8 @@ https://dev2.ci.gpdb.pivotal.io/teams/gp-extensions/pipelines/pr.plcontainer
 
 ### Main Branch Pipeline
 
-The development happens on the `6X_STABLE` branch. The merge pipeline for the `6X_STABLE`
-https://dev2.ci.gpdb.pivotal.io/teams/gp-extensions/pipelines/merge.plcontainer.6X_STABLE
+The development happens on the `main` branch. The merge pipeline for the `main`
+https://dev2.ci.gpdb.pivotal.io/teams/gp-extensions/pipelines/merge.plcontainer.main
 
 # Fly a pipeline
 
@@ -47,7 +47,7 @@ fly -t dev2 login -c https://dev2.ci.gpdb.pivotal.io -n gp-extensions
 
 ## Fly the release pipeline
 
-By default, the release is built from the `6X_STABLE` branch.
+By default, the release is built from the `main` branch.
 
 The release pipeline should be located in https://prod.ci.gpdb.pivotal.io
 
