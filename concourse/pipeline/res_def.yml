@@ -83,25 +83,25 @@ resources:
 # Image Resources
 # centos7
 - name: centos7-gpdb6-image-build
-  type: docker-image
+  type: registry-image
   source:
     repository: gcr.io/data-gpdb-public-images/gpdb6-centos7-build
     tag: latest
 - name: centos7-gpdb6-image-test
-  type: docker-image
+  type: registry-image
   source:
     repository: gcr.io/data-gpdb-public-images/gpdb6-centos7-test
     tag: latest
 # rhel8
 - name: rhel8-gpdb6-image-build
-  type: docker-image
+  type: registry-image
   source:
     repository: gcr.io/data-gpdb-private-images/gpdb6-rhel8-build
     tag: latest
     username: _json_key
     password: ((data-gpdb-private-images-container-registry-readonly-service-account-key))
 - name: rhel8-gpdb6-image-test
-  type: docker-image
+  type: registry-image
   source:
     repository: gcr.io/data-gpdb-private-images/gpdb6-rhel8-test
     tag: latest
@@ -109,12 +109,12 @@ resources:
     password: ((data-gpdb-private-images-container-registry-readonly-service-account-key))
 # Ubuntu18
 - name: ubuntu18-gpdb6-image-build
-  type: docker-image
+  type: registry-image
   source:
     repository: gcr.io/data-gpdb-public-images/gpdb6-ubuntu18.04-build
     tag: latest
 - name: ubuntu18-gpdb6-image-test
-  type: docker-image
+  type: registry-image
   source:
     repository: gcr.io/data-gpdb-public-images/gpdb6-ubuntu18.04-test
     tag: latest
