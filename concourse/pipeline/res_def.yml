@@ -252,13 +252,6 @@ resources:
     json_key: ((extension/extensions-gcs-service-account-key-dev2))
     versioned_file: intermediates/plcontainer/plcontainer-gppkg-rocky8-gp7.tar.gz
 
-- name: bin_plcontainer_gpdb7_rhel8_intermediates
-  type: gcs
-  source:
-    bucket: gp-extensions-ci
-    json_key: ((extension/extensions-gcs-service-account-key-dev2))
-    versioned_file: intermediates/plcontainer/plcontainer-gppkg-rocky8-gp7.tar.gz
-
 # Rel gppkg
 - name: bin_plcontainer_gpdb6_rhel7_intermediates_rel
   type: gcs

@@ -5,7 +5,6 @@
 #@   "ubuntu18_gpdb6_conf",
 #@   "rhel8_gpdb6_conf",
 #@   "rocky8_gpdb7_conf",
-#@   "rhel8_gpdb7_conf",
 #@   )
 #@
 #@ load("trigger_def.lib.yml",
@@ -21,7 +20,6 @@
 #@   rhel8_gpdb6_conf(release_build=False),
 #@   ubuntu18_gpdb6_conf(release_build=False),
 #@   rocky8_gpdb7_conf(release_build=False),
-#@   rhel8_gpdb7_conf(release_build=False),
 #@ ]
 jobs:
 #@ param = {
