@@ -23,6 +23,8 @@ try:
     from gppylib.commands.base import WorkerPool, REMOTE, Command
     from gppylib.commands.unix import getLocalHostname, getUserName
     try:
+        # https://github.com/greenplum-db/gpdb/pull/14145
+        # after gp7 the Scp tool renamed to Rsync
         from gppylib.commands.unix import Scp as Rsync
     except ImportError:
         from gppylib.commands.unix import Rsync
