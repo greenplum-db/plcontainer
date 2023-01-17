@@ -69,7 +69,11 @@ release_bin: bin_plcontainer_gpdb7_rocky8_release
 #! Job config for gpdb7 rhel8
 #@ def rhel8_gpdb7_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
 res_test_image: rhel8-gpdb7-image-test
-res_gpdb_bin: #@ "bin_gpdb7_rhel8" + ("" if release_build else "_debug")
+
+#! theoretically, install new package on rhel8 is illegal. build on rocky8 and test on rhel8 on purpose
+res_build_image: rocky8-gpdb7-image-test
+res_gpdb_bin: #@ "bin_gpdb7_rocky8" + ("" if release_build else "_debug")
+
 is_bundle_release: #@ is_bundle_release
 res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb7_rhel8_intermediates", release_build)
 gpdb_version: gpdb7
@@ -169,7 +173,7 @@ config:
   outputs:
     - name: plcontainer_src
     - name: plcontainer_artifacts
-image: #@ conf["res_test_image"]
+image: #@ conf["res_build_image"] if ("res_build_image" in conf) else conf["res_test_image"]
 input_mapping:
   bin_gpdb: #@ conf["res_gpdb_bin"]
 #@ end
@@ -227,6 +231,8 @@ plan:
     resource: #@ param["gpdb_src"]
   - get: #@ conf["res_test_image"]
   - get: #@ conf["res_gpdb_bin"]
+#@ if/end "res_build_image" in conf:
+  - get: #@ conf["res_build_image"]
 - #@ _build_task(conf)
 - #@ _test_task(conf)
 - put: #@ conf["res_intermediates_bin"]
