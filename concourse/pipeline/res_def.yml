@@ -139,6 +139,22 @@ resources:
     tag: latest
     username: _json_key
 
+# gpdb7 rhel8
+- name: rhel8-gpdb7-image-build
+  type: docker-image
+  source:
+    repository: gcr.io/data-gpdb-private-images/gpdb7-rhel8-test
+    tag: latest
+    username: _json_key
+    password: ((data-gpdb-private-images-container-registry-readonly-service-account-key))
+- name: rhel8-gpdb7-image-test
+  type: docker-image
+  source:
+    repository: gcr.io/data-gpdb-private-images/gpdb7-rhel8-test
+    tag: latest
+    username: _json_key
+    password: ((data-gpdb-private-images-container-registry-readonly-service-account-key))
+
 # gpdb binary on gcs is located as different folder for different version
 # Latest build with assertion enabled:
 # --enable-cassert --enable-tap-tests --enable-debug-extensions
@@ -167,6 +183,12 @@ resources:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: server/published/main/server-rc-(.*)-rocky8_x86_64.debug.tar.gz
+- name: bin_gpdb7_rhel8_debug
+  type: gcs
+  source:
+    bucket: pivotal-gpdb-concourse-resources-prod
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: server/published/main/server-rc-(.*)-rhel8_x86_64.debug.tar.gz
 # Latest release candidates, no fault-injector, no assertion:
 # --disable-debug-extensions --disable-tap-tests --enable-ic-proxy
 - name: bin_gpdb6_centos7
@@ -194,6 +216,12 @@ resources:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: server/published/main/server-rc-(.*)-rocky8_x86_64.tar.gz
+- name: bin_gpdb7_rhel8
+  type: gcs
+  source:
+    bucket: pivotal-gpdb-concourse-resources-prod
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: server/published/main/server-rc-(.*)-rhel8_x86_64.tar.gz
 
 # For uploading every build to gcs gppkg
 - name: bin_plcontainer_gpdb6_rhel7_intermediates
@@ -218,6 +246,13 @@ resources:
     versioned_file: intermediates/plcontainer/plcontainer-gppkg-ubuntu18-gp6.tar.gz
 
 - name: bin_plcontainer_gpdb7_rocky8_intermediates
+  type: gcs
+  source:
+    bucket: gp-extensions-ci
+    json_key: ((extension/extensions-gcs-service-account-key-dev2))
+    versioned_file: intermediates/plcontainer/plcontainer-gppkg-rocky8-gp7.tar.gz
+
+- name: bin_plcontainer_gpdb7_rhel8_intermediates
   type: gcs
   source:
     bucket: gp-extensions-ci
@@ -267,6 +302,20 @@ resources:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: plcontainer/released/gpdb6/plcontainer-(.*).gppkg
+
+- name: bin_plcontainer_gpdb7_rhel8_release
+  type: gcs
+  source:
+    bucket: pivotal-gpdb-concourse-resources-prod
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: plcontainer/released/gpdb7/plcontainer-(.*).gppkg
+
+- name: bin_plcontainer_gpdb7_rocky8_release
+  type: gcs
+  source:
+    bucket: pivotal-gpdb-concourse-resources-prod
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: plcontainer/released/gpdb7/plcontainer-(.*).gppkg
 
 ########## IMAGE INTERMEDIATES BUCKET #########
 - name: bin_python_image_gpdb6_intermediates

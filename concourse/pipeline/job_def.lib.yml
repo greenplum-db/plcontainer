@@ -53,7 +53,7 @@ container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_ubuntu18_release
 #@ end
 
-#! Job config for gpdb7 rhel8
+#! Job config for gpdb7 rocky8
 #@ def rocky8_gpdb7_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
 res_test_image: rocky8-gpdb7-image-test
 res_gpdb_bin: #@ "bin_gpdb7_rocky8" + ("" if release_build else "_debug")
@@ -64,6 +64,19 @@ os: rocky8
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb7_rocky8_release
+#@ end
+
+#! Job config for gpdb7 rhel8
+#@ def rhel8_gpdb7_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
+res_test_image: rhel8-gpdb7-image-test
+res_gpdb_bin: #@ "bin_gpdb7_rhel8" + ("" if release_build else "_debug")
+is_bundle_release: #@ is_bundle_release
+res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb7_rhel8_intermediates", release_build)
+gpdb_version: gpdb7
+os: rhel8
+container_name_suffix_python: #@ container_name_suffix_python
+container_name_suffix_r: #@ container_name_suffix_r
+release_bin: bin_plcontainer_gpdb7_rhel8_release
 #@ end
 
 #! Job config for bundle release
@@ -189,7 +202,7 @@ params:
 #@ end
 
 #@ def build_test_job_name(conf):
-#@   return "build_test_" + conf["os"]
+#@   return "build_test_" + conf["gpdb_version"] + "_" + conf["os"]
 #@ end
 #@ def build_test_job(param):
 #@   res_map = param["res_map"]
