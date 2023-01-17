@@ -49,7 +49,7 @@ resources:
   check_every: 1m
   source:
     branch: ((plcontainer-branch))
-    uri: https://github.com/higuoxing/plcontainer
+    uri: https://github.com/greenplum-db/plcontainer
     username: ((extension/github-access-token))
     password: x-oauth-basic
     ignore_paths:
