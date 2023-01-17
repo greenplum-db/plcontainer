@@ -49,7 +49,7 @@ resources:
   check_every: 1m
   source:
     branch: ((plcontainer-branch))
-    uri: https://github.com/greenplum-db/plcontainer
+    uri: https://github.com/higuoxing/plcontainer
     username: ((extension/github-access-token))
     password: x-oauth-basic
     ignore_paths:
@@ -143,7 +143,7 @@ resources:
 - name: rhel8-gpdb7-image-build
   type: docker-image
   source:
-    repository: gcr.io/data-gpdb-private-images/gpdb7-rhel8-test
+    repository: gcr.io/data-gpdb-private-images/gpdb7-rhel8-build
     tag: latest
     username: _json_key
     password: ((data-gpdb-private-images-container-registry-readonly-service-account-key))
@@ -295,13 +295,6 @@ resources:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: plcontainer/released/gpdb6/plcontainer-(.*).gppkg
-
-- name: bin_plcontainer_gpdb7_rhel8_release
-  type: gcs
-  source:
-    bucket: pivotal-gpdb-concourse-resources-prod
-    json_key: ((concourse-gcs-resources-service-account-key))
-    regexp: plcontainer/released/gpdb7/plcontainer-(.*).gppkg
 
 - name: bin_plcontainer_gpdb7_rocky8_release
   type: gcs
