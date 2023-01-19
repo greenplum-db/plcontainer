@@ -108,7 +108,6 @@ scipy==1.7.3
 semver==2.13.0
 sgmllib3k==1.0.0
 six==1.16.0
-sklearn==0.0
 smart-open==5.2.1
 soupsieve==2.3.2.post1
 spacy==3.3.1
