@@ -41,7 +41,7 @@ add_dependencies(installcheck testpy2 testpy testr)
 
 # for _b means for data-science-bundle include the packages and import tests
 if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
-    RegressTarget_Add(testpy3_bundle
+    RegressTarget_Add(testpy_bundle
         INIT_FILE
         ${CMAKE_CURRENT_SOURCE_DIR}/init_file
         SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/sql
