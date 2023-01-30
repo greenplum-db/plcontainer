@@ -274,6 +274,13 @@ resources:
     json_key: ((extension/extensions-gcs-service-account-key-dev2))
     versioned_file: intermediates_release/plcontainer/plcontainer-gppkg-ubuntu18-gp6.tar.gz
 
+- name: bin_plcontainer_gpdb7_rocky8_intermediates_rel
+  type: gcs
+  source:
+    bucket: gp-extensions-ci
+    json_key: ((extension/extensions-gcs-service-account-key-dev2))
+    versioned_file: intermediates_release/plcontainer/plcontainer-gppkg-rhel8-gp7.tar.gz
+
 # For uploading to the release bucket gppkg
 - name: bin_plcontainer_gpdb6_rhel7_release
   type: gcs
