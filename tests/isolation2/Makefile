@@ -38,4 +38,4 @@ match_version:
 .PHONY: resgroup
 resgroup: match_version gpdiff.pl gpstringsubs.pl
 	@echo "Tests require three runtime configurations. Will check the three"
-	$(top_builddir)/src/test/regress/pg_isolation2_regress --init-file=../init_file --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --dbname=isolation2resgrouptest --schedule=isolation2_resgroup_schedule
+	$(top_builddir)/src/test/regress/pg_isolation2_regress --init-file=../init_file --inputdir=$(srcdir) --dbname=isolation2resgrouptest --schedule=isolation2_resgroup_schedule

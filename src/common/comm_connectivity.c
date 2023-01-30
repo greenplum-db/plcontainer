@@ -43,8 +43,10 @@ plc_gettimeofday(struct timeval *tv)
 {
 	int retval;
 	retval = gettimeofday(tv, NULL);
-	if (retval < 0)
-		plc_elog(ERROR, "Failed to get time: %s", strerror(errno));
+	if (retval < 0) {
+		int saved_errno = errno;
+		plc_elog(ERROR, "Failed to get time: %s", strerror(saved_errno));
+	}
 }
 
 /*
@@ -75,7 +77,8 @@ static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
 				}
 			}
 		} else {
-			plc_elog(ERROR, "Failed to recv data: %s", strerror(errno));
+			int saved_errno = errno;
+			plc_elog(ERROR, "Failed to recv data: %s", strerror(saved_errno));
 		}
 	}
 
@@ -93,13 +96,15 @@ static ssize_t plcSocketRecv(plcConn *conn, void *ptr, size_t len) {
 static ssize_t plcSocketSend(plcConn *conn, const void *ptr, size_t len) {
 	ssize_t sz;
 	int n=0;
+	int saved_errno;
 	while((sz=send(conn->sock, ptr, len, 0))==-1) {
 #ifndef PLC_CLIENT
 		CHECK_FOR_INTERRUPTS();
 #endif
 		if (errno == EINTR && n++ < 5)
 			continue;
-		plc_elog(ERROR, "Failed to send: %s", strerror(errno));
+		saved_errno = errno;
+		plc_elog(ERROR, "Failed to send: %s", strerror(saved_errno));
 		break;
 	}
 	return sz;
@@ -130,9 +135,10 @@ static int plcBufferMaybeFlush(plcConn *conn, bool isForse) {
 			                     buf->data + buf->pStart,
 			                     buf->pEnd - buf->pStart);
 			if (sent < 0) {
+				int saved_errno = errno;
 				plc_elog(LOG, "plcBufferMaybeFlush: Socket write failed, send "
 					"return code is %d, error message is '%s'",
-					sent, strerror(errno));
+					sent, strerror(saved_errno));
 				return -1;
 			}
 			buf->pStart += sent;
@@ -388,10 +394,12 @@ plcConn *plcConnect_inet(int port) {
 	struct sockaddr_in raddr; /** Remote address */
 	plcConn *result = NULL;
 	struct timeval tv;
+	int saved_errno;
 
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock < 0) {
-		plc_elog(ERROR, "PLContainer: Cannot create socket: %s", strerror(errno));
+		saved_errno = errno;
+		plc_elog(ERROR, "PLContainer: Cannot create socket: %s", strerror(saved_errno));
 		goto err_out1;
 	}
 
@@ -412,8 +420,9 @@ plcConn *plcConnect_inet(int port) {
 	            sizeof(raddr)) < 0) {
 		char ipAddr[INET_ADDRSTRLEN];
 		inet_ntop(AF_INET, &(raddr.sin_addr), ipAddr, INET_ADDRSTRLEN);
+		saved_errno = errno;
 		plc_elog(DEBUG1, "PLContainer: Failed to connect to %s: %s", ipAddr,
-			    strerror(errno));
+			    strerror(saved_errno));
 		goto err_out2;
 	}
 
@@ -447,6 +456,7 @@ plcConn *plcConnect_ipc(char *uds_fn) {
 	struct timeval tv;
 	int sock;
 	struct sockaddr_un raddr;
+	int saved_errno;
 
 	if (strlen(uds_fn) >= sizeof(raddr.sun_path)) {
 		plc_elog(ERROR, "PLContainer: The path for unix domain socket "
@@ -456,8 +466,9 @@ plcConn *plcConnect_ipc(char *uds_fn) {
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
+		saved_errno = errno;
 		plc_elog(ERROR, "PLContainer: Cannot create unix domain socket: %s",
-			    strerror(errno));
+			    strerror(saved_errno));
 		return NULL;
 	}
 
@@ -468,8 +479,9 @@ plcConn *plcConnect_ipc(char *uds_fn) {
 
 	if (connect(sock, (const struct sockaddr *) &raddr,
 	            sizeof(raddr)) < 0) {
+		saved_errno = errno;
 		plc_elog(DEBUG1, "PLContainer: Failed to connect to %s: %s",
-			    uds_fn, strerror(errno));
+			    uds_fn, strerror(saved_errno));
 		goto err_out;
 	}
 

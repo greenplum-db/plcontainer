@@ -355,12 +355,16 @@ static void fill_callreq_arguments(FunctionCallInfo fcinfo, plcProcInfo *proc, p
 		req->args[i].name = proc->argnames[i];
 		copy_type_info(&req->args[i].type, &proc->args[i]);
 
-		if (fcinfo->argnull[i]) {
+		if (PG_ARGISNULL(i)) {
 			req->args[i].data.isnull = 1;
 			req->args[i].data.value = NULL;
 		} else {
 			req->args[i].data.isnull = 0;
+#if PG_VERSION_NUM >= 120000
+			req->args[i].data.value = proc->args[i].outfunc(fcinfo->args[i].value, &proc->args[i]);
+#else
 			req->args[i].data.value = proc->args[i].outfunc(fcinfo->arg[i], &proc->args[i]);
+#endif
 		}
 	}
 }

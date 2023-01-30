@@ -10,13 +10,13 @@
 #@ end
 
 #! Use bin_gpdb_postfix="" to use a release version of gpdb binary
-#! Job config for centos7
+#! Job config for gpdb6 centos7
 #@ def centos7_gpdb6_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
 is_bundle_release: #@ is_bundle_release
-res_test_image: centos7-gpdb6-image-test
+res_test_images: [centos7-gpdb6-image-test]
 res_gpdb_bin: #@ "bin_gpdb6_centos7" + ("" if release_build else "_debug")
-res_gpdb_src: gpdb6_src
 res_intermediates_bin: #@ inter_bin_name("bin_plcontainer_gpdb6_rhel7_intermediates", release_build)
+gpdb_version: gpdb6
 os: rhel7
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
@@ -27,30 +27,43 @@ res_intermediates_tar_r: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", re
 #@   end
 #@ end
 
-#! Job config for rhel8
+#! Job config for gpdb6 rhel8
 #@ def rhel8_gpdb6_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
-res_test_image: rhel8-gpdb6-image-test
+res_test_images: [rhel8-gpdb6-image-test]
 res_gpdb_bin: #@ "bin_gpdb6_rhel8" + ("" if release_build else "_debug")
 is_bundle_release: #@ is_bundle_release
-res_gpdb_src: gpdb6_src
 res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb6_rhel8_intermediates", release_build)
+gpdb_version: gpdb6
 os: rhel8
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_rhel8_release
 #@ end
 
-#! Job config for ubuntu18
+#! Job config for gpdb6 ubuntu18
 #@ def ubuntu18_gpdb6_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
-res_test_image: ubuntu18-gpdb6-image-test
-res_gpdb_src: gpdb6_src
+res_test_images: [ubuntu18-gpdb6-image-test]
 res_gpdb_bin: #@ "bin_gpdb6_ubuntu18" + ("" if release_build else "_debug")
 is_bundle_release: #@ is_bundle_release
 res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb6_ubuntu18_intermediates", release_build)
+gpdb_version: gpdb6
 os: ubuntu18.04
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_ubuntu18_release
+#@ end
+
+#! Job config for gpdb7 rocky8
+#@ def rocky8_gpdb7_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
+res_test_images: [rocky8-gpdb7-image-test, rhel8-gpdb7-image-test]
+res_gpdb_bin: #@ "bin_gpdb7_rocky8" + ("" if release_build else "_debug")
+is_bundle_release: #@ is_bundle_release
+res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb7_rocky8_intermediates", release_build)
+gpdb_version: gpdb7
+os: rocky8
+container_name_suffix_python: #@ container_name_suffix_python
+container_name_suffix_r: #@ container_name_suffix_r
+release_bin: bin_plcontainer_gpdb7_rocky8_release
 #@ end
 
 #! Job config for bundle release
@@ -143,40 +156,43 @@ config:
   outputs:
     - name: plcontainer_src
     - name: plcontainer_artifacts
-image: #@ conf["res_test_image"]
+image: #@ conf["res_build_image"] if ("res_build_image" in conf) else conf["res_test_images"][0]
 input_mapping:
   bin_gpdb: #@ conf["res_gpdb_bin"]
 #@ end
 
 #@ def _test_task(conf):
-task: #@ "test_" + conf["os"]
-privileged: true
-timeout: 2h
-config:
-  platform: linux
-  params:
-    CONTAINER_NAME_SUFFIX_PYTHON: #@ conf["container_name_suffix_python"]
-    CONTAINER_NAME_SUFFIX_R: #@ conf["container_name_suffix_r"]
-  run:
-    path: plcontainer_src/concourse/scripts/entry.sh
-    args:
-      - test
-  inputs:
-    - name: bin_gpdb
-    - name: gpdb_src
-    - name: plcontainer_src
-    - name: bin_cmake
-    - name: plcontainer_artifacts
-  outputs:
-    - name: plcontainer_artifacts
-image: #@ conf["res_test_image"]
-input_mapping:
-  bin_gpdb: #@ conf["res_gpdb_bin"]
-params:
+#@   images = conf['res_test_images']
+in_parallel:
+#@   for image in images:
+#@     test_os = image.split("-")[0]
+  - task: #@ "test_" + test_os
+    privileged: true
+    timeout: 2h
+    config:
+      platform: linux
+      params:
+        CONTAINER_NAME_SUFFIX_PYTHON: #@ conf["container_name_suffix_python"]
+        CONTAINER_NAME_SUFFIX_R: #@ conf["container_name_suffix_r"]
+      inputs:
+        - name: bin_gpdb
+        - name: gpdb_src
+        - name: plcontainer_src
+        - name: bin_cmake
+        - name: plcontainer_artifacts
+      outputs:
+        - name: plcontainer_artifacts
+      run:
+        path: plcontainer_src/concourse/scripts/entry.sh
+        args: [test]
+    image: #@ image
+    input_mapping:
+      bin_gpdb: #@ conf["res_gpdb_bin"]
+#@   end
 #@ end
 
 #@ def build_test_job_name(conf):
-#@   return "build_test_" + conf["os"]
+#@   return "build_test_" + conf["gpdb_version"] + "_" + conf["os"]
 #@ end
 #@ def build_test_job(param):
 #@   res_map = param["res_map"]
@@ -199,13 +215,17 @@ plan:
   - get: bin_cmake
   - get: gpdb_src
     resource: #@ param["gpdb_src"]
-  - get: #@ conf["res_test_image"]
+#@   for test_image in conf["res_test_images"]:
+  - get: #@ test_image
+#@   end
   - get: #@ conf["res_gpdb_bin"]
+#@ if/end "res_build_image" in conf:
+  - get: #@ conf["res_build_image"]
 - #@ _build_task(conf)
 - #@ _test_task(conf)
 - put: #@ conf["res_intermediates_bin"]
   params:
-    file: plcontainer_artifacts/plcontainer-gppkg-*-gp6.tar.gz
+    file: plcontainer_artifacts/plcontainer-gppkg-*.tar.gz
 #@   if conf["is_bundle_release"]:
 - put: #@ conf["res_intermediates_tar_python37"]
   params:

@@ -22,7 +22,7 @@ typedef struct plcArrayMeta {
 typedef struct plcArray {
 	plcArrayMeta *meta;
 	char *data;
-	char *nulls;
+	bool *nulls;
 } plcArray;
 
 struct plcIterator {

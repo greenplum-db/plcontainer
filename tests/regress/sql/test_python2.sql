@@ -108,7 +108,7 @@ select * from pytestudt13( (1,2,'a')::test_type3 );
 select pytestudt16();
 select * from pytestudtrecord1() as t(a int, b int, c varchar);
 select * from pytestudtrecord2() as t(a int, b int, c varchar);
-select pyreturnsetofint8(2), pyreturnsetofint8(3);
+select * from pyreturnsetofint8(2) a, pyreturnsetofint8(3) b;
 select pybadint();
 select pybadfloat8();
 select pybadudt();

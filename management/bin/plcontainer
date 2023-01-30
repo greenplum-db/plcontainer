@@ -1,9 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 #------------------------------------------------------------------------------
 #
-# 
-# Copyright (c) 2016-Present Pivotal Software, Inc
+# Copyright (c) 2016-Present VMware, Inc. or its affiliates.
 #
 #------------------------------------------------------------------------------
 
@@ -15,18 +14,24 @@ import tempfile
 import traceback
 import datetime
 import xml.dom.minidom
-import commands
+import subprocess
 import argparse
 from xml.etree import ElementTree
 
 try:
     from gppylib import gplog
     from gppylib.commands.base import WorkerPool, REMOTE, Command
-    from gppylib.commands.unix import Scp, FileDirExists, getLocalHostname, getUserName
+    from gppylib.commands.unix import getLocalHostname, getUserName
+    try:
+        # https://github.com/greenplum-db/gpdb/pull/14145
+        # after gp7 the Scp tool renamed to Rsync
+        from gppylib.commands.unix import Scp as Rsync
+    except ImportError:
+        from gppylib.commands.unix import Rsync
     from gppylib.db import dbconn
     from gppylib import gparray
     from gppylib import userinput
-except ImportError, e:
+except ImportError as e:
     sys.exit('ERROR: Cannot import Greenplum modules.  Please check that you have sourced greenplum_path.sh.  Detail: ' + str(e))
 
 PLCONTAINER_CONFIG_FILE = 'plcontainer_configuration.xml'
@@ -127,7 +132,7 @@ def distribute_docker_file(pool, d_file, dest, hosts):
     if dest is None:
         dest = os.path.join(TMP, d_file)
     for host in hosts:
-        cmd = Scp('Distribute docker image file.',
+        cmd = Rsync('Distribute docker image file.',
                     d_file,
                     dest,
                     None,
@@ -160,7 +165,7 @@ def get_docker_image(url):
     download docker image from given url
     '''
     logger.info("Getting docker image from %s" % url)
-    (ok, out) = commands.getstatusoutput('docker pull %s' % url)
+    (ok, out) = subprocess.getstatusoutput('docker pull %s' % url)
     if ok != 0:
         logger.error("Cannot pull docker image from %s" % url)
         sys.exit(1)
@@ -168,7 +173,7 @@ def get_docker_image(url):
     image_name = "".join([name_tag.replace(":", "_"), TAR_GZ])
     image_path = os.path.join(TMP, image_name)
     logger.info("Saving docker image to %s" % image_path)
-    (ok, out) = commands.getstatusoutput('docker save -o %s %s' % (image_path, url))
+    (ok, out) = subprocess.getstatusoutput('docker save -o %s %s' % (image_path, url))
     if ok != 0:
         logger.error("Cannot save docker image %s to %s" % (url, image_path))
         sys.exit(1)
@@ -196,7 +201,7 @@ def install_image_remote(hosts, pool, docker_image):
         logger.info('Removing temporary image files on all hosts...')
         docker_load_cmd = " ".join(["rm -f ", dest])
         remote_cmd(pool, docker_load_cmd, hosts)
-    except Exception, ex:
+    except Exception as ex:
         if (step == 0):
             logger.error("Cannot find docker in all hosts, please check docker installation again")
         elif (step == 1):
@@ -223,7 +228,7 @@ def install_image_local(hosts, pool, docker_file):
         logger.info('Loading image on all hosts via local file...')
         docker_load_cmd = " ".join(["docker load -i ", docker_file])
         remote_cmd(pool, docker_load_cmd, hosts)
-    except Exception, ex:
+    except Exception as ex:
         if (step == 0):
             logger.error("Cannot find docker in all hosts, please check docker installation again")
         elif (step == 1):
@@ -269,7 +274,7 @@ def delete_images(options, pool, hosts):
         logger.info('Deleting image %s on all hosts...' % docker_image)
         docker_delete_cmd = " ".join(["docker rmi -f ", docker_image])
         remote_cmd(pool, docker_delete_cmd, hosts)
-    except Exception, ex:
+    except Exception as ex:
         raise(ex)
 
 def update_xml_check_shared_folders(runtime, elements):
@@ -286,7 +291,7 @@ def update_xml_check_shared_folders(runtime, elements):
             access="ro")
     runtime.append(shareDir)
 
-    if 'hasShared' in elements.keys():
+    if 'hasShared' in elements:
         count = 0
         for plHost in elements['host']:
             shareDir = ElementTree.Element("shared_directory",
@@ -300,7 +305,7 @@ def update_xml_check_settings(runtime, elements):
     '''
     update other settings.
     '''
-    if not 'hasSetting' in elements.keys():
+    if not 'hasSetting' in elements:
         return
 
     for setting in runtime.findall('setting'):
@@ -388,7 +393,7 @@ def add_xml_config(filename, elements):
         xmlfile = open(filename, "w")
         xmlfile.write(newXMLTreeString)
         xmlfile.close()
-    except Exception, ex:
+    except Exception as ex:
         logger.error("Update XML file Error")
         logger.error(str(ex))
         raise Exception("Update XML file Error")
@@ -423,7 +428,7 @@ def update_xml_config(filename, elements):
         xmlfile = open(filename, "w")
         xmlfile.write(newXMLTreeString)
         xmlfile.close()
-    except Exception, ex:
+    except Exception as ex:
         logger.error("Update XML file Error")
         logger.error(str(ex))
         raise Exception("Update XML file Error")
@@ -447,7 +452,7 @@ def delete_xml_config(filename, del_runtime_id):
                 xmlfile.write(newXMLTreeString)
                 xmlfile.close()
                 return True
-    except Exception, ex:
+    except Exception as ex:
         logger.error("Update XML file Error")
         logger.error(str(ex))
         raise Exception("Update XML file Error")
@@ -477,9 +482,9 @@ def copy_file_to_tmp(host, file):
     tmp_file = tempfile.mktemp()
     if not os.path.exists(file):
         default_config = os.path.join(DBHOME, PLCONTAINER_GPDB_DIR, PLCONTAINER_CONFIG_FILE)
-        cmd = Scp('copy conf file from GPDB folder', default_config, file, host)
+        cmd = Rsync('copy conf file from GPDB folder', default_config, file, host)
         cmd.run()
-    cmd = Scp('copy conf file', file, tmp_file, host)
+    cmd = Rsync('copy conf file', file, tmp_file, host)
     cmd.run()
     if not os.path.exists(tmp_file):
         logger.error("Error while copying configuration file. Check that PL/Container is initialized" +
@@ -529,7 +534,7 @@ def validate_xml(filename):
             # FIXME: Need to check the naming convention?
 
             if not runtime.find('image').text in image_list:
-                logger.warn("image %s is not in the list of 'docker images'" % runtime.find('image').text)
+                logger.warning("image %s is not in the list of 'docker images'" % runtime.find('image').text)
 
             # Only one 'command' subelement is allowed.
             num = len(runtime.findall('command'))
@@ -548,9 +553,9 @@ def validate_xml(filename):
                     logger.error("access should be 'ro' or 'rw' in shared_directory in runtime %s, but now: %s", runtime_id, share_folder.attrib['access'])
                     raise Exception("Validation failed")
 
-                if  share_folder.attrib.keys() != ['access', 'host', 'container']:
+                if  sorted(list(share_folder.attrib.keys())) != ['access', 'container', 'host']:
                     logger.error("Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime %s", runtime_id)
-                    logger.error("Current: %s", share_folder.attrib.keys())
+                    logger.error("Current: %s", list(share_folder.attrib.keys()))
                     raise Exception("Validation failed")
 
                 # This path is reserved for unix domain socket connection.
@@ -610,7 +615,7 @@ def validate_xml(filename):
                         raise Exception("Validation failed")
                 else:
                     logger.error("Found illegal setting in runtime %s: %s", runtime_id, settings.attrib)
-    except Exception, ex:
+    except Exception as ex:
         correct = False 
         logger.error("XML file does not conform XML specification or wrong settings.")
         logger.error(str(ex))
@@ -646,7 +651,7 @@ def distribute_file(pool, src_filename, dest_filename, gpdb_locations):
     for l in gpdb_locations:
         dest_file = os.path.join(l[1], dest_filename)
         logger.debug("Distributing to %s:%s", l[0], dest_file)
-        cmd = Scp('distribute changed file',
+        cmd = Rsync('distribute changed file',
                   src_filename,
                   dest_file,
                   None,
@@ -666,7 +671,7 @@ def backup_file(pool, gpdb_locations, file):
     for l in gpdb_locations:
         src_file = os.path.join(l[1], file)
         dest_file = os.path.join(l[1], dest_filename)
-        cmd = Scp('backup file',
+        cmd = Rsync('backup file',
                   src_file,
                   dest_file,
                   l[0],
@@ -750,7 +755,7 @@ def runtime_show_xml(filename, r_id):
 
         if no_entry:
             sys.stdout.write("No runtime or no specified runtime was found.\n")
-    except Exception, ex:
+    except Exception as ex:
         logger.error("XML file does not conform XML specification or no related element was found.")
         logger.error(str(ex))
         raise Exception("runtime-show error")
@@ -961,7 +966,8 @@ def main():
         if options.subparser_name == "runtime-backup":
             fb = open(tmp_file, 'rb')
             fw = open(options.file, 'wb')
-            fw.write('%s\n' % fb.read())
+            fw.write(fb.read())
+            fw.write(b'\n')
             fw.close()
             fb.close()
 
@@ -1002,7 +1008,7 @@ def main():
             logger.info('Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions.' +
                         ' New sessions will get new configuration automatically.')
 
-    except Exception, ex:
+    except Exception as ex:
         retval = 1
         logger.fatal("%s failed. (Reason='%s') exiting..." % (execname, ex))
         if options.verbose:

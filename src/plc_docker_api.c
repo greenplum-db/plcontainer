@@ -14,6 +14,7 @@
 #include "common/comm_utils.h"
 #include "plc_docker_api.h"
 #include "plc_backend_api.h"
+#include "plc_configuration.h"
 #ifndef PLC_PG
   #include "cdb/cdbvars.h"
 #endif
@@ -24,7 +25,6 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <curl/curl.h>
-#include <json-c/json.h>
 
 // Default location of the Docker API unix socket
 static char *plc_docker_socket = "/var/run/docker.sock";
@@ -341,8 +341,11 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	if (has_error == true) {
 		return -1;
 	}
-
+#if PG_VERSION_NUM >= 120000
+	username = GetUserNameFromId(GetUserId(), /*noerr*/ false);
+#else
 	username = GetUserNameFromId(GetUserId());
+#endif
 	dbname = MyProcPort->database_name;
 
 
@@ -646,14 +649,14 @@ int plc_docker_get_container_state(const char *name, char **result) {
 
 static int docker_inspect_string(char *buf, char **element, plcInspectionMode type) {
 	int i;
-	struct json_object *response = NULL;
+	struct jsonc_json_object *response = NULL;
 
 	backend_log(DEBUG1, "plcontainer: docker_inspect_string:%s", buf);
 	response = json_tokener_parse(buf);
 	if (response == NULL)
 		return -1;
 	if (type == PLC_INSPECT_NAME) {
-		struct json_object *nameidObj = NULL;
+		struct jsonc_json_object *nameidObj = NULL;
 		const char *namestr;
 
 		if (!json_object_object_get_ex(response, "Id", &nameidObj)) {
@@ -664,9 +667,9 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 		*element = pstrdup(namestr);
 		return 0;
 	} else if (type == PLC_INSPECT_PORT) {
-		struct json_object *NetworkSettingsObj = NULL;
-		struct json_object *PortsObj = NULL;
-		struct json_object *HostPortArray = NULL;
+		struct jsonc_json_object *NetworkSettingsObj = NULL;
+		struct jsonc_json_object *PortsObj = NULL;
+		struct jsonc_json_object *HostPortArray = NULL;
 		int arraylen;
 
 		if (!json_object_object_get_ex(response, "NetworkSettings", &NetworkSettingsObj)) {
@@ -687,8 +690,8 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 		}
 		arraylen = json_object_array_length(HostPortArray);
 		for (i = 0; i < arraylen; i++) {
-			struct json_object *PortBindingObj = NULL;
-			struct json_object *HostPortObj = NULL;
+			struct jsonc_json_object *PortBindingObj = NULL;
+			struct jsonc_json_object *HostPortObj = NULL;
 			const char *HostPortStr;
 
 			PortBindingObj = json_object_array_get_idx(HostPortArray, i);
@@ -705,13 +708,13 @@ static int docker_inspect_string(char *buf, char **element, plcInspectionMode ty
 			return 0;
 		}
 	} else if (type == PLC_INSPECT_STATUS) {
-		struct json_object *StateObj = NULL;
+		struct jsonc_json_object *StateObj = NULL;
 
 		if (!json_object_object_get_ex(response, "State", &StateObj)) {
 			backend_log(WARNING, "failed to get json \"State\" field.");
 			return -1;
 		}
-		struct json_object *StatusObj = NULL;
+		struct jsonc_json_object *StatusObj = NULL;
 		if (!json_object_object_get_ex(StateObj, "Status", &StatusObj)) {
 			backend_log(WARNING, "failed to get json \"Status\" field.");
 			return -1;

@@ -89,8 +89,9 @@ static void set_signal_handler(int signo, int sigflags, signal_handler func) {
 
 	ret = sigaction(signo, &sa, NULL);
 	if (ret < 0) {
+		int saved_errno = errno;
 			plc_elog(ERROR, "sigaction(%d with flag 0x%x) failed: %s", signo,
-			        sigflags, strerror(errno));
+			        sigflags, strerror(saved_errno));
 		return;
 	}
 

@@ -10,12 +10,14 @@
 #define PLC_CONFIGURATION_H
 
 #include "postgres.h"
-
 #include "fmgr.h"
 
 #include "plcontainer.h"
 
+// rename a type name in json-c, to avoid name conflict
+#define json_object jsonc_json_object
 #include <json-c/json.h>
+#undef jsonc_json_object
 
 #define PLC_PROPERTIES_FILE "plcontainer_configuration.xml"
 #define RUNTIME_ID_MAX_LENGTH 64

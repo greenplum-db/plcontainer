@@ -50,15 +50,15 @@ select rint(345::int8);
 (1 row)
 
 select rfloat(3.1415926535897932384626433832::float4);
- rfloat  
----------
- 4.14159
+  rfloat  
+----------
+ 4.141593
 (1 row)
 
 select rfloat(3.1415926535897932384626433832::float8);
-      rfloat      
-------------------
- 5.14159265358979
+      rfloat       
+-------------------
+ 5.141592653589793
 (1 row)
 
 select rnumeric(3.1415926535897932384626433832::numeric);
@@ -104,9 +104,9 @@ select rtest_mia();
 (1 row)
 
 select vec('{1.23, 1.32}'::float8[]);
-     vec     
--------------
- {2.23,2.32}
+            vec            
+---------------------------
+ {2.23,2.3200000000000003}
 (1 row)
 
 select vec('{1, 5,10, 100, 7}'::int8[]);
@@ -116,9 +116,9 @@ select vec('{1, 5,10, 100, 7}'::int8[]);
 (1 row)
 
 select vec('{1.23, 1.32}'::float4[]);
-     vec     
--------------
- {2.23,2.32}
+       vec        
+------------------
+ {2.23,2.3200002}
 (1 row)
 
 select vec('{1, 5,10, 100, 7}'::int4[]);
@@ -230,9 +230,9 @@ select rfloatarr('{1.2,2.3,3.4,5.6}'::float8[]);
 (1 row)
 
 select rfloatarr('{1.2,2.3,3.4,null}'::float8[]);
- rfloatarr 
------------
-       6.9
+     rfloatarr      
+--------------------
+ 6.8999999999999995
 (1 row)
 
 select rfloatarr('{null}'::float8[]);
@@ -358,11 +358,8 @@ select rpg_spi_exec('select 1');
 
 select rlogging();
 INFO:  this is the info message
-CONTEXT:  PLContainer function "rlogging"
 NOTICE:  this is the notice message
-CONTEXT:  PLContainer function "rlogging"
 WARNING:  this is the warning message
-CONTEXT:  PLContainer function "rlogging"
  rlogging 
 ----------
  
@@ -370,17 +367,8 @@ CONTEXT:  PLContainer function "rlogging"
 
 select rlogging2();
 INFO:  this is the info message
-CONTEXT:  PLContainer function "rlogging"
-SQL statement "select rlogging()"
-PLContainer function "rlogging"
 NOTICE:  this is the notice message
-CONTEXT:  PLContainer function "rlogging"
-SQL statement "select rlogging()"
-PLContainer function "rlogging"
 WARNING:  this is the warning message
-CONTEXT:  PLContainer function "rlogging"
-SQL statement "select rlogging()"
-PLContainer function "rlogging"
  rlogging2 
 -----------
  

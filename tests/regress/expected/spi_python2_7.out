@@ -75,105 +75,55 @@ for r in rv:
 $$ LANGUAGE plcontainer;
 select py_spi_pexecute1();
 NOTICE:  Test query execution
-CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  X [('id', 7000L), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  X [('id', 8000L), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
+NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
+NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
 NOTICE:  Test query targetlist containing NULL
-CONTEXT:  PLContainer function "py_spi_pexecute1"
-NOTICE:  X [('id', 1000L), ('name', None), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
+NOTICE:  X [('id', 1000), ('name', None), ('online', 1), ('sex', 'm')]
 NOTICE:  Test text
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  True
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test bool
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 1000), ('name', None), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 1001), ('name', None), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9001), ('name', 'bob2'), ('online', 1), ('sex', 'f')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9005), ('name', 'alice3'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test int4
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9002), ('name', 'bob3'), ('online', 0), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9003), ('name', 'alice1'), ('online', 0), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9004), ('name', 'alice2'), ('online', 0), ('sex', 'f')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9005), ('name', 'alice3'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test char
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 1000), ('name', None), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 1001), ('name', None), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9002), ('name', 'bob3'), ('online', 0), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9003), ('name', 'alice1'), ('online', 0), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9005), ('name', 'alice3'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test text+bool+char+int4
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test results containing NULL
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 1000), ('name', None), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 1001), ('name', None), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  Test insert NULL
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 1000), ('name', None), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 1001), ('name', None), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 1002), ('name', None), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 7000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 8000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9000), ('name', 'bob1'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9001), ('name', 'bob2'), ('online', 1), ('sex', 'f')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9002), ('name', 'bob3'), ('online', 0), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9003), ('name', 'alice1'), ('online', 0), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9004), ('name', 'alice2'), ('online', 0), ('sex', 'f')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
 NOTICE:  X [('id', 9005), ('name', 'alice3'), ('online', 1), ('sex', 'm')]
-CONTEXT:  PLContainer function "py_spi_pexecute1"
  py_spi_pexecute1 
 ------------------
  
@@ -215,21 +165,13 @@ for r in rv:
 $$ LANGUAGE plcontainer;
 select py_spi_pexecute2();
 NOTICE:  Test int2
-CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  X [('age', 20), ('id', 8000L), ('name', 'bob1')]
-CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  X [('age', 20), ('id', 9000L), ('name', 'bob0')]
-CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  Test int8
-CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  X [('age', 40), ('id', 6000L), ('name', 'alice1')]
-CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  X [('age', 50), ('id', 6000L), ('name', 'alice2')]
-CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  Test text + int8
-CONTEXT:  PLContainer function "py_spi_pexecute2"
 NOTICE:  X [('age', 20), ('id', 9000L), ('name', 'bob0')]
-CONTEXT:  PLContainer function "py_spi_pexecute2"
  py_spi_pexecute2 
 ------------------
  
@@ -278,35 +220,20 @@ for r in rv:
 $$ LANGUAGE plcontainer;
 select py_spi_pexecute3();
 NOTICE:  Test bytea
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  Test float4
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob1'), ('score1', 8.75), ('score2', 16.75)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob2'), ('score1', 8.875), ('score2', 16.875)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  Test float8
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob1'), ('score1', 8.75), ('score2', 16.75)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob3'), ('score1', 9.125), ('score2', 16.125)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob4'), ('score1', 9.25), ('score2', 16.25)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  Test float4+float8
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob1'), ('score1', 8.75), ('score2', 16.75)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
 NOTICE:  X [('name', 'bob3'), ('score1', 9.125), ('score2', 16.125)]
-CONTEXT:  PLContainer function "py_spi_pexecute3"
  py_spi_pexecute3 
 ------------------
  
@@ -370,7 +297,6 @@ for r in rv:
 $$ LANGUAGE plcontainer;
 select py_spi_simple_t4();
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
  
@@ -392,7 +318,6 @@ QUERY:  select * from t4 where score1<$1 order by score1
 CONTEXT:  PLContainer function "py_spi_illegal_pexecute2"
 select py_spi_simple_t4();
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
  
@@ -408,7 +333,6 @@ ERROR:  PL/Container client exception occurred:
 CONTEXT:  PLContainer function "py_spi_illegal_pexecute4"
 select py_spi_simple_t4();
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
  
@@ -416,15 +340,10 @@ CONTEXT:  PLContainer function "py_spi_simple_t4"
 
 SELECT py_spi_simple_num();
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_simple_num"
 NOTICE:  X [('name', 'bob1'), ('score1', 8.75), ('score2', 16.75)]
-CONTEXT:  PLContainer function "py_spi_simple_num"
 NOTICE:  X [('name', 'bob2'), ('score1', 8.875), ('score2', 16.875)]
-CONTEXT:  PLContainer function "py_spi_simple_num"
 NOTICE:  X [('name', 'bob3'), ('score1', 9.125), ('score2', 16.125)]
-CONTEXT:  PLContainer function "py_spi_simple_num"
 NOTICE:  X [('name', 'bob4'), ('score1', 9.25), ('score2', 16.25)]
-CONTEXT:  PLContainer function "py_spi_simple_num"
  py_spi_simple_num 
 -------------------
  
@@ -472,7 +391,6 @@ return 0
 $$ LANGUAGE plcontainer IMMUTABLE;
 select py_spi_simple_t4();
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
  
@@ -495,7 +413,6 @@ ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order b
 CONTEXT:  PLContainer function "pyspi_bad_limit"
 select py_spi_simple_t4();
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
  
@@ -516,7 +433,6 @@ ERROR:  plcontainer: Cannot handle sql ('select datname from pg_database order b
 CONTEXT:  PLContainer function "pyspi_bad_limit_stable"
 select py_spi_simple_t4();
 NOTICE:  X [('name', 'bob0'), ('score1', 8.5), ('score2', 16.5)]
-CONTEXT:  PLContainer function "py_spi_simple_t4"
  py_spi_simple_t4 
 ------------------
  
