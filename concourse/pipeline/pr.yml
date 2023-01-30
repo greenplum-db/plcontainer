@@ -32,7 +32,7 @@ jobs:
 #@   param = {
 #@     "res_map": res_map,
 #@     "trigger": trigger,
-#@     "gpdb_src": "gpdb6_src",
+#@     "gpdb_src": "{}_src".format(conf["gpdb_version"]),
 #@     "conf": conf
 #@   }
 - #@ build_test_job(param)
