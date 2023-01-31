@@ -144,6 +144,7 @@ config:
   params:
     CONTAINER_NAME_SUFFIX_PYTHON: #@ conf["container_name_suffix_python"]
     CONTAINER_NAME_SUFFIX_R: #@ conf["container_name_suffix_r"]
+    ARTIFACT_TYPE: #@ "Debug" if conf["res_gpdb_bin"].endswith("_debug") else "Release"
   run:
     path: plcontainer_src/concourse/scripts/entry.sh
     args:

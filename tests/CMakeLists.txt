@@ -1,5 +1,12 @@
 include(${CMAKE_SOURCE_DIR}/cmake/Regress.cmake)
 
+list(APPEND REGRESS_OPTS "--dbname=${TEST_DB_NAME}")
+if("$ENV{ARTIFACT_TYPE}" STREQUAL "Release")
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/tests_using_faultinjector.txt EXCLUDE_TESTS)
+    string(STRIP ${EXCLUDE_TESTS} EXCLUDE_TESTS)
+    list(APPEND REGRESS_OPTS "--exclude-tests=${EXCLUDE_TESTS}")
+endif()
+
 RegressTarget_Add(testpy
     INIT_FILE
     ${CMAKE_CURRENT_SOURCE_DIR}/init_file
@@ -8,8 +15,7 @@ RegressTarget_Add(testpy
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py
-    REGRESS_OPTS
-    --dbname=${TEST_DB_NAME}
+    REGRESS_OPTS ${REGRESS_OPTS}
     REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
 
 RegressTarget_Add(testpy2
@@ -20,8 +26,7 @@ RegressTarget_Add(testpy2
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py2
-    REGRESS_OPTS
-    --dbname=${TEST_DB_NAME}
+    REGRESS_OPTS ${REGRESS_OPTS}
     REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
 
 RegressTarget_Add(testr
@@ -32,8 +37,7 @@ RegressTarget_Add(testr
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_r
-    REGRESS_OPTS
-    --dbname=${TEST_DB_NAME}
+    REGRESS_OPTS ${REGRESS_OPTS}
     REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
 
 add_custom_target(installcheck)
@@ -49,8 +53,7 @@ if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
         RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
         DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
         SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py_bundle
-        REGRESS_OPTS
-        --dbname=${TEST_DB_NAME}
+        REGRESS_OPTS ${REGRESS_OPTS}
         REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
     add_dependencies(installcheck testpy_bundle)
 endif()
