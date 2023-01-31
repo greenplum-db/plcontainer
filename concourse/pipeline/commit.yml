@@ -3,7 +3,9 @@
 #@   "build_test_job",
 #@   "centos7_gpdb6_conf",
 #@   "ubuntu18_gpdb6_conf",
-#@   "rhel8_gpdb6_conf")
+#@   "rhel8_gpdb6_conf",
+#@   "rocky8_gpdb7_conf",
+#@ )
 #@ load("trigger_def.lib.yml",
 #@   "commit_trigger",
 #@ )
@@ -16,6 +18,7 @@
 #@   centos7_gpdb6_conf(),
 #@   rhel8_gpdb6_conf(),
 #@   ubuntu18_gpdb6_conf(),
+#@   rocky8_gpdb7_conf(),
 #@ ]
 jobs:
 #@ param = {
@@ -27,7 +30,7 @@ jobs:
 #@   param = {
 #@     "res_map": res_map,
 #@     "trigger": trigger,
-#@     "gpdb_src": "gpdb6_src",
+#@     "gpdb_src": "{}_src".format(conf["gpdb_version"]),
 #@     "conf": conf
 #@   }
 - #@ build_test_job(param)
