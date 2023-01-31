@@ -3,9 +3,9 @@ FROM ubuntu:20.04
 EXPOSE 8080
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip gcc g++ cmake make r-base r-base-dev
 RUN pip3 --no-cache install cmake
-# ubuntu20.04 cmake version < 3.18 use pip install to make it easy 
+# ubuntu20.04 cmake version < 3.18 use pip install to make it easy
 
-# RUN mkdir -p /opt 
+# RUN mkdir -p /opt
 
 # ADD ./install_r.sh /opt/
 # ADD ./r_env.sh /opt/
