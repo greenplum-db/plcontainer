@@ -1,4 +1,20 @@
-#!/usr/bin/env python
+#!/bin/sh
+
+''':'
+PYTHON=$(head -n 1 "$GPHOME/lib/python/gppylib/gpcatalog.py" 2> /dev/null | cut -d ' ' -f 2)
+
+if [ -z $PYTHON ]; then
+    PYTHON=$(which python3 2> /dev/null || which python 2> /dev/null || which python2 2> /dev/null)
+fi
+
+if [ -z $PYTHON ]; then
+    echo "no python3 or python2 detected"
+    exit 1
+fi
+
+exec $PYTHON $0 "$@"
+exit $?
+''' #'''
 
 #------------------------------------------------------------------------------
 #
