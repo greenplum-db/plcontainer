@@ -17,3 +17,4 @@ typedef struct plcMsgLog {
 } plcMsgLog;
 
 #endif /* PLC_MESSAGE_LOG_H */
+

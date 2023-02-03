@@ -253,6 +253,7 @@ int plc_get_type_length(plcDatatype dt) {
 		case PLC_DATA_TEXT:
 		case PLC_DATA_UDT:
 		case PLC_DATA_BYTEA:
+		case PLC_DATA_ANYTABLE:
 			/* 8 = the size of pointer */
 			res = 8;
 			break;
@@ -278,6 +279,7 @@ static const char *plcDatatypeName[] =
 		"PLC_DATA_ARRAY",
 		"PLC_DATA_UDT",
 		"PLC_DATA_BYTEA",
+		[PLC_DATA_ANYTABLE] = "PLC_DATA_ANYTABLE",
 		"PLC_DATA_INVALID"
 	};
 

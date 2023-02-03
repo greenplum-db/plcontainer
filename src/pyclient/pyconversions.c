@@ -616,6 +616,10 @@ static plcPyInputFunc Ply_get_input_function(plcDatatype dt, bool isArrayElement
 				res = plc_pyobject_from_udt;
 			}
 			break;
+		case PLC_DATA_ANYTABLE:
+			// QQQ TODO client
+			// add PG anytable type to Python anytable
+			break;
 		default:
 			raise_execution_error("Type %s [%d] cannot be passed Ply_get_input_function function",
 			                      plc_get_type_name(dt), (int) dt);
