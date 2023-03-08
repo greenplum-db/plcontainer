@@ -1,0 +1,23 @@
+FROM ubuntu:20.04
+
+RUN apt-get update && apt-get install -y software-properties-common
+# for install python3.9
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt-get install -y \
+    python3.9 python3.9-dev python3-pip \
+    default-libmysqlclient-dev libssl-dev \
+    libpq-dev && \ 
+rm -rf /var/lib/apt/lists/*
+
+ADD requirements-py39.txt .
+ENV SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL True
+RUN ln -sf /usr/bin/python3.9 /usr/bin/python3
+# ubuntu20.04 cmake version < 3.18 use pip install to make it easy
+RUN pip3 --no-cache install cmake
+
+# old logic will cost 4GB space so I comment it for now.
+# RUN python3 -m pip install nltk
+# RUN python3 -m nltk.downloader all
+RUN mkdir -p /clientdir
+
+WORKDIR /clientdir
