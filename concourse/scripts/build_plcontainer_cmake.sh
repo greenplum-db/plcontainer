@@ -5,6 +5,8 @@ set -exo pipefail
 function build_all() {
     [ -f /opt/gcc_env.sh ] && source /opt/gcc_env.sh
     pushd /home/gpadmin/plcontainer_src
+    git submodule init
+    git submodule update
     popd
 
     pushd /home/gpadmin/plcontainer_artifacts

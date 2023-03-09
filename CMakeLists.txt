@@ -138,6 +138,11 @@ add_dependencies(
 )
 
 # Build client
+if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
+    set(DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gp-data-science-bundle/dockerfiles)
+else()
+    set(DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+endif()
 set(PYCLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_PYTHON})
 # python2.7
 set(PY2CLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_PYTHON2})
@@ -157,7 +162,7 @@ add_custom_target(pyclient_image
     -t ${PYCLIENT_IMAGE}
     -f Dockerfile.${PYCLIENT_IMAGE}
     WORKING_DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+    ${DOCKERFILES_DIR})
 
 # py2 client image docker file hard code for now.
 add_custom_target(py2client_image
