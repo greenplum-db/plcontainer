@@ -139,7 +139,7 @@ add_dependencies(
 
 # Build client
 if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
-    set(DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gp-data-science-bundle/dockerfiles)
+    set(DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles/gp-data-science-bundle/dockerfiles)
 else()
     set(DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
 endif()
