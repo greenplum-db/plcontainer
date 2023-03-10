@@ -1,6 +1,6 @@
 include(${CMAKE_SOURCE_DIR}/cmake/Regress.cmake)
 
-list(APPEND REGRESS_OPTS "--dbname=${TEST_DB_NAME}")
+list(APPEND REGRESS_OPTS "--dbname=${TEST_DB_NAME}" "--use-existing")
 if("$ENV{ARTIFACT_TYPE}" STREQUAL "Release")
     file(READ ${CMAKE_CURRENT_SOURCE_DIR}/tests_using_faultinjector.txt EXCLUDE_TESTS)
     string(STRIP ${EXCLUDE_TESTS} EXCLUDE_TESTS)
