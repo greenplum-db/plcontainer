@@ -152,12 +152,22 @@ add_custom_target(rclient_image
     -f Dockerfile.${RCLIENT_IMAGE}
     WORKING_DIRECTORY
     ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+
+# Conventionally, docker build command will send the context directory
+# (typically the current one) to the docker daemon, but without dereferencing
+# the symbolic links in the directory.
+#
+# To enable the context directory to contain symbolic links, we use tar -ch to
+# create a tarball with symbolic links dereferenced. Afterwards, we pipe the 
+# tarball to the docker build command. In this way, the docker daemon actually
+# receives a set of files with links dereferenced.
 add_custom_target(pyclient_image
     COMMAND
-    PYTHONPATH=
-    docker build .
+    tar -ch . |
+    docker build
     -t ${PYCLIENT_IMAGE}
     -f Dockerfile.${PYCLIENT_IMAGE}
+    -
     WORKING_DIRECTORY
     ${DOCKERFILES_DIR})
 
