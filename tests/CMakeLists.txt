@@ -1,6 +1,5 @@
 include(${CMAKE_SOURCE_DIR}/cmake/Regress.cmake)
 
-list(APPEND REGRESS_OPTS "--dbname=${TEST_DB_NAME}" "--use-existing")
 if("$ENV{ARTIFACT_TYPE}" STREQUAL "Release")
     file(READ ${CMAKE_CURRENT_SOURCE_DIR}/tests_using_faultinjector.txt EXCLUDE_TESTS)
     string(STRIP ${EXCLUDE_TESTS} EXCLUDE_TESTS)
@@ -16,7 +15,7 @@ RegressTarget_Add(testpy
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py
     REGRESS_OPTS ${REGRESS_OPTS}
-    REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
+    REGRESS_ENV PL_TESTDB=testpy)
 
 RegressTarget_Add(testpy2
     INIT_FILE
@@ -27,7 +26,7 @@ RegressTarget_Add(testpy2
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py2
     REGRESS_OPTS ${REGRESS_OPTS}
-    REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
+    REGRESS_ENV PL_TESTDB=testpy2)
 
 RegressTarget_Add(testr
     INIT_FILE
@@ -38,7 +37,7 @@ RegressTarget_Add(testr
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_r
     REGRESS_OPTS ${REGRESS_OPTS}
-    REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
+    REGRESS_ENV PL_TESTDB=testr)
 
 add_custom_target(installcheck)
 add_dependencies(installcheck testpy2 testpy testr)
@@ -54,7 +53,7 @@ if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
         DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
         SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py_bundle
         REGRESS_OPTS ${REGRESS_OPTS}
-        REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
+        REGRESS_ENV PL_TESTDB=testpy_bundle)
     add_dependencies(installcheck testpy_bundle)
 endif()
 

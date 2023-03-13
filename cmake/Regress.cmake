@@ -104,6 +104,7 @@ function(RegressTarget_Add name)
         get_filename_component(schedule_file_PATH ${o} ABSOLUTE)
         list(APPEND arg_REGRESS_OPTS "--schedule=${schedule_file_PATH}")
     endforeach()
+    list(APPEND arg_REGRESS_OPTS "--dbname="${name} "--use-existing")
     foreach(o IN LISTS arg_EXCLUDE)
         list(APPEND to_exclude ${o})
     endforeach()
@@ -149,6 +150,7 @@ function(RegressTarget_Add name)
         COMMAND rm -f data
         COMMAND ${ln_data_dir_CMD}
         COMMAND ${mv_data_shells_CMD}
+        COMMAND createdb ${name} || true
         COMMAND
         ${env_arg}
         ${test_command}
