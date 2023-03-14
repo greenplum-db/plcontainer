@@ -40,7 +40,6 @@ RegressTarget_Add(testr
     REGRESS_ENV PL_TESTDB=testr)
 
 add_custom_target(installcheck)
-add_dependencies(installcheck testpy2 testpy testr)
 
 # for _b means for data-science-bundle include the packages and import tests
 if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
@@ -55,6 +54,8 @@ if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
         REGRESS_OPTS ${REGRESS_OPTS}
         REGRESS_ENV PL_TESTDB=testpy_bundle)
     add_dependencies(installcheck testpy_bundle)
+else()
+    add_dependencies(installcheck testpy2 testpy testr)
 endif()
 
 add_custom_target(prepare_runtime
