@@ -16,7 +16,10 @@
 #@ res_type_map = {}
 #@ trigger = commit_dev_trigger(res_map)
 #@ confs= [
-#@   centos7_gpdb6_conf(is_bundle_release=True, container_name_suffix_python="python39.ubuntu2004_b"),
+#@   centos7_gpdb6_conf(release_build=False),
+#@   rhel8_gpdb6_conf(release_build=False),
+#@   ubuntu18_gpdb6_conf(release_build=False),
+#@   rocky8_gpdb7_conf(release_build=False),
 #@ ]
 jobs:
 #@ param = {
