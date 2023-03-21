@@ -230,7 +230,7 @@ static void cleanup(const backendConnectionInfo *backend, const runtimeConnectio
 					if (res == 0) { // backend has been successfully deleted.
 						break;
 					} else if (res < 0) { // backend delete API reports an error.
-						write_log("plcontainer cleanup process: Failed to delete backend in cleanup process (%s). "
+						write_log("plcontainer cleanup process: Failed to kill backend in cleanup process (%s). "
 								"retry %d times.", backend_error_message, wait_times);
 						wait_times++;
 					}

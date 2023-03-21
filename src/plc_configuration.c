@@ -181,7 +181,7 @@ typedef struct XML_FIELD {
 	bool notnull;
 
 	// a pointer to the output
-	// is XML_TYPE_SIGNLE_ELEMENT, the prt is a value
+	// if XML_TYPE_SIGNLE_ELEMENT, the prt is a value
 	// if not XML_TYPE_SIGNLE_ELEMENT, the prt is a value list
 	void *ptr;
 
@@ -1115,13 +1115,13 @@ backendConnectionInfo *runtime_conf_copy_backend_connection_info(const backendCo
 	r->tag = a->tag;
 	switch(a->tag) {
 		case PLC_BACKEND_DOCKER:
-			r->backend_docker.uds_address = plc_top_strdup(a->backend_docker.uds_address);
+			r->plcBackendLocalDocker.uds_address = plc_top_strdup(a->plcBackendLocalDocker.uds_address);
 			break;
 		case PLC_BACKEND_REMOTE_DOCKER:
-			r->backend_remote_docker.hostname = plc_top_strdup(a->backend_remote_docker.hostname);
-			r->backend_remote_docker.port = a->backend_remote_docker.port;
-			r->backend_remote_docker.username = plc_top_strdup_null(a->backend_remote_docker.username);
-			r->backend_remote_docker.password = plc_top_strdup_null(a->backend_remote_docker.password);
+			r->plcBackendRemoteDocker.hostname = plc_top_strdup(a->plcBackendRemoteDocker.hostname);
+			r->plcBackendRemoteDocker.port = a->plcBackendRemoteDocker.port;
+			r->plcBackendRemoteDocker.username = plc_top_strdup_null(a->plcBackendRemoteDocker.username);
+			r->plcBackendRemoteDocker.password = plc_top_strdup_null(a->plcBackendRemoteDocker.password);
 			break;
 		case PLC_BACKEND_PROCESS:
 		case PLC_BACKEND_UNIMPLEMENT:
@@ -1142,7 +1142,7 @@ backendConnectionInfo *runtime_conf_get_backend_connection_info(const plcBackend
 			}
 
 			info->tag = PLC_BACKEND_DOCKER;
-			info->backend_docker.uds_address = plc_top_strdup(address);
+			info->plcBackendLocalDocker.uds_address = plc_top_strdup(address);
 
 			break;
 		}
@@ -1164,10 +1164,10 @@ backendConnectionInfo *runtime_conf_get_backend_connection_info(const plcBackend
 			}
 
 			info->tag = PLC_BACKEND_REMOTE_DOCKER;
-			info->backend_remote_docker.hostname = hostname;
-			info->backend_remote_docker.port = backend->remotedocker.port;
-			info->backend_remote_docker.username = plc_top_strdup_null(backend->remotedocker.username);
-			info->backend_remote_docker.password = plc_top_strdup_null(backend->remotedocker.password);
+			info->plcBackendRemoteDocker.hostname = hostname;
+			info->plcBackendRemoteDocker.port = backend->remotedocker.port;
+			info->plcBackendRemoteDocker.username = plc_top_strdup_null(backend->remotedocker.username);
+			info->plcBackendRemoteDocker.password = plc_top_strdup_null(backend->remotedocker.password);
 
 			break;
 		}
@@ -1190,12 +1190,12 @@ void runtime_conf_free_backend_connection_info(backendConnectionInfo *info) {
 
 	switch(info->tag) {
 		case PLC_BACKEND_DOCKER:
-			pfree(info->backend_docker.uds_address);
+			pfree(info->plcBackendLocalDocker.uds_address);
 			break;
 		case PLC_BACKEND_REMOTE_DOCKER:
-			pfree(info->backend_remote_docker.hostname);
-			pfree_null(info->backend_remote_docker.username);
-			pfree_null(info->backend_remote_docker.password);
+			pfree(info->plcBackendRemoteDocker.hostname);
+			pfree_null(info->plcBackendRemoteDocker.username);
+			pfree_null(info->plcBackendRemoteDocker.password);
 			break;
 		case PLC_BACKEND_PROCESS:
 			break;
@@ -1235,7 +1235,7 @@ runtimeConnectionInfo* runtime_conf_get_runtime_connection_info(const backendCon
 		case PLC_BACKEND_REMOTE_DOCKER:
 			r->tag = PLC_RUNTIME_CONNECTION_TCP;
 			// container and the docker host shared the same address
-			r->connection_tcp.hostname = plc_top_strdup(a->backend_remote_docker.hostname);
+			r->connection_tcp.hostname = plc_top_strdup(a->plcBackendRemoteDocker.hostname);
 			r->connection_tcp.port = 0;
 			break;
 		case PLC_BACKEND_DOCKER:

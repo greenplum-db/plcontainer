@@ -125,14 +125,14 @@ typedef struct backendConnectionInfo {
 	union {
 		struct backend_docker {
 			char *uds_address;
-		} backend_docker;
+		} plcBackendLocalDocker;
 
 		struct backend_remote_docker {
 			char* hostname;
 			uint32_t port;
 			char* username;
 			char* password;
-		} backend_remote_docker;
+		} plcBackendRemoteDocker;
 	};
 } backendConnectionInfo;
 

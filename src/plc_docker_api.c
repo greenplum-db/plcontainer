@@ -128,14 +128,14 @@ static plcCurlBuffer *plcCurlRESTAPICall(
 			appendStringInfo(&fullurl, "http:/");
 			break;
 		case PLC_BACKEND_REMOTE_DOCKER: // remote docker will use HTTP in TCP
-			appendStringInfo(&fullurl, "http://%s/", backend->backend_remote_docker.hostname);
-			curl_easy_setopt(curl, CURLOPT_PORT, backend->backend_remote_docker.port);
+			appendStringInfo(&fullurl, "http://%s/", backend->plcBackendRemoteDocker.hostname);
+			curl_easy_setopt(curl, CURLOPT_PORT, backend->plcBackendRemoteDocker.port);
 
 			curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-			if (backend->backend_remote_docker.username && backend->backend_remote_docker.password) {
-				curl_easy_setopt(curl, CURLOPT_USERNAME, backend->backend_remote_docker.username);
-				curl_easy_setopt(curl, CURLOPT_PASSWORD , backend->backend_remote_docker.password);
+			if (backend->plcBackendRemoteDocker.username && backend->plcBackendRemoteDocker.password) {
+				curl_easy_setopt(curl, CURLOPT_USERNAME, backend->plcBackendRemoteDocker.username);
+				curl_easy_setopt(curl, CURLOPT_PASSWORD , backend->plcBackendRemoteDocker.password);
 			}
 			break;
 		case PLC_BACKEND_PROCESS:
