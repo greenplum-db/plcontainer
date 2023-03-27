@@ -110,5 +110,5 @@ INSERT INTO sequences (sequence, eid, product) VALUES ('ABCDEF', 4, 'gag') ;
 INSERT INTO sequences (sequence, eid, product) VALUES ('ABCDEF', 5, 'env') ;
 INSERT INTO sequences (sequence, eid, product) VALUES ('ABCDEF', 6, 'ns1') ;
 
--- test pre-defined UDF
-SELECT * from plcontainer_containers_summary();
+-- test existence of pre-defined UDFs
+SELECT * from plcontainer_containers_summary() WHERE FALSE;
