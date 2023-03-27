@@ -14,7 +14,7 @@ RegressTarget_Add(testpy
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py
-    REGRESS_OPTS ${REGRESS_OPTS}
+    REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy
     REGRESS_ENV PL_TESTDB=testpy)
 
 RegressTarget_Add(testpy2
@@ -25,7 +25,7 @@ RegressTarget_Add(testpy2
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py2
-    REGRESS_OPTS ${REGRESS_OPTS}
+    REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy2
     REGRESS_ENV PL_TESTDB=testpy2)
 
 RegressTarget_Add(testr
@@ -36,7 +36,7 @@ RegressTarget_Add(testr
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_r
-    REGRESS_OPTS ${REGRESS_OPTS}
+    REGRESS_OPTS ${REGRESS_OPTS} --dbname=testr
     REGRESS_ENV PL_TESTDB=testr)
 
 add_custom_target(installcheck)
@@ -51,7 +51,7 @@ if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
         RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
         DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
         SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py_bundle
-        REGRESS_OPTS ${REGRESS_OPTS}
+        REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy_bundle
         REGRESS_ENV PL_TESTDB=testpy_bundle)
     add_dependencies(installcheck testpy_bundle)
 else()
@@ -63,5 +63,4 @@ add_custom_target(prepare_runtime
     CONTAINER_NAME_SUFFIX_PYTHON=${CONTAINER_NAME_SUFFIX_PYTHON}
     CONTAINER_NAME_SUFFIX_PYTHON2=${CONTAINER_NAME_SUFFIX_PYTHON2}
     CONTAINER_NAME_SUFFIX_R=${CONTAINER_NAME_SUFFIX_R}
-    PL_TESTDB=${TEST_DB_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/prepare_runtime.sh)
