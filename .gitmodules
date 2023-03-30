@@ -1,0 +1,3 @@
+[submodule "dockerfiles/gp-data-science-bundle"]
+	path = dockerfiles/gp-data-science-bundle
+	url = https://github.com/pivotal/gp-data-science-bundle.git

@@ -15,9 +15,6 @@ function _main() {
     # R
     time plcontainer image-add -f plcontainer-r-image-*.tar.gz
 
-    # create a empty database to run metadata query
-    createdb contrib_regression || true
-
     time cmake --build . --target prepare_runtime
 
     docker images

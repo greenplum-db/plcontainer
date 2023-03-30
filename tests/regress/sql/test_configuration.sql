@@ -1,6 +1,11 @@
-select count(*) from plcontainer_containers_summary();
+-- start_ignore
+\! docker ps -a
+-- end_ignore
+select count(*) from plcontainer_containers_summary() WHERE "UP_TIME" LIKE 'Up %';
 
+SET client_min_messages TO WARNING;
 CREATE ROLE pluser;
+RESET client_min_messages;
 
 SET ROLE pluser;
 
@@ -12,11 +17,14 @@ $$ LANGUAGE plcontainer;
 SET ROLE gpadmin;
 
 SELECT pyconf();
-select count(*) from plcontainer_containers_summary();
+-- start_ignore
+\! docker ps -a
+-- end_ignore
+select count(*) from plcontainer_containers_summary() WHERE "UP_TIME" LIKE 'Up %';
 
 SET ROLE pluser;
 
-select count(*) from plcontainer_containers_summary();
+select count(*) from plcontainer_containers_summary() WHERE "UP_TIME" LIKE 'Up %';
 
 SET ROLE gpadmin;
 

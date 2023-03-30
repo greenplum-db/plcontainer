@@ -1,6 +1,5 @@
 include(${CMAKE_SOURCE_DIR}/cmake/Regress.cmake)
 
-list(APPEND REGRESS_OPTS "--dbname=${TEST_DB_NAME}")
 if("$ENV{ARTIFACT_TYPE}" STREQUAL "Release")
     file(READ ${CMAKE_CURRENT_SOURCE_DIR}/tests_using_faultinjector.txt EXCLUDE_TESTS)
     string(STRIP ${EXCLUDE_TESTS} EXCLUDE_TESTS)
@@ -15,8 +14,8 @@ RegressTarget_Add(testpy
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py
-    REGRESS_OPTS ${REGRESS_OPTS}
-    REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
+    REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy
+    REGRESS_ENV PL_TESTDB=testpy)
 
 RegressTarget_Add(testpy2
     INIT_FILE
@@ -26,8 +25,8 @@ RegressTarget_Add(testpy2
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py2
-    REGRESS_OPTS ${REGRESS_OPTS}
-    REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
+    REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy2
+    REGRESS_ENV PL_TESTDB=testpy2)
 
 RegressTarget_Add(testr
     INIT_FILE
@@ -37,11 +36,10 @@ RegressTarget_Add(testr
     RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
     DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
     SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_r
-    REGRESS_OPTS ${REGRESS_OPTS}
-    REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
+    REGRESS_OPTS ${REGRESS_OPTS} --dbname=testr
+    REGRESS_ENV PL_TESTDB=testr)
 
 add_custom_target(installcheck)
-add_dependencies(installcheck testpy2 testpy testr)
 
 # for _b means for data-science-bundle include the packages and import tests
 if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
@@ -53,9 +51,11 @@ if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
         RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
         DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
         SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py_bundle
-        REGRESS_OPTS ${REGRESS_OPTS}
-        REGRESS_ENV PL_TESTDB=${TEST_DB_NAME})
+        REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy_bundle
+        REGRESS_ENV PL_TESTDB=testpy_bundle)
     add_dependencies(installcheck testpy_bundle)
+else()
+    add_dependencies(installcheck testpy2 testpy testr)
 endif()
 
 add_custom_target(prepare_runtime
@@ -63,5 +63,4 @@ add_custom_target(prepare_runtime
     CONTAINER_NAME_SUFFIX_PYTHON=${CONTAINER_NAME_SUFFIX_PYTHON}
     CONTAINER_NAME_SUFFIX_PYTHON2=${CONTAINER_NAME_SUFFIX_PYTHON2}
     CONTAINER_NAME_SUFFIX_R=${CONTAINER_NAME_SUFFIX_R}
-    PL_TESTDB=${TEST_DB_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/prepare_runtime.sh)

@@ -12,16 +12,13 @@ if(NOT DEFINED PLCONTAINER_VERSION)
   file(STRINGS VERSION PLCONTAINER_VERSION)
 endif()
 if(NOT DEFINED PYTHON_IMAGE_VERSION)
-  file(STRINGS VERSION_bundle_ubuntu1804_py37 PYTHON_IMAGE_VERSION)
-  string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" PYTHON_IMAGE_VERSION ${PYTHON_IMAGE_VERSION})
+    set(PYTHON_IMAGE_VERSION ${PLCONTAINER_VERSION})
 endif()
 if(NOT DEFINED PYTHON2_IMAGE_VERSION)
-  file(STRINGS VERSION_bundle_ubuntu1804_py27 PYTHON2_IMAGE_VERSION)
-  string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" PYTHON2_IMAGE_VERSION ${PYTHON2_IMAGE_VERSION})
+    set(PYTHON2_IMAGE_VERSION ${PLCONTAINER_VERSION})
 endif()
 if(NOT DEFINED R_IMAGE_VERSION)
-  file(STRINGS VERSION_bundle_ubuntu1804_r R_IMAGE_VERSION)
-  string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" R_IMAGE_VERSION ${R_IMAGE_VERSION})
+    set(R_IMAGE_VERSION ${PLCONTAINER_VERSION})
 endif()
 
 configure_file(
@@ -54,7 +51,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CONTAINER_NAME_SUFFIX_PYTHON "" CACHE STRING "The container python image env for plcontainer")
 set(CONTAINER_NAME_SUFFIX_PYTHON2 "" CACHE STRING "The container python2 image env for plcontainer")
 set(CONTAINER_NAME_SUFFIX_R "" CACHE STRING "The container r image env for plcontainer")
-set(TEST_DB_NAME "" CACHE STRING "The name of regress test db")
 
 if("${CONTAINER_NAME_SUFFIX_PYTHON}" STREQUAL "")
     set(CONTAINER_NAME_SUFFIX_PYTHON "python39.alpine")
@@ -66,10 +62,6 @@ endif()
 
 if("${CONTAINER_NAME_SUFFIX_R}" STREQUAL "")
     set(CONTAINER_NAME_SUFFIX_R "r.alpine")
-endif()
-
-if("${TEST_DB_NAME}" STREQUAL "")
-    set(TEST_DB_NAME "contrib_regression")
 endif()
 
 # Build dependencies
@@ -138,6 +130,11 @@ add_dependencies(
 )
 
 # Build client
+if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
+    set(DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles/gp-data-science-bundle/dockerfiles/python)
+else()
+    set(DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+endif()
 set(PYCLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_PYTHON})
 # python2.7
 set(PY2CLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_PYTHON2})
@@ -150,14 +147,24 @@ add_custom_target(rclient_image
     -f Dockerfile.${RCLIENT_IMAGE}
     WORKING_DIRECTORY
     ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+
+# Conventionally, docker build command will send the context directory
+# (typically the current one) to the docker daemon, but without dereferencing
+# the symbolic links in the directory.
+#
+# To enable the context directory to contain symbolic links, we use tar -ch to
+# create a tarball with symbolic links dereferenced. Afterwards, we pipe the 
+# tarball to the docker build command. In this way, the docker daemon actually
+# receives a set of files with links dereferenced.
 add_custom_target(pyclient_image
     COMMAND
-    PYTHONPATH=
-    docker build .
+    tar -ch . |
+    docker build
     -t ${PYCLIENT_IMAGE}
     -f Dockerfile.${PYCLIENT_IMAGE}
+    -
     WORKING_DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+    ${DOCKERFILES_DIR})
 
 # py2 client image docker file hard code for now.
 add_custom_target(py2client_image

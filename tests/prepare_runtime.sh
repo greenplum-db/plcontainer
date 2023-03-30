@@ -23,7 +23,7 @@ plcontainer runtime-add -r plc_python2_shared -i "${CONTAINER_NAME_SUFFIX_PYTHON
 plcontainer runtime-add -r plc_r_shared -i "${CONTAINER_NAME_SUFFIX_R}:latest" -l r
 
 # for test faultinject_python we rm all the container first
-containers_cnt=$(ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a --filter label=dbid=2 -q | wc -l)
+containers_cnt=$(ssh `psql -d postgres -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a --filter label=dbid=2 -q | wc -l)
 if ((containers_cnt > 0)); then
-    ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker rm -f $(docker ps -a --filter label=dbid=2 -q)
+    ssh `psql -d postgres -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker rm -f $(docker ps -a --filter label=dbid=2 -q)
 fi
