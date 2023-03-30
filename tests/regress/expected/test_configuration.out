@@ -4,8 +4,9 @@ select count(*) from plcontainer_containers_summary() WHERE "UP_TIME" LIKE 'Up %
      0
 (1 row)
 
+SET client_min_messages TO WARNING;
 CREATE ROLE pluser;
-NOTICE:  resource queue required -- using default resource queue "pg_default"
+RESET client_min_messages;
 SET ROLE pluser;
 CREATE OR REPLACE FUNCTION pyconf() RETURNS int4 AS $$
 # container: plc_python_shared

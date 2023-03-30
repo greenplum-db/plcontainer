@@ -3,7 +3,9 @@
 -- end_ignore
 select count(*) from plcontainer_containers_summary() WHERE "UP_TIME" LIKE 'Up %';
 
+SET client_min_messages TO WARNING;
 CREATE ROLE pluser;
+RESET client_min_messages;
 
 SET ROLE pluser;
 
