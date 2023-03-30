@@ -1,3 +1,4 @@
+\! docker ps -a
 select * from plcontainer_containers_summary();
 
 CREATE ROLE pluser;
@@ -12,7 +13,8 @@ $$ LANGUAGE plcontainer;
 SET ROLE gpadmin;
 
 SELECT pyconf();
-select (count(*)) AS count from plcontainer_containers_summary();
+\! docker ps -a
+select * from plcontainer_containers_summary();
 
 SET ROLE pluser;
 
