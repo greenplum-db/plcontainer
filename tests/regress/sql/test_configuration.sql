@@ -1,5 +1,7 @@
+-- start_ignore
 \! docker ps -a
-select * from plcontainer_containers_summary();
+-- end_ignore
+select count(*) from plcontainer_containers_summary() WHERE up_time LIKE 'Up%';
 
 CREATE ROLE pluser;
 
@@ -13,12 +15,14 @@ $$ LANGUAGE plcontainer;
 SET ROLE gpadmin;
 
 SELECT pyconf();
+-- start_ignore
 \! docker ps -a
-select * from plcontainer_containers_summary();
+-- end_ignore
+select count(*) from plcontainer_containers_summary() WHERE up_time LIKE 'Up%';
 
 SET ROLE pluser;
 
-select count(*) from plcontainer_containers_summary();
+select count(*) from plcontainer_containers_summary() WHERE up_time LIKE 'Up%';
 
 SET ROLE gpadmin;
 
