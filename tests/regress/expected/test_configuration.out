@@ -1,4 +1,4 @@
-select count(*) from plcontainer_containers_summary() WHERE up_time LIKE 'Up%';
+select count(*) from plcontainer_containers_summary() WHERE "UP_TIME" LIKE 'Up%';
  count 
 -------
      0
@@ -18,14 +18,14 @@ SELECT pyconf();
      10
 (1 row)
 
-select count(*) from plcontainer_containers_summary() WHERE up_time LIKE 'Up%';
+select count(*) from plcontainer_containers_summary() WHERE "UP_TIME" LIKE 'Up%';
  count 
 -------
      1
 (1 row)
 
 SET ROLE pluser;
-select count(*) from plcontainer_containers_summary() WHERE up_time LIKE 'Up%';
+select count(*) from plcontainer_containers_summary() WHERE "UP_TIME" LIKE 'Up%';
  count 
 -------
      0
