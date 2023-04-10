@@ -2,11 +2,27 @@
 
 set -exo pipefail
 
+function _install_gppkg() {
+    if [[ ${GP_MAJOR_VERSION} == "7" ]]; then
+        "/home/gpadmin/bin_gppkg_v2/gppkg" install -a ./*.gppkg
+    else
+	gppkg --install ./*.gppkg
+    fi
+}
+
+function _uninstall_gppkg() {
+    if [[ ${GP_MAJOR_VERSION} == "7" ]]; then
+        "/home/gpadmin/bin_gppkg_v2/gppkg" remove -a plcontainer
+    else
+	gppkg --remove plcontainer
+    fi
+}
+
 function _main() {
     # Run testing
     pushd plcontainer_artifacts
     # Install gppkg
-    gppkg -i plcontainer*.gppkg
+    _install_gppkg
     # Image add for both python and r
     # Python3
     time plcontainer image-add -f plcontainer-python-image-*.tar.gz
@@ -23,14 +39,8 @@ function _main() {
 
     time cmake --build . --target installcheck
     # Test gppkg uninstall
-    gppkg -q --all
-    # Find the package name
-    local pkg_name
-    pkg_name=$(gppkg -q --all | awk -F"[-]+" '/plcontainer/{print $1}')
-    # Uninstall gppkg test if it can uninstall or not
-    gppkg -r "${pkg_name}"
-    # Install gppkg again
-    gppkg -i plcontainer*.gppkg
+    _uninstall_gppkg
+    _install_gppkg
     popd
 }
 

@@ -43,6 +43,10 @@ _determine_os() {
     echo "${name}${version}"
 }
 
+_determine_gp_major_version() {
+    grep -oP '.*GP_MAJORVERSION.*"\K[^"]+' "/usr/local/greenplum-db-devel/include/pg_config.h"
+}
+
 OS_NAME=$(_determine_os)
 CMAKE_HOME="/opt/cmake_new"
 
@@ -134,6 +138,7 @@ function install_gpdb() {
     source "/home/gpadmin/gpdb_src/concourse/scripts/common.bash"
     make_cluster
     source /home/gpadmin/gpdb_src/gpAux/gpdemo/gpdemo-env.sh
+    GP_MAJOR_VERSION=$(_determine_gp_major_version)
 }
 
 # Dependency installers
@@ -187,6 +192,7 @@ function setup_gpadmin_bashrc() {
         echo "export CONTAINER_NAME_SUFFIX_PYTHON=${CONTAINER_NAME_SUFFIX_PYTHON}"
         echo "export CONTAINER_NAME_SUFFIX_R=${CONTAINER_NAME_SUFFIX_R}"
         echo "export PATH=${CMAKE_HOME}/bin:\$PATH"
+        echo "export GP_MAJOR_VERSION=${GP_MAJOR_VERSION}"
     } >>/home/gpadmin/.bashrc
 }
 

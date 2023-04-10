@@ -40,7 +40,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         "${PG_HOME}"
         CACHE PATH "default install prefix" FORCE)
 endif()
-# for gppkg
+
 set(VERSION ${PLCONTAINER_VERSION})
 set(DOWNLOAD_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/downloads
