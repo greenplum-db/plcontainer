@@ -1,20 +1,23 @@
 resource_types:
 - name: gcs
-  type: docker-image
+  type: registry-image
   check_every: 1h
   source:
     repository: frodenas/gcs-resource
+    tag: latest
 
 - name: pull-request
-  type: docker-image
+  type: registry-image
   check_every: 1h
   source:
     repository: teliaoss/github-pr-resource
+    tag: latest
 
 - name: slack-alert
-  type: docker-image
+  type: registry-image
   source:
     repository: arbourd/concourse-slack-alert-resource
+    tag: latest
 
 resources:
 # Pull Request
@@ -176,13 +179,12 @@ resources:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: server/published/gpdb6/server-rc-(.*)-ubuntu18.04_x86_64.debug.tar.gz
-- name: bin_gpdb7_rocky8_debug
+- name: bin_gpdb7_el8_debug
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
-    regexp: server/published/main/server-rc-(.*)-rocky8_x86_64.debug.tar.gz
-
+    regexp: server/published/main/server-rc-(.*)-el8_x86_64.debug.tar.gz
 # Latest release candidates, no fault-injector, no assertion:
 # --disable-debug-extensions --disable-tap-tests --enable-ic-proxy
 # for the version string regexp: match every version but not {6,7}.99. .99 used for test
@@ -204,12 +206,12 @@ resources:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: server/release-candidates/gpdb6/greenplum-db-server-6\.([0-9]|([1-8][0-9])|(9[0-8]))\.\d{1,2}-.*-ubuntu18.04.tar.gz
-- name: bin_gpdb7_rocky8
+- name: bin_gpdb7_el8
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
-    regexp: server/release-candidates/gpdb7/greenplum-db-server-7\.([0-9]|([1-8][0-9])|(9[0-8]))\.\d{1,2}-.*-rhel8.tar.gz
+    regexp: server/release-candidates/gpdb7/greenplum-db-server-7\.([0-9]|([1-8][0-9])|(9[0-8]))\..*-dev.*-el8.tar.gz
 
 # For uploading every build to gcs gppkg
 - name: bin_plcontainer_gpdb6_rhel7_intermediates
@@ -340,6 +342,14 @@ resources:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: plcontainer/released/gpdb6/plcontainer-r-image-(.*)-gp6.tar.gz
+
+# gppkg_v2
+- name: bin_gppkg_v2
+  type: gcs
+  source:
+    bucket: pivotal-gpdb-concourse-resources-prod
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: gppkg/released/gpdb7/gppkg-(.*).tar.gz
 
 # Other dependencies
 - name: bin_cmake

@@ -56,7 +56,7 @@ release_bin: bin_plcontainer_gpdb6_ubuntu18_release
 #! Job config for gpdb7 rocky8
 #@ def rocky8_gpdb7_conf(release_build=False, is_bundle_release=False, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine"):
 res_test_images: [rocky8-gpdb7-image-test, rhel8-gpdb7-image-test]
-res_gpdb_bin: #@ "bin_gpdb7_rocky8" + ("" if release_build else "_debug")
+res_gpdb_bin: #@ "bin_gpdb7_el8" + ("" if release_build else "_debug")
 is_bundle_release: #@ is_bundle_release
 res_intermediates_bin:  #@ inter_bin_name("bin_plcontainer_gpdb7_rocky8_intermediates", release_build)
 gpdb_version: gpdb7
@@ -154,6 +154,8 @@ config:
     - name: plcontainer_src
     - name: gpdb_src
     - name: bin_cmake
+#@   if/end conf["gpdb_version"] == "gpdb7":
+    - name: bin_gppkg_v2
   outputs:
     - name: plcontainer_src
     - name: plcontainer_artifacts
@@ -181,6 +183,8 @@ in_parallel:
         - name: plcontainer_src
         - name: bin_cmake
         - name: plcontainer_artifacts
+#@     if/end conf["gpdb_version"] == "gpdb7":
+        - name: bin_gppkg_v2
       outputs:
         - name: plcontainer_artifacts
       run:
@@ -202,6 +206,9 @@ in_parallel:
 #@   add_res_by_name(res_map, "bin_cmake")
 #@   add_res_by_name(res_map, param["gpdb_src"])
 #@   add_res_by_conf(res_map, conf)
+#@   if conf["gpdb_version"] == "gpdb7":
+#@     add_res_by_name(res_map, "bin_gppkg_v2")
+#@   end
 name: #@ build_test_job_name(conf)
 max_in_flight: 10
 on_failure: #@ trigger["on_failure"]
@@ -220,8 +227,13 @@ plan:
   - get: #@ test_image
 #@   end
   - get: #@ conf["res_gpdb_bin"]
-#@ if/end "res_build_image" in conf:
+#@   if/end "res_build_image" in conf:
   - get: #@ conf["res_build_image"]
+#@   if conf["gpdb_version"] == "gpdb7":
+  - get: bin_gppkg_v2
+    params:
+      unpack: true
+#@ end
 - #@ _build_task(conf)
 - #@ _test_task(conf)
 - put: #@ conf["res_intermediates_bin"]

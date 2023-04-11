@@ -33,7 +33,12 @@ set(RPM_NAME ${CMAKE_PROJECT_NAME}-${VERSION}.${CMAKE_SYSTEM_PROCESSOR})
 set(DEB_NAME ${CMAKE_PROJECT_NAME}-${VERSION}-${CMAKE_SYSTEM_PROCESSOR})
 set(PACK_GPPKG_FILE_NAME gppython3)
 
+if(NOT DEFINED GPPKG_V2_BIN)
+    set(GPPKG_V2_BIN gppkg)
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/package/gppkg_spec.yml.in gppkg_spec.yml @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/package/gppkg_spec_v2.yml.in gppkg_spec_v2.yml @ONLY)
 
 add_custom_target(gppkg_rpm
     COMMAND
@@ -58,7 +63,20 @@ add_custom_target(gppkg_deb
     ${PG_BIN_DIR}/gppkg --build gppkg_deb --filename ${PACK_NAME}.gppkg)
 
 # Build the specific package only for our supported platform
-if(${DISTRO_NAME} MATCHES "rhel.*")
+if(${GP_MAJOR_VERSION} EQUAL "7")
+    add_custom_target(gppkg
+        COMMAND
+        ${CMAKE_COMMAND} -E rm -rf gppkg_files ${PACK_NAME}.gppkg
+        COMMAND
+        ${CMAKE_COMMAND} -E make_directory gppkg_files
+        COMMAND
+        ${CMAKE_COMMAND} --build . --target install DESTDIR=gppkg_files
+        COMMAND
+        ${GPPKG_V2_BIN} build
+        --input gppkg_files/${CMAKE_INSTALL_PREFIX}
+        --config gppkg_spec_v2.yml
+        --output ${PACK_NAME}.gppkg)
+elseif(${DISTRO_NAME} MATCHES "rhel.*")
     add_custom_target(gppkg DEPENDS gppkg_rpm)
 elseif(${DISTRO_NAME} MATCHES "ubuntu.*")
     add_custom_target(gppkg DEPENDS gppkg_deb)
