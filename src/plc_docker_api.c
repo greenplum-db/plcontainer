@@ -30,12 +30,12 @@
 static char *plc_docker_socket = "/var/run/docker.sock";
 
 // URL prefix specifies Docker API version
-static char *plc_docker_version_127 = "http:/v1.27";
+static char *plc_docker_version_127 = "v1.27";
 // GPU basic support after moby v19.03 (2019-7) API version v1.40
 // GPU with out privilege support when using NVIDIA/libnvidia-container v1.10 (2020.5) with API version v1.40
 // need to use NVIDIA/libnvidia-container to enable non-privilege container
 // NVIDIA/container-config (2019-11~2021-11) or something before libnvidia-container does not support non-privilege
-static char *plc_docker_version_140 = "http:/v1.40";
+static char *plc_docker_version_140 = "v1.40";
 
 static char *default_log_dirver = "journald";
 
@@ -125,7 +125,18 @@ static plcCurlBuffer *plcCurlRESTAPICall(
 	switch (backend->tag) {
 		case PLC_BACKEND_DOCKER: // docker will use HTTP in unix socket
 			curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, plc_docker_socket);
-			appendStringInfo(&fullurl, "http:/");
+			{
+				// curl 7.50 has a different URL resolve behavior
+				// https://github.com/curl/curl/issues/936
+				curl_version_info_data *ver = curl_version_info(CURLVERSION_NOW);
+				if (ver->version_num >= (7 << 16 | 50 << 8 | 0 << 0)) {
+					// after v7.50 URL must have the hostname
+					appendStringInfo(&fullurl, "http://localhost/");
+				} else {
+					// before v7.50, URL must not have the hostname
+					appendStringInfo(&fullurl, "http://");
+				}
+			}
 			break;
 		case PLC_BACKEND_REMOTE_DOCKER: // remote docker will use HTTP in TCP
 			appendStringInfo(&fullurl, "http://%s/", backend->plcBackendRemoteDocker.hostname);
