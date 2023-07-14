@@ -1,16 +1,15 @@
-*.o
-*.so
+# IDE/Editor files
+compile_commands.json
 cscope.*
-*.d
-src/.*
+tags
+.ccls-cache/
+.cache/
+.idea/
 
 # file generated at compile time
-management/sql/plcontainer_install.sql
-management/sql/plcontainer_uninstall.sql
-management/sql/plcontainer--1.0.0.sql
 src/common/config.h
-src/pyclient/bin/py3client
 build*/
 downloads*/
 # for test
 tests/regress/results
+

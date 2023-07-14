@@ -8,9 +8,9 @@ The architecture of PL/Container is described at [PL/Container-Architecture](htt
 
 ### Requirements
 
-1. PL/Container runs on CentOS/RHEL 7.x or CentOS/RHEL 6.6+
-1. PL/Container requires Docker version 17.05 for CentOS/RHEL 7.x and Docker version 1.7 CentOS/RHEL 6.6+
-1. GPDB version should be 5.2.0 or later.    [ For PostgreSQL ](README_PG.md)
+1. PL/Container runs on any linux distributions which support Greenplum Database.
+1. PL/Container requires minimal Docker version 17.05.
+1. GPDB version should be 5.2.0 or later. [For PostgreSQL](README_PG.md)
 
 ### Building PL/Container
 
@@ -19,48 +19,86 @@ Get the code repo
 git clone https://github.com/greenplum-db/plcontainer.git
 ```
 
-You can build PL/Container in the following way:
+### Configue the build
 
-1. Go to the PL/Container directory: `cd plcontainer`
-2. mkdir build && cd build
-3. make
-4. if you want make python3 client, `make pyclient`
-5. install `plcontainer cli command` use `make install`
+Create the build directory:
 
-PL/Container needs libcurl >=7.40. If the libcurl version on your system is low, you need to upgrade at first. For example, you could download source code and then compile and install, following this page: [Install libcurl from source](https://curl.haxx.se/docs/install.html). Note you should make sure the libcurl library path is in the list for library lookup. Typically you might want to add the path into LD_LIBRARY_PATH and export them in shell configuration or greenplum_path.sh on all nodes (Note you need to restart the Greenplum cluster).
+```
+cd plcontainer
+mkdir build
+```
+
+To configure the build with the specific version of GPDB, either source the `greenplum_path.sh` first:
+
+```
+source /path/to/gpdb/greenplum_path.sh
+cd build
+cmake ..
+```
+
+Or pass the `pg_config` path through command line:
+
+```
+cd build
+cmake .. -DPG_CONFIG=/path/to/gpdb/bin/pg_config
+```
+
+### Build & install
+
+In the `build` directory, to build & install the plcontainer extension:
+
+```
+make
+make install
+```
+
+To build the clients:
+
+```
+make clients
+```
+
+Use `make help` to see more build targets.
 
 
 ### Configuring PL/Container
 
-To configure PL/Container environment, you need to enable PL/Container for specific databases by running 
-   ```shell
-   psql -d your_database -c 'create extension plcontainer;'
-   ```
+To configure PL/Container environment, you need to enable PL/Container for specific databases by running:
+
+```shell
+psql -d your_database -c 'create extension plcontainer;'
+```
 
 ### Running the regression tests
 
-1. Prepare docker images for R & Python environment.
-   Refer [How to build docker image](https://github.com/greenplum-db/plcontainer/wiki/How-to-build-docker-image) for docker file examples.
- You can also download PLContainer images from [pivotal networks](https://network.pivotal.io)
+1. Prepare testing docker images for R & Python environment:
+
+```
+cd build
+make images_artifact
+```
 
 1. Tests require some images and runtime configurations are installed.
 
-   Install the PL/Container R & Python docker images by running
-   ```shell
-   plcontainer image-add -f /home/gpadmin/plcontainer-r-images.tar.gz;
-   plcontainer image-add -f /home/gpadmin/plcontainer-python-images.tar.gz
-   ```
+Install the PL/Container R & Python docker images by running
 
-   Add runtime configurations as below
-   ```shell
-   plcontainer runtime-add -r plc_r_shared -i pivotaldata/plcontainer_r_shared:devel -l r
-   plcontainer runtime-add -r plc_python_shared -i pivotaldata/plcontainer_python_shared:devel -l python
-   ```
+```shell
+plcontainer image-add -f plcontainer-python-image-<version>-gp<gpversion>.tar.gz
+plcontainer image-add -f plcontainer-python2-image-<version>-gp<gpversion>.tar.gz
+plcontainer image-add -f plcontainer-r-image-<version>-gp<gpversion>.tar.gz
+```
 
-1. Go to the PL/Container build directory: `cd plcontainer/build`
-1. Make it: for python3: `make testpy` for python2: `make testpy2` for r: `make testr`
+Add runtime configurations as below
 
-Note that if you just want to test or run your own R or Python code, you do just need to install the image and runtime for that language.
+```shell
+make prepare_runtime
+```
+
+1. Start tests:
+
+```
+make installcheck
+```
 
 ### Unsupported feature
 There some features PLContainer doesn't support. For unsupported feature list and their corresponding issue,
