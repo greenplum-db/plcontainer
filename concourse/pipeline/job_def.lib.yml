@@ -22,7 +22,7 @@ container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_rhel7_release
 #@   if is_bundle_release:
-res_intermediates_tar_python37: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", release_build)
+res_intermediates_tar_python39: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", release_build)
 res_intermediates_tar_r: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", release_build)
 #@   end
 #@ end
@@ -70,9 +70,9 @@ release_bin: bin_plcontainer_gpdb7_rocky8_release
 #@ def python_image_release_conf():
 job_name: push_python_image_release
 res_intermediates_tar: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", True)
-res_release_bin_image: bin_python37_ubuntu1804_bundle_release
+res_release_bin_image: bin_python39_ubuntu2204_bundle_release
 rel_tar_file_name: plcontainer-python-image-*-gp6.tar.gz
-version_file: VERSION_bundle_ubuntu1804_py37
+version_file: VERSION_bundle_ubuntu2204_py39
 #@ end
 #@ def r_image_release_conf():
 job_name: push_r_image_release
@@ -240,7 +240,7 @@ plan:
   params:
     file: plcontainer_artifacts/plcontainer-gppkg-*.tar.gz
 #@   if conf["is_bundle_release"]:
-- put: #@ conf["res_intermediates_tar_python37"]
+- put: #@ conf["res_intermediates_tar_python39"]
   params:
     file: plcontainer_artifacts/plcontainer-python-image*.tgz
 - put: #@ conf["res_intermediates_tar_r"]

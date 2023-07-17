@@ -329,7 +329,7 @@ resources:
     json_key: ((extension/extensions-gcs-service-account-key-dev2))
     versioned_file: intermediates_release/plcontainer_images/plcontainer-r-image-gp6.tgz
 
-- name: bin_python37_ubuntu1804_bundle_release
+- name: bin_python39_ubuntu2204_bundle_release
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-prod
