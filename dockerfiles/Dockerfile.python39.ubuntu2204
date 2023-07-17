@@ -9,6 +9,6 @@ RUN ln -sf /usr/bin/python3.9 /usr/bin/python3
 RUN python3 get-pip.py
 RUN pip3.9 --no-cache install cmake
 
-ENV LD_LIBRARY_PATH "/usr/lib/python3.9:${LD_LIBRARY_PATH}"
+ENV LD_LIBRARY_PATH "/usr/lib64/python3.9:${LD_LIBRARY_PATH}"
 RUN mkdir -p /clientdir
 WORKDIR /clientdir
