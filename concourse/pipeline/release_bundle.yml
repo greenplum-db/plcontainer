@@ -19,7 +19,7 @@ jobs:
 #@     "res_map": res_map,
 #@     "trigger": trigger,
 #@     "gpdb_src": "gpdb6_src",
-#@     "conf": centos7_gpdb6_conf(release_build=True, is_bundle_release=True, container_name_suffix_python="python37.ubuntu1804_b", container_name_suffix_r="r.alpine")
+#@     "conf": centos7_gpdb6_conf(release_build=True, is_bundle_release=True, container_name_suffix_python="python39.ubuntu2204_b", container_name_suffix_r="r.alpine")
 #@ }
 - #@ entrance_job(param)
 - #@ build_test_job(param)
