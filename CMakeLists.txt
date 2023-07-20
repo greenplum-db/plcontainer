@@ -21,6 +21,10 @@ if(NOT DEFINED R_IMAGE_VERSION)
     set(R_IMAGE_VERSION ${PLCONTAINER_VERSION})
 endif()
 
+# find python pkg-config
+# https://cmake.org/cmake/help/v3.24/module/FindPython.html#module:FindPython
+find_package(Python 3.9 REQUIRED COMPONENTS Interpreter)
+
 configure_file(
     "${PROJECT_SOURCE_DIR}/src/config.h.in"
     "${PROJECT_BINARY_DIR}/config.h"
