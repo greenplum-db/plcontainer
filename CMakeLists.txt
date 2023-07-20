@@ -238,7 +238,7 @@ add_custom_target(pyclient
     -w /build
     -u ${my_UID}
     -it ${PYCLIENT_IMAGE}
-    sh -c 'cmake -DPython_EXECUTABLE=/usr/bin/python3 /src/src/pyclient && cmake --build .')
+    sh -c 'cmake /src/src/pyclient && cmake --build .')
 add_dependencies(pyclient pyclient_image)
 
 # client for python2 will hardcode for the container becauesd python2 end of life
