@@ -21,11 +21,6 @@ if(NOT DEFINED R_IMAGE_VERSION)
     set(R_IMAGE_VERSION ${PLCONTAINER_VERSION})
 endif()
 
-# find python pkg-config
-# https://cmake.org/cmake/help/v3.24/module/FindPython.html#module:FindPython
-find_package(Python3 3.9 COMPONENTS Interpreter REQUIRED)
-find_package(Python3 3.9 COMPONENTS Development)
-
 configure_file(
     "${PROJECT_SOURCE_DIR}/src/config.h.in"
     "${PROJECT_BINARY_DIR}/config.h"
@@ -231,6 +226,7 @@ add_custom_target(py2client_image_artifact
     ${PYTHON2_IMAGE_TARBALL_NAME}
     DEPENDS py2client_image_tarball)
 
+# for ubuntu22.04 python3.9 need python Python_EXECUTABLE so added -DPython_EXECUTABLE=/usr/bin/python3.9
 add_custom_target(pyclient
     ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/pyclient
     COMMAND
@@ -242,7 +238,7 @@ add_custom_target(pyclient
     -w /build
     -u ${my_UID}
     -it ${PYCLIENT_IMAGE}
-    sh -c 'cmake /src/src/pyclient && cmake --build .')
+    sh -c 'cmake -DPython_EXECUTABLE=/usr/bin/python3.9 /src/src/pyclient && cmake --build .')
 add_dependencies(pyclient pyclient_image)
 
 # client for python2 will hardcode for the container becauesd python2 end of life
