@@ -1,5 +1,6 @@
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND noninteractive
+env Python_EXECUTABLE /usr/bin/python3
 
 RUN apt update && apt-get install -y --force-yes --no-install-recommends software-properties-common gpg-agent \
                && add-apt-repository ppa:deadsnakes/ppa \
