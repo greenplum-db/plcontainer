@@ -226,7 +226,6 @@ add_custom_target(py2client_image_artifact
     ${PYTHON2_IMAGE_TARBALL_NAME}
     DEPENDS py2client_image_tarball)
 
-# for ubuntu22.04 python3.9 need python Python_EXECUTABLE so added -DPython_EXECUTABLE=/usr/bin/python3.9
 add_custom_target(pyclient
     ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/pyclient
     COMMAND
