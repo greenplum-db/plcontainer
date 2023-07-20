@@ -23,7 +23,8 @@ endif()
 
 # find python pkg-config
 # https://cmake.org/cmake/help/v3.24/module/FindPython.html#module:FindPython
-find_package(Python 3.9 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 3.9 COMPONENTS Interpreter REQUIRED)
+find_package(Python3 3.9 COMPONENTS Development)
 
 configure_file(
     "${PROJECT_SOURCE_DIR}/src/config.h.in"
