@@ -47,7 +47,7 @@ CREATE OR REPLACE FUNCTION rtimestamp(t timestamp) RETURNS timestamp AS $$
 # container: plc_r_shared
 options(digits.secs = 6)
 tmp <- strptime(t,'%Y-%m-%d %H:%M:%OS')
-return (as.character(tmp + 3600))
+return (format(tmp + 3600))
 $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION rtimestamptz(t timestamptz) RETURNS timestamptz AS $$
@@ -144,7 +144,7 @@ CREATE OR REPLACE FUNCTION rtimestamparr(arr timestamp[]) RETURNS timestamp[] AS
 # container: plc_r_shared
 options(digits.secs = 6)
 tmp <- strptime(arr,'%Y-%m-%d %H:%M:%OS')
-return (as.character(tmp+3600))
+return (format(tmp+3600))
 $$
 language plcontainer;
 
@@ -374,14 +374,14 @@ $$ LANGUAGE plcontainer;
 
 CREATE OR REPLACE FUNCTION rtestudt2(r test_type2) RETURNS int AS $$
 # container: plc_r_shared
-if ( (length(r[,1]) != 3) || (r[,1] != c(1,0,1)) || (typeof(r[1,1]) != 'logical') ) return(2) 
-if ( (length(r[,2]) != 3) || (r[,2] != c(1,2,3)) || (typeof(r[1,2]) != 'integer') ) return(3)
-if ( (length(r[,3]) != 3) || (r[,3] != c(2,3,4)) || (typeof(r[1,3]) != 'integer') ) return(4)
-if ( (length(r[,4]) != 3) || (r[,4] != c(3,4,5)) || (typeof(r[1,4]) != 'double') ) return(5)
-if ( (length(r[,5]) != 3) || (r[,5] != c(4.5,5.5,6.5)) || (typeof(r[1,5]) != 'double') ) return(6)
-if ( (length(r[,6]) != 3) || (r[,6] != c(5.5,6.5,7.5)) || (typeof(r[1,6]) != 'double') ) return(7)
-if ( (length(r[,7]) != 3) || (r[,7] != c(6.5,7.5,8.5)) || (typeof(r[1,7]) != 'double') ) return(8)
-if ( (length(r[,8]) != 3) || (r[,8] != c('a','b','c')) || (typeof(r[1,8]) != 'character') ) return(9)
+if ( (length(r[,1]) != 3) | (r[,1] != c(1,0,1)) | (typeof(r[1,1]) != 'logical') ) return(2) 
+if ( (length(r[,2]) != 3) | (r[,2] != c(1,2,3)) | (typeof(r[1,2]) != 'integer') ) return(3)
+if ( (length(r[,3]) != 3) | (r[,3] != c(2,3,4)) | (typeof(r[1,3]) != 'integer') ) return(4)
+if ( (length(r[,4]) != 3) | (r[,4] != c(3,4,5)) | (typeof(r[1,4]) != 'double') ) return(5)
+if ( (length(r[,5]) != 3) | (r[,5] != c(4.5,5.5,6.5)) | (typeof(r[1,5]) != 'double') ) return(6)
+if ( (length(r[,6]) != 3) | (r[,6] != c(5.5,6.5,7.5)) | (typeof(r[1,6]) != 'double') ) return(7)
+if ( (length(r[,7]) != 3) | (r[,7] != c(6.5,7.5,8.5)) | (typeof(r[1,7]) != 'double') ) return(8)
+if ( (length(r[,8]) != 3) | (r[,8] != c('a','b','c')) | (typeof(r[1,8]) != 'character') ) return(9)
 return(10)
 $$ LANGUAGE plcontainer;
 
