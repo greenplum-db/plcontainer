@@ -92,9 +92,9 @@ case ${pipeline_config} in
       hook_res="${proj_name}_pr"
     ;;
   merge|commit)
-      # Default branch is 'main'
+      # Default branch is 'gpdb' as it is our main branch
       if [ -z "${branch}" ]; then
-          branch="main"
+          branch="gpdb"
       fi
       pipeline_type="merge"
       config_file="commit.yml"
@@ -111,22 +111,12 @@ case ${pipeline_config} in
       config_file="dev.yml"
     ;;
   release|rel)
-      # Default branch is 'main'
+      # Default branch is 'gpdb' as it is our main branch
       if [ -z "${branch}" ]; then
-          branch="main"
+          branch="gpdb"
       fi
       pipeline_type="rel"
       config_file="release.yml"
-      hook_res="${proj_name}_commit"
-    ;;
-  release_bundle|rel_bundle)
-      # Default branch is 'main'
-      if [ -z "${branch}" ]; then
-          branch="main"
-      fi
-      pipeline_type="rel"
-      pipeline_name="plcontainer_bundle"
-      config_file="release_bundle.yml"
       hook_res="${proj_name}_commit"
     ;;
   *)
