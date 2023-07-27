@@ -2,7 +2,7 @@
 #@   "entrance_job",
 #@   "image_release_job",
 #@   "build_test_job",
-#@   "centos7_gpdb6_conf",
+#@   "rocky8_gpdb7_conf",
 #@   "python_image_release_conf",
 #@   "r_image_release_conf"
 #@ )
@@ -19,7 +19,7 @@ jobs:
 #@     "res_map": res_map,
 #@     "trigger": trigger,
 #@     "gpdb_src": "gpdb6_src",
-#@     "conf": centos7_gpdb6_conf(release_build=True, is_bundle_release=True, container_name_suffix_python="python39.ubuntu2204_b", container_name_suffix_r="r.alpine")
+#@     "conf": rocky8_gpdb7_conf(release_build=True, is_bundle_release=False, container_name_suffix_python="python39.ubuntu2204", container_name_suffix_r="r.ubuntu1804")
 #@ }
 - #@ entrance_job(param)
 - #@ build_test_job(param)
