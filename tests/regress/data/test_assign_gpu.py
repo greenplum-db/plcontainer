@@ -1,6 +1,11 @@
-#!/usr/bin/env python
+#!/bin/sh
+''''which python >/dev/null 2>&1 && exec python "$0" "$@" # '''
+''''which python3  >/dev/null 2>&1 && exec python3  "$0" "$@" # '''
+''''exec echo "Error: I can't find python anywhere"         # '''
+# python/python3 may not co-exist always on all testing images.
+# Trick from https://stackoverflow.com/a/26056481/1396606
 
-import sys, os
+import os
 import argparse
 import xml.etree.ElementTree as ET
 
