@@ -363,7 +363,7 @@ plan:
           unpack: true
       - put: #@ this_rel_conf["res_release_bin_image"]
         params:
-          file: #@ "intermediates/" + this_rel_conf["rel_tar_file_name"]
+          file: #@ "intermediates_{0}/{1}".format(key, this_rel_conf["rel_tar_file_name"])
 #@   end
 #@   for to_put in trigger["to_put_post"]:
 - put: plcontainer_commit
