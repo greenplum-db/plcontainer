@@ -21,10 +21,6 @@ os: rhel7
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_rhel7_release
-#@   if is_bundle_release:
-res_intermediates_tar_python37: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", release_build)
-res_intermediates_tar_r: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", release_build)
-#@   end
 #@ end
 
 #! Job config for gpdb6 rhel8
@@ -69,17 +65,54 @@ release_bin: bin_plcontainer_gpdb7_rocky8_release
 #! Job config for bundle release
 #@ def python_image_release_conf():
 job_name: push_python_image_release
-res_intermediates_tar: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", True)
-res_release_bin_image: bin_python37_ubuntu1804_bundle_release
-rel_tar_file_name: plcontainer-python-image-*-gp6.tar.gz
-version_file: VERSION_bundle_ubuntu1804_py37
+gp6:
+  res_intermediates_tar: bin_python_image_gpdb6_intermediates_rel
+  res_release_bin_image: bin_python39_gp6_ubuntu2204_bundle_release
+  rel_tar_file_name: plcontainer-python-image-*-gp6.tar.gz
+gp7:
+  res_intermediates_tar: bin_python_image_gpdb7_intermediates_rel
+  res_release_bin_image: bin_python39_gp7_ubuntu2204_bundle_release
+  rel_tar_file_name: plcontainer-python-image-*-gp7.tar.gz
+version_file: dockerfiles/gp-data-science-bundle/dockerfiles/python/VERSION_py39_image
 #@ end
 #@ def r_image_release_conf():
 job_name: push_r_image_release
-res_intermediates_tar: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", True)
-res_release_bin_image: bin_r_ubuntu1804_bundle_release
-rel_tar_file_name: plcontainer-r-image-*-gp6.tar.gz
-version_file: VERSION_bundle_ubuntu1804_r
+gp6:
+  res_intermediates_tar: bin_r_image_gpdb6_intermediates_rel
+  res_release_bin_image: bin_r_gp6_ubuntu1804_bundle_release
+  rel_tar_file_name: plcontainer-r-image-*-gp6.tar.gz
+#!gp7:
+#!  res_intermediates_tar: bin_r_image_gpdb7_intermediates_rel
+#!  res_release_bin_image: bin_r_gp7_ubuntu1804_bundle_release
+#!  rel_tar_file_name: plcontainer-r-image-*-gp7.tar.gz
+version_file: dockerfiles/gp-data-science-bundle/dockerfiles/r/VERSION_r_image
+#@ end
+
+#! Job config for bundle build
+#! FIXME: the r bundle image is not correct. Need to fix in the DSB side
+#@ def gpdb6_bundle_conf(release_build=False, container_name_suffix_python="python39.ubuntu2204_b", container_name_suffix_r="r.ubuntu1804"):
+is_bundle_release: true
+res_test_images: [centos7-gpdb6-image-test]
+res_gpdb_bin: #@ "bin_gpdb6_centos7" + ("" if release_build else "_debug")
+res_intermediates_bin: #@ inter_bin_name("bin_plcontainer_gpdb6_rhel7_intermediates", release_build)
+gpdb_version: gpdb6
+os: rhel7
+container_name_suffix_python: #@ container_name_suffix_python
+container_name_suffix_r: #@ container_name_suffix_r
+res_intermediates_tar_python39: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", release_build)
+res_intermediates_tar_r: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", release_build)
+#@ end
+#@ def gpdb7_bundle_conf(release_build=False, container_name_suffix_python="python39.ubuntu2204_b", container_name_suffix_r="r.ubuntu1804"):
+is_bundle_release: true
+res_test_images: [rocky8-gpdb7-image-test]
+res_gpdb_bin: #@ "bin_gpdb7_el8" + ("" if release_build else "_debug")
+res_intermediates_bin: #@ inter_bin_name("bin_plcontainer_gpdb7_rocky8_intermediates", release_build)
+gpdb_version: gpdb7
+os: rocky8
+container_name_suffix_python: #@ container_name_suffix_python
+container_name_suffix_r: #@ container_name_suffix_r
+res_intermediates_tar_python39: #@ inter_bin_name("bin_python_image_gpdb7_intermediates", release_build)
+res_intermediates_tar_r: #@ inter_bin_name("bin_r_image_gpdb7_intermediates", release_build)
 #@ end
 
 #! The entry point of a pipeline. The job name must be 'entrance'.
@@ -240,7 +273,7 @@ plan:
   params:
     file: plcontainer_artifacts/plcontainer-gppkg-*.tar.gz
 #@   if conf["is_bundle_release"]:
-- put: #@ conf["res_intermediates_tar_python37"]
+- put: #@ conf["res_intermediates_tar_python39"]
   params:
     file: plcontainer_artifacts/plcontainer-python-image*.tgz
 - put: #@ conf["res_intermediates_tar_r"]
@@ -297,13 +330,12 @@ plan:
 #! Image release job
 #@ def image_release_job(param):
 #@   trigger = param["trigger"]
-#@   conf = param["conf"]
+#@   confs = param["confs"]
 #@   res_map = param["res_map"]
 #@   rel_conf = param["rel_conf"]
 #@   passed_jobs = []
-#@   passed_jobs.append(build_test_job_name(conf))
+#@   passed_jobs.extend([build_test_job_name(conf) for conf in confs])
 #@   version_file = rel_conf["version_file"]
-#@   add_res_by_conf(res_map, rel_conf)
 name: #@ rel_conf["job_name"]
 on_failure: #@ trigger["on_failure"]
 on_error: #@ trigger["on_error"]
@@ -316,13 +348,20 @@ plan:
 - in_parallel:
     steps:
     - do:
-      - get: intermediates
-        resource: #@ rel_conf["res_intermediates_tar"]
+#@   for key in rel_conf:
+#@     if not key.startswith("gp"):
+#@       continue
+#@     end
+#@     this_rel_conf = rel_conf[key]
+#@     add_res_by_conf(res_map, this_rel_conf)
+      - get: #@ "intermediates_" + key
+        resource: #@ this_rel_conf["res_intermediates_tar"]
         params:
           unpack: true
-      - put: #@ rel_conf["res_release_bin_image"]
+      - put: #@ this_rel_conf["res_release_bin_image"]
         params:
-          file: #@ "intermediates/" + rel_conf["rel_tar_file_name"]
+          file: #@ "intermediates_{0}/{1}".format(key, this_rel_conf["rel_tar_file_name"])
+#@   end
 #@   for to_put in trigger["to_put_post"]:
 - put: plcontainer_commit
   params:
