@@ -23,10 +23,10 @@ jobs:
 #@     "confs": [],
 #@ }
 - #@ entrance_job(param)
-#@ param["conf"] = gpdb6_bundle_conf(release_build=True, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine")
+#@ param["conf"] = gpdb6_bundle_conf(release_build=True)
 #@ param["confs"].append(gpdb6_bundle_conf(release_build=True))
 - #@ build_test_job(param)
-#@ param["conf"] = gpdb7_bundle_conf(release_build=True, container_name_suffix_python="python39.alpine", container_name_suffix_r="r.alpine")
+#@ param["conf"] = gpdb7_bundle_conf(release_build=True)
 #@ param["confs"].append(gpdb7_bundle_conf(release_build=True))
 - #@ build_test_job(param)
 #@ param["rel_conf"] = python_image_release_conf()
