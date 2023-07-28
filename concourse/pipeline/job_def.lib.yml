@@ -21,10 +21,6 @@ os: rhel7
 container_name_suffix_python: #@ container_name_suffix_python
 container_name_suffix_r: #@ container_name_suffix_r
 release_bin: bin_plcontainer_gpdb6_rhel7_release
-#@   if is_bundle_release:
-res_intermediates_tar_python39: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", release_build)
-res_intermediates_tar_r: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", release_build)
-#@   end
 #@ end
 
 #! Job config for gpdb6 rhel8
