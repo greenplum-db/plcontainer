@@ -93,7 +93,7 @@ version_file: dockerfiles/gp-data-science-bundle/dockerfiles/r/VERSION_r_image
 #@ end
 
 #! Job config for bundle build
-#@ def gpdb6_bundle_conf(release_build=False, container_name_suffix_python="python39.ubuntu2204", container_name_suffix_r="r.ubuntu1804"):
+#@ def gpdb6_bundle_conf(release_build=False, container_name_suffix_python="python39.ubuntu2204_b", container_name_suffix_r="r.ubuntu1804_b"):
 is_bundle_release: true
 res_test_images: [centos7-gpdb6-image-test]
 res_gpdb_bin: #@ "bin_gpdb6_centos7" + ("" if release_build else "_debug")
@@ -105,7 +105,7 @@ container_name_suffix_r: #@ container_name_suffix_r
 res_intermediates_tar_python39: #@ inter_bin_name("bin_python_image_gpdb6_intermediates", release_build)
 res_intermediates_tar_r: #@ inter_bin_name("bin_r_image_gpdb6_intermediates", release_build)
 #@ end
-#@ def gpdb7_bundle_conf(release_build=False, container_name_suffix_python="python39.ubuntu2204", container_name_suffix_r="r.ubuntu1804"):
+#@ def gpdb7_bundle_conf(release_build=False, container_name_suffix_python="python39.ubuntu2204_b", container_name_suffix_r="r.ubuntu1804_b"):
 is_bundle_release: true
 res_test_images: [rocky8-gpdb7-image-test]
 res_gpdb_bin: #@ "bin_gpdb7_el8" + ("" if release_build else "_debug")
