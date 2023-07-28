@@ -137,14 +137,15 @@ esac
 yml_path="/tmp/${proj_name}.yml"
 pipeline_dir="${my_dir}/pipeline"
 lib_dir="${my_dir}/lib"
-# pipeline cannot contain '/'
-pipeline_name=${pipeline_name/\//"_"}
 
 # Generate pipeline name
 if [ -n "${test_suffix}" ]; then
     pipeline_type="${pipeline_type}_test"
 fi
-pipeline_name="${pipeline_type}.${proj_name}"
+if [ -z "$pipeline_name" ]; then
+    pipeline_name="${proj_name}"
+fi
+pipeline_name="${pipeline_type}.${pipeline_name}"
 if [ -n "${branch}" ]; then
     pipeline_name="${pipeline_name}.${branch}"
 fi
@@ -166,7 +167,7 @@ ytt \
 echo "Generated pipeline yaml '${yml_path}'."
 
 echo ""
-echo "Fly the pipeline..."
+echo "Fly the pipeline '${pipeline_name}' ..."
 set -v
 "${fly}" \
     -t "${target}" \
