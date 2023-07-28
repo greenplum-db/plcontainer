@@ -44,8 +44,4 @@ function _main() {
     popd
 }
 
-#_main
-# FIXME: Remove this, testing only.
-pushd plcontainer_artifacts
-# Install gppkg
-_install_gppkg
+_main
