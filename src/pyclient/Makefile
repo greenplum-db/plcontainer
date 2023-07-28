@@ -10,7 +10,7 @@
 PLCONTAINER_DIR = ..
 
 ifeq ($(PYTHON_VERSION),3)
-  PYTHON = python3.9
+  PYTHON = python3.7
   CLIENT = py3client
 else
   PYTHON = python

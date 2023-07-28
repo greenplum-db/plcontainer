@@ -156,13 +156,21 @@ resources:
     bucket: gp-extensions-ci
     json_key: ((extension/extensions-gcs-service-account-key-dev2))
     versioned_file: intermediates/plcontainer_images/plcontainer-r-image-gp6.tgz
-########## IMAGE INTERMEDIATES RELEASE BUCKET #########
+
+########## IMAGE INTERMEDIATES RELEASE BUCKET ##########
 - name: bin_python_image_gpdb6_intermediates_rel
   type: gcs
   source:
     bucket: gp-extensions-ci
     json_key: ((extension/extensions-gcs-service-account-key-dev2))
     versioned_file: intermediates_release/plcontainer_images/plcontainer-python-image-gp6.tgz
+
+- name: bin_python_image_gpdb7_intermediates_rel
+  type: gcs
+  source:
+    bucket: gp-extensions-ci
+    json_key: ((extension/extensions-gcs-service-account-key-dev2))
+    versioned_file: intermediates_release/plcontainer_images/plcontainer-python-image-gp7.tgz
 
 - name: bin_r_image_gpdb6_intermediates_rel
   type: gcs
@@ -171,12 +179,19 @@ resources:
     json_key: ((extension/extensions-gcs-service-account-key-dev2))
     versioned_file: intermediates_release/plcontainer_images/plcontainer-r-image-gp6.tgz
 
-- name: bin_python39_ubuntu2204_bundle_release
+- name: bin_python39_gp6_ubuntu2204_bundle_release
   type: gcs
   source:
     bucket: pivotal-gpdb-concourse-resources-prod
     json_key: ((concourse-gcs-resources-service-account-key))
     regexp: plcontainer/released/gpdb6/plcontainer-python3-image-(.*)-gp6.tar.gz
+
+- name: bin_python39_gp7_ubuntu2204_bundle_release
+  type: gcs
+  source:
+    bucket: pivotal-gpdb-concourse-resources-prod
+    json_key: ((concourse-gcs-resources-service-account-key))
+    regexp: plcontainer/released/gpdb7/plcontainer-python3-image-(.*)-gp7.tar.gz
 
 - name: bin_r_ubuntu1804_bundle_release
   type: gcs
