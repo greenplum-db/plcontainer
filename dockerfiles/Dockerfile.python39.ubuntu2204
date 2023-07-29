@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND noninteractive
 # this is to fix UnicodeDecodeError: 'ascii' codec for pymc and other packages for
 # UnicodeDecodeError Error, can check link: https://github.com/docker-library/python/issues/13
-ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
 
 RUN apt update && \
     apt-get install -y --force-yes --no-install-recommends software-properties-common gpg-agent && \
