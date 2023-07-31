@@ -5,6 +5,8 @@ tags
 .ccls-cache/
 .cache/
 .idea/
+.clangd
+.clangd-tidy
 
 # file generated at compile time
 src/common/config.h
