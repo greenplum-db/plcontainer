@@ -53,37 +53,10 @@ if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
         SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py_bundle
         REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy_bundle
         REGRESS_ENV PL_TESTDB=testpy_bundle)
-    #add_dependencies(installcheck testpy_bundle)
+    add_dependencies(installcheck testpy_bundle)
 else()
-    #add_dependencies(installcheck testpy2 testpy testr)
+    add_dependencies(installcheck testpy2 testpy testr)
 endif()
-
-
-# Example to run test_truncate infinite times
-RegressTarget_Add(regress_schema
-    INIT_FILE
-    ${CMAKE_CURRENT_SOURCE_DIR}/init_file
-    SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/sql
-    EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/expected
-    RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
-    DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
-    REGRESS schema
-    REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy
-    REGRESS_ENV PL_TESTDB=testpy)
-RegressTarget_Add(regress_configuration_loop
-    INIT_FILE
-    ${CMAKE_CURRENT_SOURCE_DIR}/init_file
-    SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/sql
-    EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/expected
-    RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
-    DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
-    REGRESS
-    test_configuration
-    RUN_TIMES -1
-    REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy
-    REGRESS_ENV PL_TESTDB=testpy)
-add_dependencies(regress_configuration_loop regress_schema)
-add_dependencies(installcheck regress_configuration_loop)
 
 add_custom_target(prepare_runtime
     COMMAND
