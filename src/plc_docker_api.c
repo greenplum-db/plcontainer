@@ -598,6 +598,7 @@ int plc_docker_delete_container(const char *name) {
 int plc_docker_list_container(char **result, int dbid) {
 	plcCurlBuffer *response = NULL;
 	char *url = "/containers/json?all=1&filters=";
+	/* not return exiting and removing containers */
 	char *param = "{\"label\":[\"dbid=%d\"], \"status\":[\"created\", \"restarting\", \"running\"]}";
 	char *body = NULL;
 	int res = 0;
