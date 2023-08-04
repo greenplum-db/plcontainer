@@ -630,14 +630,18 @@ int plc_docker_get_container_state(const char *name, char **result) {
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
 	response = plcCurlRESTAPICall(PLC_HTTP_GET, plc_docker_version_127, url, NULL);
+
+	/* FIXME: Mixing return value of curl and HTTP status code is confusing and might cause issues. */
 	res = response->status;
 
 	if (res == 200) {
-		res = 0;
+		res = PLC_DOCKER_API_RES_OK;
 	} else if (res >= 0) {
 		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to get container %s state, return code: %d, detail: %s", name, res, response->data);
-		res = -1;
+
+		/* for the code use 'res < 0' to check the result */
+		res = -res;
 	}
 
 	*result = pstrdup(response->data);

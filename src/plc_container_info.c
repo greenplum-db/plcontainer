@@ -522,17 +522,21 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 
 			res = plc_docker_get_container_state(idStr, &containerState);
 			if (res < 0) {
-				plc_elog(ERROR, "Fail to get docker container state: %s", backend_error_message);
-			}
+				if (res != PLC_DOCKER_API_RES_NOT_FOUND) {
+					plc_elog(ERROR, "Fail to get docker container state: %s", backend_error_message);
+				}
 
-			containerStateObj = json_tokener_parse(containerState);
-			if (!json_object_object_get_ex(containerStateObj, "memory_stats", &memoryObj)) {
-				plc_elog(ERROR, "failed to get json \"memory_stats\" field.");
-			}
-			if (!json_object_object_get_ex(memoryObj, "usage", &memoryUsageObj)) {
-				plc_elog(LOG, "failed to get json \"usage\" field.");
+				statusStr = psprintf("Has been removed");
 			} else {
-				containerMemoryUsage = json_object_get_int64(memoryUsageObj) / 1024;
+				containerStateObj = json_tokener_parse(containerState);
+				if (!json_object_object_get_ex(containerStateObj, "memory_stats", &memoryObj)) {
+					plc_elog(ERROR, "failed to get json \"memory_stats\" field.");
+				}
+				if (!json_object_object_get_ex(memoryObj, "usage", &memoryUsageObj)) {
+					plc_elog(LOG, "failed to get json \"usage\" field.");
+				} else {
+					containerMemoryUsage = json_object_get_int64(memoryUsageObj) / 1024;
+				}
 			}
 
 			values = (char **) palloc(5 * sizeof(char *));
