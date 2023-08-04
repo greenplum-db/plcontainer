@@ -630,6 +630,8 @@ int plc_docker_get_container_state(const char *name, char **result) {
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
 	response = plcCurlRESTAPICall(PLC_HTTP_GET, plc_docker_version_127, url, NULL);
+
+	/* FIXME: Mixing return value of curl and HTTP status code is confusing and might cause issues. */
 	res = response->status;
 
 	if (res == 200) {
