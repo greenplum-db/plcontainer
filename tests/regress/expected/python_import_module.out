@@ -237,21 +237,21 @@ SELECT beautifulsoup_test();
 
 DROP FUNCTION beautifulsoup_test();
 --
--- import pymc3
+-- import pymc
 --
-create or replace function pymc3_test() RETURNS TEXT AS $$
+create or replace function pymc_test() RETURNS TEXT AS $$
 # container: plc_python_shared
-from pymc3 import Model, Normal, HalfNormal
+from pymc import Model, Normal, HalfNormal
 basic_model = Model()
 return "Success!"
 $$ LANGUAGE plcontainer;
-SELECT pymc3_test();
- pymc3_test 
-------------
+SELECT pymc_test();
+ pymc_test 
+-----------
  Success!
 (1 row)
 
-DROP FUNCTION pymc3_test();
+DROP FUNCTION pymc_test();
 --
 -- import nltk
 --

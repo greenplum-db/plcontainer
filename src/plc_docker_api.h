@@ -13,6 +13,9 @@
 
 #define CURL_BUFFER_SIZE 8192
 
+#define PLC_DOCKER_API_RES_OK 0
+#define PLC_DOCKER_API_RES_NOT_FOUND -404
+
 typedef enum {
 	PLC_HTTP_GET = 0,
 	PLC_HTTP_POST,

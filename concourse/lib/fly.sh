@@ -92,9 +92,9 @@ case ${pipeline_config} in
       hook_res="${proj_name}_pr"
     ;;
   merge|commit)
-      # Default branch is 'main'
+      # Default branch is 'gpdb' as it is our main branch
       if [ -z "${branch}" ]; then
-          branch="main"
+          branch="gpdb"
       fi
       pipeline_type="merge"
       config_file="commit.yml"
@@ -111,22 +111,12 @@ case ${pipeline_config} in
       config_file="dev.yml"
     ;;
   release|rel)
-      # Default branch is 'main'
+      # Default branch is 'gpdb' as it is our main branch
       if [ -z "${branch}" ]; then
-          branch="main"
+          branch="gpdb"
       fi
       pipeline_type="rel"
       config_file="release.yml"
-      hook_res="${proj_name}_commit"
-    ;;
-  release_bundle|rel_bundle)
-      # Default branch is 'main'
-      if [ -z "${branch}" ]; then
-          branch="main"
-      fi
-      pipeline_type="rel"
-      pipeline_name="plcontainer_bundle"
-      config_file="release_bundle.yml"
       hook_res="${proj_name}_commit"
     ;;
   *)
@@ -137,15 +127,14 @@ esac
 yml_path="/tmp/${proj_name}.yml"
 pipeline_dir="${my_dir}/pipeline"
 lib_dir="${my_dir}/lib"
+# pipeline cannot contain '/'
+pipeline_name=${pipeline_name/\//"_"}
 
 # Generate pipeline name
 if [ -n "${test_suffix}" ]; then
     pipeline_type="${pipeline_type}_test"
 fi
-if [ -z "$pipeline_name" ]; then
-    pipeline_name="${proj_name}"
-fi
-pipeline_name="${pipeline_type}.${pipeline_name}"
+pipeline_name="${pipeline_type}.${proj_name}"
 if [ -n "${branch}" ]; then
     pipeline_name="${pipeline_name}.${branch}"
 fi
@@ -167,7 +156,7 @@ ytt \
 echo "Generated pipeline yaml '${yml_path}'."
 
 echo ""
-echo "Fly the pipeline '${pipeline_name}' ..."
+echo "Fly the pipeline..."
 set -v
 "${fly}" \
     -t "${target}" \

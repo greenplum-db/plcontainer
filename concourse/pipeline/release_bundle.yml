@@ -2,7 +2,8 @@
 #@   "entrance_job",
 #@   "image_release_job",
 #@   "build_test_job",
-#@   "centos7_gpdb6_conf",
+#@   "gpdb6_bundle_conf",
+#@   "gpdb7_bundle_conf",
 #@   "python_image_release_conf",
 #@   "r_image_release_conf"
 #@ )
@@ -19,9 +20,14 @@ jobs:
 #@     "res_map": res_map,
 #@     "trigger": trigger,
 #@     "gpdb_src": "gpdb6_src",
-#@     "conf": centos7_gpdb6_conf(release_build=True, is_bundle_release=True, container_name_suffix_python="python37.ubuntu1804_b", container_name_suffix_r="r.alpine")
+#@     "confs": [],
 #@ }
 - #@ entrance_job(param)
+#@ param["conf"] = gpdb6_bundle_conf(release_build=True)
+#@ param["confs"].append(gpdb6_bundle_conf(release_build=True))
+- #@ build_test_job(param)
+#@ param["conf"] = gpdb7_bundle_conf(release_build=True)
+#@ param["confs"].append(gpdb7_bundle_conf(release_build=True))
 - #@ build_test_job(param)
 #@ param["rel_conf"] = python_image_release_conf()
 - #@ image_release_job(param)
