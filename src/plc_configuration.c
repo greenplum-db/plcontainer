@@ -1110,7 +1110,7 @@ runtimeConfEntry *plc_get_runtime_configuration(char *runtime_id) {
 
 
 backendConnectionInfo *runtime_conf_copy_backend_connection_info(const backendConnectionInfo *a) {
-	backendConnectionInfo *r = palloc0(sizeof(backendConnectionInfo));
+	backendConnectionInfo *r = PLy_malloc(sizeof(backendConnectionInfo));
 
 	r->tag = a->tag;
 	switch(a->tag) {
@@ -1208,7 +1208,7 @@ void runtime_conf_free_backend_connection_info(backendConnectionInfo *info) {
 
 
 runtimeConnectionInfo* runtime_conf_copy_runtime_connection_info(const runtimeConnectionInfo *a) {
-	runtimeConnectionInfo *r = palloc0(sizeof(runtimeConnectionInfo));
+	runtimeConnectionInfo *r = PLy_malloc(sizeof(runtimeConnectionInfo));
 
 	r->tag = a->tag;
 	r->identity = plc_top_strdup(a->identity);
