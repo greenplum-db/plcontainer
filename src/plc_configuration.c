@@ -70,7 +70,7 @@ PG_FUNCTION_INFO_V1(refresh_plcontainer_config);
 
 PG_FUNCTION_INFO_V1(show_plcontainer_config);
 
-static HTAB *rumtime_conf_table;
+static HTAB *runtime_conf_table;
 
 // runtime_backend_table is a session level in-process static variable
 // [0] is the default runtime backend with name 'default' fill in by parse_runtime_backend_configuration()
@@ -91,17 +91,17 @@ static void init_runtime_configurations() {
 	HASHCTL		hash_ctl;
 
 	/* destroy runtime configuration first if exists */
-	if (rumtime_conf_table != NULL) {
+	if (runtime_conf_table != NULL) {
 		HASH_SEQ_STATUS hash_status;
 		runtimeConfEntry *entry;
 
-		hash_seq_init(&hash_status, rumtime_conf_table);
+		hash_seq_init(&hash_status, runtime_conf_table);
 
 		while ((entry = (runtimeConfEntry *) hash_seq_search(&hash_status)) != NULL)
 		{
 			free_runtime_conf_entry(entry);
 		}
-		hash_destroy(rumtime_conf_table);
+		hash_destroy(runtime_conf_table);
 	}
 
 	/* destroy backend configuration first if exists */
@@ -125,12 +125,12 @@ static void init_runtime_configurations() {
 	 * For string key, we use string_hash to caculate hash key and
 	 * use strlcpy to copy key(when string_hash is set as hash function).
 	 */
-	rumtime_conf_table = hash_create("runtime configuration hash",
+	runtime_conf_table = hash_create("runtime configuration hash",
 								MAX_EXPECTED_RUNTIME_NUM,
 								&hash_ctl,
 								HASH_ELEM | HASH_FUNCTION);
 
-	if (rumtime_conf_table == NULL) {
+	if (runtime_conf_table == NULL) {
 		plc_elog(ERROR, "Error: could not create runtime conf hash table. Check your memory usage.");
 	}
 
@@ -392,7 +392,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 	runtimeConfEntry *conf_entry = NULL;
 	bool		foundPtr;
 
-	if (rumtime_conf_table == NULL) {
+	if (runtime_conf_table == NULL) {
 		plc_elog(ERROR, "Runtime configuration table is not initialized.");
 	}
 
@@ -426,7 +426,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 			plc_elog(ERROR, "runtime id should not be longer than 63 bytes.");
 		}
 		/* find the corresponding runtime config*/
-		conf_entry = (runtimeConfEntry *) hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_ENTER, &foundPtr);
+		conf_entry = (runtimeConfEntry *) hash_search(runtime_conf_table,  (const void *) runtime_id, HASH_ENTER, &foundPtr);
 
 		/*check if runtime id already exists in hash table.*/
 		if (foundPtr) {
@@ -803,9 +803,9 @@ static void parse_runtime_configuration(xmlNode *node) {
 			value = NULL;
 		}
 
-		if (rumtime_conf_table != NULL && runtime_id != NULL) {
+		if (runtime_conf_table != NULL && runtime_id != NULL) {
 			/* remove the broken runtime config entry in hash table*/
-			hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_REMOVE, NULL);
+			hash_search(runtime_conf_table,  (const void *) runtime_id, HASH_REMOVE, NULL);
 		}
 
 		PG_RE_THROW();
@@ -837,7 +837,7 @@ static void get_runtime_configurations(xmlNode *node) {
 	}
 
 	/* If no container definitions found - error */
-	if (hash_get_num_entries(rumtime_conf_table) == 0) {
+	if (hash_get_num_entries(runtime_conf_table) == 0) {
 		plc_elog(ERROR, "Did not find a single 'runtime' declaration in configuration");
 	}
 
@@ -846,9 +846,6 @@ static void get_runtime_configurations(xmlNode *node) {
 
 /* Safe way to deallocate container configuration list structure */
 static void free_runtime_conf_entry(runtimeConfEntry *entry) {
-	pfree_null(entry->image);
-	pfree_null(entry->command);
-
 	if (entry->image)
 		pfree(entry->image);
 	if (entry->command)
@@ -908,7 +905,7 @@ static void free_runtime_backend_entry(plcBackend *entry, bool release_self) {
 }
 
 static void print_runtime_configurations() {
-	if (rumtime_conf_table == NULL) {
+	if (runtime_conf_table == NULL) {
 		return;
 	}
 
@@ -932,7 +929,7 @@ static void print_runtime_configurations() {
 	}
 
 	HASH_SEQ_STATUS hash_status;
-	hash_seq_init(&hash_status, rumtime_conf_table);
+	hash_seq_init(&hash_status, runtime_conf_table);
 
 	runtimeConfEntry *conf_entry;
 	while ((conf_entry = (runtimeConfEntry *) hash_seq_search(&hash_status)) != NULL)
@@ -1037,7 +1034,7 @@ static int plc_refresh_container_config(bool verbose) {
 	/* Free the global variables that may have been allocated by the parser */
 	xmlCleanupParser();
 
-	if (hash_get_num_entries(rumtime_conf_table) == 0) {
+	if (hash_get_num_entries(runtime_conf_table) == 0) {
 		return -1;
 	}
 
@@ -1051,13 +1048,13 @@ static int plc_refresh_container_config(bool verbose) {
 static int plc_show_container_config() {
 	int res = 0;
 
-	if (rumtime_conf_table == NULL) {
+	if (runtime_conf_table == NULL) {
 		res = plc_refresh_container_config(false);
 		if (res != 0)
 			return -1;
 	}
 
-	if (rumtime_conf_table == NULL || hash_get_num_entries(rumtime_conf_table) == 0) {
+	if (runtime_conf_table == NULL || hash_get_num_entries(runtime_conf_table) == 0) {
 		return -1;
 	}
 
@@ -1095,7 +1092,7 @@ runtimeConfEntry *plc_get_runtime_configuration(char *runtime_id) {
 	int res = 0;
 	runtimeConfEntry *entry = NULL;
 
-	if (rumtime_conf_table == NULL || hash_get_num_entries(rumtime_conf_table) == 0) {
+	if (runtime_conf_table == NULL || hash_get_num_entries(runtime_conf_table) == 0) {
 		res = plc_refresh_container_config(0);
 		if (res < 0) {
 			return NULL;
@@ -1103,7 +1100,7 @@ runtimeConfEntry *plc_get_runtime_configuration(char *runtime_id) {
 	}
 
 	/* find the corresponding runtime config*/
-	entry = (runtimeConfEntry *) hash_search(rumtime_conf_table,  (const void *) runtime_id, HASH_FIND, NULL);
+	entry = (runtimeConfEntry *) hash_search(runtime_conf_table,  (const void *) runtime_id, HASH_FIND, NULL);
 
 	return entry;
 }
