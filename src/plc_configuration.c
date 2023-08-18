@@ -1531,6 +1531,9 @@ static void parse_runtime_backend_configuration(xmlNode *root) {
 }
 
 const plcBackend *take_plcbackend_byname(const char *name) {
+	if (runtime_backend_table == NULL)
+		plc_refresh_container_config(false);
+
 	for (int i = 0; i < nruntime_backend_table; i++) {
 		const plcBackend *b = &runtime_backend_table[i];
 		if (strcmp(b->name, name) == 0)
