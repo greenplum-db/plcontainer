@@ -939,9 +939,9 @@ static void print_runtime_configurations() {
 		plc_elog(INFO, "    command = '%s'", conf_entry->command);
 		plc_elog(INFO, "    memory_mb = '%d'", conf_entry->memoryMb);
 		plc_elog(INFO, "    cpu_share = '%d'", conf_entry->cpuShare);
-		plc_elog(INFO, "    use_container_logging  = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
-		plc_elog(INFO, "    enable_network  = '%s'", conf_entry->enableNetwork ? "yes" : "no");
-		plc_elog(INFO, "    backend  = '%s'", conf_entry->backend->name);
+		plc_elog(INFO, "    use_container_logging = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
+		plc_elog(INFO, "    enable_network = '%s'", conf_entry->enableNetwork ? "yes" : "no");
+		plc_elog(INFO, "    backend = '%s'", conf_entry->backend->name);
 		if (conf_entry->ndevicerequests != 0) {
 			for (int i = 0; i < conf_entry->ndevicerequests; i++) {
 				plcDeviceRequest *req = &conf_entry->devicerequests[i];
