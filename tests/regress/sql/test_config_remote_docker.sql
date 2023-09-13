@@ -1,5 +1,5 @@
 -- start_ignore
-\! plcontainer runtime-add -r plc_python3_shared_remote_docker -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 -s enable_network=yes
+\! plcontainer runtime-add -r plc_python3_shared_remote_docker -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 -s enable_network=yes -s roles=$USER
 \! plcontainer runtime-backup -f test_config_remote_docker.xml
 \! ./data/test_assign_backend.py ./test_config_remote_docker.xml -r plc_python3_shared_remote_docker
 \! plcontainer runtime-restore -f test_config_remote_docker.xml

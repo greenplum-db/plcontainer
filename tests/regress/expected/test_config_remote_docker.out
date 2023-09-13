@@ -1,5 +1,5 @@
 -- start_ignore
-\! plcontainer runtime-add -r plc_python3_shared_remote_docker -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3
+\! plcontainer runtime-add -r plc_python3_shared_remote_docker -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 -s enable_network=yes -s roles=$USER
 20230913:08:42:38:027232 plcontainer:867fa21d-f30f-4821-5748-08d9640dd083:gpadmin-[WARNING]:-image python39.alpine is not in the list of 'docker images'
 20230913:08:42:38:027232 plcontainer:867fa21d-f30f-4821-5748-08d9640dd083:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20230913:08:42:39:027232 plcontainer:867fa21d-f30f-4821-5748-08d9640dd083:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
