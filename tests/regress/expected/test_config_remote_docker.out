@@ -12,7 +12,7 @@
 \! rm test_config_remote_docker.xml
 -- end_ignore
 select * from plcontainer_refresh_config order by gp_segment_id DESC;
- gp_segment_id | plcontainer_refresh_local_config
+ gp_segment_id | plcontainer_refresh_local_config 
 ---------------+----------------------------------
              2 | ok
              1 | ok
@@ -25,7 +25,7 @@ create function with_conf_remote_docker() returns TEXT as $$
   return 'hello'
 $$ LANGUAGE plcontainer;
 select * from with_conf_remote_docker();
- with_conf_remote_docker
+ with_conf_remote_docker 
 -------------------------
  hello
 (1 row)
