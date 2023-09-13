@@ -122,7 +122,8 @@ target_include_directories(plcontainer PRIVATE
     ${deps_INSTALL_DIR}/include/libxml2)
 target_link_libraries(plcontainer PRIVATE
     ${deps_INSTALL_DIR}/lib/libxml2.a
-    ${deps_INSTALL_DIR}/lib/libjson-c.a)
+    ${deps_INSTALL_DIR}/lib/libjson-c.a
+    ${PG_LIB_DIR}/libpq.so)
 add_dependencies(
     plcontainer
     libxml
