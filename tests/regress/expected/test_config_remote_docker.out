@@ -11,12 +11,12 @@
 20230913:08:42:40:027747 plcontainer:867fa21d-f30f-4821-5748-08d9640dd083:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 \! rm test_config_remote_docker.xml
 -- end_ignore
-select * from plcontainer_refresh_config;
+select * from plcontainer_refresh_config order by gp_segment_id DESC;
  gp_segment_id | plcontainer_refresh_local_config
 ---------------+----------------------------------
              2 | ok
-             0 | ok
              1 | ok
+             0 | ok
             -1 | ok
 (4 rows)
 
@@ -24,7 +24,6 @@ create function with_conf_remote_docker() returns TEXT as $$
   # container: plc_python3_shared_remote_docker
   return 'hello'
 $$ LANGUAGE plcontainer;
-
 select * from with_conf_remote_docker();
  with_conf_remote_docker
 -------------------------

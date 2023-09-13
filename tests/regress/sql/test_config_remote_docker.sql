@@ -5,7 +5,7 @@
 \! plcontainer runtime-restore -f test_config_remote_docker.xml
 \! rm test_config_remote_docker.xml
 -- end_ignore
-select * from plcontainer_refresh_config;
+select * from plcontainer_refresh_config order by gp_segment_id DESC;
 
 create function with_conf_remote_docker() returns TEXT as $$
   # container: plc_python3_shared_remote_docker
