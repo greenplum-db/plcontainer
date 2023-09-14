@@ -18,5 +18,5 @@ select * from with_conf_remote_docker();
 \! plcontainer runtime-delete -r plc_python3_shared_remote_docker
 -- end_ignore
 
-drop function with_conf_remote_docker;
+drop function with_conf_remote_docker();
 
