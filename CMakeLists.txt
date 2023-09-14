@@ -192,21 +192,18 @@ set(PYTHON2_IMAGE_TARBALL_NAME
 add_custom_target(rclient_image_tarball
     COMMAND
     PYTHONPATH=
-    docker save ${RCLIENT_IMAGE}
-    -o ${R_IMAGE_TARBALL_NAME}
+    docker save ${RCLIENT_IMAGE} | gzip > ${R_IMAGE_TARBALL_NAME}
     DEPENDS rclient_image)
 
 add_custom_target(pyclient_image_tarball
     COMMAND
     PYTHONPATH=
-    docker save ${PYCLIENT_IMAGE}
-    -o ${PYTHON_IMAGE_TARBALL_NAME}
+    docker save ${PYCLIENT_IMAGE} | gzip > ${PYTHON_IMAGE_TARBALL_NAME}
     DEPENDS pyclient_image)
 add_custom_target(py2client_image_tarball
     COMMAND
     PYTHONPATH=
-    docker save ${PY2CLIENT_IMAGE}
-    -o ${PYTHON2_IMAGE_TARBALL_NAME}
+    docker save ${PY2CLIENT_IMAGE} | gzip > ${PYTHON2_IMAGE_TARBALL_NAME}
     DEPENDS py2client_image)
 
 # for version-less tarball which will be uploaded to intermediate bucket
