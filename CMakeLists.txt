@@ -21,6 +21,10 @@ if(NOT DEFINED R_IMAGE_VERSION)
     set(R_IMAGE_VERSION ${PLCONTAINER_VERSION})
 endif()
 
+if(GP_MAJOR_VERSION VERSION_GREATER 6)
+    set(LIBPQ ${PG_LIB_DIR}/libpq.so)
+endif()
+
 configure_file(
     "${PROJECT_SOURCE_DIR}/src/config.h.in"
     "${PROJECT_BINARY_DIR}/config.h"
@@ -123,7 +127,7 @@ target_include_directories(plcontainer PRIVATE
 target_link_libraries(plcontainer PRIVATE
     ${deps_INSTALL_DIR}/lib/libxml2.a
     ${deps_INSTALL_DIR}/lib/libjson-c.a
-    ${PG_LIB_DIR}/libpq.so)
+    ${LIBPQ})
 add_dependencies(
     plcontainer
     libxml
