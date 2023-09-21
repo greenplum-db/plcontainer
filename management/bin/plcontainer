@@ -480,12 +480,8 @@ def get_file_md5(file):
     of bytes and cannot be printed directly to the screen or log file
     without converting to hex.
     '''
-    h = hashlib.md5()
-    f = open(file, 'r')
-    for l in f:
-        h.update(l)
-    f.close()
-    return h.digest()
+    with open(file, 'rb') as f:
+        return hashlib.md5(f.read()).digest()
 
 
 def copy_file_to_tmp(host, file):
