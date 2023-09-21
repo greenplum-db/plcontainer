@@ -483,7 +483,7 @@ def get_file_md5(file):
     h = hashlib.md5()
     f = open(file, 'r')
     for l in f:
-        h.update(l)
+        h.update(l.encode('utf-8'))
     f.close()
     return h.digest()
 
