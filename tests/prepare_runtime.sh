@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ex
 
+cd "$(dirname "$0")"
+
 # prepare for plcontainer tests
 # this script is for local install
 # we need to set two argments for the env
@@ -15,12 +17,12 @@ plcontainer runtime-delete -r plc_r_shared
 plcontainer runtime-delete -r plc_python2_shared
 
 # then add the python and r container image
-plcontainer runtime-add -r plc_python_shared -i "${CONTAINER_NAME_SUFFIX_PYTHON}:latest" -l python3
-plcontainer runtime-add -r plc_python_shared_oom -i "${CONTAINER_NAME_SUFFIX_PYTHON}:latest" -l python3 -s memory_mb=100
+plcontainer runtime-add -r plc_python_shared -i "${CONTAINER_NAME_SUFFIX_PYTHON}:latest" -l python3 $(./regress/data/auto_select_client.py -i "${CONTAINER_NAME_SUFFIX_PYTHON}")
+plcontainer runtime-add -r plc_python_shared_oom -i "${CONTAINER_NAME_SUFFIX_PYTHON}:latest" -l python3 -s memory_mb=100 $(./regress/data/auto_select_client.py -i "${CONTAINER_NAME_SUFFIX_PYTHON}")
 
 # python2 oom for python2 or python3 just test one version is enough
-plcontainer runtime-add -r plc_python2_shared -i "${CONTAINER_NAME_SUFFIX_PYTHON2}:latest" -l python
-plcontainer runtime-add -r plc_r_shared -i "${CONTAINER_NAME_SUFFIX_R}:latest" -l r
+plcontainer runtime-add -r plc_python2_shared -i "${CONTAINER_NAME_SUFFIX_PYTHON2}:latest" -l python $(./regress/data/auto_select_client.py -i "${CONTAINER_NAME_SUFFIX_PYTHON2}")
+plcontainer runtime-add -r plc_r_shared -i "${CONTAINER_NAME_SUFFIX_R}:latest" -l r $(./regress/data/auto_select_client.py -i "${CONTAINER_NAME_SUFFIX_R}")
 
 # for test faultinject_python we rm all the container first
 containers_cnt=$(ssh `psql -d postgres -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a --filter label=dbid=2 -q | wc -l)

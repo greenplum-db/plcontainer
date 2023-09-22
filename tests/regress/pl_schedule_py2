@@ -19,5 +19,8 @@ test: test_python2_error
 # PL/Container UDA test
 test: uda_python2
 
+# build client test only runs in py2. only the py2 images is able to build a client (make cmake gcc and python-dev)
+test: build_client
+
 # Drop the extension - need to be last
 test: drop

@@ -672,6 +672,11 @@ def validate_xml(filename):
                     if not roles_str:
                         logger.error("'roles_str' is empty, please add roles (separate with ',') or remove this element")
                         raise Exception("Validation failed")
+                elif 'client' in settings.attrib:
+                    client_str = settings.attrib['client']
+                    if not client_str:
+                        logger.error("'client_str' is empty, please add client name or remove this element")
+                        raise Exception("Validation failed")
                 else:
                     logger.error("Found illegal setting in runtime %s: %s", runtime_id, settings.attrib)
     except Exception as ex:
@@ -846,7 +851,7 @@ def get_conf_settings(options, elements):
         strList = setting.split("=")
         if len(strList) != 2:
             raise Exception("Bad setting format: %s" % setting)
-        if strList[0] not in ("memory_mb", "cpu_share", "use_container_logging", "resource_group_id", "roles", "enable_network"):
+        if strList[0] not in ("memory_mb", "cpu_share", "use_container_logging", "resource_group_id", "roles", "enable_network", "client"):
             raise Exception("Bad setting key: %s" % strList[0])
         elements['setting'][strList[0]] = strList[1]
 

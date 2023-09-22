@@ -1,4 +1,4 @@
-\! plcontainer runtime-add -r plc_python_shared_net -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 --setting enable_network=yes -s roles=$USER
+\! plcontainer runtime-add -r plc_python_shared_net -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 --setting enable_network=yes -s roles=$USER $(./data/auto_select_client.py -i ${CONTAINER_NAME_SUFFIX_PYTHON})
 20220718:16:25:26:178095 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20220718:16:25:26:178095 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 select * from plcontainer_refresh_config;
@@ -39,7 +39,7 @@ select * from access_network_ok();
 20220718:16:25:40:179535 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20220718:16:25:40:179535 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 -- strict permission check, expect error
-\! plcontainer runtime-add -r plc_python_shared_net -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 --setting enable_network=yes
+\! plcontainer runtime-add -r plc_python_shared_net -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python3 --setting enable_network=yes $(./data/auto_select_client.py -i ${CONTAINER_NAME_SUFFIX_PYTHON})
 20220718:16:25:40:179832 plcontainer:fluorite:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20220718:16:25:40:179832 plcontainer:fluorite:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 select * from plcontainer_refresh_config;

@@ -441,6 +441,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 		conf_entry->cpuShare = 1024;
 		conf_entry->useContainerLogging = false;
 		conf_entry->enableNetwork = false;
+		conf_entry->client_name = NULL;
 		conf_entry->resgroupOid = InvalidOid;
 		conf_entry->useUserControl = false;
 		conf_entry->roles = NULL;
@@ -591,6 +592,18 @@ static void parse_runtime_configuration(xmlNode *node) {
 						}
 						conf_entry->roles = plc_top_strdup((char *) value);
 						conf_entry->useUserControl = true;
+						xmlFree((void *) value);
+						value = NULL;
+					}
+
+
+					value = xmlGetProp(cur_node, (const xmlChar *) "client");
+					if (value != NULL) {
+						validSetting = true;
+						if (strlen((char *) value) == 0) {
+							plc_elog(ERROR, "SETTING length of element <client> is zero");
+						}
+						conf_entry->client_name = plc_top_strdup((char *) value);
 						xmlFree((void *) value);
 						value = NULL;
 					}
@@ -852,6 +865,8 @@ static void free_runtime_conf_entry(runtimeConfEntry *entry) {
 		pfree(entry->command);
 	if (entry->roles)
 		pfree(entry->roles);
+	if (entry->client_name)
+		pfree(entry->client_name);
 
 	for (int i = 0; i < entry->nSharedDirs; i++) {
 		pfree_null(entry->sharedDirs[i].host);
@@ -942,6 +957,9 @@ static void print_runtime_configurations() {
 		plc_elog(INFO, "    use_container_logging = '%s'", conf_entry->useContainerLogging ? "yes" : "no");
 		plc_elog(INFO, "    enable_network = '%s'", conf_entry->enableNetwork ? "yes" : "no");
 		plc_elog(INFO, "    backend = '%s'", conf_entry->backend->name);
+		if (conf_entry->client_name != NULL) {
+			plc_elog(INFO, "    client = '%s'", conf_entry->client_name);
+		}
 		if (conf_entry->ndevicerequests != 0) {
 			for (int i = 0; i < conf_entry->ndevicerequests; i++) {
 				plcDeviceRequest *req = &conf_entry->devicerequests[i];

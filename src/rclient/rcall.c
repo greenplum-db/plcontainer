@@ -253,7 +253,8 @@ static char *get_load_self_ref_cmd() {
 	char *buf = (char *) pmalloc(PATH_MAX);
 
 #ifdef __linux__
-	char path[PATH_MAX];
+	char path[PATH_MAX] = {};
+	char filename[PATH_MAX] = {};
 	char *p = NULL;
 	int size;
 	/* next load the plr library into R */
@@ -266,16 +267,17 @@ static char *get_load_self_ref_cmd() {
 
 	plc_elog(DEBUG1, "Current R client path is %s", path);
 	p = strrchr(path, '/');
-	if(p) {
+	if (p) {
+		strcpy(filename, p+1);
 		*(p+1) = '\0';
 	} else {
 		plc_elog(ERROR, "can not read execute directory %s", path);
 	}
 
-	plc_elog(DEBUG1, "Split path by '/'. Get the path: %s", path);
-	snprintf(buf, PATH_MAX, "dyn.load(\"%s/%s\")", path, "librcall.so");
+	plc_elog(DEBUG1, "self the path: %s. self name %s", path, filename);
+	snprintf(buf, PATH_MAX, "dyn.load(\"%s/lib%s_rcall.so\")", path, filename);
 #else
-	snprintf(buf, PATH_MAX, "dyn.load(\"%s\")", "librcall.so");
+	#error "This OS is not supported by plcontainer"
 #endif
 	return buf;
 }
