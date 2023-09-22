@@ -48,9 +48,10 @@
         runtime configuration examples:
 
     <runtime>
-        <id>plc_python_example1</id>
+        <id>plc_python_example_autobuild</id>
         <image>pivotaldata/plcontainer_python_with_clients:0.1</image>
         <command>./pyclient</command>
+        <shared_directory access="rw" container="/clientdir" host="/usr/local/greenplum-db/bin/plcontainer_clients"/>
     </runtime>
 
     <runtime>

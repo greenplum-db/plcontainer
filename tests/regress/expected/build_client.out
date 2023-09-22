@@ -1,0 +1,33 @@
+-- start_ignore
+\! plcontainer runtime-add -r plc_python2_build -i ${CONTAINER_NAME_SUFFIX_PYTHON} -l python -s roles=$USER -s client=python27
+20230928:16:12:20:308905 plcontainer:vmw:sa-[WARNING]:-image python27.ubuntu is not in the list of 'docker images'
+20230928:16:12:20:308905 plcontainer:vmw:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20230928:16:12:20:308905 plcontainer:vmw:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+-- end_ignore
+select * from plcontainer_refresh_config;
+ gp_segment_id | plcontainer_refresh_local_config 
+---------------+----------------------------------
+             2 | ok
+             0 | ok
+             1 | ok
+            -1 | ok
+(4 rows)
+
+create function build_client() returns int as $$
+  # container: plc_python2_build
+  return 0
+$$ LANGUAGE plcontainer;
+\! mv $GPHOME/bin/plcontainer_clients/client_python27_ubuntu-18.04 $GPHOME/bin/plcontainer_clients/__client_python27_ubuntu-18.04
+select build_client();
+ build_client 
+--------------
+            0
+(1 row)
+
+\! mv $GPHOME/bin/plcontainer_clients/__client_python27_ubuntu-18.04 $GPHOME/bin/plcontainer_clients/client_python27_ubuntu-18.04
+-- start_ignore
+\! plcontainer runtime-delete -r plc_python2_build
+20230928:16:12:23:309341 plcontainer:vmw:sa-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
+20230928:16:12:23:309341 plcontainer:vmw:sa-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
+-- end_ignore
+drop function build_client();
