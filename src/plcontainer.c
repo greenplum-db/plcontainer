@@ -27,6 +27,7 @@
 #endif
 #include "utils/memutils.h"
 #include "utils/guc.h"
+#include "tablefuncapi.h"
 /* PLContainer Headers */
 #include "common/comm_channel.h"
 #include "common/messages/messages.h"
@@ -743,4 +744,137 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 #endif
 
 	return datumreturn;
+}
+
+typedef struct
+{
+    bool end_of_input;
+    ArrayBuildState *astate;
+    PG_FUNCTION_ARGS;
+    plcProcInfo *proc;
+    plcProcResult *results;
+} apply_ctx;
+
+static apply_ctx *
+apply_ctx_init(Oid tuple_type, Oid func_oid, ReturnSetInfo *rsi)
+{
+    apply_ctx *ac = palloc(sizeof(apply_ctx));
+    if (ac == NULL) goto alloc_failed;
+    ac->end_of_input = false;
+    ac->astate = initArrayResult(tuple_type, CurrentMemoryContext, false);
+    ac->results = NULL;
+    FmgrInfo flinfo = {0};
+    fmgr_info(func_oid, &flinfo);
+	ac->fcinfo = palloc0(SizeForFunctionCallInfo(1));
+	if (ac->fcinfo == NULL) goto alloc_failed;
+	InitFunctionCallInfoData(*(ac->fcinfo), &flinfo, 1, InvalidOid, NULL, (fmNodePtr)rsi);
+    ac->proc = plcontainer_procedure_get(ac->fcinfo);
+    return ac;
+
+alloc_failed:
+	elog(ERROR, "Failed to alloc memory.");
+	return NULL;
+}
+
+static void
+apply_ctx_refresh(apply_ctx *ac)
+{
+	Pointer tuple_array = DatumGetPointer(ac->fcinfo->args->value);
+	if (tuple_array != NULL)
+	{
+		pfree(tuple_array);
+		tuple_array = NULL;
+	}
+	if (ac->results != NULL)
+	{
+		free_result(ac->results->resmsg, false);
+		pfree(ac->results);
+		ac->results = NULL;
+	}
+}
+
+PG_FUNCTION_INFO_V1(apply);
+Datum
+apply(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *fctx;
+	ReturnSetInfo *rsi;
+	AnyTable scan;
+	HeapTuple tuple;
+	TupleDesc in_tupdesc;
+	TupleDesc out_tupdesc;
+
+	/*
+	 * Sanity checking, shouldn't occur if our CREATE FUNCTION in SQL is done
+	 * correctly.
+	 */
+	if (PG_NARGS() < 1 || PG_ARGISNULL(0))
+		plc_elog(ERROR, "invalid invocation of table function.");
+	scan = PG_GETARG_ANYTABLE(0); /* Should be the first parameter */
+    
+	int32 batch_size = PG_GETARG_INT32(2);
+	if (!(batch_size > 0))
+		plc_elog(ERROR, "batch size must be > 0.");
+
+	/* Get the next value from the input scan */
+	rsi = (ReturnSetInfo *)fcinfo->resultinfo;
+	out_tupdesc = rsi->expectedDesc;
+	in_tupdesc = AnyTable_GetTupleDesc(scan);
+
+	MemoryContext mctx_old;
+	/* Basic set-returning function (SRF) protocol, setup the context */
+	if (SRF_IS_FIRSTCALL())
+	{
+		fctx = SRF_FIRSTCALL_INIT();
+		mctx_old = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
+		fctx->user_fctx = apply_ctx_init(in_tupdesc->tdtypeid, PG_GETARG_OID(1), rsi);
+		MemoryContextSwitchTo(mctx_old);
+	}
+
+	fctx = SRF_PERCALL_SETUP();
+	mctx_old = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
+	apply_ctx *ac = (apply_ctx *)fctx->user_fctx;
+	if (ac->end_of_input && ac->results->resrow == ac->results->resmsg->rows)
+	{
+		apply_ctx_refresh(ac);
+		MemoryContextSwitchTo(mctx_old);
+		SRF_RETURN_DONE(fctx);
+	}
+
+    if (ac->results == NULL || ac->results->resrow == ac->results->resmsg->rows)
+    {
+        int32 tuple_num = 0;
+        for (; tuple_num < batch_size; tuple_num++)
+        {
+            tuple = AnyTable_GetNextTuple(scan);
+
+            /* check for end of scan */
+            if (tuple == NULL) {
+                ac->end_of_input = true;
+                break;
+            }
+
+            ac->astate = accumArrayResult(
+                ac->astate, 
+                HeapTupleGetDatum(tuple), 
+                false,
+                in_tupdesc->tdtypeid,
+                fctx->multi_call_memory_ctx);
+        }
+        if (tuple_num == 0)
+        {
+			apply_ctx_refresh(ac);
+			MemoryContextSwitchTo(mctx_old);
+            SRF_RETURN_DONE(fctx);
+        }
+		apply_ctx_refresh(ac);
+        ac->fcinfo->args[0].value = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
+		ac->astate->nelems = 0;
+        ac->fcinfo->args[0].isnull = false;
+        ac->results = plcontainer_get_result(ac->fcinfo, ac->proc);
+    }
+    Datum ret = plcontainer_process_result(ac->fcinfo, ac->proc, ac->results);
+	ac->results->resrow += 1;
+	MemoryContextSwitchTo(mctx_old);
+	SRF_RETURN_NEXT(fctx, ret);
 }

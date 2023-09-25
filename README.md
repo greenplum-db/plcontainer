@@ -9,7 +9,7 @@ The architecture of PL/Container is described at [PL/Container-Architecture](htt
 ### Requirements
 
 1. PL/Container runs on any linux distributions which support Greenplum Database.
-1. PL/Container requires minimal Docker version 17.05.
+1. PL/Container requires minimal Docker version 17.05. The user runing `initdb` need to be added to the `docker` group.
 1. GPDB version should be 5.2.0 or later. [For PostgreSQL](README_PG.md)
 
 ### Building PL/Container
@@ -109,7 +109,7 @@ please refer to [Unsupported Feature](https://github.com/greenplum-db/plcontaine
 The idea of PL/Container is to use containers to run user defined functions. The current implementation assume the PL function definition to have the following structure:
 
 ```sql
-CREATE FUNCTION dummyPython() RETURNS text AS $$
+CREATE OR REPLACE FUNCTION dummyPython() RETURNS text AS $$
 # container: plc_python_shared
 return 'hello from Python'
 $$ LANGUAGE plcontainer;

@@ -234,8 +234,8 @@ add_custom_target(pyclient
     PYTHONPATH=
     docker run
     --entrypoint=
-    -v ${CMAKE_CURRENT_BINARY_DIR}/pyclient:/build
-    -v ${CMAKE_CURRENT_SOURCE_DIR}:/src
+    -v ${CMAKE_CURRENT_BINARY_DIR}/pyclient:/build:z
+    -v ${CMAKE_CURRENT_SOURCE_DIR}:/src:z
     -w /build
     -u ${my_UID}
     -it ${PYCLIENT_IMAGE}
@@ -288,6 +288,9 @@ install(
 install(
     FILES management/sql/plcontainer_gp--1.0.0.sql
     RENAME plcontainer--1.0.0.sql
+    DESTINATION share/postgresql/extension)
+install(
+    FILES management/sql/plcontainer--1.0.0--1.1.0.sql
     DESTINATION share/postgresql/extension)
 install(
     FILES plcontainer.control
