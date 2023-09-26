@@ -793,36 +793,31 @@ apply_ctx_refresh(apply_ctx *ac)
 	}
 }
 
+/*
+ * Modified from multiset_example() in `gpdb/src/test/regress/regress_gp.c`.
+ * [gpdb](https://github.com/greenplum-db/gpdb) is released under the
+ * [Apache 2.0 license](https://github.com/greenplum-db/gpdb/blob/main/LICENSE)
+ */
 PG_FUNCTION_INFO_V1(apply);
 Datum
 apply(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *fctx;
 	ReturnSetInfo *rsi;
-	AnyTable scan;
 	HeapTuple tuple;
 	TupleDesc in_tupdesc;
 	TupleDesc out_tupdesc;
 
-	/*
-	 * Sanity checking, shouldn't occur if our CREATE FUNCTION in SQL is done
-	 * correctly.
-	 */
-	if (PG_NARGS() < 1 || PG_ARGISNULL(0))
-		plc_elog(ERROR, "invalid invocation of table function.");
-	scan = PG_GETARG_ANYTABLE(0); /* Should be the first parameter */
-    
+	AnyTable input = PG_GETARG_ANYTABLE(0);
 	int32 batch_size = PG_GETARG_INT32(2);
 	if (!(batch_size > 0))
 		plc_elog(ERROR, "batch size must be > 0.");
 
-	/* Get the next value from the input scan */
 	rsi = (ReturnSetInfo *)fcinfo->resultinfo;
 	out_tupdesc = rsi->expectedDesc;
-	in_tupdesc = AnyTable_GetTupleDesc(scan);
+	in_tupdesc = AnyTable_GetTupleDesc(input);
 
 	MemoryContext mctx_old;
-	/* Basic set-returning function (SRF) protocol, setup the context */
 	if (SRF_IS_FIRSTCALL())
 	{
 		fctx = SRF_FIRSTCALL_INIT();
@@ -846,10 +841,9 @@ apply(PG_FUNCTION_ARGS)
         int32 tuple_num = 0;
         for (; tuple_num < batch_size; tuple_num++)
         {
-            tuple = AnyTable_GetNextTuple(scan);
-
-            /* check for end of scan */
-            if (tuple == NULL) {
+            tuple = AnyTable_GetNextTuple(input);
+            if (tuple == NULL)
+			{
                 ac->end_of_input = true;
                 break;
             }
