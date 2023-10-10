@@ -9,7 +9,7 @@ The architecture of PL/Container is described at [PL/Container-Architecture](htt
 ### Requirements
 
 1. PL/Container runs on any linux distributions which support Greenplum Database.
-1. PL/Container requires minimal Docker version 17.05. The user runing `initdb` need to be added to the `docker` group.
+1. PL/Container requires minimal Docker version 17.05. To use the `plcontainer` command, the user needs to be added to the `docker` group.
 1. GPDB version should be 5.2.0 or later. [For PostgreSQL](README_PG.md)
 
 ### Building PL/Container
