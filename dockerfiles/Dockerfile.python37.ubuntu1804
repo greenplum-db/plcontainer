@@ -1,5 +1,6 @@
 FROM ubuntu:18.04
 
+EXPOSE 8080
 RUN apt update && apt install -y python3.7 python3.7-dev python3.7-distutils gcc g++ make wget
 RUN wget https://bootstrap.pypa.io/get-pip.py
 RUN ln -sf /usr/bin/python3.7 /usr/bin/python3

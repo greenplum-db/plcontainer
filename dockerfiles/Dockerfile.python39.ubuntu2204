@@ -1,4 +1,5 @@
 FROM ubuntu:22.04
+EXPOSE 8080
 ENV DEBIAN_FRONTEND noninteractive
 # this is to fix UnicodeDecodeError: 'ascii' codec for pymc and other packages for
 # UnicodeDecodeError Error, can check link: https://github.com/docker-library/python/issues/13

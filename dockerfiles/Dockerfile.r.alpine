@@ -1,5 +1,6 @@
 FROM alpine:latest
 
+EXPOSE 8080
 RUN apk add --no-cache gcc g++ cmake make musl-dev R R-dev
 
 # for R test we need to make these `env`

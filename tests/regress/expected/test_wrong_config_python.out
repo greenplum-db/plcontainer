@@ -92,6 +92,9 @@ ERROR:  invalid input syntax for integer: "plgroup"
 \! $(pwd)/test_wrong_config.sh 22
 Test good format (but it still fails since the configuration (image/command) is not legal)
 select plcontainer_refresh_local_config(true);
+INFO:  plcontainer: Backend 'default' configuration
+INFO:  plcontainer:     type = 'docker'
+INFO:  plcontainer:     uds_address = '/var/run/docker.sock'
 INFO:  plcontainer: Container 'plc_python_shared' configuration
 INFO:  plcontainer:     image = 'not_exist_pivotaldata/plcontainer_python:0.1'
 INFO:  plcontainer:     command = './not_exist_client'
@@ -99,6 +102,7 @@ INFO:  plcontainer:     memory_mb = '512'
 INFO:  plcontainer:     cpu_share = '1024'
 INFO:  plcontainer:     use_container_logging = 'no'
 INFO:  plcontainer:     enable_network = 'no'
+INFO:  plcontainer:     backend = 'default'
 INFO:  plcontainer:     shared directory from host '/home/gpadmin/gpdb.devel/bin/plcontainer_clients1' to container '/clientdir1'
 INFO:  plcontainer:         access = readwrite
 INFO:  plcontainer:     shared directory from host '/home/gpadmin/gpdb.devel/bin/plcontainer_clients2' to container '/clientdir2'
@@ -113,6 +117,9 @@ ERROR:  plcontainer: backend create error (containers.c:xxx
 DETAIL:  Failed to create container, return code: 404, detail: {"message":"No such image: not_exist_pivotaldata/plcontainer_python:0.1"}
 CONTEXT:  PLContainer function "pyint"
 select plcontainer_show_local_config();
+INFO:  plcontainer: Backend 'default' configuration
+INFO:  plcontainer:     type = 'docker'
+INFO:  plcontainer:     uds_address = '/var/run/docker.sock'
 INFO:  plcontainer: Container 'plc_python_shared' configuration
 INFO:  plcontainer:     image = 'not_exist_pivotaldata/plcontainer_python:0.1'
 INFO:  plcontainer:     command = './not_exist_client'
@@ -120,6 +127,7 @@ INFO:  plcontainer:     memory_mb = '512'
 INFO:  plcontainer:     cpu_share = '1024'
 INFO:  plcontainer:     use_container_logging = 'no'
 INFO:  plcontainer:     enable_network = 'no'
+INFO:  plcontainer:     backend = 'default'
 INFO:  plcontainer:     shared directory from host '/home/gpadmin/gpdb.devel/bin/plcontainer_clients1' to container '/clientdir1'
 INFO:  plcontainer:         access = readwrite
 INFO:  plcontainer:     shared directory from host '/home/gpadmin/gpdb.devel/bin/plcontainer_clients2' to container '/clientdir2'

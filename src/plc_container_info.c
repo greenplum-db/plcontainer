@@ -27,6 +27,7 @@
 #include "plc_backend_api.h"
 #include "plc_docker_api.h"
 #include "plc_container_info.h"
+#include "plc_configuration.h"
 
 #if PG_VERSION_NUM >= 120000
 #include "common/hashfn.h"
@@ -47,7 +48,6 @@ static UdfContainerIdMap* find_containerid_entry(const char *dockerid);
 
 Datum
 list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
-
 	FuncCallContext *funcctx;
 	int call_cntr;
 	int max_calls;
@@ -58,6 +58,11 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	char *json_result;
 	bool isFirstCall = true;
 
+	char* backend_name = "default";
+	if (PG_NARGS() == 1) {
+		backend_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	}
+	const plcBackend *backend = take_plcbackend_byname(backend_name);
 
 	/* Init the container list in the first call and get the results back */
 	if (SRF_IS_FIRSTCALL()) {
@@ -73,7 +78,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 
 		dbid = GpIdentity.segindex;
 
-		res = plc_docker_list_container(&json_result, dbid);
+		res = plc_docker_list_container(&json_result, dbid, backend);
 		if (res < 0) {
 			plc_elog(ERROR, "Docker container list error: %s", backend_error_message);
 		}
@@ -236,7 +241,7 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			}
 			idStr = json_object_get_string(idObj);
 
-			res = plc_docker_get_container_state(idStr, &containerState);
+			res = plc_docker_get_container_state(&containerState, idStr, backend);
 			if (res < 0) {
 				plc_elog(ERROR, "Fail to get docker container state: %s", backend_error_message);
 			}
@@ -361,7 +366,6 @@ PG_FUNCTION_INFO_V1(containers_summary);
 
 Datum
 containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
-
 	FuncCallContext *funcctx;
 	int call_cntr;
 	int max_calls;
@@ -372,6 +376,11 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 	char *json_result;
 	bool isFirstCall = true;
 
+	char* backend_name = "default";
+	if (PG_NARGS() == 1) {
+		backend_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	}
+	const plcBackend *backend = take_plcbackend_byname(backend_name);
 
 	/* Init the container list in the first call and get the results back */
 	if (SRF_IS_FIRSTCALL()) {
@@ -384,7 +393,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		/* switch to memory context appropriate for multiple function calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		res = plc_docker_list_container(&json_result, GpIdentity.segindex);
+		res = plc_docker_list_container(&json_result, GpIdentity.segindex, backend);
 		if (res < 0) {
 			plc_elog(ERROR, "Docker container list error: %s", backend_error_message);
 		}
@@ -520,7 +529,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 			}
 			idStr = json_object_get_string(idObj);
 
-			res = plc_docker_get_container_state(idStr, &containerState);
+			res = plc_docker_get_container_state(&containerState, idStr, backend);
 			if (res < 0) {
 				if (res != PLC_DOCKER_API_RES_NOT_FOUND) {
 					plc_elog(ERROR, "Fail to get docker container state: %s", backend_error_message);
