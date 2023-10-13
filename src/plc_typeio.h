@@ -14,6 +14,7 @@
 #include "funcapi.h"
 
 #include "common/messages/messages.h"
+#include "plcontainer.h"
 
 typedef struct plcTypeInfo plcTypeInfo;
 

@@ -700,7 +700,7 @@ static int send_call(plcConn *conn, plcMsgCallreq *call) {
 	int i;
 
 	channel_elog(WARNING, "Sending call request for function '%s'", call->proc.name);
-	res |= message_start(conn, call->msgtype);
+	res |= message_start(conn, MT_CALLREQ);
 	res |= send_cstring(conn, call->proc.name);
 	channel_elog(WARNING, "Function source code:");
 	channel_elog(WARNING, "%s", call->proc.src);
