@@ -862,9 +862,14 @@ apply(PG_FUNCTION_ARGS)
             SRF_RETURN_DONE(fctx);
         }
 		apply_ctx_refresh(ac);
+#if PG_VERSION_NUM >= 120000 /* Also for GPDB 7X */
         ac->fcinfo->args[0].value = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
-		ac->astate->nelems = 0;
         ac->fcinfo->args[0].isnull = false;
+#else
+		ac->fcinfo->arg[0] = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
+        ac->fcinfo->argnull[0] = false;
+#endif
+		ac->astate->nelems = 0;
         ac->results = plcontainer_get_result(ac->fcinfo, ac->proc);
     }
     Datum ret = plcontainer_process_result(ac->fcinfo, ac->proc, ac->results);
