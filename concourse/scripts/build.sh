@@ -2,6 +2,14 @@
 # TODO when PR merge replace it with build_plcontainer.sh
 set -exo pipefail
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+function start_docker_server() {
+    source "$SCRIPT_DIR/docker-lib.sh"
+    ln -s /usr/libexec/docker/docker-runc-current /usr/bin/docker-runc
+    start_docker
+}
+
 function build_all() {
     [ -f /opt/gcc_env.sh ] && source /opt/gcc_env.sh
 
@@ -22,6 +30,7 @@ function build_all() {
 }
 
 function _main() {
+    start_docker_server
     time build_all
 }
 

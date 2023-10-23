@@ -2,6 +2,14 @@
 
 set -exo pipefail
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+function start_docker_server() {
+    source "$SCRIPT_DIR/docker-lib.sh"
+    ln -s /usr/libexec/docker/docker-runc-current /usr/bin/docker-runc
+    start_docker
+}
+
 function _install_gppkg() {
     if [[ ${GP_MAJOR_VERSION} == "7" ]]; then
         "/home/gpadmin/bin_gppkg_v2/gppkg" install -a ./*.gppkg
@@ -44,4 +52,7 @@ function _main() {
     popd
 }
 
+# print the test diff to stdout in our CI
+export SHOW_REGRESS_DIFF=1
+start_docker_server
 _main
