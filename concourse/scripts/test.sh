@@ -44,4 +44,6 @@ function _main() {
     popd
 }
 
+# print the test diff to stdout in our CI
+export SHOW_REGRESS_DIFF=1
 _main

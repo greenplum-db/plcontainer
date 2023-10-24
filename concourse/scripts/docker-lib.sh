@@ -84,7 +84,6 @@ start_docker() {
   fi
 
   export server_args LOG_FILE DOCKER_DATA_ROOT
-  trap stop_docker EXIT
 
   try_start() {
     # we add this arg `--storage-driver`
