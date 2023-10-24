@@ -2,6 +2,8 @@
 
 set -exo
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 source "$CI_REPO_DIR/common/entry_common.sh"
 
 function install_extra_build_dependencies() {
@@ -28,8 +30,15 @@ function install_extra_build_dependencies() {
     esac
 }
 
+function start_docker_server() {
+    source "$SCRIPT_DIR/docker-lib.sh"
+    ln -s /usr/libexec/docker/docker-runc-current /usr/bin/docker-runc
+    start_docker
+}
+
 install_cmake
 install_extra_build_dependencies
+start_docker_server
 
 # gpadmin docker permission
 usermod -aG docker gpadmin
