@@ -109,6 +109,7 @@ typedef struct runtimeConfEntry {
 	bool enableNetwork;
 	int ndevicerequests;
 	plcDeviceRequest *devicerequests;
+	char *client_name;
 } runtimeConfEntry;
 
 /* entrypoint for all plcontainer procedures */

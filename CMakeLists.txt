@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.18)
 
 project(plcontainer)
 
+# generate 'compile_commands.json'
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Gpdb.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Distro.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
@@ -50,8 +53,6 @@ set(DOWNLOAD_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/downloads
     CACHE STRING "Directory for downloading external project")
 
-# generate 'compile_commands.json'
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CONTAINER_NAME_SUFFIX_PYTHON "" CACHE STRING "The container python image env for plcontainer")
 set(CONTAINER_NAME_SUFFIX_PYTHON2 "" CACHE STRING "The container python2 image env for plcontainer")
 set(CONTAINER_NAME_SUFFIX_R "" CACHE STRING "The container r image env for plcontainer")
@@ -141,45 +142,23 @@ else()
     set(DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
 endif()
 set(PYCLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_PYTHON})
-# python2.7
 set(PY2CLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_PYTHON2})
 set(RCLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_R})
+
 add_custom_target(rclient_image
-    COMMAND
-    PYTHONPATH=
-    docker build .
-    -t ${RCLIENT_IMAGE}
-    -f Dockerfile.${RCLIENT_IMAGE}
-    WORKING_DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+    COMMAND docker build . -t ${RCLIENT_IMAGE} -f Dockerfile.${RCLIENT_IMAGE}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles
+)
 
-# Conventionally, docker build command will send the context directory
-# (typically the current one) to the docker daemon, but without dereferencing
-# the symbolic links in the directory.
-#
-# To enable the context directory to contain symbolic links, we use tar -ch to
-# create a tarball with symbolic links dereferenced. Afterwards, we pipe the 
-# tarball to the docker build command. In this way, the docker daemon actually
-# receives a set of files with links dereferenced.
 add_custom_target(pyclient_image
-    COMMAND
-    tar -ch . |
-    docker build
-    -t ${PYCLIENT_IMAGE}
-    -f Dockerfile.${PYCLIENT_IMAGE}
-    -
-    WORKING_DIRECTORY
-    ${DOCKERFILES_DIR})
+    COMMAND docker build . -t ${PYCLIENT_IMAGE} -f Dockerfile.${PYCLIENT_IMAGE}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles
+)
 
-# py2 client image docker file hard code for now.
 add_custom_target(py2client_image
-    COMMAND
-    PYTHONPATH=
-    docker build .
-    -t ${PY2CLIENT_IMAGE}
-    -f Dockerfile.${PY2CLIENT_IMAGE}
-    WORKING_DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+    COMMAND docker build . -t ${PY2CLIENT_IMAGE} -f Dockerfile.${PY2CLIENT_IMAGE}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles
+)
 
 # tarball name
 set(R_IMAGE_TARBALL_NAME
@@ -231,7 +210,6 @@ add_custom_target(py2client_image_artifact
 add_custom_target(pyclient
     ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/pyclient
     COMMAND
-    PYTHONPATH=
     docker run
     --entrypoint=
     -v ${CMAKE_CURRENT_BINARY_DIR}/pyclient:/build
@@ -247,7 +225,6 @@ add_dependencies(pyclient pyclient_image)
 add_custom_target(py2client
     ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/py2client
     COMMAND
-    PYTHONPATH=
     docker run
     --entrypoint=
     -v ${CMAKE_CURRENT_BINARY_DIR}/py2client:/build
@@ -261,7 +238,6 @@ add_dependencies(py2client py2client_image)
 add_custom_target(rclient
     ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/rclient
     COMMAND
-    PYTHONPATH=
     docker run
     --entrypoint=
     -v ${CMAKE_CURRENT_BINARY_DIR}/rclient:/build
@@ -280,8 +256,7 @@ add_dependencies(images_artifact
     py2client_image_artifact
     rclient_image_artifact)
 
-
-# Install
+# Install plcontainer self
 install(
     TARGETS plcontainer
     DESTINATION "lib/postgresql")
@@ -299,31 +274,60 @@ install(
     PROGRAMS management/bin/plcontainer
     DESTINATION bin)
 
+# Install plcontainer clients
+install(PROGRAMS src/entry.sh RENAME pyclient.sh  DESTINATION bin/plcontainer_clients/)
+install(PROGRAMS src/entry.sh RENAME py3client.sh DESTINATION bin/plcontainer_clients/)
+install(PROGRAMS src/entry.sh RENAME rclient.sh   DESTINATION bin/plcontainer_clients/)
+
 # Install clients
-# user may only use pyclient or rclient so make the install optional
 install(
-    PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/pyclient/pyclient
-    RENAME py3client
-    DESTINATION bin/plcontainer_clients/ OPTIONAL)
-# python2 client
+    DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/py2client/" DESTINATION bin/plcontainer_clients
+    USE_SOURCE_PERMISSIONS
+    REGEX "client_python$" REGEX "Make" EXCLUDE REGEX "make" EXCLUDE
+)
 install(
-    PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/py2client/pyclient
-    DESTINATION bin/plcontainer_clients/ OPTIONAL)
+    DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pyclient/" DESTINATION bin/plcontainer_clients # py3
+    USE_SOURCE_PERMISSIONS
+    REGEX "client_python$" REGEX "Make" EXCLUDE REGEX "make" EXCLUDE
+)
 install(
-    PROGRAMS src/pyclient/bin/py3client.sh
-    DESTINATION bin/plcontainer_clients/ OPTIONAL)
+    DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rclient/" DESTINATION bin/plcontainer_clients
+    USE_SOURCE_PERMISSIONS
+    REGEX "client_r$" REGEX "Make" EXCLUDE REGEX "make" EXCLUDE
+)
+
+# hardcode the default client name here
+file(CREATE_LINK "./client_python27_ubuntu-18.04" "${CMAKE_CURRENT_BINARY_DIR}/pyclient.exe"  SYMBOLIC)
+file(CREATE_LINK "./client_python39_ubuntu-22.04" "${CMAKE_CURRENT_BINARY_DIR}/py3client.exe" SYMBOLIC)
+file(CREATE_LINK "./client_r3.6.3_ubuntu-18.04"   "${CMAKE_CURRENT_BINARY_DIR}/rclient.exe"   SYMBOLIC)
+install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/pyclient.exe"  RENAME pyclient  DESTINATION "bin/plcontainer_clients/")
+install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/py3client.exe" RENAME py3client DESTINATION "bin/plcontainer_clients/")
+install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/rclient.exe"   RENAME rclient   DESTINATION "bin/plcontainer_clients/")
+
+# Install client source
 install(
-    PROGRAMS src/pyclient/bin/pyclient.sh
-    DESTINATION bin/plcontainer_clients/ OPTIONAL)
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/pyclient/" DESTINATION bin/plcontainer_clients/source_python_client
+    USE_SOURCE_PERMISSIONS
+    PATTERN ".gitignore" EXCLUDE
+    PATTERN "common"     EXCLUDE
+)
 install(
-    PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/rclient/rclient
-    DESTINATION bin/plcontainer_clients/ OPTIONAL)
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/rclient/" DESTINATION bin/plcontainer_clients/source_r_client
+    USE_SOURCE_PERMISSIONS
+    PATTERN ".gitignore" EXCLUDE
+    PATTERN "common"     EXCLUDE
+)
 install(
-    PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/rclient/librcall.so
-    DESTINATION bin/plcontainer_clients/ OPTIONAL)
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/common/" DESTINATION bin/plcontainer_clients/source_python_client/common
+    USE_SOURCE_PERMISSIONS
+)
 install(
-    PROGRAMS src/rclient/bin/rclient.sh
-    DESTINATION bin/plcontainer_clients/ OPTIONAL)
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/common/" DESTINATION bin/plcontainer_clients/source_r_client/common
+    USE_SOURCE_PERMISSIONS
+)
+
+file(CREATE_LINK "./source_python_client" "${CMAKE_CURRENT_BINARY_DIR}/source_python3_client.link" SYMBOLIC)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/source_python3_client.link" RENAME source_python3_client DESTINATION "bin/plcontainer_clients/")
 
 # Add tests targets
 add_subdirectory(tests)

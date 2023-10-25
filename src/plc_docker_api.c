@@ -325,7 +325,8 @@ int plc_docker_create_container(
 			"              \"DB_USER_NAME=%s\",\n"
 			"              \"DB_NAME=%s\",\n"
 			"              \"DB_QE_PID=%d\",\n"
-			"              \"USE_CONTAINER_NETWORK=%s\"],\n"
+			"              \"USE_CONTAINER_NETWORK=%s\",\n"
+			"              \"PLC_CLIENT=%s\"],\n"
 			"    \"NetworkDisabled\": %s,\n"
 			"    \"Image\": \"%s\",\n"
 			"    \"HostConfig\": {\n"
@@ -440,6 +441,7 @@ int plc_docker_create_container(
 	         dbname,
 	         MyProcPid,
 	         connection->tag == PLC_RUNTIME_CONNECTION_TCP ? "true" : "false", // .Env.useContainerNetwork
+	         conf->client_name ? conf->client_name : "", // .Env.PLC_CLIENT
 	         conf->enableNetwork ? "false" : "true", // .NetworkDisabled
 	         conf->image,
 	         volumeShare,

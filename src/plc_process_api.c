@@ -59,15 +59,18 @@ int plc_process_create_container(
             }
         }
         char uid_string[1024] = {0};
-        char gid_string[1024] = {0};
         sprintf(uid_string, "EXECUTOR_UID=%d", getuid());
+        char gid_string[1024] = {0};
         sprintf(gid_string, "EXECUTOR_GID=%d", getgid());
+        char plc_client[1024] = {0};
+        sprintf(plc_client, "PLC_CLIENT=%s", conf->client_name);
         // TODO add more environment variables needed.
         char *const env[] = {
             "USE_CONTAINER_NETWORK=false",
             "LOCAL_PROCESS_MODE=1",
             uid_string,
             gid_string,
+            plc_client,
             NULL
         };
 
