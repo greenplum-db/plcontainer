@@ -185,7 +185,7 @@ add_custom_target(py2client_image
 set(R_IMAGE_TARBALL_NAME
     plcontainer-r-image-${R_IMAGE_VERSION}-gp${GP_MAJOR_VERSION}.tar.gz)
 set(PYTHON_IMAGE_TARBALL_NAME
-    plcontainer-python-image-${PYTHON_IMAGE_VERSION}-gp${GP_MAJOR_VERSION}.tar.gz)
+    plcontainer-python3-image-${PYTHON_IMAGE_VERSION}-gp${GP_MAJOR_VERSION}.tar.gz)
 set(PYTHON2_IMAGE_TARBALL_NAME
     plcontainer-python2-image-${PYTHON_IMAGE_VERSION}-gp${GP_MAJOR_VERSION}.tar.gz)
 
@@ -217,7 +217,7 @@ add_custom_target(rclient_image_artifact
 add_custom_target(pyclient_image_artifact
     COMMAND
     ${CMAKE_COMMAND} -E tar czvf
-    plcontainer-python-image-gp${GP_MAJOR_VERSION}.tgz
+    plcontainer-python3-image-gp${GP_MAJOR_VERSION}.tgz
     ${PYTHON_IMAGE_TARBALL_NAME}
     DEPENDS pyclient_image_tarball)
 
