@@ -27,20 +27,18 @@
 #include <json-c/json.h>
 #include <sys/wait.h>
 
-int plc_process_create_container(
-		const runtimeConfEntry *conf,            // input the runtime config
-		const backendConnectionInfo *backend,    // input the backend connection info
-		const int container_slot,                // input the slot id used to generate uds name
-		runtimeConnectionInfo *connection        // output the new process connection info
-) {
-    // no shared volumes should not be treated as an error (TODO why?), so we use has_error to
-    // identifier whether there is an error when parse sharing options.
-    char *volumeShare;
-    bool has_error = generate_sharing_options_and_uds_address(conf, backend, container_slot, connection, &volumeShare);
-    if (has_error == true || volumeShare == NULL) {
+int plc_process_create_container(runtimeConfEntry *conf, char **name, int container_id, char **uds_dir) {
+    (void)(name);
+    bool has_error;
+    char *volumeShare = get_sharing_options(conf, container_id, &has_error, uds_dir);
+    (void)(volumeShare);
+/*
+ *  no shared volumes should not be treated as an error, so we use has_error to
+ *  identifier whether there is an error when parse sharing options.
+ */
+    if (has_error == true) {
         return -1;
     }
-    pfree(volumeShare);
 
     pid_t pid = -1;
     int res = 0;
@@ -76,78 +74,47 @@ int plc_process_create_container(
     }
 
     // parent, continue......
-    connection->identity = palloc(64);
-    snprintf(connection->identity, 64, "%d", pid);
+    *name = palloc(64);
+    sprintf(*name, "%d", pid);
 
-    backend_log(LOG, "create backend process with name:%s", connection->identity);
+    backend_log(LOG, "create backend process with name:%s", *name);
     return res;
 }
 
-int plc_process_start_container(
-		const backendConnectionInfo *backend,    // input the backend connection info
-		runtimeConnectionInfo *connection        // output the new process connection info
-) {
-	(void)backend;
-
+int plc_process_start_container(const char *name) {
     int res = 0;
-    backend_log(LOG, "start backend process with name:%s", connection->identity);
+    backend_log(LOG, "start backend process with name:%s", name);
     return res;
 }
 
-int plc_process_kill_container(
-		const backendConnectionInfo *backend,    // input the backend connection info
-		const runtimeConnectionInfo *connection  // input the new process connection info
-) {
-	(void)backend;
-
+int plc_process_kill_container(const char *name) {
     int res = 0;
-    int pid = atoi(connection->identity);
-	Assert(pid != 0);
-
+    int pid = atoi(name);
     kill(pid, SIGKILL);
-    backend_log(LOG, "kill backend process with name:%d", pid);
+    backend_log(LOG, "kill backend process with name:%s", name);
     return res;
 }
 
-int plc_process_inspect_container(
-		const plcInspectionMode type,            // the inspect method
-		const backendConnectionInfo *backend,    // input the backend connection info
-		const runtimeConnectionInfo *connection, // input the new process connection info
-		char **element                           // the output
-) {
-	(void)backend;
-
+int plc_process_inspect_container(const char *name, char **element, plcInspectionMode type) {
     int res = 0;
     *element = palloc(64);
-    sprintf(*element, "process:%s type:%d", connection->identity, type);
-    backend_log(LOG, "inspect backend process with name:%s", connection->identity);
+    sprintf(*element, "process:%s type:%d", name, type);
+    backend_log(LOG, "inspect backend process with name:%s", name);
     return res;
 }
 
-int plc_process_wait_container(
-		const backendConnectionInfo *backend,    // input the backend connection info
-		const runtimeConnectionInfo *connection  // input the new process connection info
-) {
-	(void)backend;
-
+int plc_process_wait_container(const char *name) {
     int res = 0;
-    int pid = atoi(connection->identity);
+    int pid = atoi(name);
     waitpid(pid, &res, 0);
-    backend_log(LOG, "wait backend process with name:%d", pid);
+    backend_log(LOG, "wait backend process with name:%s", name);
     return res;
 }
 
-int plc_process_delete_container(
-		const backendConnectionInfo *backend,    // input the backend connection info
-		const runtimeConnectionInfo *connection  // input the new process connection info
-) {
-	(void)backend;
-
+int plc_process_delete_container(const char *name) {
     int res = 0;
-    int pid = atoi(connection->identity);
-	Assert(pid != 0);
-
+    int pid = atoi(name);
     kill(pid, SIGKILL);
-    backend_log(LOG, "delete backend process with name:%d", pid);
+    backend_log(LOG, "delete backend process with name:%s", name);
     return res;
 }

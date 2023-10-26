@@ -50,11 +50,10 @@ void plc_backend_prepareImplementation(enum PLC_BACKEND_TYPE imptype) {
     CurrentBackendType = imptype;
 
 	switch (imptype) {
-		case PLC_BACKEND_DOCKER:
-		case PLC_BACKEND_REMOTE_DOCKER:
+		case BACKEND_DOCKER:
 			CurrentBackend = &DockerBackend;
 			break;
-		case PLC_BACKEND_PROCESS:
+		case BACKEND_PROCESS:
 			CurrentBackend = &ProcessBackend;
 			break;
 		default:
@@ -62,56 +61,56 @@ void plc_backend_prepareImplementation(enum PLC_BACKEND_TYPE imptype) {
 	}
 }
 
-int plc_backend_create(const runtimeConfEntry *conf, const backendConnectionInfo *backend, const int container_slot, runtimeConnectionInfo *connection) {
+int plc_backend_create(runtimeConfEntry *conf, char **name, int container_slot, char **uds_dir) {
 	if (CurrentBackend == NULL || CurrentBackend->create_backend == NULL) {
 		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend create");
 		return -1;
 	}
 
-	return CurrentBackend->create_backend(conf, backend, container_slot, connection);
+	return CurrentBackend->create_backend(conf, name, container_slot, uds_dir);
 }
 
-int plc_backend_start(const backendConnectionInfo *backend, runtimeConnectionInfo *connection) {
+int plc_backend_start(const char *name) {
 	if (CurrentBackend == NULL || CurrentBackend->start_backend == NULL) {
 		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend start");
 		return -1;
 	}
 
-	return CurrentBackend->start_backend(backend, connection);
+	return CurrentBackend->start_backend(name);
 }
 
-int plc_backend_kill(const backendConnectionInfo *backend, const runtimeConnectionInfo *connection) {
+int plc_backend_kill(const char *name) {
 	if (CurrentBackend == NULL || CurrentBackend->kill_backend == NULL) {
 		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend kill");
 		return -1;
 	}
 
-	return CurrentBackend->kill_backend(backend, connection);
+	return CurrentBackend->kill_backend(name);
 }
 
-int plc_backend_inspect(const plcInspectionMode type, const backendConnectionInfo *backend, const runtimeConnectionInfo *connection, char **element) {
+int plc_backend_inspect(const char *name, char **element, plcInspectionMode type) {
 	if (CurrentBackend == NULL || CurrentBackend->inspect_backend == NULL) {
 		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend inspect");
 		return -1;
 	}
 
-	return CurrentBackend->inspect_backend(type, backend, connection, element);
+	return CurrentBackend->inspect_backend(name, element, type);
 }
 
-int plc_backend_wait(const backendConnectionInfo *backend, const runtimeConnectionInfo *connection) {
+int plc_backend_wait(const char *name) {
 	if (CurrentBackend == NULL || CurrentBackend->wait_backend == NULL) {
 		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend wait");
 		return -1;
 	}
 
-	return CurrentBackend->wait_backend(backend, connection);
+	return CurrentBackend->wait_backend(name);
 }
 
-int plc_backend_delete(const backendConnectionInfo *backend, const runtimeConnectionInfo *connection) {
+int plc_backend_delete(const char *name) {
 	if (CurrentBackend == NULL || CurrentBackend->delete_backend == NULL) {
 		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend delete");
 		return -1;
 	}
 
-	return CurrentBackend->delete_backend(backend, connection);
+	return CurrentBackend->delete_backend(name);
 }
