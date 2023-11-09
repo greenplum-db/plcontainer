@@ -7,4 +7,14 @@ layout:
 - go.kubebuilder.io/v4
 projectName: k8s
 repo: greenplum.org/plcontainer
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: greenplum.org
+  group: plcontainer
+  kind: PLContainerBackend
+  path: greenplum.org/plcontainer/api/v1
+  version: v1
 version: "3"

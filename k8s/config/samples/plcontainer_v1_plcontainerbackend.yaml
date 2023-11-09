@@ -1,0 +1,12 @@
+apiVersion: plcontainer.greenplum.org/v1
+kind: PLContainerBackend
+metadata:
+  labels:
+    app.kubernetes.io/name: plcontainerbackend
+    app.kubernetes.io/instance: plcontainerbackend-sample
+    app.kubernetes.io/part-of: k8s
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: k8s
+  name: plcontainerbackend-sample
+spec:
+  # TODO(user): Add fields here
