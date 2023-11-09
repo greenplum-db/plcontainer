@@ -11,13 +11,13 @@ metadata:
 spec:
   instanceid: xxxx
   setupmethod: ClientInHostpath
-  networkmode: ClusterIP
+  networkmode: HostPort
   databasename: p
   portrange:
     min: 100
     max: 150
   command: sh
-  args: ["-c", "exit 0"]
+  args: ["-c", "sleep 100"]
   uid: 1
   gid: 1
   username: x

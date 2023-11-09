@@ -17,7 +17,7 @@ spec:
     min: 100
     max: 150
   command: sh
-  args: ["-c", "exit 0"]
+  args: ["-c", "exit 1"]
   uid: 1
   gid: 1
   username: x
