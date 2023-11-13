@@ -748,27 +748,27 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 
 typedef struct
 {
-    bool end_of_input;
-    ArrayBuildState *astate;
-    PG_FUNCTION_ARGS;
-    plcProcInfo *proc;
-    plcProcResult *results;
+	bool end_of_input;
+	ArrayBuildState *astate;
+	PG_FUNCTION_ARGS;
+	plcProcInfo *proc;
+	plcProcResult *results;
 } apply_ctx;
 
 static apply_ctx *
 apply_ctx_init(Oid tuple_type, Oid func_oid, ReturnSetInfo *rsi)
 {
-    apply_ctx *ac = palloc(sizeof(apply_ctx));
-    ac->end_of_input = false;
-    ac->astate = NULL;
-    ac->results = NULL;
-    FmgrInfo flinfo = {0};
-    fmgr_info(func_oid, &flinfo);
+	apply_ctx *ac = palloc(sizeof(apply_ctx));
+	ac->end_of_input = false;
+	ac->astate = NULL;
+	ac->results = NULL;
+	FmgrInfo flinfo = {0};
+	fmgr_info(func_oid, &flinfo);
 	ac->fcinfo = palloc0(SizeForFunctionCallInfo(1));
 	InitFunctionCallInfoData(*(ac->fcinfo), &flinfo, 1, InvalidOid, NULL, (fmNodePtr)rsi);
-    ac->proc = plcontainer_procedure_get(ac->fcinfo);
+	ac->proc = plcontainer_procedure_get(ac->fcinfo);
 	ac->fcinfo->flinfo = NULL;  /* flinfo is for plcontainer_procedure_get() only. */
-    return ac;
+	return ac;
 }
 
 static void
@@ -829,43 +829,43 @@ apply(PG_FUNCTION_ARGS)
 		SRF_RETURN_DONE(fctx);
 	}
 
-    if (ac->results == NULL || ac->results->resrow == ac->results->resmsg->rows)
-    {
-        int32 tuple_num = 0;
-        for (; tuple_num < batch_size; tuple_num++)
-        {
-            tuple = AnyTable_GetNextTuple(input);
-            if (tuple == NULL)
+	if (ac->results == NULL || ac->results->resrow == ac->results->resmsg->rows)
+	{
+		int32 tuple_num = 0;
+		for (; tuple_num < batch_size; tuple_num++)
+		{
+			tuple = AnyTable_GetNextTuple(input);
+			if (tuple == NULL)
 			{
-                ac->end_of_input = true;
-                break;
-            }
+				ac->end_of_input = true;
+				break;
+			}
 
-            ac->astate = accumArrayResult(
-                ac->astate, 
-                HeapTupleGetDatum(tuple), 
-                false,
-                in_tupdesc->tdtypeid,
-                fctx->multi_call_memory_ctx);
-        }
-        if (tuple_num == 0)
-        {
+			ac->astate = accumArrayResult(
+				ac->astate, 
+				HeapTupleGetDatum(tuple), 
+				false,
+				in_tupdesc->tdtypeid,
+				fctx->multi_call_memory_ctx);
+		}
+		if (tuple_num == 0)
+		{
 			apply_ctx_refresh(ac);
 			MemoryContextSwitchTo(mctx_old);
-            SRF_RETURN_DONE(fctx);
-        }
+			SRF_RETURN_DONE(fctx);
+		}
 		apply_ctx_refresh(ac);
 #if PG_VERSION_NUM >= 120000 /* Also for GPDB 7X */
-        ac->fcinfo->args[0].value = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
-        ac->fcinfo->args[0].isnull = false;
+		ac->fcinfo->args[0].value = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
+		ac->fcinfo->args[0].isnull = false;
 #else
 		ac->fcinfo->arg[0] = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
-        ac->fcinfo->argnull[0] = false;
+		ac->fcinfo->argnull[0] = false;
 #endif
 		ac->astate->nelems = 0;
-        ac->results = plcontainer_get_result(ac->fcinfo, ac->proc);
-    }
-    Datum ret = plcontainer_process_result(ac->fcinfo, ac->proc, ac->results);
+		ac->results = plcontainer_get_result(ac->fcinfo, ac->proc);
+	}
+	Datum ret = plcontainer_process_result(ac->fcinfo, ac->proc, ac->results);
 	ac->results->resrow += 1;
 	MemoryContextSwitchTo(mctx_old);
 	SRF_RETURN_NEXT(fctx, ret);
