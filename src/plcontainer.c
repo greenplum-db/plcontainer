@@ -759,21 +759,16 @@ static apply_ctx *
 apply_ctx_init(Oid tuple_type, Oid func_oid, ReturnSetInfo *rsi)
 {
     apply_ctx *ac = palloc(sizeof(apply_ctx));
-    if (ac == NULL) goto alloc_failed;
     ac->end_of_input = false;
-    ac->astate = initArrayResult(tuple_type, CurrentMemoryContext, false);
+    ac->astate = NULL;
     ac->results = NULL;
     FmgrInfo flinfo = {0};
     fmgr_info(func_oid, &flinfo);
 	ac->fcinfo = palloc0(SizeForFunctionCallInfo(1));
-	if (ac->fcinfo == NULL) goto alloc_failed;
 	InitFunctionCallInfoData(*(ac->fcinfo), &flinfo, 1, InvalidOid, NULL, (fmNodePtr)rsi);
     ac->proc = plcontainer_procedure_get(ac->fcinfo);
+	ac->fcinfo->flinfo = NULL;  /* flinfo is for plcontainer_procedure_get() only. */
     return ac;
-
-alloc_failed:
-	elog(ERROR, "Failed to alloc memory.");
-	return NULL;
 }
 
 static void
@@ -806,7 +801,6 @@ apply(PG_FUNCTION_ARGS)
 	ReturnSetInfo *rsi;
 	HeapTuple tuple;
 	TupleDesc in_tupdesc;
-	TupleDesc out_tupdesc;
 
 	AnyTable input = PG_GETARG_ANYTABLE(0);
 	int32 batch_size = PG_GETARG_INT32(2);
@@ -814,7 +808,6 @@ apply(PG_FUNCTION_ARGS)
 		plc_elog(ERROR, "batch size must be > 0.");
 
 	rsi = (ReturnSetInfo *)fcinfo->resultinfo;
-	out_tupdesc = rsi->expectedDesc;
 	in_tupdesc = AnyTable_GetTupleDesc(input);
 
 	MemoryContext mctx_old;
