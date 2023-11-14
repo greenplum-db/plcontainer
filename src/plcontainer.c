@@ -760,7 +760,8 @@ apply_ctx_init(Oid tuple_type, Oid func_oid, ReturnSetInfo *rsi)
 {
 	apply_ctx *ac = palloc(sizeof(apply_ctx));
 	ac->end_of_input = false;
-	ac->astate = NULL;
+	/* Set subcontext to false to avoid re-init for each batch. */
+	ac->astate = initArrayResult(tuple_type, CurrentMemoryContext, false);
 	ac->results = NULL;
 	FmgrInfo flinfo = {0};
 	fmgr_info(func_oid, &flinfo);
@@ -862,6 +863,7 @@ apply(PG_FUNCTION_ARGS)
 		ac->fcinfo->arg[0] = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
 		ac->fcinfo->argnull[0] = false;
 #endif
+		/* Prepare astate for next batch. */
 		ac->astate->nelems = 0;
 		ac->results = plcontainer_get_result(ac->fcinfo, ac->proc);
 	}
