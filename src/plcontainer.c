@@ -110,11 +110,11 @@ plcontainer_cleanup(pg_attribute_unused() int code, pg_attribute_unused() Datum 
 static void 
 plcontainer_backend_type_assign_hook(const char *newvalue, void *extra) {
     (void)(extra);
-    enum PLC_BACKEND_TYPE type = UNIMPLEMENT_TYPE;
+    enum PLC_BACKEND_TYPE type = PLC_BACKEND_UNIMPLEMENT;
     if (strcmp(newvalue, "docker") == 0) {
-        type = BACKEND_DOCKER;
+        type = PLC_BACKEND_DOCKER;
     } else if (strcmp(newvalue, "process") == 0) {
-        type = BACKEND_PROCESS;
+        type = PLC_BACKEND_PROCESS;
     }
     plc_backend_prepareImplementation(type);
 }
@@ -131,6 +131,7 @@ _PG_init(void) {
 	if (inited)
 		return;
 
+	// deprecated
     DefineCustomStringVariable("plcontainer.backend_type",
                                 gettext_noop("plcontainer backend type (docker|process)."),
                                 NULL,

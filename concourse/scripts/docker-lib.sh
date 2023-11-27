@@ -88,7 +88,7 @@ start_docker() {
   try_start() {
     # we add this arg `--storage-driver`
     # Otherwise, if concourse worker use `btrfs`` files created inside the container will be leaked to the concourse worker host.
-    dockerd --storage-driver overlay2 --data-root $DOCKER_DATA_ROOT ${server_args} >$LOG_FILE 2>&1 &
+    dockerd --storage-driver overlay2 -H unix:///var/run/docker.sock -H tcp://127.0.0.1 --data-root $DOCKER_DATA_ROOT ${server_args} >$LOG_FILE 2>&1 &
     echo $! > /tmp/docker.pid
 
     sleep 1
