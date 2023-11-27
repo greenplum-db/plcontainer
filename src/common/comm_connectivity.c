@@ -389,7 +389,7 @@ extern void deinit_pplan_slots(plcConn *conn);
  *  Connect to the specified host of the localhost and initialize the plcConn
  *  data structure
  */
-plcConn *plcConnect_inet(int port) {
+plcConn *plcConnect_inet(const char *hostname, int port) {
 	struct hostent *server;
 	struct sockaddr_in raddr; /** Remote address */
 	plcConn *result = NULL;
@@ -403,11 +403,11 @@ plcConn *plcConnect_inet(int port) {
 		goto err_out1;
 	}
 
-	server = gethostbyname("localhost");
+	server = gethostbyname(hostname);
 	if (server == NULL) {
 		close(sock);
-		plc_elog(ERROR, "PLContainer: Failed to call gethostbyname('localhost'):"
-			" %s", hstrerror(h_errno));
+		plc_elog(ERROR, "gethostbyname('%s'): %s",
+				hostname, hstrerror(h_errno));
 		return NULL;
 	}
 
@@ -505,28 +505,28 @@ err_out:
  *  Close the plcConn connection and deallocate the buffers
  */
 void plcDisconnect(plcConn *conn) {
-	char *uds_fn;
+	if (conn == NULL)
+		return;
 
-	if (conn != NULL) {
-		close(conn->sock);
+	close(conn->sock);
 
-		uds_fn = conn->uds_fn;
-		if (uds_fn != NULL) {
-			unlink(uds_fn);
-			rmdir(dirname(uds_fn));
-			pfree(uds_fn);
-			conn->uds_fn = NULL;
-		}
-
-		pfree(conn->buffer[PLC_INPUT_BUFFER]->data);
-		pfree(conn->buffer[PLC_OUTPUT_BUFFER]->data);
-		pfree(conn->buffer[PLC_INPUT_BUFFER]);
-		pfree(conn->buffer[PLC_OUTPUT_BUFFER]);
-		conn->buffer[PLC_INPUT_BUFFER] = NULL;
-		conn->buffer[PLC_OUTPUT_BUFFER] = NULL;
-		deinit_pplan_slots(conn);
-		pfree(conn);
+	char *uds_fn = conn->uds_fn;
+	if (uds_fn != NULL) {
+		unlink(uds_fn);
+		rmdir(dirname(uds_fn));
+		pfree(uds_fn);
+		conn->uds_fn = NULL;
 	}
+
+	pfree(conn->buffer[PLC_INPUT_BUFFER]->data);
+	pfree(conn->buffer[PLC_OUTPUT_BUFFER]->data);
+	pfree(conn->buffer[PLC_INPUT_BUFFER]);
+	pfree(conn->buffer[PLC_OUTPUT_BUFFER]);
+	conn->buffer[PLC_INPUT_BUFFER] = NULL;
+	conn->buffer[PLC_OUTPUT_BUFFER] = NULL;
+	deinit_pplan_slots(conn);
+	pfree(conn);
+
 	return;
 }
 

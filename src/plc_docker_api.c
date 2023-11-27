@@ -30,12 +30,12 @@
 static char *plc_docker_socket = "/var/run/docker.sock";
 
 // URL prefix specifies Docker API version
-static char *plc_docker_version_127 = "http:/v1.27";
+static char *plc_docker_version_127 = "v1.27";
 // GPU basic support after moby v19.03 (2019-7) API version v1.40
 // GPU with out privilege support when using NVIDIA/libnvidia-container v1.10 (2020.5) with API version v1.40
 // need to use NVIDIA/libnvidia-container to enable non-privilege container
 // NVIDIA/container-config (2019-11~2021-11) or something before libnvidia-container does not support non-privilege
-static char *plc_docker_version_140 = "http:/v1.40";
+static char *plc_docker_version_140 = "v1.40";
 
 static char *default_log_dirver = "journald";
 
@@ -46,7 +46,12 @@ static void plcCurlBufferFree(plcCurlBuffer *buf);
 
 static size_t plcCurlCallback(void *contents, size_t size, size_t nmemb, void *userp);
 
-static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType, const char *version, char *url, char *body);
+static plcCurlBuffer *plcCurlRESTAPICall(
+		const backendConnectionInfo *backend,
+		plcCurlCallType cType,
+		const char *version_prefix,
+		char *url,
+		char *body);
 
 static int docker_inspect_string(char *buf, char **element, plcInspectionMode type);
 
@@ -90,130 +95,153 @@ static size_t plcCurlCallback(void *contents, size_t size, size_t nmemb, void *u
 }
 
 /* Function for calling Docker REST API using Curl */
-static plcCurlBuffer *plcCurlRESTAPICall(plcCurlCallType cType,
-                                         const char *version_prefix,
-                                         char *url,
-                                         char *body) {
-	CURL *curl;
-	CURLcode res;
+static plcCurlBuffer *plcCurlRESTAPICall(
+		const backendConnectionInfo *backend,
+		plcCurlCallType cType,
+		const char *version_prefix,
+		char *url,
+		char *body)
+{
 	plcCurlBuffer *buffer = plcCurlBufferInit();
 	char errbuf[CURL_ERROR_SIZE];
-
-	/* Calling the API */
-	struct timeval start_time, end_time;
-	uint64_t elapsed_us;
-
 	memset(errbuf, 0, CURL_ERROR_SIZE);
 
-	curl = curl_easy_init();
-
-	if (curl) {
-		char *fullurl;
-		struct curl_slist *headers = NULL;
-
-		curl_easy_reset(curl);
-		if (log_min_messages <= DEBUG1)
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
-		/* Setting Docker API endpoint */
-		curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, plc_docker_socket);
-
-		/* Setting up request URL */
-		if (cType == PLC_HTTP_GET && body != NULL)
-		{
-			char *param = NULL;
-			param = curl_easy_escape(curl, body ,strlen(body));
-			fullurl = palloc(strlen(version_prefix) + strlen(url) + strlen(param) + 2);
-			sprintf(fullurl, "%s%s%s", plc_docker_version_127, url, param);
-			curl_easy_setopt(curl, CURLOPT_URL, fullurl);
-			curl_free(param);
-		} else {
-			fullurl = palloc(strlen(version_prefix) + strlen(url) + 2);
-			sprintf(fullurl, "%s%s", version_prefix, url);
-			curl_easy_setopt(curl, CURLOPT_URL, fullurl);
-		}
-
-		/* Providing a buffer to store errors in */
-		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
-
-		/* FIXME: Need GUCs for timeout parameter settings? */
-
-		/* Setting timeout for connecting. */
-		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
-
-		/* Setting timeout for connecting. */
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
-
-		/* Choosing the right request type */
-		switch (cType) {
-			case PLC_HTTP_GET:
-				curl_easy_setopt(curl, CURLOPT_HTTPGET, 1);
-				break;
-			case PLC_HTTP_POST:
-				curl_easy_setopt(curl, CURLOPT_POST, 1);
-				/* If the body is set - we are sending JSON, else - plain text */
-				if (body != NULL) {
-					headers = curl_slist_append(headers, "Content-Type: application/json");
-					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
-				} else {
-					headers = curl_slist_append(headers, "Content-Type: text/plain");
-					curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 0L);
-				}
-				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-				break;
-			case PLC_HTTP_DELETE:
-				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-				break;
-			default:
-				snprintf(backend_error_message, sizeof(backend_error_message),
-				         "Unsupported call type for PL/Container Docker Curl API: %d", cType);
-				buffer->status = -1;
-				goto cleanup;
-		}
-
-		/* Setting up response receive callback */
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plcCurlCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) buffer);
-
-		gettimeofday(&start_time, NULL);
-		res = curl_easy_perform(curl);
-		if (res != CURLE_OK) {
-			size_t len = strlen(errbuf);
-
-			gettimeofday(&end_time, NULL);
-			elapsed_us =
-				((uint64) end_time.tv_sec) * 1000000 + end_time.tv_usec -
-				((uint64) start_time.tv_sec) * 1000000 - start_time.tv_usec;
-
-			snprintf(backend_error_message, sizeof(backend_error_message),
-			         "PL/Container libcurl returns code %d, error '%s'", res,
-			         (len > 0) ? errbuf : curl_easy_strerror(res));
-			buffer->status = -1;
-
-			backend_log(LOG, "Curl Request with type: %d, url: %s", cType, fullurl);
-			backend_log(LOG, "Curl Request with http body: %s\n", body);
-			backend_log(LOG, "Curl Request costs "
-				UINT64_FORMAT
-				"ms", elapsed_us / 1000);
-
-			goto cleanup;
-		} else {
-			long http_code = 0;
-
-			curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
-			buffer->status = (int) http_code;
-			backend_log(DEBUG1, "CURL response code is %ld. CURL response message is %s", http_code, buffer->data);
-		}
-
-cleanup:
-		pfree(fullurl);
-		curl_slist_free_all(headers);
-		curl_easy_cleanup(curl);
-	} else {
+	CURL *curl = curl_easy_init();
+	if (curl == NULL) {
 		snprintf(backend_error_message, sizeof(backend_error_message),
 		         "Failed to start a curl session for unknown reason");
 		buffer->status = -1;
+		return buffer;
 	}
+
+	curl_easy_reset(curl);
+
+	if (log_min_messages <= DEBUG1)
+		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+
+	/* Setting Docker API endpoint */
+	StringInfoData fullurl = {};
+	initStringInfoOfSize(&fullurl, 64);
+	switch (backend->tag) {
+		case PLC_BACKEND_DOCKER: // docker will use HTTP in unix socket
+			curl_easy_setopt(curl, CURLOPT_UNIX_SOCKET_PATH, plc_docker_socket);
+			{
+				// curl 7.50 has a different URL resolve behavior
+				// https://github.com/curl/curl/issues/936
+				curl_version_info_data *ver = curl_version_info(CURLVERSION_NOW);
+				if (ver->version_num >= (7 << 16 | 50 << 8 | 0 << 0)) {
+					// after v7.50 URL must have the hostname
+					appendStringInfo(&fullurl, "http://localhost/");
+				} else {
+					// before v7.50, URL must not have the hostname
+					appendStringInfo(&fullurl, "http://");
+				}
+			}
+			break;
+		case PLC_BACKEND_REMOTE_DOCKER: // remote docker will use HTTP in TCP
+			appendStringInfo(&fullurl, "http://%s/", backend->plcBackendRemoteDocker.hostname);
+			curl_easy_setopt(curl, CURLOPT_PORT, backend->plcBackendRemoteDocker.port);
+
+			curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+			if (backend->plcBackendRemoteDocker.username && backend->plcBackendRemoteDocker.password) {
+				curl_easy_setopt(curl, CURLOPT_USERNAME, backend->plcBackendRemoteDocker.username);
+				curl_easy_setopt(curl, CURLOPT_PASSWORD , backend->plcBackendRemoteDocker.password);
+			}
+			break;
+		case PLC_BACKEND_PROCESS:
+		case PLC_BACKEND_UNIMPLEMENT:
+			Assert(!"BUG not docker backend but calling docker api");
+			break;
+	}
+
+	/* Setting up request URL */
+	if (cType == PLC_HTTP_GET && body != NULL) {
+		char *param = curl_easy_escape(curl, body ,strlen(body));
+		appendStringInfo(&fullurl, "%s%s%s", version_prefix, url, param);
+		curl_free(param);
+	} else {
+		appendStringInfo(&fullurl, "%s%s", version_prefix, url);
+	}
+
+	curl_easy_setopt(curl, CURLOPT_URL, fullurl.data);
+
+	/* Providing a buffer to store errors in */
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
+
+	/* Need GUCs for timeout parameter settings? */
+
+	/* Setting timeout for connecting. */
+	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
+
+	/* Choosing the right request type */
+	struct curl_slist *headers = NULL;
+	switch (cType) {
+		case PLC_HTTP_GET:
+			curl_easy_setopt(curl, CURLOPT_HTTPGET, 1);
+			break;
+		case PLC_HTTP_POST:
+			curl_easy_setopt(curl, CURLOPT_POST, 1);
+			/* If the body is set - we are sending JSON, else - plain text */
+			if (body != NULL) {
+				headers = curl_slist_append(headers, "Content-Type: application/json");
+				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
+			} else {
+				headers = curl_slist_append(headers, "Content-Type: text/plain");
+				curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, 0L);
+			}
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+			break;
+		case PLC_HTTP_DELETE:
+			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+			break;
+		default:
+			snprintf(backend_error_message, sizeof(backend_error_message),
+			         "Unsupported call type for PL/Container Docker Curl API: %d", cType);
+			buffer->status = -1;
+			goto cleanup;
+	}
+
+	/* Setting up response receive callback */
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, plcCurlCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) buffer);
+
+	struct timeval start_time;
+	gettimeofday(&start_time, NULL);
+
+	CURLcode res = curl_easy_perform(curl);
+	if (res != CURLE_OK) {
+		size_t len = strlen(errbuf);
+
+		struct timeval end_time;
+		gettimeofday(&end_time, NULL);
+		uint64_t elapsed_us =
+			((uint64) end_time.tv_sec) * 1000000 + end_time.tv_usec -
+			((uint64) start_time.tv_sec) * 1000000 - start_time.tv_usec;
+
+		snprintf(backend_error_message, sizeof(backend_error_message),
+		         "PL/Container libcurl returns code %d, error '%s'", res,
+		         (len > 0) ? errbuf : curl_easy_strerror(res));
+		buffer->status = -1;
+
+		backend_log(LOG, "Curl Request with type: %d, url: %s", cType, fullurl.data);
+		backend_log(LOG, "Curl Request with http body: %s\n", body);
+		backend_log(LOG, "Curl Request costs "UINT64_FORMAT"ms", elapsed_us / 1000);
+
+		goto cleanup;
+	} else {
+		long http_code = 0;
+
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+		buffer->status = (int) http_code;
+		backend_log(DEBUG1, "CURL response code is %ld. CURL response message is %s", http_code, buffer->data);
+	}
+
+cleanup:
+	pfree(fullurl.data);
+	curl_slist_free_all(headers);
+	curl_easy_cleanup(curl);
 
 	return buffer;
 }
@@ -279,7 +307,12 @@ static void _req_serialize_devicerequest(StringInfo b, const plcDeviceRequest *r
 	appendStringInfo(b, "}");
 }
 
-int plc_docker_create_container(runtimeConfEntry *conf, char **name, int container_id, char **uds_dir) {
+int plc_docker_create_container(
+		const runtimeConfEntry *conf,            // input the runtime config
+		const backendConnectionInfo *backend,    // input the backend connection info
+		const int container_slot,                // input the slot id used to generate uds name
+		runtimeConnectionInfo *connection        // output the new process connection info
+) {
 	char *createRequest =
 		"{\n"
 			"    \"AttachStdin\": false,\n"
@@ -311,8 +344,10 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 			"        \"segindex\": \"%d\"\n"
 			"    }\n"
 			"}\n";
-	bool has_error;
-	char *volumeShare = get_sharing_options(conf, container_id, &has_error, uds_dir);
+
+	char *volumeShare = NULL;
+	bool has_error = generate_sharing_options_and_uds_address(conf, backend, container_slot,
+															 connection, &volumeShare);
 
 	char *messageBody = NULL;
 	plcCurlBuffer *response = NULL;
@@ -404,7 +439,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	         username,
 	         dbname,
 	         MyProcPid,
-	         conf->useContainerNetwork ? "true" : "false", // .Env.useContainerNetwork
+	         connection->tag == PLC_RUNTIME_CONNECTION_TCP ? "true" : "false", // .Env.useContainerNetwork
 	         conf->enableNetwork ? "false" : "true", // .NetworkDisabled
 	         conf->image,
 	         volumeShare,
@@ -422,7 +457,7 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	// resolve version dynamically to compatible with old docker install
 	const char* version_prefix = conf->devicerequests == NULL ? plc_docker_version_127 : plc_docker_version_140;
 
-	response = plcCurlRESTAPICall(PLC_HTTP_POST, version_prefix, "/containers/create", messageBody);
+	response = plcCurlRESTAPICall(backend, PLC_HTTP_POST, version_prefix, "/containers/create", messageBody);
 
 	res = response->status;
 
@@ -442,7 +477,8 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 	if (res < 0) {
 		goto cleanup;
 	}
-	res = docker_inspect_string(response->data, name, PLC_INSPECT_NAME);
+
+	res = docker_inspect_string(response->data, &connection->identity, PLC_INSPECT_NAME);
 
 	if (res < 0) {
 		backend_log(DEBUG1, "Error parsing container ID during creating container with errno %d.", res);
@@ -451,41 +487,93 @@ int plc_docker_create_container(runtimeConfEntry *conf, char **name, int contain
 		goto cleanup;
 	}
 
+	// port available after docker start
+	if (connection->tag == PLC_RUNTIME_CONNECTION_TCP) {
+		connection->connection_tcp.port = 0;
+	}
+
 cleanup:
 	pfree(requestBuffer.data);
 	plcCurlBufferFree(response);
 
+
+#ifdef FAULT_INJECTOR
+	// some slow debug Assert
+	if (res == 0) {
+		switch(connection->tag) {
+			case PLC_RUNTIME_CONNECTION_TCP:
+				Assert(connection->connection_tcp.hostname != NULL);
+				Assert(strlen(connection->connection_tcp.hostname) != 0);
+				break;
+			case PLC_RUNTIME_CONNECTION_UDS:
+				Assert(connection->connection_uds.uds_address != NULL);
+				Assert(strlen(connection->connection_uds.uds_address) != 0);
+				break;
+			case PLC_RUNTIME_CONNECTION_UNKNOWN:
+				Assert(!"BUG: connection unknown");
+				break;
+		}
+	}
+#endif
+
 	return res;
 }
 
-int plc_docker_start_container(const char *name) {
+int plc_docker_start_container(
+		const backendConnectionInfo *backend, // input the backend connection info
+		runtimeConnectionInfo *connection     // output the new process connection info
+) {
 	plcCurlBuffer *response = NULL;
-	char *method = "/containers/%s/start";
+	const char *method = "/containers/%s/start";
 	char *url = NULL;
 	int res = 0;
 
-	url = palloc(strlen(method) + strlen(name) + 2);
-	sprintf(url, method, name);
+	url = palloc(strlen(method) + strlen(connection->identity) + 2);
+	sprintf(url, method, connection->identity);
 
-	response = plcCurlRESTAPICall(PLC_HTTP_POST, plc_docker_version_127, url, NULL);
-	res = response->status;
+	response = plcCurlRESTAPICall(backend, PLC_HTTP_POST, plc_docker_version_127, url, NULL);
 
-	if (res == 204 || res == 304) {
-		res = 0;
-	} else if (res >= 0) {
-		backend_log(DEBUG1, "start docker container %s failed with errno %d.", name, res);
+	if (response->status != 204 && response->status != 304) {
+		backend_log(DEBUG1, "start docker container %s failed with errno %d.", connection->identity, res);
 		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to start container %s, return code: %d, detail: %s", name, res, response->data);
+		         "Failed to start container %s, return code: %d, detail: %s", connection->identity, res, response->data);
+
 		res = -1;
+		goto cleanup;
 	}
 
+	if (connection->tag == PLC_RUNTIME_CONNECTION_TCP) {
+		char *port = NULL;
+		res = plc_docker_inspect_container(PLC_INSPECT_PORT, backend, connection, &port);
+
+		if (res < 0 || port == NULL || atoi(port) == 0) {
+			backend_log(DEBUG1, "Error parsing container port during creating container with errno %d.", res);
+			snprintf(backend_error_message, sizeof(backend_error_message),
+			         "Error parsing container port during creating container");
+
+			res = -1;
+			goto cleanup;
+		}
+		connection->connection_tcp.port = atoi(port);
+		pfree(port);
+	}
+
+cleanup:
 	plcCurlBufferFree(response);
 	pfree(url);
+
+#ifdef FAULT_INJECTOR
+	if (res == 0 && connection->tag == PLC_RUNTIME_CONNECTION_TCP)
+		Assert(connection->connection_tcp.port != 0);
+#endif
 
 	return res;
 }
 
-int plc_docker_kill_container(const char *name) {
+int plc_docker_kill_container(
+		const backendConnectionInfo *backend,    // input the backend connection info
+		const runtimeConnectionInfo *connection  // input the new process connection info
+) {
 	plcCurlBuffer *response = NULL;
 	char *method = "/containers/%s/kill?signal=KILL";
 	char *url = NULL;
@@ -493,10 +581,10 @@ int plc_docker_kill_container(const char *name) {
 
 	backend_log(FATAL, "Not implemented yet. Do not call it.");
 
-	url = palloc(strlen(method) + strlen(name) + 2);
-	sprintf(url, method, name);
+	url = palloc(strlen(method) + strlen(connection->identity) + 2);
+	sprintf(url, method, connection->identity);
 
-	response = plcCurlRESTAPICall(PLC_HTTP_POST, plc_docker_version_127, url, NULL);
+	response = plcCurlRESTAPICall(backend, PLC_HTTP_POST, plc_docker_version_127, url, NULL);
 	res = response->status;
 
 	plcCurlBufferFree(response);
@@ -506,16 +594,21 @@ int plc_docker_kill_container(const char *name) {
 	return res;
 }
 
-int plc_docker_inspect_container(const char *name, char **element, plcInspectionMode type) {
+int plc_docker_inspect_container(
+		const plcInspectionMode type,            // the inspect method
+		const backendConnectionInfo *backend,    // input the backend connection info
+		const runtimeConnectionInfo *connection, // input the new process connection info
+		char **element                           // the output
+) {
 	plcCurlBuffer *response = NULL;
 	char *method = "/containers/%s/json";
 	char *url = NULL;
 	int res = 0;
 
-	url = palloc(strlen(method) + strlen(name) + 2);
-	sprintf(url, method, name);
+	url = palloc(strlen(method) + strlen(connection->identity) + 2);
+	sprintf(url, method, connection->identity);
 
-	response = plcCurlRESTAPICall(PLC_HTTP_GET, plc_docker_version_127, url, NULL);
+	response = plcCurlRESTAPICall(backend, PLC_HTTP_GET, plc_docker_version_127, url, NULL);
 	res = response->status;
 
 	/* We will need to handle the "no such container" case specially. */
@@ -528,7 +621,7 @@ int plc_docker_inspect_container(const char *name, char **element, plcInspection
 	if (res != 200) {
 		backend_log(LOG, "Docker cannot inspect container, response: %s", response->data);
 		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Docker inspect api returns http code %d on container %s, detail: %s", res, name, response->data);
+		         "Docker inspect api returns http code %d on container %s, detail: %s", res, connection->identity, response->data);
 		res = -1;
 		goto cleanup;
 	}
@@ -547,7 +640,10 @@ cleanup:
 	return res;
 }
 
-int plc_docker_wait_container(const char *name) {
+int plc_docker_wait_container(
+		const backendConnectionInfo *backend,    // input the backend connection info
+		const runtimeConnectionInfo *connection  // input the new process connection info
+) {
 	plcCurlBuffer *response = NULL;
 	char *method = "/containers/%s/wait";
 	char *url = NULL;
@@ -555,10 +651,10 @@ int plc_docker_wait_container(const char *name) {
 
 	backend_log(FATAL, "Not implemented yet. Do not call it.");
 
-	url = palloc(strlen(method) + strlen(name) + 2);
-	sprintf(url, method, name);
+	url = palloc(strlen(method) + strlen(connection->identity) + 2);
+	sprintf(url, method, connection->identity);
 
-	response = plcCurlRESTAPICall(PLC_HTTP_POST, plc_docker_version_127, url, NULL);
+	response = plcCurlRESTAPICall(backend, PLC_HTTP_POST, plc_docker_version_127, url, NULL);
 	res = response->status;
 
 	plcCurlBufferFree(response);
@@ -568,16 +664,19 @@ int plc_docker_wait_container(const char *name) {
 	return res;
 }
 
-int plc_docker_delete_container(const char *name) {
+int plc_docker_delete_container(
+		const backendConnectionInfo *backend,    // input the backend connection info
+		const runtimeConnectionInfo *connection  // input the new process connection info
+) {
 	plcCurlBuffer *response = NULL;
 	char *method = "/containers/%s?v=1&force=1";
 	char *url = NULL;
 	int res = 0;
 
-	url = palloc(strlen(method) + strlen(name) + 2);
-	sprintf(url, method, name);
+	url = palloc(strlen(method) + strlen(connection->identity) + 2);
+	sprintf(url, method, connection->identity);
 
-	response = plcCurlRESTAPICall(PLC_HTTP_DELETE, plc_docker_version_127, url, NULL);
+	response = plcCurlRESTAPICall(backend, PLC_HTTP_DELETE, plc_docker_version_127, url, NULL);
 	res = response->status;
 
 	/* 204 = deleted success, 404 = container not found, both are OK for delete */
@@ -585,7 +684,7 @@ int plc_docker_delete_container(const char *name) {
 		res = 0;
 	} else if (res >= 0) {
 		snprintf(backend_error_message, sizeof(backend_error_message),
-		         "Failed to delete container %s, return code: %d, detail: %s", name, res, response->data);
+		         "Failed to delete container %s, return code: %d, detail: %s", connection->identity, res, response->data);
 		res = -1;
 	}
 
@@ -595,16 +694,17 @@ int plc_docker_delete_container(const char *name) {
 	return res;
 }
 
-int plc_docker_list_container(char **result, int dbid) {
+int plc_docker_list_container(char **result, int dbid, const plcBackend* backend_conf) {
 	plcCurlBuffer *response = NULL;
 	char *url = "/containers/json?all=1&filters=";
 	char *param = "{\"label\":[\"dbid=%d\"]}";
 	char *body = NULL;
 	int res = 0;
+	backendConnectionInfo *backend = runtime_conf_get_backend_connection_info(backend_conf);
 
 	body = (char *) palloc((strlen(param) + 12) * sizeof(char));
 	sprintf(body, param, dbid);
-	response = plcCurlRESTAPICall(PLC_HTTP_GET, plc_docker_version_127, url, body);
+	response = plcCurlRESTAPICall(backend, PLC_HTTP_GET, plc_docker_version_127, url, body);
 	res = response->status;
 
 	if (res == 200) {
@@ -616,20 +716,23 @@ int plc_docker_list_container(char **result, int dbid) {
 	}
 	*result = pstrdup(response->data);
 
+	runtime_conf_free_backend_connection_info(backend);
 	pfree(body);
 
 	return res;
 }
 
-int plc_docker_get_container_state(const char *name, char **result) {
+int plc_docker_get_container_state(char **result, const char *name, const plcBackend* backend_conf) {
 	plcCurlBuffer *response = NULL;
 	char *method = "/containers/%s/stats?stream=false";
 	char *url = NULL;
 	int res = 0;
+	backendConnectionInfo *backend = runtime_conf_get_backend_connection_info(backend_conf);
 
 	url = palloc(strlen(method) + strlen(name) + 2);
 	sprintf(url, method, name);
-	response = plcCurlRESTAPICall(PLC_HTTP_GET, plc_docker_version_127, url, NULL);
+  
+	response = plcCurlRESTAPICall(backend, PLC_HTTP_GET, plc_docker_version_127, url, NULL);
 
 	/* FIXME: Mixing return value of curl and HTTP status code is confusing and might cause issues. */
 	res = response->status;
@@ -647,6 +750,7 @@ int plc_docker_get_container_state(const char *name, char **result) {
 	*result = pstrdup(response->data);
 
 	pfree(url);
+	runtime_conf_free_backend_connection_info(backend);
 
 	return res;
 }
