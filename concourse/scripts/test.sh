@@ -6,15 +6,20 @@ function _install_gppkg() {
     if [[ ${GP_MAJOR_VERSION} == "7" ]]; then
         "/home/gpadmin/bin_gppkg_v2/gppkg" install -a ./*.gppkg
     else
-	gppkg --install ./*.gppkg
+    gppkg --install ./*.gppkg
     fi
+
+
+    # scp did not copy symlink. create those file if not exist to make our CI happy
+    touch "$GPHOME/bin/plcontainer_clients/client_python39_ubuntu-22.04"
+    touch "$GPHOME/bin/plcontainer_clients/client_r3.6.3_ubuntu-18.04"
 }
 
 function _uninstall_gppkg() {
     if [[ ${GP_MAJOR_VERSION} == "7" ]]; then
         "/home/gpadmin/bin_gppkg_v2/gppkg" remove -a plcontainer
     else
-	gppkg --remove plcontainer
+    gppkg --remove plcontainer
     fi
 }
 

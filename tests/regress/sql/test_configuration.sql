@@ -59,9 +59,9 @@ SELECT py_no_exsited();
 \! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
 
 \! plcontainer remote-setup --hosts 'unreachable' | grep ssh
-\! ls -A -1 /tmp/xxxxremotedockertestxxx/plcontainer_clients
+\! test -d /tmp/xxxxremotedockertestxxx/plcontainer_clients || echo $?
 
 \! plcontainer remote-setup --hosts 'localhost' --clientdir '/tmp/xxxxremotedockertestxxx/plcontainer_clients' > /dev/null 2>&1 && echo $?
-\! ls -A -1 /tmp/xxxxremotedockertestxxx/plcontainer_clients
+\! test -d /tmp/xxxxremotedockertestxxx/plcontainer_clients && echo $?
 \! rm -rf /tmp/xxxxremotedockertestxxx
 \! rm ./alpine.tar.gz

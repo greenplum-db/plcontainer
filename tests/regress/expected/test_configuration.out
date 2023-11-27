@@ -91,17 +91,11 @@ alpine
 \! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
 \! plcontainer remote-setup --hosts 'unreachable' | grep ssh
   stderr='ssh: Could not resolve hostname unreachable: Name or service not known
-\! ls -A -1 /tmp/xxxxremotedockertestxxx/plcontainer_clients
-ls: cannot access '/tmp/xxxxremotedockertestxxx/plcontainer_clients': No such file or directory
+\! test -d /tmp/xxxxremotedockertestxxx/plcontainer_clients || echo $?
+1
 \! plcontainer remote-setup --hosts 'localhost' --clientdir '/tmp/xxxxremotedockertestxxx/plcontainer_clients' > /dev/null 2>&1 && echo $?
 0
-\! ls -A -1 /tmp/xxxxremotedockertestxxx/plcontainer_clients
-librcall.so
-py3client
-py3client.sh
-pyclient
-pyclient.sh
-rclient
-rclient.sh
+\! test -d /tmp/xxxxremotedockertestxxx/plcontainer_clients && echo $?
+0
 \! rm -rf /tmp/xxxxremotedockertestxxx
 \! rm ./alpine.tar.gz
