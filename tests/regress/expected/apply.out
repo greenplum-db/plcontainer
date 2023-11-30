@@ -88,7 +88,7 @@ ERROR:  array size exceeds the maximum allowed (1073741823)
 -- no ERROR when using plcontainer_apply()
 select count(*)
 from plcontainer_apply(
-    table(table "1gb_text"), 'echo_for_apply', 10
+    table(table "1gb_text"), 'echo_for_apply', 100
 ) as (a text);
  count 
 -------

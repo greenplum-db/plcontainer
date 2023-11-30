@@ -42,8 +42,7 @@ create or replace view "1gb_text" as (
 create or replace function echo_for_apply(arg_records "1gb_text"[])
 returns setof record as $$
 # container: plc_python_user
-for row in arg_records:
-    yield row
+return arg_records
 $$ language plcontainer;
 
 -- should throw an ERROR when using array_agg()
@@ -52,5 +51,5 @@ select echo_for_apply(array_agg("1gb_text")) from "1gb_text";
 -- no ERROR when using plcontainer_apply()
 select count(*)
 from plcontainer_apply(
-    table(table "1gb_text"), 'echo_for_apply', 10
+    table(table "1gb_text"), 'echo_for_apply', 100
 ) as (a text);
