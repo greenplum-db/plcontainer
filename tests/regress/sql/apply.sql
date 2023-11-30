@@ -6,8 +6,7 @@ create type add_one_input as (
 create or replace function add_one_for_apply(_ add_one_input[])
 returns setof record as $$
 # container: plc_python_user
-for row in _:
-    yield {"i": row["i"] + 1}
+return [{"i": row["i"] + 1} for row in _]
 $$ language plcontainer;
 
 -- batch size == 0

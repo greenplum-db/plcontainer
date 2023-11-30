@@ -6,15 +6,14 @@ create type add_one_input as (
 create or replace function add_one_for_apply(_ add_one_input[])
 returns setof record as $$
 # container: plc_python_user
-for row in _:
-    yield {"i": row["i"] + 1}
+return [{"i": row["i"] + 1} for row in _]
 $$ language plcontainer;
 -- batch size == 0
 select * 
 from plcontainer_apply(
     table(select generate_series(1, 10)), 'add_one_for_apply', 0
 ) as (i int);
-ERROR:  plcontainer: batch size must be > 0. (plcontainer.c:817)
+ERROR:  plcontainer: batch size must be > 0. (plcontainer.c:809)
 -- data size % batch size == 0
 select * 
 from plcontainer_apply(
@@ -79,8 +78,7 @@ create or replace view "1gb_text" as (
 create or replace function echo_for_apply(arg_records "1gb_text"[])
 returns setof record as $$
 # container: plc_python_user
-for row in arg_records:
-    yield row
+return arg_records
 $$ language plcontainer;
 -- should throw an ERROR when using array_agg()
 select echo_for_apply(array_agg("1gb_text")) from "1gb_text";
