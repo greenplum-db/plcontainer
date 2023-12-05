@@ -543,23 +543,6 @@ static void parse_runtime_configuration(xmlNode *node) {
 						}
 					}
 
-#if PG_VERSION_NUM >= 120000 // at 2023-01, currently GP7 does not support resource group
-					value = xmlGetProp(cur_node, (const xmlChar *) "resource_group_id");
-					if (value != NULL) {
-						validSetting = true;
-						plc_elog(WARNING, "Greenplum7 resource group integration is not supported is this PL/Container");
-
-						{ // to pass the test
-							if (strlen((char *) value) == 0) {
-								plc_elog(ERROR, "SETTING length of element <resource_group_id> is zero");
-							}
-							pg_atoi((char *) value, sizeof(int), 0);
-						}
-
-						xmlFree((void *) value);
-						value = NULL;
-					}
-#else
 					value = xmlGetProp(cur_node, (const xmlChar *) "resource_group_id");
 					if (value != NULL) {
 						Oid resgroupOid;
@@ -573,16 +556,18 @@ static void parse_runtime_configuration(xmlNode *node) {
 						if (resgroupOid == InvalidOid || GetResGroupNameForId(resgroupOid) == NULL) {
 							plc_elog(ERROR, "SETTING element <resource_group_id> must be a resource group id in greenplum. " "Current setting is: %s", (char * ) value);
 						}
+#if PG_VERSION_NUM < 120000 // gpdb7 removed RESGROUP_MEMORY_AUDITOR_CGROUP
 						int32 memAuditor = GetResGroupMemAuditorForId(resgroupOid, AccessShareLock);
 						if (memAuditor != RESGROUP_MEMORY_AUDITOR_CGROUP) {
 							plc_elog(ERROR, "SETTING element <resource_group_id> must be a resource group with memory_auditor type cgroup.");
 						}
 #endif
+#endif
 						conf_entry->resgroupOid = resgroupOid;
 						xmlFree((void *) value);
 						value = NULL;
 					}
-#endif
+
 					value = xmlGetProp(cur_node, (const xmlChar *) "roles");
 					if (value != NULL) {
 						validSetting = true;

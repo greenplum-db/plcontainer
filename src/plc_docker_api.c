@@ -401,7 +401,7 @@ int plc_docker_create_container(
 	 * Note that this feature is only for gpdb with resource group enable.
 	 */
 
-	if (conf->resgroupOid != InvalidOid) {
+	if (conf->resgroupOid != InvalidOid && backend->tag == PLC_BACKEND_DOCKER) {
 		snprintf(cgroupParent, RES_GROUP_PATH_MAX_LENGTH, "/gpdb/%d",conf->resgroupOid);
 	}
 
