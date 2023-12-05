@@ -149,6 +149,8 @@ static plcCurlBuffer *plcCurlRESTAPICall(
 				curl_easy_setopt(curl, CURLOPT_PASSWORD , backend->plcBackendRemoteDocker.password);
 			}
 			break;
+		case PLC_BACKEND_K8S:
+		case PLC_BACKEND_END:
 		case PLC_BACKEND_PROCESS:
 		case PLC_BACKEND_UNIMPLEMENT:
 			Assert(!"BUG not docker backend but calling docker api");
@@ -308,10 +310,10 @@ static void _req_serialize_devicerequest(StringInfo b, const plcDeviceRequest *r
 }
 
 int plc_docker_create_container(
-		const runtimeConfEntry *conf,            // input the runtime config
-		const backendConnectionInfo *backend,    // input the backend connection info
-		const int container_slot,                // input the slot id used to generate uds name
-		runtimeConnectionInfo *connection        // output the new process connection info
+		const runtimeConfEntry *conf,      // input the runtime config
+		backendConnectionInfo *backend,    // output the backend connection info
+		const int container_slot,          // input the slot id used to generate uds name
+		runtimeConnectionInfo *connection  // output the new process connection info
 ) {
 	char *createRequest =
 		"{\n"

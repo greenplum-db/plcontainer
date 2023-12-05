@@ -15,10 +15,10 @@
 extern char backend_error_message[256];
 
 typedef int (*PLC_FPTR_create)(
-		const runtimeConfEntry *conf,            // input the runtime config
-		const backendConnectionInfo *backend,    // input the backend connection info
-		const int container_slot,                // input the slot id used to generate uds name
-		runtimeConnectionInfo *connection        // output the new process connection info
+		const runtimeConfEntry *conf,      // input the runtime config
+		backendConnectionInfo *backend,    // output the backend connection info
+		const int container_slot,          // input the slot id used to generate uds name
+		runtimeConnectionInfo *connection  // output the new process connection info
 );
 
 typedef int (*PLC_FPTR_start)(

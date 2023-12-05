@@ -60,6 +60,8 @@ typedef enum PLC_BACKEND_TYPE {
 	PLC_BACKEND_DOCKER = 1,
 	PLC_BACKEND_REMOTE_DOCKER = 2,
 	PLC_BACKEND_PROCESS = 3,
+	PLC_BACKEND_K8S = 4,
+	PLC_BACKEND_END = 100,
 } PLC_BACKEND_TYPE;
 
 const char* PLC_BACKEND_TYPE_TO_STRING(PLC_BACKEND_TYPE b);
@@ -78,12 +80,23 @@ typedef struct plcBackendRemoteDocker {
 	bool add_segment_index;
 } plcBackendRemoteDocker;
 
+typedef struct plcBackendK8s {
+	char *kubectl_path;
+
+	uint32_t portrange_min;
+	uint32_t portrange_max;
+
+	int network; // enum PLC_BACKEND_K8S_NETWORK_MODEL
+	int setupmethod; // enum PLC_BACKEND_K8S_SETUP_METHOD
+} plcBackendK8s;
+
 typedef struct plcBackend {
 	char *name;
 	PLC_BACKEND_TYPE tag;
 	union {
 		plcBackendLocalDocker localdocker;
 		plcBackendRemoteDocker remotedocker;
+		plcBackendK8s k8s;
 	};
 } plcBackend;
 
@@ -133,6 +146,11 @@ typedef struct backendConnectionInfo {
 			char* username;
 			char* password;
 		} plcBackendRemoteDocker;
+
+		struct backend_k8s {
+			char *kubectl_path;
+			char *name;
+		} plcBackendK8s;
 	};
 } backendConnectionInfo;
 

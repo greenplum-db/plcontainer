@@ -153,6 +153,11 @@ static void cleanup_atexit_callback() {
 }
 
 static void cleanup(const backendConnectionInfo *backend, const runtimeConnectionInfo *info) {
+	if (backend->tag == PLC_BACKEND_K8S) {
+		// in K8s, container will be managed by K8s, no need to cleanup
+		return;
+	}
+
 	/* fork the process to synchronously wait for backend to exit */
 	pid_t pid = fork();
 	if (pid < 0) {
