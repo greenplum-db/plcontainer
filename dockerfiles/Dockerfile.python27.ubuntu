@@ -5,7 +5,7 @@ RUN mkdir -p /clientdir
 RUN apt update && apt install -y python2.7 python-pip python-dev gcc g++ make
 # for easily install the latest cmake
 RUN pip install -U pip
-RUN pip install cmake
+RUN pip install cmake==3.27.7
 
 ENV PATH "${PATH:+:${PATH}}"
 ENV LD_LIBRARY_PATH "/usr/lib/python2.7${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
