@@ -15,10 +15,10 @@
 extern char backend_error_message[256];
 
 typedef int (*PLC_FPTR_create)(
-		const runtimeConfEntry *conf,            // input the runtime config
-		const backendConnectionInfo *backend,    // input the backend connection info
-		const int container_slot,                // input the slot id used to generate uds name
-		runtimeConnectionInfo *connection        // output the new process connection info
+		const runtimeConfEntry *conf,      // input the runtime config
+		backendConnectionInfo *backend,    // output the backend connection info
+		const int container_slot,          // input the slot id used to generate uds name
+		runtimeConnectionInfo *connection  // output the new process connection info
 );
 
 typedef int (*PLC_FPTR_start)(
@@ -63,7 +63,7 @@ void plc_backend_prepareImplementation(PLC_BACKEND_TYPE imptype);
 
 /* interfaces for plc backend. */
 
-int plc_backend_create(const runtimeConfEntry *conf, const backendConnectionInfo *backend, const int container_slot, runtimeConnectionInfo *connection)  __attribute__((warn_unused_result));
+int plc_backend_create(const runtimeConfEntry *conf, backendConnectionInfo *backend, const int container_slot, runtimeConnectionInfo *connection)  __attribute__((warn_unused_result));
 
 int plc_backend_start(const backendConnectionInfo *backend, runtimeConnectionInfo *connection) __attribute__((warn_unused_result));
 

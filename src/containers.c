@@ -153,6 +153,11 @@ static void cleanup_atexit_callback() {
 }
 
 static void cleanup(const backendConnectionInfo *backend, const runtimeConnectionInfo *info) {
+	if (backend->tag == PLC_BACKEND_K8S) {
+		// in K8s, container will be managed by K8s, no need to cleanup
+		return;
+	}
+
 	/* fork the process to synchronously wait for backend to exit */
 	pid_t pid = fork();
 	if (pid < 0) {
@@ -385,6 +390,8 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	int res = 0, loop_count = 0;
 
 	int container_slot = find_container_slot();
+
+	plc_backend_prepareImplementation(conf->backend->tag);
 	backendConnectionInfo *backend = runtime_conf_get_backend_connection_info(conf->backend);
 	runtimeConnectionInfo *connection = runtime_conf_get_runtime_connection_info(backend);
 

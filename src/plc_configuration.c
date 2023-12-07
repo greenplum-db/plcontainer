@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 
 #include "postgres.h"
+#include "utils/palloc.h"
 #ifndef PLC_PG
   #include "commands/resgroupcmds.h"
 #else
@@ -46,6 +47,7 @@
 #include "plcontainer.h"
 #include "plc_backend_api.h"
 #include "plc_docker_api.h"
+#include "plc_k8s_api.h"
 #include "plc_configuration.h"
 
 #define pfree_null(x) do { if (x) pfree(x); } while(0)
@@ -895,7 +897,11 @@ static void free_runtime_backend_entry(plcBackend *entry, bool release_self) {
 		case PLC_BACKEND_DOCKER:
 			pfree_null(entry->localdocker.uds_address);
 			break;
+		case PLC_BACKEND_K8S:
+			pfree_null(entry->k8s.kubectl_path);
+			break;
 		case PLC_BACKEND_PROCESS:
+		case PLC_BACKEND_END:
 		case PLC_BACKEND_UNIMPLEMENT:
 			Assert(!"BUG: not implement");
 	}
@@ -1120,8 +1126,14 @@ backendConnectionInfo *runtime_conf_copy_backend_connection_info(const backendCo
 			r->plcBackendRemoteDocker.username = plc_top_strdup_null(a->plcBackendRemoteDocker.username);
 			r->plcBackendRemoteDocker.password = plc_top_strdup_null(a->plcBackendRemoteDocker.password);
 			break;
+		case PLC_BACKEND_K8S:
+			r->plcBackendK8s.name = plc_top_strdup(a->plcBackendK8s.name);
+			r->plcBackendK8s.kubectl_path = plc_top_strdup_null(a->plcBackendK8s.kubectl_path);
+			break;
 		case PLC_BACKEND_PROCESS:
+			break;
 		case PLC_BACKEND_UNIMPLEMENT:
+		case PLC_BACKEND_END:
 			Assert(!"not implement");
 			break;
 	}
@@ -1149,7 +1161,7 @@ backendConnectionInfo *runtime_conf_get_backend_connection_info(const plcBackend
 				address = backend->remotedocker.address;
 			}
 
-			int sz = strlen(address) + sizeof("2147483647") + 1;
+			int sz = strlen(address) + sizeof("2147483647") + 1; // 2147483647 = max port
 			char *hostname = palloc(sizeof(char) * sz);
 
 			if (backend->remotedocker.add_segment_index) {
@@ -1172,6 +1184,18 @@ backendConnectionInfo *runtime_conf_get_backend_connection_info(const plcBackend
 			info->tag = PLC_BACKEND_PROCESS;
 
 			break;
+		case PLC_BACKEND_K8S: {
+			int sz = strlen("255.255.255.255") + sizeof("2147483647") + 1; // 2147483647 = max port
+			char *hostname = palloc(sizeof(char) * sz);
+
+			info->tag = PLC_BACKEND_K8S;
+			info->plcBackendK8s.kubectl_path = plc_top_strdup_null(backend->k8s.kubectl_path);
+			info->plcBackendK8s.hostname = hostname;
+			info->plcBackendK8s.name = palloc0(64);
+
+			break;
+		}
+		case PLC_BACKEND_END:
 		case PLC_BACKEND_UNIMPLEMENT:
 			plc_elog(ERROR, "%s: BUG! unimplemented", __func__);
 			break;
@@ -1194,6 +1218,12 @@ void runtime_conf_free_backend_connection_info(backendConnectionInfo *info) {
 			pfree_null(info->plcBackendRemoteDocker.username);
 			pfree_null(info->plcBackendRemoteDocker.password);
 			break;
+		case PLC_BACKEND_K8S:
+			pfree_null(info->plcBackendK8s.name);
+			pfree_null(info->plcBackendK8s.kubectl_path);
+			pfree_null(info->plcBackendK8s.hostname);
+			break;
+		case PLC_BACKEND_END:
 		case PLC_BACKEND_PROCESS:
 			break;
 		case PLC_BACKEND_UNIMPLEMENT:
@@ -1229,18 +1259,24 @@ runtimeConnectionInfo* runtime_conf_get_runtime_connection_info(const backendCon
 	runtimeConnectionInfo *r = palloc0(sizeof(runtimeConnectionInfo));
 
 	switch(a->tag) {
+		case PLC_BACKEND_K8S: // both k8s and remote docker using TCP
+			r->tag = PLC_RUNTIME_CONNECTION_TCP;
+			r->connection_tcp.hostname = plc_top_strdup(a->plcBackendK8s.hostname);
+			r->connection_tcp.port = a->plcBackendK8s.port;
+			break;
 		case PLC_BACKEND_REMOTE_DOCKER:
 			r->tag = PLC_RUNTIME_CONNECTION_TCP;
 			// container and the docker host shared the same address
 			r->connection_tcp.hostname = plc_top_strdup(a->plcBackendRemoteDocker.hostname);
 			r->connection_tcp.port = 0;
 			break;
-		case PLC_BACKEND_DOCKER:
+		case PLC_BACKEND_DOCKER: // both docker and process backend using UDP
+		case PLC_BACKEND_PROCESS:
 			r->tag = PLC_RUNTIME_CONNECTION_UDS;
 			r->connection_uds.uds_address = NULL;
 			break;
-		case PLC_BACKEND_PROCESS:
 		case PLC_BACKEND_UNIMPLEMENT:
+		case PLC_BACKEND_END:
 			Assert(!"unimplement");
 	}
 
@@ -1400,6 +1436,9 @@ const char* PLC_BACKEND_TYPE_TO_STRING(PLC_BACKEND_TYPE b) {
 			return "remote docker";
 		case PLC_BACKEND_PROCESS:
 			return "process";
+		case PLC_BACKEND_K8S:
+			return "kubernetes";
+		case PLC_BACKEND_END:
 		case PLC_BACKEND_UNIMPLEMENT:
 			return "unimplement";
 	}
@@ -1434,9 +1473,12 @@ static void xml_read_backend(void *ctx, size_t off, xmlNode *node) {
 	} else if (strcmp(type_str, "remote_docker") == 0) {
 		// https://docs.docker.com/engine/reference/commandline/dockerd/#bind-docker-to-another-host-port-or-a-unix-socket
 		backend->tag = PLC_BACKEND_REMOTE_DOCKER;
+	} else if (strcmp(type_str, "kubernetes") == 0 ||
+			   strcmp(type_str, "k8s") == 0) {
+		backend->tag = PLC_BACKEND_K8S;
 	} else {
 		plc_elog(ERROR, "<backend name=\"%s\"/> the 'type' should be: "
-				"['docker', 'local_docker', 'remote_docker']. current %s", backend->name, type_str);
+				"['docker', 'local_docker', 'remote_docker', 'k8s', 'kubernetes']. current %s", backend->name, type_str);
 	}
 
 	pfree_null(type_str);
@@ -1489,6 +1531,81 @@ static void xml_read_backend(void *ctx, size_t off, xmlNode *node) {
 				},
 			});
 			break;
+		case PLC_BACKEND_K8S: {
+			char *network_model = NULL;
+			char *setup_method = NULL;
+			XML_READ_CONTENT(node, 1, (XML_FIELD[]) {
+				{
+					.name = XC("kubectl_path"),
+					.tag = XML_TYPE_text,
+					.notnull = false,
+					.N = &XML_TYPE_SIGNLE_ELEMENT,
+					.ptr = &backend->k8s.kubectl_path,
+				},
+				{
+					.name = XC("port_max"),
+					.tag = XML_TYPE_integer,
+					.notnull = false,
+					.N = &XML_TYPE_SIGNLE_ELEMENT,
+					.ptr = &backend->k8s.portrange_max,
+				},
+				{
+					.name = XC("port_min"),
+					.tag = XML_TYPE_integer,
+					.notnull = false,
+					.N = &XML_TYPE_SIGNLE_ELEMENT,
+					.ptr = &backend->k8s.portrange_min,
+				},
+				{
+					.name = XC("setup_method"),
+					.tag = XML_TYPE_text,
+					.notnull = false,
+					.N = &XML_TYPE_SIGNLE_ELEMENT,
+					.ptr = &setup_method,
+				},
+				{
+					.name = XC("network_model"),
+					.tag = XML_TYPE_text,
+					.notnull = false,
+					.N = &XML_TYPE_SIGNLE_ELEMENT,
+					.ptr = &network_model,
+				}
+			});
+
+			// k8s host port default range
+			if (backend->k8s.portrange_min == 0) {
+				backend->k8s.portrange_min = 30000;
+			}
+			if (backend->k8s.portrange_max == 0) {
+				backend->k8s.portrange_max = 32767;
+			}
+
+			if (network_model == NULL ||
+				strcmp(network_model, "clusterip") == 0) {
+				backend->k8s.network = PLC_BACKEND_K8S_NETWORK_CLUSTERIP;
+			} else if (strcmp(network_model, "hostport") == 0) {
+				backend->k8s.network = PLC_BACKEND_K8S_NETWORK_HOSTPORT;
+			} else {
+				plc_elog(ERROR, "<backend name=\"%s\"/> the 'network_model' should be: ['clusterip', 'hostport']. current %s", backend->name, network_model);
+			}
+
+			if (setup_method == NULL ||
+				strcmp(setup_method, "client_in_hostpath") == 0) {
+				backend->k8s.setupmethod = PLC_BACKEND_K8S_SETUP_CLIENT_IN_HOSTPATH;
+			} else if (strcmp(setup_method, "client_in_container") == 0) {
+				backend->k8s.setupmethod = PLC_BACKEND_K8S_SETUP_CLIENT_IN_CONTAINER;
+			} else if (strcmp(setup_method, "client_in_initcontainer") == 0) {
+				backend->k8s.setupmethod = PLC_BACKEND_K8S_SETUP_CLIENT_IN_INITCONTAINER;
+			} else {
+				plc_elog(ERROR, "<backend name=\"%s\"/> the 'setup_method' should be: ['client_in_hostpath', 'client_in_container', 'client_in_initcontainer']. current %s", backend->name, setup_method);
+			}
+
+			pfree_null(setup_method);
+			pfree_null(network_model);
+
+			break;
+		}
+		case PLC_BACKEND_END:
 		case PLC_BACKEND_PROCESS:
 		case PLC_BACKEND_UNIMPLEMENT:
 			Assert(!"unreachable");

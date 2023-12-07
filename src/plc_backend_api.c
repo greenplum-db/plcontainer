@@ -8,6 +8,7 @@
 #include "plc_backend_api.h"
 #include "plc_docker_api.h"
 #include "plc_process_api.h"
+#include "plc_k8s_api.h"
 #include "common/comm_utils.h"
 
 enum PLC_BACKEND_TYPE CurrentBackendType;
@@ -36,6 +37,16 @@ static PLC_FunctionEntriesData ProcessBackend =
 	plc_process_delete_container,
 };
 
+static PLC_FunctionEntriesData K8sBackend =
+{
+	plc_k8s_create_container,
+	plc_k8s_start_container,
+	plc_k8s_kill_container,
+	plc_k8s_inspect_container,
+	plc_k8s_wait_container,
+	plc_k8s_delete_container,
+};
+
 /*
  * NOTE: Do not call plc_elog(>=ERROR, ...) in backend api code. Let the callers
  * handle according to the return value and error message string.
@@ -57,12 +68,15 @@ void plc_backend_prepareImplementation(enum PLC_BACKEND_TYPE imptype) {
 		case PLC_BACKEND_PROCESS:
 			CurrentBackend = &ProcessBackend;
 			break;
+		case PLC_BACKEND_K8S:
+			CurrentBackend = &K8sBackend;
+			break;
 		default:
 			plc_elog(ERROR, "Unsupported plc backend type: %d", imptype);
 	}
 }
 
-int plc_backend_create(const runtimeConfEntry *conf, const backendConnectionInfo *backend, const int container_slot, runtimeConnectionInfo *connection) {
+int plc_backend_create(const runtimeConfEntry *conf, backendConnectionInfo *backend, const int container_slot, runtimeConnectionInfo *connection) {
 	if (CurrentBackend == NULL || CurrentBackend->create_backend == NULL) {
 		snprintf(backend_error_message, sizeof(backend_error_message), "Fail to get interface for backend create");
 		return -1;
