@@ -761,7 +761,7 @@ apply_ctx_init(Oid tuple_type, Oid func_oid, ReturnSetInfo *rsi)
 	apply_ctx *ac = palloc(sizeof(apply_ctx));
 	ac->end_of_input = false;
 	/* Set subcontext to false to avoid re-init for each batch. */
-	ac->astate = initArrayResult(tuple_type, CurrentMemoryContext, false);
+	ac->astate = NULL;
 	ac->results = NULL;
 	FmgrInfo flinfo = {0};
 	fmgr_info(func_oid, &flinfo);
@@ -832,6 +832,7 @@ apply(PG_FUNCTION_ARGS)
 
 	if (ac->results == NULL || ac->results->resrow == ac->results->resmsg->rows)
 	{
+		apply_ctx_refresh(ac);
 		int32 tuple_num = 0;
 		for (; tuple_num < batch_size; tuple_num++)
 		{
@@ -848,6 +849,7 @@ apply(PG_FUNCTION_ARGS)
 				false,
 				in_tupdesc->tdtypeid,
 				fctx->multi_call_memory_ctx);
+			pfree(tuple);
 		}
 		if (tuple_num == 0)
 		{
@@ -855,7 +857,6 @@ apply(PG_FUNCTION_ARGS)
 			MemoryContextSwitchTo(mctx_old);
 			SRF_RETURN_DONE(fctx);
 		}
-		apply_ctx_refresh(ac);
 #if PG_VERSION_NUM >= 120000 /* Also for GPDB 7X */
 		ac->fcinfo->args[0].value = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
 		ac->fcinfo->args[0].isnull = false;
@@ -863,8 +864,7 @@ apply(PG_FUNCTION_ARGS)
 		ac->fcinfo->arg[0] = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
 		ac->fcinfo->argnull[0] = false;
 #endif
-		/* Prepare astate for next batch. */
-		ac->astate->nelems = 0;
+		ac->astate = NULL;
 		ac->results = plcontainer_get_result(ac->fcinfo, ac->proc);
 	}
 	Datum ret = plcontainer_process_result(ac->fcinfo, ac->proc, ac->results);
