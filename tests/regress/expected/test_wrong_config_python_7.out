@@ -89,7 +89,6 @@ ERROR:  plcontainer: container cpu share couldn't be equal or less than 0, curre
 Test wrong resource group id which contain nondigit
 select plcontainer_refresh_local_config(true);
 ERROR:  invalid input syntax for type integer: "plgroup"
-WARNING:  plcontainer: Greenplum7 resource group integration is not supported is this PL/Container
 \! $(pwd)/test_wrong_config.sh 22
 Test good format (but it still fails since the configuration (image/command) is not legal)
 select plcontainer_refresh_local_config(true);
