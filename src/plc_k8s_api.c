@@ -53,7 +53,7 @@ int plc_k8s_create_container(
 	appendStringInfo(&container_spec, "  instanceid: \"%s\"\n", "TODO");
 	switch (conf->backend->k8s.setupmethod) {
 		case PLC_BACKEND_K8S_SETUP_CLIENT_IN_HOSTPATH:
-			appendStringInfo(&container_spec, "  setupmethod: Hostpath\n");
+			appendStringInfo(&container_spec, "  setupmethod: ClientInHostpath\n");
 			break;
 		case PLC_BACKEND_K8S_SETUP_CLIENT_IN_CONTAINER:
 			appendStringInfo(&container_spec, "  setupmethod: ClientInContainer\n");
@@ -134,8 +134,10 @@ int plc_k8s_create_container(
 	backend->tag = PLC_BACKEND_K8S;
 	connection->tag = PLC_RUNTIME_CONNECTION_TCP;
 	connection->identity = pstrdup(backend->plcBackendK8s.name);
-	backend->plcBackendK8s.kubectl_path = pstrdup(conf->backend->k8s.kubectl_path);
 	fread(backend->plcBackendK8s.name, 64, 1, kubectl_io);
+	if (conf->backend->k8s.kubectl_path != NULL) {
+		backend->plcBackendK8s.kubectl_path = pstrdup(conf->backend->k8s.kubectl_path);
+	}
 
 	int ret_code = pclose(kubectl_io);
 	if(ret_code != 0) {

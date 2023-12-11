@@ -1534,7 +1534,7 @@ static void xml_read_backend(void *ctx, size_t off, xmlNode *node) {
 		case PLC_BACKEND_K8S: {
 			char *network_model = NULL;
 			char *setup_method = NULL;
-			XML_READ_CONTENT(node, 1, (XML_FIELD[]) {
+			XML_READ_CONTENT(node, 5, (XML_FIELD[]) {
 				{
 					.name = XC("kubectl_path"),
 					.tag = XML_TYPE_text,
