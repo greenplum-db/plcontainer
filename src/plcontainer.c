@@ -867,8 +867,21 @@ apply(PG_FUNCTION_ARGS)
 		ac->astate = NULL;
 		ac->results = plcontainer_get_result(ac->fcinfo, ac->proc);
 	}
+	
+	MemoryContextSwitchTo(mctx_old);
+
+	/*
+	 * The return value should be allocated in the memory context of the
+	 * current call, i.e. "ExecutorState" -> "ExprContext", so that it can be
+	 * freed when the call is completed.
+	 * 
+	 * The `multi_call_memory_ctx`, i.e. "ExecutorState" -> 
+	 * "SRF multi-call context",  will live across all calls. And thus
+	 * objects there will remain valid for each call. This guarantees that
+	 * the apply context `ac` and all its members are still valid after 
+	 * switching to the memory context of the current call.
+	 */
 	Datum ret = plcontainer_process_result(ac->fcinfo, ac->proc, ac->results);
 	ac->results->resrow += 1;
-	MemoryContextSwitchTo(mctx_old);
 	SRF_RETURN_NEXT(fctx, ret);
 }
