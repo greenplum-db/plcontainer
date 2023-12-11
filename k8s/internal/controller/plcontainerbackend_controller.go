@@ -194,7 +194,7 @@ func (r *PLContainerBackendReconciler) Reconcile(ctx context.Context, req ctrl.R
 		plcBackend.Status.Status = plcontainerv1.BackendStatusRunnig
 		switch plcBackend.Spec.NetworkMode {
 		case plcontainerv1.NetworkModeHostPort:
-			plcBackend.Status.BackendIP = pod.Spec.Containers[0].Ports[0].HostIP
+			plcBackend.Status.BackendIP = pod.Status.HostIP
 			plcBackend.Status.BackendPort = pod.Spec.Containers[0].Ports[0].HostPort
 		case plcontainerv1.NetworkModeClusterIP:
 			plcBackend.Status.BackendIP = pod.Status.PodIP
@@ -417,9 +417,9 @@ func (r *PLContainerBackendReconciler) AllocNewPod(spec *plcontainerv1.PLContain
 
 			init := corev1.Container{
 				Name:         "clientdir",
-				Image:        "",
-				Command:      []string{"true"}, // TODO
-				Args:         []string{},       // TODO
+				Image:        "alpine", // TODO
+				Command:      []string{"cp"},
+				Args:         []string{"-r", "/clientdir-template", "/clientdir"},
 				VolumeMounts: []corev1.VolumeMount{m},
 			}
 			ret.Spec.InitContainers = append(ret.Spec.InitContainers, init)
