@@ -749,6 +749,7 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 typedef struct
 {
 	bool end_of_input;
+	MemoryContext batch_mctx;
 	ArrayBuildState *astate;
 	PG_FUNCTION_ARGS;
 	plcProcInfo *proc;
@@ -756,11 +757,12 @@ typedef struct
 } apply_ctx;
 
 static apply_ctx *
-apply_ctx_init(Oid tuple_type, Oid func_oid, ReturnSetInfo *rsi)
+apply_ctx_init(MemoryContext multi_call_mctx, Oid tuple_type, Oid func_oid, ReturnSetInfo *rsi)
 {
+	MemoryContext old_mctx = MemoryContextSwitchTo(multi_call_mctx);
 	apply_ctx *ac = palloc(sizeof(apply_ctx));
 	ac->end_of_input = false;
-	/* Set subcontext to false to avoid re-init for each batch. */
+	ac->batch_mctx = NULL;
 	ac->astate = NULL;
 	ac->results = NULL;
 	FmgrInfo flinfo = {0};
@@ -768,25 +770,33 @@ apply_ctx_init(Oid tuple_type, Oid func_oid, ReturnSetInfo *rsi)
 	ac->fcinfo = palloc0(SizeForFunctionCallInfo(1));
 	InitFunctionCallInfoData(*(ac->fcinfo), &flinfo, 1, InvalidOid, NULL, (fmNodePtr)rsi);
 	ac->proc = plcontainer_procedure_get(ac->fcinfo);
-	ac->fcinfo->flinfo = NULL;  /* flinfo is for plcontainer_procedure_get() only. */
+	ac->fcinfo->flinfo = NULL; /* flinfo is for plcontainer_procedure_get() only. */
+	MemoryContextSwitchTo(old_mctx);
 	return ac;
 }
 
 static void
-apply_ctx_refresh(apply_ctx *ac)
+apply_ctx_end_batch(apply_ctx *ac, MemoryContext return_mctx)
 {
-	Pointer tuple_array = DatumGetPointer(ac->fcinfo->args->value);
-	if (tuple_array != NULL)
-	{
-		pfree(tuple_array);
-		tuple_array = NULL;
-	}
-	if (ac->results != NULL)
-	{
-		free_result(ac->results->resmsg, false);
-		pfree(ac->results);
-		ac->results = NULL;
-	}
+	MemoryContextSwitchTo(return_mctx);
+	if (ac->batch_mctx)
+		MemoryContextDelete(ac->batch_mctx);
+}
+
+static void
+apply_ctx_begin_batch(apply_ctx *ac, FuncCallContext *fctx)
+{
+	if (ac->batch_mctx)
+		MemoryContextDelete(ac->batch_mctx);
+	ac->batch_mctx = AllocSetContextCreate(fctx->multi_call_memory_ctx,
+										   "PLContainerApplyBatch",
+										   ALLOCSET_DEFAULT_SIZES);
+	/* 
+	 * To ensure that memory for building array can be freed immediately
+	 * when done. 
+	 */
+	ac->astate = NULL;
+	MemoryContextSwitchTo(ac->batch_mctx);
 }
 
 /*
@@ -795,90 +805,85 @@ apply_ctx_refresh(apply_ctx *ac)
  * [Apache 2.0 license](https://github.com/greenplum-db/gpdb/blob/main/LICENSE)
  */
 PG_FUNCTION_INFO_V1(apply);
-Datum
-apply(PG_FUNCTION_ARGS)
+Datum apply(PG_FUNCTION_ARGS)
 {
-	FuncCallContext *fctx;
-	ReturnSetInfo *rsi;
-	HeapTuple tuple;
-	TupleDesc in_tupdesc;
+	MemoryContext current_call_mctx = CurrentMemoryContext;
 
 	AnyTable input = PG_GETARG_ANYTABLE(0);
+	Oid func_oid = PG_GETARG_OID(1);
 	int32 batch_size = PG_GETARG_INT32(2);
 	if (!(batch_size > 0))
 		plc_elog(ERROR, "batch size must be > 0.");
 
-	rsi = (ReturnSetInfo *)fcinfo->resultinfo;
-	in_tupdesc = AnyTable_GetTupleDesc(input);
-
-	MemoryContext mctx_old;
+	ReturnSetInfo *rsi = (ReturnSetInfo *)fcinfo->resultinfo;
+	TupleDesc in_tupdesc = AnyTable_GetTupleDesc(input);
+	
+	FuncCallContext *fctx = NULL;
 	if (SRF_IS_FIRSTCALL())
 	{
 		fctx = SRF_FIRSTCALL_INIT();
-		mctx_old = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
-		fctx->user_fctx = apply_ctx_init(in_tupdesc->tdtypeid, PG_GETARG_OID(1), rsi);
-		MemoryContextSwitchTo(mctx_old);
+		fctx->user_fctx = apply_ctx_init(
+			fctx->multi_call_memory_ctx,
+			in_tupdesc->tdtypeid,
+			func_oid,
+			rsi);
 	}
 
 	fctx = SRF_PERCALL_SETUP();
-	mctx_old = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
 	apply_ctx *ac = (apply_ctx *)fctx->user_fctx;
 	if (ac->end_of_input && ac->results->resrow == ac->results->resmsg->rows)
 	{
-		apply_ctx_refresh(ac);
-		MemoryContextSwitchTo(mctx_old);
+		apply_ctx_end_batch(ac, current_call_mctx);
 		SRF_RETURN_DONE(fctx);
 	}
 
 	if (ac->results == NULL || ac->results->resrow == ac->results->resmsg->rows)
 	{
-		apply_ctx_refresh(ac);
+		apply_ctx_begin_batch(ac, fctx);
 		int32 tuple_num = 0;
 		for (; tuple_num < batch_size; tuple_num++)
 		{
-			tuple = AnyTable_GetNextTuple(input);
-			if (tuple == NULL)
+			HeapTuple args_tuple = AnyTable_GetNextTuple(input);
+			if (args_tuple == NULL)
 			{
 				ac->end_of_input = true;
 				break;
 			}
 
 			ac->astate = accumArrayResult(
-				ac->astate, 
-				HeapTupleGetDatum(tuple), 
+				ac->astate,
+				HeapTupleGetDatum(args_tuple),
 				false,
 				in_tupdesc->tdtypeid,
-				fctx->multi_call_memory_ctx);
-			pfree(tuple);
+				CurrentMemoryContext);
+			pfree(args_tuple);
 		}
 		if (tuple_num == 0)
 		{
-			apply_ctx_refresh(ac);
-			MemoryContextSwitchTo(mctx_old);
+			apply_ctx_end_batch(ac, current_call_mctx);
 			SRF_RETURN_DONE(fctx);
 		}
 #if PG_VERSION_NUM >= 120000 /* Also for GPDB 7X */
-		ac->fcinfo->args[0].value = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
+		ac->fcinfo->args[0].value = makeArrayResult(ac->astate, CurrentMemoryContext);
 		ac->fcinfo->args[0].isnull = false;
 #else
-		ac->fcinfo->arg[0] = makeArrayResult(ac->astate, fctx->multi_call_memory_ctx);
+		ac->fcinfo->arg[0] = makeArrayResult(ac->astate, CurrentMemoryContext);
 		ac->fcinfo->argnull[0] = false;
 #endif
-		ac->astate = NULL;
 		ac->results = plcontainer_get_result(ac->fcinfo, ac->proc);
 	}
-	
-	MemoryContextSwitchTo(mctx_old);
+
+	MemoryContextSwitchTo(current_call_mctx);
 
 	/*
 	 * The return value should be allocated in the memory context of the
 	 * current call, i.e. "ExecutorState" -> "ExprContext", so that it can be
 	 * freed when the call is completed.
-	 * 
-	 * The `multi_call_memory_ctx`, i.e. "ExecutorState" -> 
+	 *
+	 * The `multi_call_memory_ctx`, i.e. "ExecutorState" ->
 	 * "SRF multi-call context",  will live across all calls. And thus
 	 * objects there will remain valid for each call. This guarantees that
-	 * the apply context `ac` and all its members are still valid after 
+	 * the apply context `ac` and all its members are still valid after
 	 * switching to the memory context of the current call.
 	 */
 	Datum ret = plcontainer_process_result(ac->fcinfo, ac->proc, ac->results);
