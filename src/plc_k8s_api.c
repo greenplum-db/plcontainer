@@ -78,7 +78,11 @@ int plc_k8s_create_container(
 	appendStringInfo(&container_spec, "  args: []\n"); // args is always empty
 	appendStringInfo(&container_spec, "  uid: %d\n", getuid());
 	appendStringInfo(&container_spec, "  gid: %d\n", getgid());
+#if PG_VERSION_NUM >= 120000
 	appendStringInfo(&container_spec, "  username: \"%s\"\n", GetUserNameFromId(GetUserId(), false));
+#else
+	appendStringInfo(&container_spec, "  username: \"%s\"\n", GetUserNameFromId(GetUserId()));
+#endif
 	appendStringInfo(&container_spec, "  databasename: \"%s\"\n", MyProcPort->database_name);
 	appendStringInfo(&container_spec, "  qepid: %d\n", MyProcPid);
 	appendStringInfo(&container_spec, "  dbid: %d\n", MyDatabaseId);
