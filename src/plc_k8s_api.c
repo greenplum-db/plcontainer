@@ -8,17 +8,18 @@
 
 #include "plc_k8s_api.h"
 
-#include "cdb/cdbvars.h"
+
+#include "plc_configuration.h"
+#include "plc_backend_api.h"
+
 #include "postgres.h"
+#include "cdb/cdbvars.h"
 #include "miscadmin.h"
 #include "lib/stringinfo.h"
 #include "libpq/libpq-be.h"
 #include "common/comm_utils.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
-
-#include "plc_configuration.h"
-#include "plc_backend_api.h"
 
 #include <errno.h>
 #include <stdio.h>
