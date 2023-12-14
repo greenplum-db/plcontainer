@@ -14,8 +14,8 @@ function _main() {
 
     # copy clientdir
 
-    make docker-build IMG=gcr.io/TODO/TODO
-    docker save gcr.io/TODO/TODO gzizp > x.x.tar.gz
+    make docker-build IMG=gcr.io/todo/todo
+    docker save gcr.io/todo/todo gzizp > x.x.tar.gz
 
     popd
 }
