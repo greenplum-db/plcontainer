@@ -26,3 +26,4 @@ Dockerfile.cross
 *~
 
 plcontainer_clients/
+plcontainer_on_k8s.yaml
