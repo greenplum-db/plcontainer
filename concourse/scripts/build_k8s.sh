@@ -18,10 +18,11 @@ function _main() {
     make plcontainer_on_k8s.yaml IMG=gcr.io/todo/todo
     docker save gcr.io/todo/todo | gzip > x.x.tar.gz
 
-    mv plcontainer_on_k8s.yaml /tmp
-    mv x.x.tar.gz /tmp
-
     popd
+
+    mkdir -p plcontainer_artifacts
+    mv /home/gpadmin/plcontainer_src/k8s/x.x.tar.gz plcontainer_artifacts/bin_plcontainer_k8s_controller_intermediates.tar.gz
+    mv /home/gpadmin/plcontainer_src/k8s/plcontainer_on_k8s.yaml plcontainer_artifacts/bin_plcontainer_k8s_yaml_intermediates.yaml
 }
 
 _main
