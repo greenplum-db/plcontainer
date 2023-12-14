@@ -11,6 +11,7 @@ function _main() {
 
     make manifests
     make generate
+    make test
 
     # copy clientdir
 
