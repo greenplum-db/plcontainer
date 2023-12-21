@@ -15,6 +15,8 @@
 #include "plc_docker_api.h"
 #include "plc_backend_api.h"
 #include "plc_configuration.h"
+#include "utils/resgroup.h"
+#include "utils/resource_manager.h"
 #ifndef PLC_PG
   #include "cdb/cdbvars.h"
 #endif
@@ -402,7 +404,14 @@ int plc_docker_create_container(
 	 */
 
 	if (conf->resgroupOid != InvalidOid && backend->tag == PLC_BACKEND_DOCKER) {
-		snprintf(cgroupParent, RES_GROUP_PATH_MAX_LENGTH, "/gpdb/%d",conf->resgroupOid);
+#if GP_VERSION_NUM >= 70000 // gpdb7 removed RESGROUP_MEMORY_AUDITOR_CGROUP
+		if (Gp_resource_manager_policy == RESOURCE_MANAGER_POLICY_GROUP_V2)
+			snprintf(cgroupParent, RES_GROUP_PATH_MAX_LENGTH, "/%s/%d",gp_resource_group_cgroup_parent, conf->resgroupOid);
+		else
+			snprintf(cgroupParent, RES_GROUP_PATH_MAX_LENGTH, "/gpdb/%d", conf->resgroupOid);
+#else
+		snprintf(cgroupParent, RES_GROUP_PATH_MAX_LENGTH, "/gpdb/%d", conf->resgroupOid);
+#endif
 	}
 
 	if (conf->ndevicerequests > 0) {
