@@ -12,6 +12,7 @@ test: function_python function_python_gpdb6
 
 # test PL/Container normal function
 test: test_python
+test: plpy_module
 test: plpython_quote
 test: test_python_gpdb6 subtransaction_python
 test: spi_python
