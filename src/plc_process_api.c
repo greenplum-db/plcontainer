@@ -73,6 +73,15 @@ int plc_process_create_container(
             NULL
         };
 
+        /* Redirect log to file. */
+        char log_path[1024] = { 0 };
+        snprintf(log_path,  sizeof(log_path), "/tmp/plcontainer_client--%d.log", getpid());
+
+        int log_fd = open(log_path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+        dup2(log_fd, 1);
+        dup2(log_fd, 2);
+        close(log_fd);
+
         execle(binaryPath, binaryPath, NULL, env);
         exit(EXIT_FAILURE);
     }
