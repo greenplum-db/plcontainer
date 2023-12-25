@@ -1,0 +1,30 @@
+apiVersion: plcontainer.greenplum.org/v1
+kind: PLContainerBackend
+metadata:
+  generateName: plcontainerbackend-sample-
+  labels:
+    app.kubernetes.io/name: plcontainerbackend
+    app.kubernetes.io/instance: plcontainerbackend-sample
+    app.kubernetes.io/part-of: k8s
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: k8s
+spec:
+  instanceid: xxxx
+  setupmethod: ClientInHostpath
+  networkmode: HostPort
+  databasename: p
+  portrange:
+    min: 100
+    max: 150
+  command: sh
+  args: ["-c", "sleep 100"]
+  uid: 1
+  gid: 1
+  username: x
+  qepid: 1
+  dbid: 1
+  segindex: 1
+  image: busybox
+  cpushare: 1
+  memorymb: 100
+  hostvolume: []

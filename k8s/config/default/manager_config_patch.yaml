@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plcontainer-k8s-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager

@@ -1,0 +1,159 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: plcontainerbackends.plcontainer.greenplum.org
+spec:
+  group: plcontainer.greenplum.org
+  names:
+    kind: PLContainerBackend
+    listKind: PLContainerBackendList
+    plural: plcontainerbackends
+    singular: plcontainerbackend
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: PLContainerBackend is the Schema for the plcontainerbackends
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PLContainerBackendSpec defines the desired state of PLContainerBackend
+            properties:
+              args:
+                description: Args is the arguments for Command
+                items:
+                  type: string
+                type: array
+              command:
+                description: Command is the entry point for the continer
+                type: string
+              cpushare:
+                description: CpuShare is a value to set the cpu limit
+                format: int32
+                type: integer
+              databasename:
+                description: UserName is the user name passed from Greenplum
+                type: string
+              dbid:
+                description: DBID is the database id passed from Greenplum
+                format: int32
+                type: integer
+              gid:
+                description: Gid is the group id passed from Greenplum
+                format: int32
+                type: integer
+              hostvolume:
+                description: HostVolume is the files mapped into continer using hostpath
+                  format '(\/[a-zA-Z0-9_\/-]*[^\/]):(\/[a-zA-Z0-9_\/-]*[^\/]):[ro|rw]'
+                  ^^^^                        ^^^^ host                        container
+                items:
+                  type: string
+                type: array
+              image:
+                description: Image is the OCI image name to boot the continer
+                type: string
+              instanceid:
+                description: InstanceID is the value for app.kubernetes.io/instance
+                  labes
+                type: string
+              memorymb:
+                description: MemoryMB is a value to set the memory limit
+                format: int32
+                type: integer
+              networkmode:
+                description: NetworkMode is the mode to create the network connection
+                  from Greenplum to language client avalive option is "HostPort" or
+                  "ClusterIP" When using HostPort, will alloc a HostPort on Pod and
+                  using HostIP and HostPort to create the connection When using ClusterIP,
+                  will use ClusterIP on the Pod and default Port to create the connection
+                type: string
+              portrange:
+                description: PortRange is the TCP port poll rang if using NetworkMode=HostPort
+                properties:
+                  max:
+                    format: int32
+                    type: integer
+                  min:
+                    format: int32
+                    type: integer
+                required:
+                - max
+                - min
+                type: object
+              qepid:
+                description: QEpid is the Query Executer pid passed from Greenplum
+                format: int32
+                type: integer
+              segindex:
+                description: Segindex is the segment index passed from Greenplum
+                format: int32
+                type: integer
+              setupmethod:
+                description: SetupMethod is the method about how to start plcontainer
+                  client avalive options is ["ClientInContainer", "ClientInInitContainer",
+                  "ClientInHostpath"]
+                type: string
+              uid:
+                description: Uid is the user id passed from Greenplum
+                format: int32
+                type: integer
+              username:
+                description: UserName is the user name passed from Greenplum
+                type: string
+            required:
+            - args
+            - command
+            - cpushare
+            - databasename
+            - dbid
+            - gid
+            - hostvolume
+            - image
+            - instanceid
+            - memorymb
+            - networkmode
+            - qepid
+            - segindex
+            - setupmethod
+            - uid
+            - username
+            type: object
+          status:
+            description: PLContainerBackendStatus defines the observed state of PLContainerBackend
+            properties:
+              hostip:
+                description: BackendIP is the IP Address of the language client
+                type: string
+              hostport:
+                description: BackendPort is the IP Port of the language client
+                format: int32
+                type: integer
+              podname:
+                description: BackendPodName is the name of the language client pod
+                type: string
+              status:
+                description: Status is the Status of the Backend. avalive value is
+                  ["Booting", "Running", "Completed"]
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- plcontainer_v1_plcontainerbackend.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

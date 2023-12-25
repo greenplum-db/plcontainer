@@ -107,7 +107,7 @@ plcontainer_cleanup(pg_attribute_unused() int code, pg_attribute_unused() Datum 
 	delete_containers();
 }
 
-static void 
+static void
 plcontainer_backend_type_assign_hook(const char *newvalue, void *extra) {
     (void)(extra);
     enum PLC_BACKEND_TYPE type = PLC_BACKEND_UNIMPLEMENT;
@@ -115,6 +115,8 @@ plcontainer_backend_type_assign_hook(const char *newvalue, void *extra) {
         type = PLC_BACKEND_DOCKER;
     } else if (strcmp(newvalue, "process") == 0) {
         type = PLC_BACKEND_PROCESS;
+    } else if (strcmp(newvalue, "kubernetes") == 0) {
+        type = PLC_BACKEND_K8S;
     }
     plc_backend_prepareImplementation(type);
 }
