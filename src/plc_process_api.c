@@ -52,10 +52,12 @@ int plc_process_create_container(
         if ((env_str = getenv("GPHOME")) == NULL) {
             plc_elog (ERROR, "GPHOME is not set");
         } else {
-            if (strstr(conf->command, "pyclient") != NULL) {
-                sprintf(binaryPath, "%s/bin/plcontainer_clients/pyclient", env_str);
-            } else {
+            if (strstr(conf->command, "py3client") != NULL) {
+                sprintf(binaryPath, "%s/bin/plcontainer_clients/py3client", env_str);
+            } else if (strstr(conf->command, "rclient") != NULL) {
                 sprintf(binaryPath, "%s/bin/plcontainer_clients/rclient", env_str);
+            } else {
+                plc_elog(ERROR, "Invalid command for runtime '%s'", conf->runtimeid);
             }
         }
         char uid_string[1024] = {0};
