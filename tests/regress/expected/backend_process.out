@@ -1,0 +1,24 @@
+SET plcontainer.backend_type = 'process';
+CREATE OR REPLACE FUNCTION hello() RETURNS text AS $$
+# container: plc_python_shared
+return 'hello'
+$$ LANGUAGE plcontainer;
+SELECT hello();
+ hello 
+-------
+ hello
+(1 row)
+
+SHOW plcontainer.backend_type;
+ plcontainer.backend_type 
+--------------------------
+ process
+(1 row)
+
+RESET plcontainer.backend_type;
+SHOW plcontainer.backend_type;
+ plcontainer.backend_type 
+--------------------------
+ docker
+(1 row)
+
