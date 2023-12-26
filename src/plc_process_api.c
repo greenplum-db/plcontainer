@@ -51,11 +51,15 @@ int plc_process_create_container(
         char binaryPath[1024] = {0};
         if ((env_str = getenv("GPHOME")) == NULL) {
             plc_elog (ERROR, "GPHOME is not set");
-        } else {
+        } else {            
             if (strstr(conf->command, "pyclient") != NULL) {
                 sprintf(binaryPath, "%s/bin/plcontainer_clients/pyclient", env_str);
-            } else {
+            } else if (strstr(conf->command, "rclient") != NULL) {
                 sprintf(binaryPath, "%s/bin/plcontainer_clients/rclient", env_str);
+            } else if (strstr(conf->command, "py3client") != NULL) {
+                sprintf(binaryPath, "%s/bin/plcontainer_clients/py3client", env_str);
+            } else {
+                plc_elog(ERROR, "Invalid command for runtime '%s'", conf->runtimeid);
             }
         }
         char uid_string[1024] = {0};
@@ -70,6 +74,15 @@ int plc_process_create_container(
             gid_string,
             NULL
         };
+
+        /* Redirect log to file. */
+        char log_path[1024] = { 0 };
+        snprintf(log_path,  sizeof(log_path), "/tmp/plcontainer_client--%d.log", getpid());
+
+        int log_fd = open(log_path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+        dup2(log_fd, 1);
+        dup2(log_fd, 2);
+        close(log_fd);
 
         execle(binaryPath, binaryPath, NULL, env);
         exit(EXIT_FAILURE);

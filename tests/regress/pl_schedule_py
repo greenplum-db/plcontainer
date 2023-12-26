@@ -7,6 +7,8 @@ test: test_configuration
 # test declaration combinations in function definitions.
 test: runtimeid_declaration
 
+test: backend_process
+
 # set R and Python function - need before "test PL/Container normal function"
 test: function_python function_python_gpdb6
 
