@@ -5,7 +5,7 @@ import sys
 return 'plpy' in sys.modules
 $$ language plcontainer;
 
-SELECT check_plpy_imported();
+SELECT check_plpy_created();
 
 -- Check if 'plpy' is a built-in module
 CREATE OR REPLACE FUNCTION check_plpy_builtin_module() RETURNS bool AS $$
