@@ -131,6 +131,10 @@ int python_init() {
 	plc_Py_SetProgramName("PythonContainer");
 	Py_Initialize();
 
+#if PY_MAJOR_VERSION >= 3
+	PyImport_ImportModule("plpy");
+#endif
+
 	/*
 	 * initialize plpy module
 	 */

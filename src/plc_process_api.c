@@ -92,7 +92,7 @@ int plc_process_create_container(
     connection->identity = palloc(64);
     snprintf(connection->identity, 64, "%d", pid);
 
-    backend_log(LOG, "create backend process with name:%s", connection->identity);
+    backend_log(NOTICE, "created backend process with pid %s", connection->identity);
     return res;
 }
 
