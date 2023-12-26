@@ -1,5 +1,5 @@
--- Check if 'plpy' is an imported module
-CREATE OR REPLACE FUNCTION check_plpy_imported() RETURNS bool AS $$
+-- Check if the "plpy" module is created
+CREATE OR REPLACE FUNCTION check_plpy_created() RETURNS bool AS $$
 # container: plc_python_shared
 import sys
 return 'plpy' in sys.modules
