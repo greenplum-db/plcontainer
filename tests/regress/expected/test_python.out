@@ -753,7 +753,7 @@ ERROR:  PL/Container client exception occurred:
   File "<string>", line 11, in fun3
   File "<string>", line 8, in fun2
   File "<string>", line 5, in fun1
-AttributeError: module 'plpy' has no attribute 'Error'
+plpy.Error: boom
 CONTEXT:  PLContainer function "nested_error_raise"
 select nested_fatal_raise();
 ERROR:  PL/Container client exception occurred: 
@@ -763,7 +763,7 @@ ERROR:  PL/Container client exception occurred:
   File "<string>", line 11, in fun3
   File "<string>", line 8, in fun2
   File "<string>", line 5, in fun1
-AttributeError: module 'plpy' has no attribute 'Fatal'
+plpy.Fatal: boom
 CONTEXT:  PLContainer function "nested_fatal_raise"
 select pseudotype_result(1);
 ERROR:  PLContainer functions cannot return type anyarray
