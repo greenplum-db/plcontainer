@@ -77,8 +77,6 @@ static int start_listener_ipc() {
 	gid_t qe_gid;
 	long val;
 
-	mkdir(IPC_CLIENT_DIR, 0700);
-
 	/* filename: IPC_CLIENT_DIR + '/' + UDS_SHARED_FILE */
 	sz = strlen(IPC_CLIENT_DIR) + 1 + MAX_SHARED_FILE_SZ + 1;
 	uds_fn = pmalloc(sz);
