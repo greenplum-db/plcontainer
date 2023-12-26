@@ -1,14 +1,19 @@
+\connect
+
 SET plcontainer.backend_type = 'process';
 
-CREATE OR REPLACE FUNCTION hello() RETURNS text AS $$
+CREATE OR REPLACE FUNCTION check_postgres() RETURNS bool AS $$
 # container: plc_python_shared
-return 'hello'
+import subprocess
+try:
+    output = subprocess.check_output(["ps", "-ef"], text=True, stderr=subprocess.STDOUT)
+    return "postgres" in output
+except subprocess.CalledProcessError as e:
+    raise Exception(e.stdout)
 $$ LANGUAGE plcontainer;
 
-SELECT hello();
+SELECT check_postgres();
 
 SHOW plcontainer.backend_type;
 
-RESET plcontainer.backend_type;
-
-SHOW plcontainer.backend_type;
+\connect
