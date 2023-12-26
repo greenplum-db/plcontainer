@@ -51,7 +51,7 @@ int plc_process_create_container(
         char binaryPath[1024] = {0};
         if ((env_str = getenv("GPHOME")) == NULL) {
             plc_elog (ERROR, "GPHOME is not set");
-        } else {            
+        } else {
             if (strstr(conf->command, "pyclient") != NULL) {
                 sprintf(binaryPath, "%s/bin/plcontainer_clients/pyclient", env_str);
             } else if (strstr(conf->command, "rclient") != NULL) {
@@ -92,7 +92,7 @@ int plc_process_create_container(
     connection->identity = palloc(64);
     snprintf(connection->identity, 64, "%d", pid);
 
-    backend_log(LOG, "create backend process with name:%s", connection->identity);
+    backend_log(NOTICE, "created backend process with pid: %s", connection->identity);
     return res;
 }
 

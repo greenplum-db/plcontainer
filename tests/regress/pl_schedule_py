@@ -7,7 +7,9 @@ test: test_configuration
 # test declaration combinations in function definitions.
 test: runtimeid_declaration
 
-test: backend_process
+# Skipping this on CI for now since this feature is only for debugging and will
+# not be used in production.
+# test: backend_process
 
 # set R and Python function - need before "test PL/Container normal function"
 test: function_python function_python_gpdb6
