@@ -57,3 +57,6 @@ test: test_config_remote_docker
 
 # Drop the extension - need to be last
 test: drop
+
+# clean docker containers
+test: clean_docker
