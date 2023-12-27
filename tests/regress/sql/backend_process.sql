@@ -12,6 +12,8 @@ except subprocess.CalledProcessError as e:
     raise Exception(e.stdout)
 $$ LANGUAGE plcontainer;
 
+\! LOCAL_PROCESS_MODE=1 $GPHOME/bin/plcontainer_clients/py3client &> /tmp/plcontainer_py3client.log &
+
 SELECT check_postgres();
 
 SHOW plcontainer.backend_type;

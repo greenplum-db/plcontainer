@@ -5,27 +5,7 @@
  *------------------------------------------------------------------------------
  */
 
-
-#include "postgres.h"
-#include "utils/guc.h"
-#include "libpq/libpq.h"
-#include "miscadmin.h"
-#include "libpq/libpq-be.h"
-#include "common/comm_utils.h"
 #include "plc_process_api.h"
-#include "plc_backend_api.h"
-#ifndef PLC_PG
-  #include "cdb/cdbvars.h"
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pwd.h>
-#include <unistd.h>
-#include <curl/curl.h>
-#include <json-c/json.h>
-#include <sys/wait.h>
 
 int plc_process_create_container(
 		const runtimeConfEntry *conf,            // input the runtime config
@@ -42,84 +22,26 @@ int plc_process_create_container(
     }
     pfree(volumeShare);
 
-    pid_t pid = -1;
-    int res = 0;
-    if ((pid = fork()) == -1) {
-        res = -1;
-    } else if (pid == 0) {
-        char *env_str;
-        char binaryPath[1024] = {0};
-        if ((env_str = getenv("GPHOME")) == NULL) {
-            plc_elog (ERROR, "GPHOME is not set");
-        } else {
-            if (strstr(conf->command, "pyclient") != NULL) {
-                sprintf(binaryPath, "%s/bin/plcontainer_clients/pyclient", env_str);
-            } else if (strstr(conf->command, "rclient") != NULL) {
-                sprintf(binaryPath, "%s/bin/plcontainer_clients/rclient", env_str);
-            } else if (strstr(conf->command, "py3client") != NULL) {
-                sprintf(binaryPath, "%s/bin/plcontainer_clients/py3client", env_str);
-            } else {
-                plc_elog(ERROR, "Invalid command for runtime '%s'", conf->runtimeid);
-            }
-        }
-        char uid_string[1024] = {0};
-        char gid_string[1024] = {0};
-        sprintf(uid_string, "EXECUTOR_UID=%d", getuid());
-        sprintf(gid_string, "EXECUTOR_GID=%d", getgid());
-        // TODO add more environment variables needed.
-        char *const env[] = {
-            "USE_CONTAINER_NETWORK=false",
-            "LOCAL_PROCESS_MODE=1",
-            uid_string,
-            gid_string,
-            NULL
-        };
-
-        /* Redirect log to file. */
-        char log_path[1024] = { 0 };
-        snprintf(log_path,  sizeof(log_path), "/tmp/plcontainer_client--%d.log", getpid());
-
-        int log_fd = open(log_path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-        dup2(log_fd, 1);
-        dup2(log_fd, 2);
-        close(log_fd);
-
-        execle(binaryPath, binaryPath, NULL, env);
-        exit(EXIT_FAILURE);
-    }
-
-    // parent, continue......
+	/* Identity is unknown since the backend is started manually. */
     connection->identity = palloc(64);
-    snprintf(connection->identity, 64, "%d", pid);
-
-    backend_log(NOTICE, "created backend process with pid: %s", connection->identity);
-    return res;
+    snprintf(connection->identity, 64, "<unknown>");
+    return 0;
 }
 
 int plc_process_start_container(
 		const backendConnectionInfo *backend,    // input the backend connection info
 		runtimeConnectionInfo *connection        // output the new process connection info
 ) {
-	(void)backend;
-
-    int res = 0;
-    backend_log(LOG, "start backend process with name:%s", connection->identity);
-    return res;
+	/* Do nothing since the backend is started manually. */
+    return 0;
 }
 
 int plc_process_kill_container(
 		const backendConnectionInfo *backend,    // input the backend connection info
 		const runtimeConnectionInfo *connection  // input the new process connection info
 ) {
-	(void)backend;
-
-    int res = 0;
-    int pid = atoi(connection->identity);
-	Assert(pid != 0);
-
-    kill(pid, SIGKILL);
-    backend_log(LOG, "kill backend process with name:%d", pid);
-    return res;
+	/* Do nothing since the backend is started manually. */
+    return 0;
 }
 
 int plc_process_inspect_container(
@@ -128,39 +50,22 @@ int plc_process_inspect_container(
 		const runtimeConnectionInfo *connection, // input the new process connection info
 		char **element                           // the output
 ) {
-	(void)backend;
-
-    int res = 0;
-    *element = palloc(64);
-    sprintf(*element, "process:%s type:%d", connection->identity, type);
-    backend_log(LOG, "inspect backend process with name:%s", connection->identity);
-    return res;
+	/* Do nothing since the backend is started manually. */
+    return 0;
 }
 
 int plc_process_wait_container(
 		const backendConnectionInfo *backend,    // input the backend connection info
 		const runtimeConnectionInfo *connection  // input the new process connection info
 ) {
-	(void)backend;
-
-    int res = 0;
-    int pid = atoi(connection->identity);
-    waitpid(pid, &res, 0);
-    backend_log(LOG, "wait backend process with name:%d", pid);
-    return res;
+	/* Do nothing since the backend is started manually. */
+    return 0;
 }
 
 int plc_process_delete_container(
 		const backendConnectionInfo *backend,    // input the backend connection info
 		const runtimeConnectionInfo *connection  // input the new process connection info
 ) {
-	(void)backend;
-
-    int res = 0;
-    int pid = atoi(connection->identity);
-	Assert(pid != 0);
-
-    kill(pid, SIGKILL);
-    backend_log(LOG, "delete backend process with name:%d", pid);
-    return res;
+	/* Do nothing since the backend is started manually. */
+    return 0;
 }
