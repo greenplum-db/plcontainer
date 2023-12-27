@@ -1106,6 +1106,7 @@ backendConnectionInfo *runtime_conf_copy_backend_connection_info(const backendCo
 			r->plcBackendRemoteDocker.password = plc_top_strdup_null(a->plcBackendRemoteDocker.password);
 			break;
 		case PLC_BACKEND_PROCESS:
+			break;
 		case PLC_BACKEND_UNIMPLEMENT:
 			Assert(!"not implement");
 			break;
@@ -1221,10 +1222,10 @@ runtimeConnectionInfo* runtime_conf_get_runtime_connection_info(const backendCon
 			r->connection_tcp.port = 0;
 			break;
 		case PLC_BACKEND_DOCKER:
+		case PLC_BACKEND_PROCESS:
 			r->tag = PLC_RUNTIME_CONNECTION_UDS;
 			r->connection_uds.uds_address = NULL;
 			break;
-		case PLC_BACKEND_PROCESS:
 		case PLC_BACKEND_UNIMPLEMENT:
 			Assert(!"unimplement");
 	}
@@ -1321,7 +1322,11 @@ int generate_sharing_options_and_uds_address(const runtimeConfEntry *conf, const
 		}
 
 		// do the format again to get the UDS filename
-		n = snprintf(_dirname, sz, "%s.%d.%d.%d/%s", IPC_GPDB_BASE_DIR, getpid(), uds_count, container_slot, UDS_SHARED_FILE);
+		if (backend->tag == PLC_BACKEND_PROCESS) {
+			n = snprintf(_dirname, sz, "%s/%s", IPC_GPDB_BASE_DIR, UDS_SHARED_FILE);
+		} else {
+			n = snprintf(_dirname, sz, "%s.%d.%d.%d/%s", IPC_GPDB_BASE_DIR, getpid(), uds_count, container_slot, UDS_SHARED_FILE);
+		}
 		Assert(n < sz);
 
 		// free out side
@@ -1475,6 +1480,7 @@ static void xml_read_backend(void *ctx, size_t off, xmlNode *node) {
 			});
 			break;
 		case PLC_BACKEND_PROCESS:
+			break;
 		case PLC_BACKEND_UNIMPLEMENT:
 			Assert(!"unreachable");
 			break;
@@ -1504,6 +1510,8 @@ static void parse_runtime_backend_configuration(xmlNode *root) {
 	plcBackend *new = MemoryContextAllocZero(TopMemoryContext, sizeof(plcBackend) * (old + 1));
 	new[0].name = plc_top_strdup("default");
 	new[0].tag = PLC_BACKEND_DOCKER;
+	if (plc_backend_type_string && strcmp(plc_backend_type_string, "process") == 0)
+		new[0].tag = PLC_BACKEND_PROCESS;
 	new[0].localdocker.uds_address = plc_top_strdup("/var/run/docker.sock");
 
 	memcpy(&new[1], runtime_backend_table, old * sizeof(plcBackend));
