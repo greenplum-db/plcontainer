@@ -7,6 +7,10 @@ test: test_configuration
 # test declaration combinations in function definitions.
 test: runtimeid_declaration
 
+# Skipping this on CI for now since this feature is only for debugging and will
+# not be used in production.
+# test: backend_process
+
 # test if plpy is available
 test: plpy_module
 

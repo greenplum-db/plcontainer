@@ -11,6 +11,8 @@
 
 #include "fmgr.h"
 
+extern char *plc_backend_type_string;
+
 /* entrypoint for all plcontainer procedures */
 Datum plcontainer_call_handler(PG_FUNCTION_ARGS);
 
