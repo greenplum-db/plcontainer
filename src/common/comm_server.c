@@ -79,7 +79,7 @@ static int start_listener_ipc() {
 
 	if (mkdir(IPC_CLIENT_DIR, 0700) < 0) {
 		if (errno != EEXIST) {
-			plc_elog(ERROR, "Failed to create directory for Unix-Domain Socket");
+			plc_elog(ERROR, "Failed to create directory for Unix-Domain Socket: %s", strerror(errno));
 		}
 	}
 
@@ -299,7 +299,7 @@ void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *), plcConn *conn
 		res = plcontainer_channel_receive(conn, &msg, MT_CALLREQ_BIT);
 
 		if (res < 0) {
-				plc_elog(ERROR, "Error receiving data from the peer: %d", res);
+			plc_elog(ERROR, "Error receiving data from the peer: %d (%s)", res, strerror(errno));
 			break;
 		}
 		plc_elog(DEBUG1, "Client receive a request: called function oid %u", ((plcMsgCallreq *) msg)->objectid);
