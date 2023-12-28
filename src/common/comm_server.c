@@ -112,10 +112,10 @@ static int start_listener_ipc() {
 
 	if (getenv("LOCAL_PROCESS_MODE") == NULL) {
 		/*
-		* The path owner should be generally the uid, but we are not 100% sure
-		* about this for current/future backends, so we still use environment
-		* variable, instead of extracting them via reading the owner of the path.
-		*/
+		 * The path owner should be generally the uid, but we are not 100% sure
+		 * about this for current/future backends, so we still use environment
+		 * variable, instead of extracting them via reading the owner of the path.
+		 */
 
 		/* Get executor uid: for permission of the unix domain socket file. */
 		if ((env_str = getenv("EXECUTOR_UID")) == NULL)
@@ -144,8 +144,8 @@ static int start_listener_ipc() {
 		qe_gid = val;
 
 		/* Change ownership & permission for the file for unix domain socket so
-		* code on the QE side could access it and clean up it later.
-		*/
+		 * code on the QE side could access it and clean up it later.
+		 */
 		if (chown(uds_fn, qe_uid, qe_gid) < 0)
 			plc_elog (ERROR, "Could not set ownership for file %s with owner %d, "
 				"group %d: %s", uds_fn, qe_uid, qe_gid, strerror(errno));
