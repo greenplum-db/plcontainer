@@ -11,6 +11,9 @@ test: runtimeid_declaration
 # not be used in production.
 # test: backend_process
 
+# test if plpy is available
+test: plpy_module
+
 # set R and Python function - need before "test PL/Container normal function"
 test: function_python function_python_gpdb6
 
