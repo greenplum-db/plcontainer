@@ -46,7 +46,7 @@ SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
 show optimizer;
  optimizer 
 -----------
- off
+ on
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_before_container_started', 'fatal', 2);
@@ -56,7 +56,8 @@ SELECT gp_inject_fault('plcontainer_before_container_started', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3066)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=512648)
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -84,7 +85,8 @@ SELECT gp_inject_fault('plcontainer_before_container_connected', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3254)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=513253)
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -110,7 +112,8 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3434)
+ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=513737)
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -136,7 +139,8 @@ SELECT gp_inject_fault('plcontainer_after_recv_request', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3612)
+ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=514172)
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -162,7 +166,8 @@ SELECT gp_inject_fault('plcontainer_before_udf_finish', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3797)
+ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=514587)
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -225,7 +230,7 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 1);
 show optimizer;
  optimizer 
 -----------
- off
+ on
 (1 row)
 
 SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
@@ -236,6 +241,7 @@ SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
 
 SELECT pyint(0);
 ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'error'
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -243,7 +249,7 @@ SELECT pg_sleep(30);
 (1 row)
 
 -- end_ignore
-\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
+\! docker ps -a '--filter' 'label=dbid=1' </dev/null | wc -l
 1
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
@@ -262,6 +268,7 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'error', 1);
 
 SELECT pyint(2);
 ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'error'
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -269,7 +276,7 @@ SELECT pg_sleep(30);
 (1 row)
 
 -- end_ignore
-\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
+\! docker ps -a '--filter' 'label=dbid=1' </dev/null | wc -l
 1
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
@@ -281,7 +288,7 @@ SELECT pyint(3);
 
 -- Detect for the process name change (from "plcontainer cleaner" to other).
 -- In such case, above cases will still succeed as unexpected.
-\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
+\! docker ps -a '--filter' 'label=dbid=1' </dev/null | wc -l
 2
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 1
