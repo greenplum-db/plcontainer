@@ -614,9 +614,7 @@ static void parse_runtime_configuration(xmlNode *node) {
 					}
 
 					if (conf_entry->enableNetwork == false && conf_entry->backend->tag == PLC_BACKEND_REMOTE_DOCKER) {
-						plc_elog(WARNING, "runtime \"%s\": <enable_network> must be true when using remote_docker as backend."
-								" turnning on network automaticly", conf_entry->runtimeid);
-						conf_entry->enableNetwork = true;
+						plc_elog(ERROR, "runtime \"%s\": <enable_network> must be true when using remote_docker as backend." , conf_entry->runtimeid);
 					}
 
 					processed = 1;
