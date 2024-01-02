@@ -292,6 +292,14 @@ install(
 install(
     FILES management/sql/plcontainer--1.0.0--1.1.0.sql
     DESTINATION share/postgresql/extension)
+if(GP_MAJOR_VERSION VERSION_LESS_EQUAL 6)
+    add_custom_command(
+        OUTPUT ${CMAKE_INSTALL_PREFIX}/share/postgresql/extension/plcontainer--1.1.0.sql
+        COMMAND
+            cat management/sql/plcontainer_gp--1.0.0.sql management/sql/plcontainer--1.0.0--1.1.0.sql > ${CMAKE_INSTALL_PREFIX}/share/postgresql/extension/plcontainer--1.1.0.sql
+        DEPENDS management/sql/plcontainer_gp--1.0.0.sql management/sql/plcontainer--1.0.0--1.1.0.sql
+        )
+endif()
 install(
     FILES plcontainer.control
     DESTINATION share/postgresql/extension)
