@@ -51,6 +51,16 @@ PG_MODULE_MAGIC;
     volatile bool QueryFinishPending = false;
 #endif
 
+typedef struct
+{
+	bool end_of_input;
+	MemoryContext batch_mctx;
+	ArrayBuildState *astate;
+	PG_FUNCTION_ARGS;
+	plcProcInfo *proc;
+	plcProcResult *results;
+} apply_ctx;
+
 /* exported functions */
 Datum plcontainer_validator(PG_FUNCTION_ARGS);
 
@@ -746,16 +756,6 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 	return datumreturn;
 }
 
-typedef struct
-{
-	bool end_of_input;
-	MemoryContext batch_mctx;
-	ArrayBuildState *astate;
-	PG_FUNCTION_ARGS;
-	plcProcInfo *proc;
-	plcProcResult *results;
-} apply_ctx;
-
 static apply_ctx *
 apply_ctx_init(MemoryContext multi_call_mctx, Oid tuple_type, Oid func_oid, ReturnSetInfo *rsi)
 {
@@ -816,12 +816,12 @@ Datum apply(PG_FUNCTION_ARGS)
 	AnyTable input = PG_GETARG_ANYTABLE(0);
 	Oid func_oid = PG_GETARG_OID(1);
 	int32 batch_size = PG_GETARG_INT32(2);
-	if (!(batch_size > 0))
+	if (batch_size <= 0)
 		plc_elog(ERROR, "batch size must be > 0.");
 
 	ReturnSetInfo *rsi = (ReturnSetInfo *)fcinfo->resultinfo;
 	TupleDesc in_tupdesc = AnyTable_GetTupleDesc(input);
-	
+
 	FuncCallContext *fctx = NULL;
 	if (SRF_IS_FIRSTCALL())
 	{
