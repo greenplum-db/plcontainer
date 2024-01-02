@@ -767,7 +767,11 @@ apply_ctx_init(MemoryContext multi_call_mctx, Oid tuple_type, Oid func_oid, Retu
 	ac->results = NULL;
 	FmgrInfo flinfo = {0};
 	fmgr_info(func_oid, &flinfo);
+#if PG_VERSION_NUM >= 120000 /* Also for GPDB 7X */
 	ac->fcinfo = palloc0(SizeForFunctionCallInfo(1));
+#else
+	ac->fcinfo = palloc0(sizeof(FunctionCallInfoData));
+#endif
 	InitFunctionCallInfoData(*(ac->fcinfo), &flinfo, 1, InvalidOid, NULL, (fmNodePtr)rsi);
 	ac->proc = plcontainer_procedure_get(ac->fcinfo);
 	ac->fcinfo->flinfo = NULL; /* flinfo is for plcontainer_procedure_get() only. */
