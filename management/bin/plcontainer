@@ -87,11 +87,11 @@ def parseargs():
     image_add_options.add_argument("-f", "--file", dest="file", help="image location (e.g. /tmp/centos.7.2.tar.gz)")
     image_add_parser.add_argument("-ulc", "--use_local_copy", action="store_true", dest="local", help="If set, use the local image file (default is no)")
     image_add_options.add_argument("-u", "--url", dest="url", help="image url (e.g. 192.168.0.1:5000/images/centos:7.2)")
-    image_add_parser.add_argument("--hosts", dest="hosts", default='', help="also load image for those IP in this host IP list (e.g. '128.66.0.1 128.66.0.2,128.66.0.3') or a gpscp hostilfe")
+    image_add_parser.add_argument("--hosts", dest="hosts", default='', help="also load image for those IP in this host IP list (e.g. '128.66.0.1,128.66.0.2,128.66.0.3') or a gpscp hostilfe")
 
     # For image-delete
     image_delete_parser.add_argument("-i", "--image", dest="image_name", help="image name:tag (e.g. centos:7.2)", required=True)
-    image_delete_parser.add_argument("--hosts", dest="hosts", default='', help="also load image for those IP in this host IP list (e.g. '128.66.0.1 128.66.0.2,128.66.0.3') or a gpscp hostilfe")
+    image_delete_parser.add_argument("--hosts", dest="hosts", default='', help="also load image for those IP in this host IP list (e.g. '128.66.0.1,128.66.0.2,128.66.0.3') or a gpscp hostilfe")
 
     # For runtime-add
     runtime_add_parser.add_argument("-r", "--runtime", dest="runtime_id",
