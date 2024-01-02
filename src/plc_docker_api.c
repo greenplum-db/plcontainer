@@ -364,7 +364,7 @@ int plc_docker_create_container(
 	int16 dbid = 0;
 	int16 database_id = 0, segindex = 0;
 #ifndef PLC_PG
-	dbid = GpIdentity.segindex;
+	dbid = GpIdentity.dbid;
 	database_id = MyDatabaseId;
 	segindex = GpIdentity.segindex;
 #endif
