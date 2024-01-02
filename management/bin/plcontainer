@@ -37,7 +37,7 @@ try:
     from gppylib import gplog
     from gppylib.commands.base import WorkerPool, REMOTE, Command
     from gppylib.commands.unix import getLocalHostname, getUserName
-    from gppylib.operations.unix import MakeRemoteDir, CheckRemoteDir
+    from gppylib.operations.unix import MakeRemoteDir, CheckRemoteDir, CheckRemoteFile
     try:
         # https://github.com/greenplum-db/gpdb/pull/14145
         # after gp7 the Scp tool renamed to Rsync
@@ -182,6 +182,23 @@ def distribute_clientdir(pool, dest, hosts):
     pool.join()
     pool.check_results()
 
+def distribute_greenplum_path(pool, hosts):
+    pathfile = os.path.join(DBHOME, 'greenplum_path.sh')
+
+    for host in hosts:
+        if not CheckRemoteDir(DBHOME, host).execute():
+            MakeRemoteDir(DBHOME, host).execute()
+
+    for host in hosts:
+        if not CheckRemoteFile(pathfile, host).execute():
+            cmd = Rsync('Distribute greenplum_path.sh.',
+                        pathfile,
+                        DBHOME,
+                        None,
+                        host.strip())
+            pool.addCommand(cmd)
+    pool.join()
+    pool.check_results()
 
 def remote_cmd(pool, cmd_str, hosts):
     for host in hosts:
@@ -330,6 +347,7 @@ def setup_remote(pool, dest_dir, hosts):
     try:
         logger.info('Copying clientdir to %s on all hosts' % (dest_dir,))
         distribute_clientdir(pool, dest_dir, hosts)
+        distribute_greenplum_path(pool, hosts)
     except Exception as ex:
         raise ex
 
