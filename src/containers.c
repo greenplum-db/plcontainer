@@ -92,7 +92,8 @@ static int check_container_if_oomkilled(const backendConnectionInfo *backend, co
 static int delete_backend_if_exited(const backendConnectionInfo *backend, const runtimeConnectionInfo *connection) {
 	char *element = NULL;
 
-	int return_code = 1;
+	/* Return -1 if container is not exited. */
+	int return_code = -1;
 	int res;
 	res = plc_backend_inspect(PLC_INSPECT_STATUS, backend, connection, &element);
 	if (res < 0) {
@@ -150,137 +151,6 @@ static void cleanup_atexit_callback() {
 
     dockerid_for_cleanup = NULL;
 	uds_fn_for_cleanup = NULL;
-}
-
-static void cleanup(const backendConnectionInfo *backend, const runtimeConnectionInfo *info) {
-	/* fork the process to synchronously wait for backend to exit */
-	pid_t pid = fork();
-	if (pid < 0) {
-		plc_elog(ERROR, "Could not create cleanup process for container %s", info->identity);
-	}
-
-	if (pid == 0 /* child */ ) {
-		MyProcPid = getpid();
-
-		/* We do not need proc_exit() callbacks of QE. Besides, we
-		 * do not use on_proc_exit() + proc_exit() since it may invovle
-		 * some QE related operations, * e.g. Quit interconnect, etc, which
-		 * might finally damage QE. Instead we register our own onexit
-		 * callback functions and invoke them via exit().
-		 * Finally we might better invoke a pg/gp independent program
-		 * to manage the lifecycles of backends.
-		 */
-		on_exit_reset();
-
-		if (info->tag == PLC_RUNTIME_CONNECTION_UDS) {
-			uds_fn_for_cleanup = strdup(info->connection_uds.uds_address);
-		} else {
-			uds_fn_for_cleanup = NULL; /* use network TCP/IP, no need to clean up uds file */
-		}
-
-        /* dup the container id for clean purpose */
-        dockerid_for_cleanup = strdup(info->identity);
-
-#ifdef HAVE_ATEXIT
-		atexit(cleanup_atexit_callback);
-#else
-	#ifdef PLC_PG
-		on_exit(cleanup_atexit_callback, NULL);
-	#else
-		on_exit(cleanup_atexit_callback, NULL);
-	#endif
-#endif
-
-		pqsignal(SIGHUP, SIG_IGN);
-		pqsignal(SIGINT, SIG_IGN);
-		pqsignal(SIGTERM, SIG_IGN);
-		pqsignal(SIGQUIT, SIG_IGN);
-		pqsignal(SIGALRM, SIG_IGN);
-		pqsignal(SIGPIPE, SIG_IGN);
-		pqsignal(SIGUSR1, SIG_IGN);
-		pqsignal(SIGUSR2, SIG_IGN);
-		pqsignal(SIGCHLD, SIG_IGN);
-		pqsignal(SIGCONT, SIG_IGN);
-
-		/* Setting application name to let the system know it is us */
-		char psname[200];
-		snprintf(psname, sizeof(psname), "plcontainer cleaner %s", info->identity);
-		set_ps_display(psname, false);
-
-		int res = 0;
-		int wait_times = 0;
-		PG_TRY();
-		{
-			/* elog need to be try-catch in cleanup process to avoid longjump*/
-			write_log("plcontainer cleanup process launched for docker id: %s and executor process %d",
-			          info->identity, getppid());
-			while (1) {
-				// Check parent pid whether parent process is alive or not.
-				if (log_min_messages <= DEBUG1)
-					write_log("plcontainer cleanup process: Checking whether QE is alive");
-
-				bool qe_is_alive = (getppid() != 1);
-
-				if (log_min_messages <= DEBUG1)
-					write_log("plcontainer cleanup process: QE alive status: %d", qe_is_alive);
-
-				// qe dead. kill the backend
-				if (!qe_is_alive) {
-					res = plc_backend_kill(backend, info);
-					if (res == 0) { // backend has been successfully deleted.
-						break;
-					} else if (res < 0) { // backend delete API reports an error.
-						write_log("plcontainer cleanup process: Failed to kill backend in cleanup process (%s). "
-								"retry %d times.", backend_error_message, wait_times);
-						wait_times++;
-					}
-				} else {
-					// backend still alive, check container status.
-					wait_times = 0;
-				}
-
-				/* Check whether conatiner is exited or not. if exited, remove the container. */
-				if (log_min_messages <= DEBUG1)
-					write_log("plcontainer cleanup process: Checking whether the backend is alive");
-
-				res = delete_backend_if_exited(backend, info);
-
-				if (log_min_messages <= DEBUG1)
-					write_log("plcontainer cleanup process: Backend alive status: %d", res);
-
-				if (res > 0) { // container still alive, sleep and check again.
-					wait_times = 0;
-				} else if (res == 0) { // container exited, container has been successfully deleted.
-					break;
-				} else if (res < 0) { // docker API error
-					wait_times++;
-					write_log(
-						"plcontainer cleanup process: Failed to inspect or delete backend in cleanup process (%s). "
-						"Will retry later.", backend_error_message);
-				}
-
-				if (wait_times >= CLEANUP_CONTAINER_CONNECT_RETRY_TIMES) {
-					write_log("plcontainer cleanup process: Docker API fails after %d retries. cleanup process will exit.", wait_times);
-					break;
-				}
-
-				sleep(CLEANUP_SLEEP_SEC);
-			}
-
-			write_log("plcontainer cleanup process deleted docker %s with return value %d",
-			          info->identity, res);
-			exit(res);
-		}
-		PG_CATCH();
-		{
-			/* Do not rethrow to previous stack context. exit immediately.*/
-			write_log("plcontainer cleanup process should not reach here. Anyway it should"
-			          " not hurt. Exiting. dockerid is %s. You might need to check"
-			          " and delete the container manually ('docker rm').", info->identity);
-			exit(-1);
-		}
-		PG_END_TRY();
-	}
 }
 
 #endif /* not CONTAINER_DEBUG */
@@ -450,9 +320,6 @@ plcConn *start_backend(runtimeConfEntry *conf) {
 	while (wait3(&wait_status, WNOHANG, NULL /* any child */) > 0);
 #endif
 
-	/* Create a process to clean up the container after it finishes */
-	cleanup(backend, connection);
-
 	/*
 	 * Unblock signals after we insert the container identifier into the
 	 * container slot for later cleanup.
@@ -568,7 +435,12 @@ void delete_containers() {
 			pg_usleep(200 * 1000L);
 		}
 
-		/* Force to delete the backend if needed. */
+		/* 
+		 * Force to delete the backend if needed.
+		 *
+		 * NOTE: If the container cannot be deleted here, we will not get
+		 * another chance to delete it since the info has been set to NULL.
+		 */
 		if (res != 0) {
 			_loop_cnt = 0;
 			while ((res = plc_backend_delete(backend, connection)) < 0 && _loop_cnt++ < 3)

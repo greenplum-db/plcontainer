@@ -37,7 +37,7 @@ function _main() {
     docker ps -a
     plcontainer runtime-show
 
-    time cmake --build . --target installcheck
+    time cmake --build . --target repeatpy
     # Test gppkg uninstall
     _uninstall_gppkg
     _install_gppkg
