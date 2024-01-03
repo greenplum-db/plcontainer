@@ -59,7 +59,7 @@ from plcontainer_apply(
     table(table "1gb_text"), 'echo_for_apply', 100
 ) as (a text);
 
--- check if NULL in table is handled correctly
+-- NULL in the input table should be OK
 create or replace function check_none_for_apply(_ add_one_input[])
 returns setof record as $$
 # container: plc_python_shared
@@ -71,13 +71,13 @@ from plcontainer_apply(
     table(select NULL FROM generate_series(1, 10)), 'check_none_for_apply', 3
 ) as (i bool);
 
--- empty table
+-- empty table should be OK
 select * 
 from plcontainer_apply(
     table(select WHERE FALSE), 'check_none_for_apply', 3
 ) as (i bool);
 
--- check if we can return None
+-- returning None in a row should be OK
 create or replace function return_none_for_apply(arg_records add_one_input[])
 returns setof record as $$
 # container: plc_python_shared
@@ -89,8 +89,21 @@ from plcontainer_apply(
     table(SELECT 1), 'return_none_for_apply', 1
 ) as (r text);
 
--- Should throw an ERROR if UDF not exists
+-- should throw an ERROR if UDF not exists
 select *
 from plcontainer_apply(
     table(SELECT 1), 'non_exist_udf', 1
 ) as (a text);
+
+-- SCATTER BY in input table should be OK
+create or replace function count_for_apply(_ add_one_input[])
+returns setof record as $$
+# container: plc_python_shared
+return [{"len": len(_)}]
+$$ language plcontainer;
+
+select gp_execution_segment(), *
+from plcontainer_apply(
+    table(SELECT i FROM generate_series(1, 10) AS i SCATTER BY i), 'count_for_apply', 10
+) as (len int)
+ORDER BY gp_execution_segment;
