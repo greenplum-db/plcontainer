@@ -280,6 +280,21 @@ add_dependencies(images_artifact
     py2client_image_artifact
     rclient_image_artifact)
 
+if(GP_MAJOR_VERSION VERSION_LESS_EQUAL 6)
+    add_custom_target(
+        extension_scripts
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND
+            cat 
+            management/sql/plcontainer_gp--1.0.0.sql
+            management/sql/plcontainer--1.0.0--1.1.0.sql 
+            >${CMAKE_CURRENT_BINARY_DIR}/plcontainer--1.1.0.sql
+        DEPENDS
+            management/sql/plcontainer_gp--1.0.0.sql
+            management/sql/plcontainer--1.0.0--1.1.0.sql
+        )
+    add_dependencies(plcontainer extension_scripts)
+endif()
 
 # Install
 install(
@@ -292,14 +307,9 @@ install(
 install(
     FILES management/sql/plcontainer--1.0.0--1.1.0.sql
     DESTINATION share/postgresql/extension)
-if(GP_MAJOR_VERSION VERSION_LESS_EQUAL 6)
-    add_custom_command(
-        OUTPUT ${CMAKE_INSTALL_PREFIX}/share/postgresql/extension/plcontainer--1.1.0.sql
-        COMMAND
-            cat management/sql/plcontainer_gp--1.0.0.sql management/sql/plcontainer--1.0.0--1.1.0.sql > ${CMAKE_INSTALL_PREFIX}/share/postgresql/extension/plcontainer--1.1.0.sql
-        DEPENDS management/sql/plcontainer_gp--1.0.0.sql management/sql/plcontainer--1.0.0--1.1.0.sql
-        )
-endif()
+install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/plcontainer--1.1.0.sql
+    DESTINATION share/postgresql/extension)
 install(
     FILES plcontainer.control
     DESTINATION share/postgresql/extension)
