@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.18)
 
 project(plcontainer)
 
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Gpdb.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Distro.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
@@ -308,6 +310,9 @@ if(GP_MAJOR_VERSION VERSION_LESS_EQUAL 6)
             management/sql/plcontainer--1.0.0--1.1.0.sql
         )
     add_dependencies(plcontainer extension_scripts)
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/plcontainer--1.1.0.sql
+        DESTINATION share/postgresql/extension)
 endif()
 
 # Install
@@ -320,9 +325,6 @@ install(
     DESTINATION share/postgresql/extension)
 install(
     FILES management/sql/plcontainer--1.0.0--1.1.0.sql
-    DESTINATION share/postgresql/extension)
-install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/plcontainer--1.1.0.sql
     DESTINATION share/postgresql/extension)
 install(
     FILES plcontainer.control
