@@ -119,8 +119,21 @@ int python_init() {
 	PyObject *dict = NULL;
 	PyObject *gd = NULL;
 
+#if PY_MAJOR_VERSION >= 3
+	/* 
+	 * Create the 'plpy' module. 
+	 * 
+	 * NOTE: This Needs to be called before Py_Initialize().
+	 */
+	PyImport_AppendInittab("plpy", PLyInit_plpy);
+#endif
+
 	plc_Py_SetProgramName("PythonContainer");
 	Py_Initialize();
+
+#if PY_MAJOR_VERSION >= 3
+	PyImport_ImportModule("plpy");
+#endif
 
 	/*
 	 * initialize plpy module
@@ -132,25 +145,28 @@ int python_init() {
 	if (PyType_Ready(&PLy_SubtransactionType) < 0)
 			plc_elog (ERROR, "could not initialize PLy_SubtransactionType");
 
-	/* create the plpy module */
 #if PY_MAJOR_VERSION >= 3
-	plpymod = PyModule_Create(&plc_plpy_module);
-	PyImport_AppendInittab("plpy", PLyInit_plpy);
+	/* To add the 'plpy' module to __main__ . */
+	plpymod = PyImport_AddModule("plpy");
 #else
+	/* Create and get the 'plpy' module */
 	plpymod = Py_InitModule("plpy", moddef);
 	PLy_add_exceptions(plpymod);
 #endif
 
-	/* Initialize the main module */
+	/* Initialize the __main__ module */
 	PyMainModule = PyImport_ImportModule("__main__");
-
-	/* Add plpy module to it */
-	PyModule_AddObject(PyMainModule, "plpy", plpymod);
 
 	/* Get module dictionary of objects */
 	dict = PyModule_GetDict(PyMainModule);
 	if (dict == NULL) {
 		raise_execution_error("Cannot get '__main__' module contents in Python");
+		return -1;
+	}
+
+	/* Add plpy module to it */
+	if (PyDict_SetItemString(dict, "plpy", plpymod) < 0) {
+		raise_execution_error("Cannot set 'plpy' module to '__main__' module");
 		return -1;
 	}
 
@@ -161,7 +177,7 @@ int python_init() {
 	}
 
 	if (PyDict_SetItemString(dict, "GD", gd) < 0) {
-		raise_execution_error("Cannot set GD dictionary to main module");
+		raise_execution_error("Cannot set GD dictionary to '__main__' module");
 		return -1;
 	}
 	Py_DECREF(gd);
@@ -232,7 +248,7 @@ void handle_call(plcMsgCallreq *req, plcConn *conn) {
 	}
 
 	if (PyDict_SetItemString(dict, "SD", pyfunc->pySD) < 0) {
-		raise_execution_error("Cannot set SD dictionary to main module");
+		raise_execution_error("Cannot set SD dictionary to __main__ module");
 		return;
 	}
 

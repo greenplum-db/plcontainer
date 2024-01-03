@@ -51,6 +51,15 @@ PG_MODULE_MAGIC;
     volatile bool QueryFinishPending = false;
 #endif
 
+typedef struct
+{
+	bool end_of_input;
+	MemoryContext batch_mctx;
+	PG_FUNCTION_ARGS;
+	plcProcInfo *proc;
+	plcProcResult *results;
+} apply_ctx;
+
 /* exported functions */
 Datum plcontainer_validator(PG_FUNCTION_ARGS);
 
@@ -111,11 +120,11 @@ plcontainer_cleanup(pg_attribute_unused() int code, pg_attribute_unused() Datum 
 static void 
 plcontainer_backend_type_assign_hook(const char *newvalue, void *extra) {
     (void)(extra);
-    enum PLC_BACKEND_TYPE type = UNIMPLEMENT_TYPE;
+    enum PLC_BACKEND_TYPE type = PLC_BACKEND_UNIMPLEMENT;
     if (strcmp(newvalue, "docker") == 0) {
-        type = BACKEND_DOCKER;
+        type = PLC_BACKEND_DOCKER;
     } else if (strcmp(newvalue, "process") == 0) {
-        type = BACKEND_PROCESS;
+        type = PLC_BACKEND_PROCESS;
     }
     plc_backend_prepareImplementation(type);
 }
@@ -132,6 +141,7 @@ _PG_init(void) {
 	if (inited)
 		return;
 
+	// deprecated
     DefineCustomStringVariable("plcontainer.backend_type",
                                 gettext_noop("plcontainer backend type (docker|process)."),
                                 NULL,
@@ -746,16 +756,6 @@ plcontainer_function_handler(FunctionCallInfo fcinfo, plcProcInfo *proc)
 	return datumreturn;
 }
 
-typedef struct
-{
-	bool end_of_input;
-	MemoryContext batch_mctx;
-	ArrayBuildState *astate;
-	PG_FUNCTION_ARGS;
-	plcProcInfo *proc;
-	plcProcResult *results;
-} apply_ctx;
-
 static apply_ctx *
 apply_ctx_init(MemoryContext multi_call_mctx, Oid tuple_type, Oid func_oid, ReturnSetInfo *rsi)
 {
@@ -763,7 +763,6 @@ apply_ctx_init(MemoryContext multi_call_mctx, Oid tuple_type, Oid func_oid, Retu
 	apply_ctx *ac = palloc(sizeof(apply_ctx));
 	ac->end_of_input = false;
 	ac->batch_mctx = NULL;
-	ac->astate = NULL;
 	ac->results = NULL;
 	FmgrInfo flinfo = {0};
 	fmgr_info(func_oid, &flinfo);
@@ -799,7 +798,6 @@ apply_ctx_begin_batch(apply_ctx *ac, FuncCallContext *fctx)
 	 * To ensure that memory for building array can be freed immediately
 	 * when done. 
 	 */
-	ac->astate = NULL;
 	MemoryContextSwitchTo(ac->batch_mctx);
 }
 
@@ -816,12 +814,12 @@ Datum apply(PG_FUNCTION_ARGS)
 	AnyTable input = PG_GETARG_ANYTABLE(0);
 	Oid func_oid = PG_GETARG_OID(1);
 	int32 batch_size = PG_GETARG_INT32(2);
-	if (!(batch_size > 0))
+	if (batch_size <= 0)
 		plc_elog(ERROR, "batch size must be > 0.");
 
 	ReturnSetInfo *rsi = (ReturnSetInfo *)fcinfo->resultinfo;
 	TupleDesc in_tupdesc = AnyTable_GetTupleDesc(input);
-	
+
 	FuncCallContext *fctx = NULL;
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -844,7 +842,9 @@ Datum apply(PG_FUNCTION_ARGS)
 	if (ac->results == NULL || ac->results->resrow == ac->results->resmsg->rows)
 	{
 		apply_ctx_begin_batch(ac, fctx);
+		Assert(CurrentMemoryContext == ac->batch_mctx);
 		int32 tuple_num = 0;
+		ArrayBuildState *astate = NULL;
 		for (; tuple_num < batch_size; tuple_num++)
 		{
 			HeapTuple args_tuple = AnyTable_GetNextTuple(input);
@@ -854,8 +854,8 @@ Datum apply(PG_FUNCTION_ARGS)
 				break;
 			}
 
-			ac->astate = accumArrayResult(
-				ac->astate,
+			astate = accumArrayResult(
+				astate,
 				HeapTupleGetDatum(args_tuple),
 				false,
 				in_tupdesc->tdtypeid,
@@ -868,10 +868,10 @@ Datum apply(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(fctx);
 		}
 #if PG_VERSION_NUM >= 120000 /* Also for GPDB 7X */
-		ac->fcinfo->args[0].value = makeArrayResult(ac->astate, CurrentMemoryContext);
+		ac->fcinfo->args[0].value = makeArrayResult(astate, CurrentMemoryContext);
 		ac->fcinfo->args[0].isnull = false;
 #else
-		ac->fcinfo->arg[0] = makeArrayResult(ac->astate, CurrentMemoryContext);
+		ac->fcinfo->arg[0] = makeArrayResult(astate, CurrentMemoryContext);
 		ac->fcinfo->argnull[0] = false;
 #endif
 		ac->results = plcontainer_get_result(ac->fcinfo, ac->proc);

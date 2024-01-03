@@ -1,3 +1,11 @@
+-- start_ignore
+\! docker ps -a
+CONTAINER ID   IMAGE             COMMAND                  CREATED         STATUS                     PORTS     NAMES
+c97ac9593d64   r.alpine:latest   "/clientdir/rclient.…"   4 seconds ago   Exited (1) 2 seconds ago             infallible_dewdney
+7f02df529fd5   r.alpine:latest   "/clientdir/rclient.…"   5 seconds ago   Up 4 seconds                         optimistic_diffie
+eaeb00025f7b   r.alpine:latest   "/clientdir/rclient.…"   5 seconds ago   Up 4 seconds                         bold_lederberg
+fd4bfcb0b29f   r.alpine:latest   "/clientdir/rclient.…"   5 seconds ago   Up 4 seconds                         naughty_booth
+-- end_ignore
 select count(*) from plcontainer_containers_summary() WHERE "UP_TIME" LIKE 'Up %';
  count 
 -------
@@ -19,6 +27,14 @@ SELECT pyconf();
      10
 (1 row)
 
+-- start_ignore
+\! docker ps -a
+CONTAINER ID   IMAGE                    COMMAND                  CREATED          STATUS          PORTS     NAMES
+5a12213758b0   python39.alpine:latest   "/clientdir/py3clien…"   6 seconds ago    Up 1 second               wizardly_easley
+7f02df529fd5   r.alpine:latest          "/clientdir/rclient.…"   12 seconds ago   Up 11 seconds             optimistic_diffie
+eaeb00025f7b   r.alpine:latest          "/clientdir/rclient.…"   12 seconds ago   Up 11 seconds             bold_lederberg
+fd4bfcb0b29f   r.alpine:latest          "/clientdir/rclient.…"   12 seconds ago   Up 11 seconds             naughty_booth
+-- end_ignore
 select count(*) from plcontainer_containers_summary() WHERE "UP_TIME" LIKE 'Up %';
  count 
 -------
@@ -41,4 +57,51 @@ CREATE OR REPLACE FUNCTION py_no_exsited() RETURNS int4 AS $$
 return 10
 $$ LANGUAGE plcontainer;
 SELECT py_no_exsited();
-ERROR:  plcontainer: Runtime 'plc_python_shared1' is not defined in configuration and cannot be used (plcontainer.c:224)
+ERROR:  plcontainer: Runtime 'plc_python_shared1' is not defined in configuration and cannot be used (plcontainer.c:336)
+CONTEXT:  PLContainer function "py_no_exsited"
+-- start_ignore
+\! docker pull alpine
+Using default tag: latest
+latest: Pulling from library/alpine
+96526aa774ef: Pulling fs layer
+96526aa774ef: Verifying Checksum
+96526aa774ef: Download complete
+96526aa774ef: Pull complete
+Digest: sha256:eece025e432126ce23f223450a0326fbebde39cdf496a85d8c016293fc851978
+Status: Downloaded newer image for alpine:latest
+docker.io/library/alpine:latest
+\! docker save alpine | gzip > ./alpine.tar.gz
+\! docker rmi alpine
+-- end_ignore
+\! plcontainer image-add -f ./alpine.tar.gz > /dev/null 2>&1 && echo $?
+0
+\! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
+alpine
+\! plcontainer image-delete -i alpine > /dev/null 2>&1 && echo $?
+0
+\! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
+\! plcontainer image-add -f ./alpine.tar.gz --hosts 'localhost,localhost' > /dev/null 2>&1 && echo $?
+0
+\! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
+alpine
+\! plcontainer image-delete -i alpine --hosts 'localhost' > /dev/null 2>&1 && echo $?
+0
+\! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
+\! plcontainer image-add -f ./alpine.tar.gz --hosts 'unreachable' | grep ssh
+\! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
+\! plcontainer remote-setup --hosts 'unreachable' | grep ssh
+  stderr='ssh: Could not resolve hostname unreachable: Name or service not known
+\! ls -A -1 /tmp/xxxxremotedockertestxxx/plcontainer_clients
+ls: cannot access '/tmp/xxxxremotedockertestxxx/plcontainer_clients': No such file or directory
+\! plcontainer remote-setup --hosts 'localhost' --clientdir '/tmp/xxxxremotedockertestxxx/plcontainer_clients' > /dev/null 2>&1 && echo $?
+0
+\! ls -A -1 /tmp/xxxxremotedockertestxxx/plcontainer_clients
+librcall.so
+py3client
+py3client.sh
+pyclient
+pyclient.sh
+rclient
+rclient.sh
+\! rm -rf /tmp/xxxxremotedockertestxxx
+\! rm ./alpine.tar.gz

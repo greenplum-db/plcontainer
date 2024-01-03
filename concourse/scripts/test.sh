@@ -25,7 +25,7 @@ function _main() {
     _install_gppkg
     # Image add for both python and r
     # Python3
-    time plcontainer image-add -f plcontainer-python-image-*.tar.gz
+    time plcontainer image-add -f plcontainer-python3-image-*.tar.gz
     # Python2
     time plcontainer image-add -f plcontainer-python2-image-*.tar.gz
     # R
@@ -44,4 +44,6 @@ function _main() {
     popd
 }
 
+# print the test diff to stdout in our CI
+export SHOW_REGRESS_DIFF=1
 _main

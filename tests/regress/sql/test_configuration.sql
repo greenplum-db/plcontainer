@@ -38,3 +38,30 @@ return 10
 $$ LANGUAGE plcontainer;
 
 SELECT py_no_exsited();
+
+-- start_ignore
+\! docker pull alpine
+\! docker save alpine | gzip > ./alpine.tar.gz
+\! docker rmi alpine
+-- end_ignore
+
+\! plcontainer image-add -f ./alpine.tar.gz > /dev/null 2>&1 && echo $?
+\! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
+\! plcontainer image-delete -i alpine > /dev/null 2>&1 && echo $?
+\! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
+
+\! plcontainer image-add -f ./alpine.tar.gz --hosts 'localhost,localhost' > /dev/null 2>&1 && echo $?
+\! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
+\! plcontainer image-delete -i alpine --hosts 'localhost' > /dev/null 2>&1 && echo $?
+\! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
+
+\! plcontainer image-add -f ./alpine.tar.gz --hosts 'unreachable' | grep ssh
+\! docker images --format '{{.Repository}}' | grep -P '^alpine' | sort | uniq
+
+\! plcontainer remote-setup --hosts 'unreachable' | grep ssh
+\! ls -A -1 /tmp/xxxxremotedockertestxxx/plcontainer_clients
+
+\! plcontainer remote-setup --hosts 'localhost' --clientdir '/tmp/xxxxremotedockertestxxx/plcontainer_clients' > /dev/null 2>&1 && echo $?
+\! ls -A -1 /tmp/xxxxremotedockertestxxx/plcontainer_clients
+\! rm -rf /tmp/xxxxremotedockertestxxx
+\! rm ./alpine.tar.gz

@@ -1,10 +1,12 @@
 FROM ubuntu:18.04
 
 EXPOSE 8080
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip gcc g++ make r-base r-base-dev
-# solve No module named 'skbuild'
-RUN pip3 install --upgrade pip
-RUN pip3 --no-cache install cmake
+RUN apt-get update && \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        gcc g++ make r-base r-base-dev
+
+ADD https://github.com/Kitware/CMake/releases/download/v3.26.5/cmake-3.26.5-linux-x86_64.sh /cmake.sh
+RUN sh /cmake.sh --prefix=/usr/local/ --exclude-subdir --skip-license && rm /cmake.sh 
 
 ENV R_HOME "/usr/lib/R"
 ENV PATH "/usr/lib/R/bin:$PATH"

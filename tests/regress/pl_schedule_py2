@@ -21,3 +21,6 @@ test: uda_python2
 
 # Drop the extension - need to be last
 test: drop
+
+# clean docker containers
+test: clean_docker

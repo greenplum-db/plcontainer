@@ -77,6 +77,12 @@ static int start_listener_ipc() {
 	gid_t qe_gid;
 	long val;
 
+	if (mkdir(IPC_CLIENT_DIR, 0700) < 0) {
+		if (errno != EEXIST) {
+			plc_elog(ERROR, "Failed to create directory for Unix-Domain Socket: %s", strerror(errno));
+		}
+	}
+
 	/* filename: IPC_CLIENT_DIR + '/' + UDS_SHARED_FILE */
 	sz = strlen(IPC_CLIENT_DIR) + 1 + MAX_SHARED_FILE_SZ + 1;
 	uds_fn = pmalloc(sz);
@@ -104,47 +110,49 @@ static int start_listener_ipc() {
 		plc_elog(ERROR, "Cannot bind the addr: %s", strerror(errno));
 	}
 
-	/*
-	 * The path owner should be generally the uid, but we are not 100% sure
-	 * about this for current/future backends, so we still use environment
-	 * variable, instead of extracting them via reading the owner of the path.
-	 */
+	if (getenv("LOCAL_PROCESS_MODE") == NULL) {
+		/*
+		 * The path owner should be generally the uid, but we are not 100% sure
+		 * about this for current/future backends, so we still use environment
+		 * variable, instead of extracting them via reading the owner of the path.
+		 */
 
-	/* Get executor uid: for permission of the unix domain socket file. */
-	if ((env_str = getenv("EXECUTOR_UID")) == NULL)
-		plc_elog (ERROR, "EXECUTOR_UID is not set, something wrong on QE side");
-	errno = 0;
-	val = strtol(env_str, &endptr, 10);
-	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-	    (errno != 0 && val == 0) ||
-	    endptr == env_str ||
-	    *endptr != '\0') {
-		plc_elog(ERROR, "EXECUTOR_UID is wrong:'%s'", env_str);
+		/* Get executor uid: for permission of the unix domain socket file. */
+		if ((env_str = getenv("EXECUTOR_UID")) == NULL)
+			plc_elog (ERROR, "EXECUTOR_UID is not set, something wrong on QE side");
+		errno = 0;
+		val = strtol(env_str, &endptr, 10);
+		if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
+			(errno != 0 && val == 0) ||
+			endptr == env_str ||
+			*endptr != '\0') {
+			plc_elog(ERROR, "EXECUTOR_UID is wrong:'%s'", env_str);
+		}
+		qe_uid = val;
+
+		/* Get executor gid: for permission of the unix domain socket file. */
+		if ((env_str = getenv("EXECUTOR_GID")) == NULL)
+			plc_elog (ERROR, "EXECUTOR_GID is not set, something wrong on QE side");
+		errno = 0;
+		val = strtol(env_str, &endptr, 10);
+		if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
+			(errno != 0 && val == 0) ||
+			endptr == env_str ||
+			*endptr != '\0') {
+			plc_elog(ERROR, "EXECUTOR_GID is wrong:'%s'", env_str);
+		}
+		qe_gid = val;
+
+		/* Change ownership & permission for the file for unix domain socket so
+		 * code on the QE side could access it and clean up it later.
+		 */
+		if (chown(uds_fn, qe_uid, qe_gid) < 0)
+			plc_elog (ERROR, "Could not set ownership for file %s with owner %d, "
+				"group %d: %s", uds_fn, qe_uid, qe_gid, strerror(errno));
+		if (chmod(uds_fn, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) < 0) /* 0666*/
+			plc_elog (ERROR, "Could not set permission for file %s: %s",
+						uds_fn, strerror(errno));
 	}
-	qe_uid = val;
-
-	/* Get executor gid: for permission of the unix domain socket file. */
-	if ((env_str = getenv("EXECUTOR_GID")) == NULL)
-		plc_elog (ERROR, "EXECUTOR_GID is not set, something wrong on QE side");
-	errno = 0;
-	val = strtol(env_str, &endptr, 10);
-	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) ||
-	    (errno != 0 && val == 0) ||
-	    endptr == env_str ||
-	    *endptr != '\0') {
-		plc_elog(ERROR, "EXECUTOR_GID is wrong:'%s'", env_str);
-	}
-	qe_gid = val;
-
-	/* Change ownership & permission for the file for unix domain socket so
-	 * code on the QE side could access it and clean up it later.
-	 */
-	if (chown(uds_fn, qe_uid, qe_gid) < 0)
-		plc_elog (ERROR, "Could not set ownership for file %s with owner %d, "
-			"group %d: %s", uds_fn, qe_uid, qe_gid, strerror(errno));
-	if (chmod(uds_fn, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) < 0) /* 0666*/
-		plc_elog (ERROR, "Could not set permission for file %s: %s",
-			         uds_fn, strerror(errno));
 
 	if (listen(sock, 10) == -1) {
 		plc_elog(ERROR, "Cannot listen the socket: %s", strerror(errno));
@@ -291,7 +299,7 @@ void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *), plcConn *conn
 		res = plcontainer_channel_receive(conn, &msg, MT_CALLREQ_BIT);
 
 		if (res < 0) {
-				plc_elog(ERROR, "Error receiving data from the peer: %d", res);
+			plc_elog(ERROR, "Error receiving data from the peer: %d (%s)", res, strerror(errno));
 			break;
 		}
 		plc_elog(DEBUG1, "Client receive a request: called function oid %u", ((plcMsgCallreq *) msg)->objectid);

@@ -14,20 +14,19 @@ fi
 
 exec $PYTHON $0 "$@"
 exit $?
-''' #'''
+'''  # '''
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 #
 # Copyright (c) 2016-Present VMware, Inc. or its affiliates.
 #
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 import os
 import re
 import sys
 import hashlib
 import tempfile
-import traceback
 import datetime
 import xml.dom.minidom
 import subprocess
@@ -38,6 +37,7 @@ try:
     from gppylib import gplog
     from gppylib.commands.base import WorkerPool, REMOTE, Command
     from gppylib.commands.unix import getLocalHostname, getUserName
+    from gppylib.operations.unix import MakeRemoteDir, CheckRemoteDir, CheckRemoteFile
     try:
         # https://github.com/greenplum-db/gpdb/pull/14145
         # after gp7 the Scp tool renamed to Rsync
@@ -61,6 +61,7 @@ TAR_GZ = '.tar.gz'
 
 global DBHOME
 
+
 def parseargs():
     parser = argparse.ArgumentParser()
 
@@ -78,17 +79,19 @@ def parseargs():
     runtime_edit_parser = subparsers.add_parser("runtime-edit", help = "Use editor (vi by default) to edit and then update configurations on all hosts")
     runtime_backup_parser = subparsers.add_parser("runtime-backup", help = "Backup the local runtime configurations to a file")
     runtime_restore_parser = subparsers.add_parser("runtime-restore", help = "Restore the runtime configurations from a file and distribute them to all hosts")
-    runtime_verify_parser = subparsers.add_parser("runtime-verify",
-                                                help="Sanity check configurations on all the hosts")
+    runtime_verify_parser = subparsers.add_parser("runtime-verify", help="Sanity check configurations on all the hosts")
+    remote_setup_parser = subparsers.add_parser("remote-setup", help="Setup a remote host for plcontainer")
 
     # For image-add
     image_add_options = image_add_parser.add_mutually_exclusive_group(required=True)
     image_add_options.add_argument("-f", "--file", dest="file", help="image location (e.g. /tmp/centos.7.2.tar.gz)")
     image_add_parser.add_argument("-ulc", "--use_local_copy", action="store_true", dest="local", help="If set, use the local image file (default is no)")
     image_add_options.add_argument("-u", "--url", dest="url", help="image url (e.g. 192.168.0.1:5000/images/centos:7.2)")
+    image_add_parser.add_argument("--hosts", dest="hosts", default='', help="also load image for those IP in this host IP list (e.g. '128.66.0.1,128.66.0.2,128.66.0.3') or a gpscp hostilfe")
 
     # For image-delete
     image_delete_parser.add_argument("-i", "--image", dest="image_name", help="image name:tag (e.g. centos:7.2)", required=True)
+    image_delete_parser.add_argument("--hosts", dest="hosts", default='', help="also load image for those IP in this host IP list (e.g. '128.66.0.1,128.66.0.2,128.66.0.3') or a gpscp hostilfe")
 
     # For runtime-add
     runtime_add_parser.add_argument("-r", "--runtime", dest="runtime_id",
@@ -97,7 +100,7 @@ def parseargs():
                                     help="image name:tag (e.g. centos:7.2)", required=True)
     runtime_add_parser.add_argument("-l", "--language", dest="language",
                                     help="language type, currently support python, python3 and r. " +
-                                    "Used to auto-configure container command.", required=True, choices=['r','python','python3'])
+                                    "Used to auto-configure container command.", required=True ,choices=['r','python','python3'])
     runtime_add_parser.add_argument("-v", "--volume", dest="shared", action="append",
                                     help="Bind mount a volume, can work with multiple volumes" +
                                     " format: HOST:CONTAINER:[rw|ro]")
@@ -139,10 +142,14 @@ def parseargs():
     runtime_restore_parser.add_argument("-f", "--file", dest="file",
                                     help="The file that includes the runtime configurations", required=True)
 
+    # For remote-setup
+    __clientdir = os.path.join(DBHOME, PLCONTAINER_CLIENT_DIR)
+    remote_setup_parser.add_argument("--hosts", dest="hosts", required=True, help="a list of remote host IP (e.g. '128.66.0.1,128.66.0.2') or a gpscp hostfile")
+    remote_setup_parser.add_argument("--clientdir", dest="clientdir", default=__clientdir, help="the dir to save plcontainer language client")
 
     options = parser.parse_args()
-
     return options
+
 
 def distribute_docker_file(pool, d_file, dest, hosts):
     if dest is None:
@@ -157,12 +164,48 @@ def distribute_docker_file(pool, d_file, dest, hosts):
     pool.join()
     pool.check_results()
 
+def distribute_clientdir(pool, dest, hosts):
+    clientdir = os.path.join(DBHOME, PLCONTAINER_CLIENT_DIR, '*')
+
+    for host in hosts:
+        if not CheckRemoteDir(dest, host).execute():
+            MakeRemoteDir(dest, host).execute()
+
+    for host in hosts:
+        cmd = Rsync('Distribute plcontainer client dir.',
+                    clientdir,
+                    dest,
+                    None,
+                    host.strip(),
+                    recursive=True)
+        pool.addCommand(cmd)
+    pool.join()
+    pool.check_results()
+
+def distribute_greenplum_path(pool, hosts):
+    pathfile = os.path.join(DBHOME, 'greenplum_path.sh')
+
+    for host in hosts:
+        if not CheckRemoteDir(DBHOME, host).execute():
+            MakeRemoteDir(DBHOME, host).execute()
+
+    for host in hosts:
+        if not CheckRemoteFile(pathfile, host).execute():
+            cmd = Rsync('Distribute greenplum_path.sh.',
+                        pathfile,
+                        DBHOME,
+                        None,
+                        host.strip())
+            pool.addCommand(cmd)
+    pool.join()
+    pool.check_results()
+
 def remote_cmd(pool, cmd_str, hosts):
     for host in hosts:
         cmd = Command('Execute remote cmd on all hosts.',
-                        cmd_str,
-                        ctxt = REMOTE,
-                        remoteHost = host.strip())
+                      cmd_str,
+                      ctxt = REMOTE,
+                      remoteHost = host.strip())
         pool.addCommand(cmd)
     pool.join()
 
@@ -226,7 +269,8 @@ def install_image_remote(hosts, pool, docker_image):
             logger.error("Cannot load docker image in all hosts")
         elif (step == 3):
             logger.error("Unable to remove temporary files")
-        raise(ex)
+        raise ex
+
 
 def install_image_local(hosts, pool, docker_file):
     try:
@@ -251,7 +295,8 @@ def install_image_local(hosts, pool, docker_file):
             logger.error("Docker image tarball %s is not existed on all hosts, please copy them again" % docker_file)
         elif (step == 2):
             logger.error("Cannot load docker image in all hosts")
-        raise(ex)
+        raise ex
+
 
 def install_images(options, pool, hosts):
     '''
@@ -276,6 +321,7 @@ def install_images(options, pool, hosts):
             sys.exit(1)
         install_image_remote(hosts, pool, docker_image)
 
+
 def delete_images(options, pool, hosts):
     '''
     delete docker image
@@ -291,7 +337,20 @@ def delete_images(options, pool, hosts):
         docker_delete_cmd = " ".join(["docker rmi -f ", docker_image])
         remote_cmd(pool, docker_delete_cmd, hosts)
     except Exception as ex:
-        raise(ex)
+        raise ex
+
+
+def setup_remote(pool, dest_dir, hosts):
+    '''
+    copy clientdir to hosts
+    '''
+    try:
+        logger.info('Copying clientdir to %s on all hosts' % (dest_dir,))
+        distribute_clientdir(pool, dest_dir, hosts)
+        distribute_greenplum_path(pool, hosts)
+    except Exception as ex:
+        raise ex
+
 
 def update_xml_check_shared_folders(runtime, elements):
     '''
@@ -303,16 +362,16 @@ def update_xml_check_shared_folders(runtime, elements):
     dest = os.path.join(DBHOME, PLCONTAINER_CLIENT_DIR)
 
     shareDir = ElementTree.Element("shared_directory",
-            host=dest, container="/clientdir",
-            access="ro")
+                                   host=dest, container="/clientdir",
+                                   access="ro")
     runtime.append(shareDir)
 
     if 'hasShared' in elements:
         count = 0
         for plHost in elements['host']:
             shareDir = ElementTree.Element("shared_directory",
-                    host=plHost, container=elements['container'][count],
-                    access=elements['access'][count])
+                                           host=plHost, container=elements['container'][count],
+                                           access=elements['access'][count])
             count = count + 1
             runtime.append(shareDir)
 
@@ -321,7 +380,7 @@ def update_xml_check_settings(runtime, elements):
     '''
     update other settings.
     '''
-    if not 'hasSetting' in elements:
+    if 'hasSetting' not in elements:
         return
 
     for setting in runtime.findall('setting'):
@@ -332,6 +391,7 @@ def update_xml_check_settings(runtime, elements):
         xml_setting.set(setting, elements['setting'][setting])
         xml_setting.text = ""
         runtime.append(xml_setting)
+
 
 def update_xml_runtime(runtime, elements):
     '''
@@ -378,13 +438,15 @@ def update_xml_new_runtime(elements):
 
     return runtime
 
+
 def update_reformat_xml(xmltree):
     '''
     reformat xml to a pretty print format
     '''
     xmlString = ElementTree.tostring(xmltree)
     reformatString = xml.dom.minidom.parseString(xmlString)
-    return reformatString.toprettyxml(indent = '    ') 
+    return reformatString.toprettyxml(indent = '    ')
+
 
 def add_xml_config(filename, elements):
     '''
@@ -413,6 +475,7 @@ def add_xml_config(filename, elements):
         logger.error("Update XML file Error")
         logger.error(str(ex))
         raise Exception("Update XML file Error")
+
 
 def update_xml_config(filename, elements):
     '''
@@ -449,6 +512,7 @@ def update_xml_config(filename, elements):
         logger.error(str(ex))
         raise Exception("Update XML file Error")
 
+
 def delete_xml_config(filename, del_runtime_id):
     '''
     Delete given runtime from the xml file.
@@ -473,6 +537,7 @@ def delete_xml_config(filename, del_runtime_id):
         logger.error(str(ex))
         raise Exception("Update XML file Error")
     return False
+
 
 def get_file_md5(file):
     '''
@@ -506,7 +571,7 @@ def copy_file_to_tmp(host, file):
 
 
 def validate_xml(filename):
-    image_list=[]
+    image_list = []
     for line in os.popen("docker images | awk 'NR>1 {print $1 \":\" $2}'"):
         line = line.strip('\n')
         image_list.append(line)
@@ -531,7 +596,7 @@ def validate_xml(filename):
             if len(runtime_id) >= RUNTIME_ID_MAX_LENGTH:
                 logger.error("length of runtime id %s should not exceeds 63.", runtime_id)
                 raise Exception("Validation failed")
-            if  not pattern.match(runtime_id):
+            if not pattern.match(runtime_id):
                 logger.error("'id' name with wrong format: %s", runtime_id)
                 raise Exception("Validation failed")
 
@@ -565,7 +630,7 @@ def validate_xml(filename):
                     logger.error("access should be 'ro' or 'rw' in shared_directory in runtime %s, but now: %s", runtime_id, share_folder.attrib['access'])
                     raise Exception("Validation failed")
 
-                if  sorted(list(share_folder.attrib.keys())) != ['access', 'container', 'host']:
+                if sorted(list(share_folder.attrib.keys())) != ['access', 'container', 'host']:
                     logger.error("Unknown or missing attributes (need and only need 'access', 'host' and 'container') in shared_directory in runtime %s", runtime_id)
                     logger.error("Current: %s", list(share_folder.attrib.keys()))
                     raise Exception("Validation failed")
@@ -617,7 +682,7 @@ def validate_xml(filename):
                         raise Exception("Validation failed")
                 elif 'resource_group_id' in settings.attrib:
                     resource_group_id_str = settings.attrib['resource_group_id']
-                    if resource_group_id_str.isdigit() != True:
+                    if not resource_group_id_str.isdigit():
                         logger.error("'resource_group_id_str' cannot contain non-digit, it should be oid of resource group")
                         raise Exception("Validation failed")
                 elif 'roles' in settings.attrib:
@@ -628,10 +693,11 @@ def validate_xml(filename):
                 else:
                     logger.error("Found illegal setting in runtime %s: %s", runtime_id, settings.attrib)
     except Exception as ex:
-        correct = False 
+        correct = False
         logger.error("XML file does not conform XML specification or wrong settings.")
         logger.error(str(ex))
     return correct
+
 
 def edit_file(filename, editor):
     """
@@ -664,10 +730,10 @@ def distribute_file(pool, src_filename, dest_filename, gpdb_locations):
         dest_file = os.path.join(l[1], dest_filename)
         logger.debug("Distributing to %s:%s", l[0], dest_file)
         cmd = Rsync('distribute changed file',
-                  src_filename,
-                  dest_file,
-                  None,
-                  l[0])
+                    src_filename,
+                    dest_file,
+                    None,
+                    l[0])
         pool.addCommand(cmd)
     pool.join()
     pool.check_results()
@@ -684,19 +750,34 @@ def backup_file(pool, gpdb_locations, file):
         src_file = os.path.join(l[1], file)
         dest_file = os.path.join(l[1], dest_filename)
         cmd = Rsync('backup file',
-                  src_file,
-                  dest_file,
-                  l[0],
-                  l[0])
+                    src_file,
+                    dest_file,
+                    l[0],
+                    l[0])
         pool.addCommand(cmd)
     pool.join()
     pool.check_results()
 
+
 def get_all_hosts(array):
     hosts = set()
     for hostname in array.get_hostlist():
-       hosts.add(hostname)
+        hosts.add(hostname)
     return hosts
+
+
+def read_iplist_from_file_or_parse_iplist(iplist_or_file):
+    iplist_or_file = iplist_or_file.strip()
+
+    if iplist_or_file == '':
+        return []
+
+    if os.path.exists(iplist_or_file):
+        with open(iplist_or_file, 'r') as f:
+            return [line.strip() for line in f]
+
+    return iplist_or_file.split(',')
+
 
 def get_segment_locations(seg_list):
     """
@@ -707,6 +788,7 @@ def get_segment_locations(seg_list):
     for s in seg_list:
         gpdb_locations.append((s.getSegmentHostName(), s.getSegmentDataDirectory()))
     return gpdb_locations
+
 
 def remote_remove_files(pool, gpdb_locations, remote_filename):
     """
@@ -728,11 +810,10 @@ def show_file(filename):
     sys.stdout.write('%s\n' % f.read())
     f.close()
 
+
 def runtime_show_xml(filename, r_id):
     '''
     Print configurations
-    :param filename:  
-    :return: 
     '''
     try:
         no_entry = True
@@ -772,6 +853,7 @@ def runtime_show_xml(filename, r_id):
         logger.error(str(ex))
         raise Exception("runtime-show error")
 
+
 def get_conf_settings(options, elements):
     '''
     get the settings for the runtime configuration.
@@ -785,6 +867,7 @@ def get_conf_settings(options, elements):
         if strList[0] not in ("memory_mb", "cpu_share", "use_container_logging", "resource_group_id", "roles", "enable_network"):
             raise Exception("Bad setting key: %s" % strList[0])
         elements['setting'][strList[0]] = strList[1]
+
 
 def get_conf_shared_dirs(options, elements):
     '''
@@ -807,6 +890,7 @@ def get_conf_shared_dirs(options, elements):
         else:
             elements['access'].append("ro")
 
+
 def get_conf_elements(options):
     '''
     build an element dict for configuration
@@ -814,27 +898,27 @@ def get_conf_elements(options):
     elements = dict()
     elements['id'] = options.runtime_id
     elements['image'] = options.image_name
-    elements['language']=options.language.lower()
+    elements['language'] = options.language.lower()
     if options.shared:
-       get_conf_shared_dirs(options, elements)
+        get_conf_shared_dirs(options, elements)
     if options.setting:
-       get_conf_settings(options, elements)
+        get_conf_settings(options, elements)
     return elements
+
 
 def checkAllFileMD5(pool, gpdb_locations):
     '''
-    
-    :param pool: workpool 
+    :param pool: workpool
     :param gpdb_locations: gpdb data dir
-    :return TRUE if match, FALSE if not match: 
+    :return TRUE if match, FALSE if not match:
     '''
     logger.info("Verifying...")
     for l in gpdb_locations:
         remote_file = os.path.join(l[1], PLCONTAINER_CONFIG_FILE)
         cmd = Command('Check %s:%s' % (l[0], remote_file),
-                  'md5sum %s || exit 0' % remote_file,
-                  ctxt=REMOTE,
-                  remoteHost=l[0])
+                      'md5sum %s || exit 0' % remote_file,
+                      ctxt=REMOTE,
+                      remoteHost=l[0])
         pool.addCommand(cmd)
     pool.join()
 
@@ -863,25 +947,26 @@ def main():
     global DBHOME
     global DBTYPE
 
+    DBHOME = os.environ.get('GPHOME')
+    if not DBHOME:
+        DBHOME = os.environ.get('PGHOME')
+        if not DBHOME:
+            raise Exception('$GPHOME or $PGHOME environment variable is not set')
+        else:
+            DBTYPE = "pg"
+    else:
+        DBTYPE = "gp"
+
     options = parseargs()
     if options.verbose:
         gplog.enable_verbose_logging()
 
     try:
-        DBHOME = os.environ.get('GPHOME')
-        if not DBHOME:
-            DBHOME = os.environ.get('PGHOME')
-            if not DBHOME:
-                raise Exception('$GPHOME or $PGHOME environment variable is not set')
-            else:
-                DBTYPE = "pg"
-        else:
-            DBTYPE = "gp"
 
         logger.debug('Retrieving GPDB configuration from database...')
         url = dbconn.DbURL()
-        
-        #for pg
+
+        # for pg
         hosts = set()
         gpdb_locations = []
 
@@ -891,13 +976,12 @@ def main():
             hosts = get_all_hosts(array)
             gpdb_locations = get_segment_locations(segs)
         else:
-            hosts.add('localhost')   #todo 
+            hosts.add('localhost')   # todo
             pgdata_path = os.environ.get('PGDATA')
             if not pgdata_path:
                 raise Exception('$PGDATA environment variable is not set for postgresql.')
-            gpdb_locations.append( ('localhost', pgdata_path) )
+            gpdb_locations.append(('localhost', pgdata_path))
 
-            
         logger.debug('GPDB Configuration is:')
 
         # FIXME: do them for configure commands only.
@@ -912,11 +996,13 @@ def main():
         if options.subparser_name == "image-add":
             logger.debug('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
+            hosts.update(read_iplist_from_file_or_parse_iplist(options.hosts))
             install_images(options, pool, hosts)
 
         if options.subparser_name == "image-delete":
             logger.debug('Preparing the worker pool...')
             pool = WorkerPool(PL_BATCH_SIZE)
+            hosts.update(read_iplist_from_file_or_parse_iplist(options.hosts))
             delete_images(options, pool, hosts)
 
         if options.subparser_name == "image-list":
@@ -1016,6 +1102,12 @@ def main():
                 else:
                     logger.info('Verify success!')
 
+        if options.subparser_name == "remote-setup":
+            logger.debug('Preparing the worker pool...')
+            pool = WorkerPool(PL_BATCH_SIZE)
+            remote_docker_hosts = read_iplist_from_file_or_parse_iplist(options.hosts)
+            setup_remote(pool, options.clientdir, remote_docker_hosts)
+
         if new_config:
             logger.info('Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions.' +
                         ' New sessions will get new configuration automatically.')
@@ -1034,6 +1126,7 @@ def main():
             pool.haltWork()
             pool.joinWorkers()
         return retval
+
 
 if __name__ == '__main__':
     execname = os.path.split(__file__)[-1]

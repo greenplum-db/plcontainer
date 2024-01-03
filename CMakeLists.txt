@@ -135,23 +135,27 @@ add_dependencies(
 )
 
 # Build client
-if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES ".*_b")
-    set(DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles/gp-data-science-bundle/dockerfiles/python)
-else()
-    set(DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+set(PY_DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+set(R_DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
+
+if(CONTAINER_NAME_SUFFIX_PYTHON MATCHES "python.*_b")
+    string(REGEX MATCH "python\([0-9]*\).*" _ ${CONTAINER_NAME_SUFFIX_PYTHON})
+    set(_ver_PY ${CMAKE_MATCH_1})
+    file(STRINGS dockerfiles/gp-data-science-bundle/dockerfiles/python/VERSION_py${_ver_PY}_image PYTHON_IMAGE_VERSION)
+    string(REGEX MATCH "\(.*\)-.*_.*" _ ${PYTHON_IMAGE_VERSION})
+    set(PYTHON_IMAGE_VERSION ${CMAKE_MATCH_1})
+    set(PY_DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles/gp-data-science-bundle/dockerfiles/python)
+endif()
+if(CONTAINER_NAME_SUFFIX_R MATCHES "r.*_b")
+    file(STRINGS dockerfiles/gp-data-science-bundle/dockerfiles/r/VERSION_r_image R_IMAGE_VERSION)
+    string(REGEX MATCH "\(.*\)-.*_.*" _ ${R_IMAGE_VERSION})
+    set(R_IMAGE_VERSION ${CMAKE_MATCH_1})
+    set(R_DOCKERFILES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles/gp-data-science-bundle/dockerfiles/r)
 endif()
 set(PYCLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_PYTHON})
 # python2.7
 set(PY2CLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_PYTHON2})
 set(RCLIENT_IMAGE ${CONTAINER_NAME_SUFFIX_R})
-add_custom_target(rclient_image
-    COMMAND
-    PYTHONPATH=
-    docker build .
-    -t ${RCLIENT_IMAGE}
-    -f Dockerfile.${RCLIENT_IMAGE}
-    WORKING_DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/dockerfiles)
 
 # Conventionally, docker build command will send the context directory
 # (typically the current one) to the docker daemon, but without dereferencing
@@ -161,6 +165,16 @@ add_custom_target(rclient_image
 # create a tarball with symbolic links dereferenced. Afterwards, we pipe the 
 # tarball to the docker build command. In this way, the docker daemon actually
 # receives a set of files with links dereferenced.
+add_custom_target(rclient_image
+    COMMAND
+    tar -ch . |
+    docker build
+    -t ${RCLIENT_IMAGE}
+    -f Dockerfile.${RCLIENT_IMAGE}
+    -
+    WORKING_DIRECTORY
+    ${R_DOCKERFILES_DIR})
+
 add_custom_target(pyclient_image
     COMMAND
     tar -ch . |
@@ -169,7 +183,7 @@ add_custom_target(pyclient_image
     -f Dockerfile.${PYCLIENT_IMAGE}
     -
     WORKING_DIRECTORY
-    ${DOCKERFILES_DIR})
+    ${PY_DOCKERFILES_DIR})
 
 # py2 client image docker file hard code for now.
 add_custom_target(py2client_image
@@ -185,7 +199,7 @@ add_custom_target(py2client_image
 set(R_IMAGE_TARBALL_NAME
     plcontainer-r-image-${R_IMAGE_VERSION}-gp${GP_MAJOR_VERSION}.tar.gz)
 set(PYTHON_IMAGE_TARBALL_NAME
-    plcontainer-python-image-${PYTHON_IMAGE_VERSION}-gp${GP_MAJOR_VERSION}.tar.gz)
+    plcontainer-python3-image-${PYTHON_IMAGE_VERSION}-gp${GP_MAJOR_VERSION}.tar.gz)
 set(PYTHON2_IMAGE_TARBALL_NAME
     plcontainer-python2-image-${PYTHON_IMAGE_VERSION}-gp${GP_MAJOR_VERSION}.tar.gz)
 
@@ -217,7 +231,7 @@ add_custom_target(rclient_image_artifact
 add_custom_target(pyclient_image_artifact
     COMMAND
     ${CMAKE_COMMAND} -E tar czvf
-    plcontainer-python-image-gp${GP_MAJOR_VERSION}.tgz
+    plcontainer-python3-image-gp${GP_MAJOR_VERSION}.tgz
     ${PYTHON_IMAGE_TARBALL_NAME}
     DEPENDS pyclient_image_tarball)
 
