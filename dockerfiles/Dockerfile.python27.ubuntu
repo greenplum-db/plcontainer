@@ -3,9 +3,9 @@ FROM ubuntu:18.04
 EXPOSE 8080
 RUN mkdir -p /clientdir
 RUN apt update && apt install -y python2.7 python-pip python-dev gcc g++ make
-# for easily install the latest cmake
-RUN pip install -U pip
-RUN pip install cmake
+
+ADD https://github.com/Kitware/CMake/releases/download/v3.26.5/cmake-3.26.5-linux-x86_64.sh /cmake.sh
+RUN sh /cmake.sh --prefix=/usr/local/ --exclude-subdir --skip-license && rm /cmake.sh
 
 ENV PATH "${PATH:+:${PATH}}"
 ENV LD_LIBRARY_PATH "/usr/lib/python2.7${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"

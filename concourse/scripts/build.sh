@@ -1,5 +1,4 @@
 #!/bin/bash -l
-# TODO when PR merge replace it with build_plcontainer.sh
 set -exo pipefail
 
 function build_all() {

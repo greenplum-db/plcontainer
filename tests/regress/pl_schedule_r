@@ -12,3 +12,6 @@ test: uda_r
 
 # Drop the extension - need to be last
 test: drop
+
+# clean docker containers
+test: clean_docker

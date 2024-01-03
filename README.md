@@ -123,6 +123,17 @@ There are a couple of things you need to pay attention to:
 
 PL/Container supports various parameters for docker run, and also it supports some useful UDFs for monitoring or debugging. Please read the official document for details.
 
+## Debugging Locally
+
+Sometimes, it is much eaiser to use a debugger like GDB to debug the clients. As they are typically run in containers, debugging info might not be loaded, such as the debug symbols of `libpython3.x.so`.
+
+To make debugging easier, we can run the clients on the same host as the database backend process with the following steps:
+
+1. Compile the client on host with bash command `cmake --build build/pyclient/ && make -C build/ install`.
+1. Start a new database session and run SQL command `SET plcontainer.backend_type='process';`.
+1. Start the client with `LOCAL_PROCESS_MODE=1 $GPHOME/bin/plcontainer_clients/py3client`.
+1. Run the PL/Container UDF and the UDF will run in a process on host.
+
 ### Contributing
 PL/Container is maintained by a core team of developers with commit rights to the [plcontainer repository](https://github.com/greenplum-db/plcontainer) on GitHub. At the same time, we are very eager to receive contributions and any discussions about it from anybody in the wider community.
 

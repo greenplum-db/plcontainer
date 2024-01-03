@@ -4,6 +4,7 @@ FROM python:3.9-alpine3.13
 # That happens with the docker on CentOS7.
 # See more details on https://gitlab.alpinelinux.org/alpine/aports/-/issues/12321
 
+EXPOSE 8080
 RUN apk add --no-cache gcc g++ cmake make musl-dev
 
 RUN mkdir -p /clientdir

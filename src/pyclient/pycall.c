@@ -131,6 +131,10 @@ int python_init() {
 	plc_Py_SetProgramName("PythonContainer");
 	Py_Initialize();
 
+#if PY_MAJOR_VERSION >= 3
+	PyImport_ImportModule("plpy");
+#endif
+
 	/*
 	 * initialize plpy module
 	 */
@@ -150,7 +154,7 @@ int python_init() {
 	PLy_add_exceptions(plpymod);
 #endif
 
-	/* Initialize the main module */
+	/* Initialize the __main__ module */
 	PyMainModule = PyImport_ImportModule("__main__");
 
 	/* Get module dictionary of objects */
@@ -162,7 +166,7 @@ int python_init() {
 
 	/* Add plpy module to it */
 	if (PyDict_SetItemString(dict, "plpy", plpymod) < 0) {
-		raise_execution_error("Cannot set 'plpy' module to main module");
+		raise_execution_error("Cannot set 'plpy' module to '__main__' module");
 		return -1;
 	}
 
@@ -173,7 +177,7 @@ int python_init() {
 	}
 
 	if (PyDict_SetItemString(dict, "GD", gd) < 0) {
-		raise_execution_error("Cannot set GD dictionary to main module");
+		raise_execution_error("Cannot set GD dictionary to '__main__' module");
 		return -1;
 	}
 	Py_DECREF(gd);
@@ -244,7 +248,7 @@ void handle_call(plcMsgCallreq *req, plcConn *conn) {
 	}
 
 	if (PyDict_SetItemString(dict, "SD", pyfunc->pySD) < 0) {
-		raise_execution_error("Cannot set SD dictionary to main module");
+		raise_execution_error("Cannot set SD dictionary to __main__ module");
 		return;
 	}
 
