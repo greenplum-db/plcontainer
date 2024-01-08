@@ -10,6 +10,28 @@ CREATE TABLE tbl(i int);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 INSERT INTO tbl SELECT * FROM generate_series(1, 10);
+SET optimizer TO OFF;
+-- Currently only containers in status "running" or "exited" can be cleaned.
+CREATE OR REPLACE FUNCTION count_containers_to_be_cleaned(gp_segment_id int) 
+RETURNS SETOF bigint AS $$
+    WITH all_seg_containers AS (
+        SELECT plcontainer_containers_info() AS container_info
+        FROM gp_dist_random('gp_id')
+        UNION ALL 
+        SELECT plcontainer_containers_info() AS container_info
+    ), containers_info_expanded AS (
+        SELECT (container_info).* 
+        FROM all_seg_containers
+    )
+    SELECT count(*) 
+    FROM containers_info_expanded 
+    WHERE
+        "SEGMENT_ID"::int = gp_segment_id AND
+        (
+            "UP_TIME" LIKE 'Up %' OR 
+            "UP_TIME" LIKE 'Exited %'
+        );
+$$ LANGUAGE sql;
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 2);
  gp_inject_fault 
@@ -56,7 +78,8 @@ SELECT gp_inject_fault('plcontainer_before_container_started', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3066)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2287299)
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -64,8 +87,12 @@ SELECT pg_sleep(30);
 (1 row)
 
 -- end_ignore
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
-1
+SELECT count_containers_to_be_cleaned(0);
+ count_containers_to_be_cleaned 
+--------------------------------
+                              0
+(1 row)
+
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 SELECT sum(pyint(i)) from tbl;
@@ -84,7 +111,8 @@ SELECT gp_inject_fault('plcontainer_before_container_connected', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3254)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2287766)
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -92,8 +120,12 @@ SELECT pg_sleep(30);
 (1 row)
 
 -- end_ignore
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
-1
+SELECT count_containers_to_be_cleaned(0);
+ count_containers_to_be_cleaned 
+--------------------------------
+                              0
+(1 row)
+
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 SELECT sum(pyint(i)) from tbl;
@@ -110,7 +142,8 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3434)
+ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2288202)
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -118,8 +151,12 @@ SELECT pg_sleep(30);
 (1 row)
 
 -- end_ignore
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
-1
+SELECT count_containers_to_be_cleaned(0);
+ count_containers_to_be_cleaned 
+--------------------------------
+                              0
+(1 row)
+
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 SELECT sum(pyint(i)) from tbl;
@@ -136,7 +173,8 @@ SELECT gp_inject_fault('plcontainer_after_recv_request', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3612)
+ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2288506)
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -144,8 +182,12 @@ SELECT pg_sleep(30);
 (1 row)
 
 -- end_ignore
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
-1
+SELECT count_containers_to_be_cleaned(0);
+ count_containers_to_be_cleaned 
+--------------------------------
+                              0
+(1 row)
+
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 SELECT sum(pyint(i)) from tbl;
@@ -162,7 +204,8 @@ SELECT gp_inject_fault('plcontainer_before_udf_finish', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:25432 pid=3797)
+ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2288787)
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -170,8 +213,12 @@ SELECT pg_sleep(30);
 (1 row)
 
 -- end_ignore
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
-1
+SELECT count_containers_to_be_cleaned(0);
+ count_containers_to_be_cleaned 
+--------------------------------
+                              0
+(1 row)
+
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 -- reset the injection points
@@ -236,6 +283,7 @@ SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
 
 SELECT pyint(0);
 ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'error'
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -243,8 +291,12 @@ SELECT pg_sleep(30);
 (1 row)
 
 -- end_ignore
-\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
-1
+SELECT count_containers_to_be_cleaned(-1);
+ count_containers_to_be_cleaned 
+--------------------------------
+                              0
+(1 row)
+
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 SELECT pyint(1);
@@ -262,6 +314,7 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'error', 1);
 
 SELECT pyint(2);
 ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'error'
+CONTEXT:  PLContainer function "pyint"
 SELECT pg_sleep(30);
  pg_sleep 
 ----------
@@ -269,8 +322,12 @@ SELECT pg_sleep(30);
 (1 row)
 
 -- end_ignore
-\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
-1
+SELECT count_containers_to_be_cleaned(-1);
+ count_containers_to_be_cleaned 
+--------------------------------
+                              0
+(1 row)
+
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 0
 SELECT pyint(3);
@@ -281,8 +338,16 @@ SELECT pyint(3);
 
 -- Detect for the process name change (from "plcontainer cleaner" to other).
 -- In such case, above cases will still succeed as unexpected.
-\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
-2
+-- start_ignore
+\! docker container ls --all --format json 
+{"Command":"\"/clientdir/py3clien…\"","CreatedAt":"2024-01-08 03:46:59 -0500 EST","ID":"2e2f61b0a75b","Image":"python39.rocky8","Labels":"databaseid=6340,dbid=-1,owner=gpadmin,segindex=-1","LocalVolumes":"0","Mounts":"/home/gpadmin/…,/home/gpadmin/…,/tmp/plcontain…","Names":"naughty_heyrovsky","Networks":"","Ports":"","RunningFor":"Less than a second ago","Size":"0B","State":"running","Status":"Up Less than a second"}
+-- end_ignore
+SELECT count_containers_to_be_cleaned(-1);
+ count_containers_to_be_cleaned 
+--------------------------------
+                              1
+(1 row)
+
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 1
 -- reset the injection points
