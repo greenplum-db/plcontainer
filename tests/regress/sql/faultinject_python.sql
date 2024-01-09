@@ -12,6 +12,30 @@ CREATE TABLE tbl(i int);
 
 INSERT INTO tbl SELECT * FROM generate_series(1, 10);
 
+SET optimizer TO OFF;
+
+-- Currently only containers in status "running" or "exited" can be cleaned.
+CREATE OR REPLACE FUNCTION count_containers_to_be_cleaned(gp_segment_id int) 
+RETURNS SETOF bigint AS $$
+    WITH all_seg_containers AS (
+        SELECT plcontainer_containers_info() AS container_info
+        FROM gp_dist_random('gp_id')
+        UNION ALL 
+        SELECT plcontainer_containers_info() AS container_info
+    ), containers_info_expanded AS (
+        SELECT (container_info).* 
+        FROM all_seg_containers
+    )
+    SELECT count(*) 
+    FROM containers_info_expanded 
+    WHERE
+        "SEGMENT_ID"::int = gp_segment_id AND
+        (
+            "UP_TIME" LIKE 'Up %' OR 
+            "UP_TIME" LIKE 'Exited %'
+        );
+$$ LANGUAGE sql;
+
 -- reset the injection points
 SELECT gp_inject_fault('plcontainer_before_container_started', 'reset', 2);
 SELECT gp_inject_fault('plcontainer_before_container_connected', 'reset', 2);
@@ -27,7 +51,7 @@ SELECT pyint(i) from tbl;
 SELECT pg_sleep(30);
 -- end_ignore
 
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
+SELECT count_containers_to_be_cleaned(0);
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT sum(pyint(i)) from tbl;
 
@@ -40,7 +64,7 @@ SELECT pyint(i) from tbl;
 SELECT pg_sleep(30);
 -- end_ignore
 
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
+SELECT count_containers_to_be_cleaned(0);
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT sum(pyint(i)) from tbl;
 
@@ -50,7 +74,7 @@ SELECT pyint(i) from tbl;
 SELECT pg_sleep(30);
 -- end_ignore
 
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
+SELECT count_containers_to_be_cleaned(0);
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT sum(pyint(i)) from tbl;
 
@@ -60,7 +84,7 @@ SELECT pyint(i) from tbl;
 SELECT pg_sleep(30);
 -- end_ignore
 
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
+SELECT count_containers_to_be_cleaned(0);
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT sum(pyint(i)) from tbl;
 
@@ -70,7 +94,7 @@ SELECT pyint(i) from tbl;
 SELECT pg_sleep(30);
 -- end_ignore
 
-\! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` docker ps -a '--filter' 'label=dbid=2' </dev/null | wc -l
+SELECT count_containers_to_be_cleaned(0);
 \! ssh `psql -d ${PL_TESTDB} -c 'select address from gp_segment_configuration where dbid=2' -t -A` ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 
 -- reset the injection points
@@ -95,7 +119,7 @@ SELECT pyint(0);
 SELECT pg_sleep(30);
 -- end_ignore
 
-\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
+SELECT count_containers_to_be_cleaned(-1);
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT pyint(1);
 
@@ -105,12 +129,15 @@ SELECT pyint(2);
 SELECT pg_sleep(30);
 -- end_ignore
 
-\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
+SELECT count_containers_to_be_cleaned(-1);
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 SELECT pyint(3);
 -- Detect for the process name change (from "plcontainer cleaner" to other).
 -- In such case, above cases will still succeed as unexpected.
-\! docker ps -a '--filter' 'label=dbid=-1' </dev/null | wc -l
+-- start_ignore
+\! docker container ls --all --format json 
+-- end_ignore
+SELECT count_containers_to_be_cleaned(-1);
 \! ps -ef </dev/null | grep -v grep | grep "plcontainer cleaner" | wc -l
 
 -- reset the injection points
