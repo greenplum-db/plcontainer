@@ -330,6 +330,7 @@ int plc_docker_create_container(
 			"              \"USE_CONTAINER_NETWORK=%s\"],\n"
 			"    \"NetworkDisabled\": %s,\n"
 			"    \"Image\": \"%s\",\n"
+			"    %s \n"
 			"    \"HostConfig\": {\n"
 			"        \"Binds\": [%s],\n"
 			"        \"CgroupParent\": \"%s\",\n"
@@ -451,6 +452,7 @@ int plc_docker_create_container(
 	         connection->tag == PLC_RUNTIME_CONNECTION_TCP ? "true" : "false", // .Env.useContainerNetwork
 	         conf->enableNetwork ? "false" : "true", // .NetworkDisabled
 	         conf->image,
+	         connection->tag == PLC_RUNTIME_CONNECTION_TCP ? "\"ExposedPorts\": {\"8080/tcp\": {}},": "", // client will listen on 8080/tcp inside container
 	         volumeShare,
 	         cgroupParent,
 	         ((long long) conf->memoryMb) * 1024 * 1024,

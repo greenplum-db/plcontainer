@@ -45,6 +45,24 @@
     -->
 
     <!--
+        backend configuration examples:
+
+        <backend name="remote_docker" type="remote_docker">
+            <address>127.0.0.1</address>
+            <port>2375</port>
+        </backend>
+
+        <runtime>
+            <id>plc_python_remote</id>
+            <image>pivotaldata/plcontainer_python_without_clients:0.1</image>
+            <command>/clientdir/pyclient.sh</command>
+            <shared_directory access="ro" container="/clientdir" host="/usr/local/greenplum-db/bin/plcontainer_clients"/>
+            <setting enable_network="yes"/>
+            <setting role="gpadmin"/>
+        </runtime>
+    -->
+
+    <!--
         runtime configuration examples:
 
     <runtime>
