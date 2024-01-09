@@ -280,6 +280,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		/* If the reason is Cancel or Termination or Backend error. */
 		if (InterruptPending || QueryCancelPending || QueryFinishPending ||
 		    DeleteBackendsWhenError) {
@@ -291,6 +292,7 @@ Datum plcontainer_call_handler(PG_FUNCTION_ARGS) {
 		}
 		error_context_stack = plerrcontext.previous;
 		PLy_curr_procedure = save_curr_proc;
+		RESUME_INTERRUPTS();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
