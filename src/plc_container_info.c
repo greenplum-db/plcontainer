@@ -338,9 +338,6 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 
 			SRF_RETURN_NEXT(funcctx, result);
 		} else {
-			if (container_list != NULL) {
-				//json_object_put(container_list);
-			}
 			SRF_RETURN_DONE(funcctx);
 		}
 	}
