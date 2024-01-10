@@ -243,7 +243,11 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 
 			res = plc_docker_get_container_state(&containerState, idStr, backend);
 			if (res < 0) {
-				plc_elog(ERROR, "Fail to get docker container state: %s", backend_error_message);
+				if (res != PLC_DOCKER_API_RES_NOT_FOUND) {
+					plc_elog(ERROR, "Fail to get docker container state: %s", backend_error_message);
+				}
+
+				statusStr = psprintf("Removed");
 			}
 
 			containerStateObj = json_tokener_parse(containerState);
@@ -535,7 +539,7 @@ containers_summary(pg_attribute_unused() PG_FUNCTION_ARGS) {
 					plc_elog(ERROR, "Fail to get docker container state: %s", backend_error_message);
 				}
 
-				statusStr = psprintf("Has been removed");
+				statusStr = psprintf("Removed");
 			} else {
 				containerStateObj = json_tokener_parse(containerState);
 				if (!json_object_object_get_ex(containerStateObj, "memory_stats", &memoryObj)) {
