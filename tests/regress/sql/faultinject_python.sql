@@ -43,12 +43,15 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 2);
 SELECT gp_inject_fault('plcontainer_after_recv_request', 'reset', 2);
 SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
 
+-- Number of seconds for signal being delievered to the container.
+\set container_signal_delay 0.1
+
 -- start_ignore
 -- QE crash after start a container
 show optimizer;
 SELECT gp_inject_fault('plcontainer_before_container_started', 'fatal', 2);
 SELECT pyint(i) from tbl;
-SELECT pg_sleep(0.1);
+SELECT pg_sleep(:container_signal_delay);
 -- end_ignore
 
 SELECT count_containers_to_be_cleaned(0);
@@ -61,7 +64,7 @@ SELECT sum(pyint(i)) from tbl;
 -- QE crash when connnecting to an existing container
 SELECT gp_inject_fault('plcontainer_before_container_connected', 'fatal', 2);
 SELECT pyint(i) from tbl;
-SELECT pg_sleep(0.1);
+SELECT pg_sleep(:container_signal_delay);
 -- end_ignore
 
 SELECT count_containers_to_be_cleaned(0);
@@ -71,7 +74,7 @@ SELECT sum(pyint(i)) from tbl;
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_send_request', 'fatal', 2);
 SELECT pyint(i) from tbl;
-SELECT pg_sleep(0.1);
+SELECT pg_sleep(:container_signal_delay);
 -- end_ignore
 
 SELECT count_containers_to_be_cleaned(0);
@@ -81,7 +84,7 @@ SELECT sum(pyint(i)) from tbl;
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_recv_request', 'fatal', 2);
 SELECT pyint(i) from tbl;
-SELECT pg_sleep(0.1);
+SELECT pg_sleep(:container_signal_delay);
 -- end_ignore
 
 SELECT count_containers_to_be_cleaned(0);
@@ -91,7 +94,7 @@ SELECT sum(pyint(i)) from tbl;
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_before_udf_finish', 'fatal', 2);
 SELECT pyint(i) from tbl;
-SELECT pg_sleep(0.1);
+SELECT pg_sleep(:container_signal_delay);
 -- end_ignore
 
 SELECT count_containers_to_be_cleaned(0);
@@ -116,7 +119,7 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'reset', 1);
 show optimizer;
 SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
 SELECT pyint(0);
-SELECT pg_sleep(0.1);
+SELECT pg_sleep(:container_signal_delay);
 -- end_ignore
 
 SELECT count_containers_to_be_cleaned(-1);
@@ -126,7 +129,7 @@ SELECT pyint(1);
 -- start_ignore
 SELECT gp_inject_fault('plcontainer_after_send_request', 'error', 1);
 SELECT pyint(2);
-SELECT pg_sleep(0.1);
+SELECT pg_sleep(:container_signal_delay);
 -- end_ignore
 
 SELECT count_containers_to_be_cleaned(-1);

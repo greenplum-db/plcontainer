@@ -63,6 +63,8 @@ SELECT gp_inject_fault('plcontainer_before_udf_finish', 'reset', 2);
  Success:
 (1 row)
 
+-- Number of seconds for signal being delievered to the container.
+\set container_signal_delay 0.1
 -- start_ignore
 -- QE crash after start a container
 show optimizer;
@@ -78,9 +80,9 @@ SELECT gp_inject_fault('plcontainer_before_container_started', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2287299)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2416521)
 CONTEXT:  PLContainer function "pyint"
-SELECT pg_sleep(30);
+SELECT pg_sleep(:container_signal_delay);
  pg_sleep 
 ----------
  
@@ -111,9 +113,9 @@ SELECT gp_inject_fault('plcontainer_before_container_connected', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2287766)
+ERROR:  fault triggered, fault name:'plcontainer_before_container_connected' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2416797)
 CONTEXT:  PLContainer function "pyint"
-SELECT pg_sleep(30);
+SELECT pg_sleep(:container_signal_delay);
  pg_sleep 
 ----------
  
@@ -142,9 +144,9 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2288202)
+ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2417089)
 CONTEXT:  PLContainer function "pyint"
-SELECT pg_sleep(30);
+SELECT pg_sleep(:container_signal_delay);
  pg_sleep 
 ----------
  
@@ -173,9 +175,9 @@ SELECT gp_inject_fault('plcontainer_after_recv_request', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2288506)
+ERROR:  fault triggered, fault name:'plcontainer_after_recv_request' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2417372)
 CONTEXT:  PLContainer function "pyint"
-SELECT pg_sleep(30);
+SELECT pg_sleep(:container_signal_delay);
  pg_sleep 
 ----------
  
@@ -204,9 +206,9 @@ SELECT gp_inject_fault('plcontainer_before_udf_finish', 'fatal', 2);
 (1 row)
 
 SELECT pyint(i) from tbl;
-ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2288787)
+ERROR:  fault triggered, fault name:'plcontainer_before_udf_finish' fault type:'fatal'  (seg0 slice1 127.0.0.1:7002 pid=2417668)
 CONTEXT:  PLContainer function "pyint"
-SELECT pg_sleep(30);
+SELECT pg_sleep(:container_signal_delay);
  pg_sleep 
 ----------
  
@@ -284,7 +286,7 @@ SELECT gp_inject_fault('plcontainer_before_container_started', 'error', 1);
 SELECT pyint(0);
 ERROR:  fault triggered, fault name:'plcontainer_before_container_started' fault type:'error'
 CONTEXT:  PLContainer function "pyint"
-SELECT pg_sleep(30);
+SELECT pg_sleep(:container_signal_delay);
  pg_sleep 
 ----------
  
@@ -315,7 +317,7 @@ SELECT gp_inject_fault('plcontainer_after_send_request', 'error', 1);
 SELECT pyint(2);
 ERROR:  fault triggered, fault name:'plcontainer_after_send_request' fault type:'error'
 CONTEXT:  PLContainer function "pyint"
-SELECT pg_sleep(30);
+SELECT pg_sleep(:container_signal_delay);
  pg_sleep 
 ----------
  
@@ -340,7 +342,7 @@ SELECT pyint(3);
 -- In such case, above cases will still succeed as unexpected.
 -- start_ignore
 \! docker container ls --all --format json 
-{"Command":"\"/clientdir/py3clien…\"","CreatedAt":"2024-01-08 03:46:59 -0500 EST","ID":"2e2f61b0a75b","Image":"python39.rocky8","Labels":"databaseid=6340,dbid=-1,owner=gpadmin,segindex=-1","LocalVolumes":"0","Mounts":"/home/gpadmin/…,/home/gpadmin/…,/tmp/plcontain…","Names":"naughty_heyrovsky","Networks":"","Ports":"","RunningFor":"Less than a second ago","Size":"0B","State":"running","Status":"Up Less than a second"}
+{"Command":"\"/clientdir/py3clien…\"","CreatedAt":"2024-01-09 20:17:43 -0500 EST","ID":"d438553c6c90","Image":"python39.rocky8","Labels":"segindex=-1,databaseid=8207,dbid=-1,owner=gpadmin","LocalVolumes":"0","Mounts":"/home/gpadmin/…,/home/gpadmin/…,/tmp/plcontain…","Names":"tender_chaplygin","Networks":"","Ports":"","RunningFor":"Less than a second ago","Size":"0B","State":"running","Status":"Up Less than a second"}
 -- end_ignore
 SELECT count_containers_to_be_cleaned(-1);
  count_containers_to_be_cleaned 
