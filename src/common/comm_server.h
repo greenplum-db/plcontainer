@@ -20,10 +20,10 @@
 
 int start_listener(void);
 
-void connection_wait(int sock);
+int connection_wait(fd_set* fdset, int sock, plcConn* all_connections[]);
 
 plcConn *connection_init(int sock);
 
-void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *), plcConn *conn);
+void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *));
 
 #endif /* PLC_COMM_SERVER_H */

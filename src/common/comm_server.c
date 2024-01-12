@@ -32,6 +32,8 @@ int dbQePid;
 char *clientLanguage;
 int client_log_level;
 
+#define MAX_CONNECTIONS 10
+
 /*
  * Function binds the socket and starts listening on it: tcp
  */
@@ -228,28 +230,44 @@ int start_listener() {
 	return sock;
 }
 
+
 /*
  * Function waits for the socket to accept connection for finite amount of time
  * and errors out when the timeout is reached and no client connected
  */
-void connection_wait(int sock) {
+int connection_wait(fd_set* fdset, int sock, plcConn* all_connections[]) {
 	struct timeval timeout;
 	int rv;
-	fd_set fdset;
 
-	FD_ZERO(&fdset);    /* clear the set */
-	FD_SET(sock, &fdset); /* add our file descriptor to the set */
+	FD_ZERO(fdset);    /* clear the set */
+	FD_SET(sock, fdset); /* add our file descriptor to the set */
 	timeout.tv_sec = TIMEOUT_SEC;
 	timeout.tv_usec = 0;
 
-	rv = select(sock + 1, &fdset, NULL, NULL, &timeout);
+	int max_fd = sock;
+	for (int i = 0; i < MAX_CONNECTIONS; i++) {
+		if (all_connections[i] == NULL) continue;
+		FD_SET(all_connections[i]->sock, fdset);
+		if (all_connections[i]->sock > max_fd) {
+			max_fd = all_connections[i]->sock;
+		}
+	}
+
+	rv = select(max_fd + 1, fdset, NULL, NULL, &timeout);
 	if (rv == -1) {
 		plc_elog(ERROR, "Failed to select() socket: %s", strerror(errno));
 	}
 	if (rv == 0) {
-		plc_elog(ERROR, "Socket timeout - no client connected within %d "
+		plc_elog(LOG, "Socket timeout - no incoming event within %d "
 			"seconds", TIMEOUT_SEC);
 	}
+	return rv;
+}
+
+static void connection_close(plcConn *conn) {
+	plc_elog(LOG, "Closing connection");
+	close(conn->sock);
+	pfree(conn);
 }
 
 /*
@@ -263,8 +281,10 @@ plcConn *connection_init(int sock) {
 
 	raddr_len = sizeof(raddr);
 	connection = accept(sock, (struct sockaddr *) &raddr, &raddr_len);
+	plc_elog(LOG, "Accepting a connection: %d (%s)", connection, strerror(errno));
 	if (connection == -1) {
-		plc_elog(ERROR, "failed to accept connection: %s", strerror(errno));
+		plc_elog(LOG, "Accepting a connection: %d (%s)", connection, strerror(errno));
+		goto error;
 	}
 
 	/* Set socket receive timeout to 500ms */
@@ -272,39 +292,81 @@ plcConn *connection_init(int sock) {
 	tv.tv_usec = 500000;
 	setsockopt(connection, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval));
 
-	return plcConnInit(connection);
+	plcConn *conn = plcConnInit(connection);
+	plcMessage *msg = NULL;
+	int res = 0;
+
+	res = plcontainer_channel_receive(conn, &msg, MT_PING_BIT);
+	if (res < 0) {
+		plc_elog(LOG, "Error receiving data from the backend, %d", res);
+		goto error;
+	}
+
+	res = plcontainer_channel_send(conn, msg);
+	if (res < 0) {
+		plc_elog(LOG, "Cannot send 'ping' message response");
+		goto error;
+	}
+	pfree(msg);
+	return conn;
+
+error:
+	pfree(msg);
+	connection_close(conn);
+	return NULL;
+}
+
+static int connection_add(plcConn *all_connections[], plcConn *new_conn) {
+	for (int i = 0; i < MAX_CONNECTIONS; i++) {
+		if (all_connections[i] == NULL) {
+			all_connections[i] = new_conn;
+			return 0;
+		}
+	}
+	plc_elog(LOG, "Too many connections");
+	return -1;
 }
 
 /*
  * The loop of receiving commands from the Greenplum process and processing them
  */
-void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *), plcConn *conn) {
-	plcMessage *msg;
-	int res = 0;
-
-	res = plcontainer_channel_receive(conn, &msg, MT_PING_BIT);
-	if (res < 0) {
-		plc_elog(ERROR, "Error receiving data from the backend, %d", res);
-		return;
+void receive_loop(void (*handle_call)(plcMsgCallreq *, plcConn *)) {
+	plcConn *all_connections[MAX_CONNECTIONS] = {NULL};
+	/* Different from PostMaster, we only listen to one socket. */
+	int listen_sock = start_listener();
+	if (listen_sock + 1 > FD_SETSIZE) {
+		plc_elog(ERROR, "Fd %d exceeded FD_SETSIZE", listen_sock);
 	}
-
-	res = plcontainer_channel_send(conn, msg);
-	if (res < 0) {
-		plc_elog(ERROR, "Cannot send 'ping' message response");
-		return;
-	}
-	pfree(msg);
+	fd_set fdset;
+	struct timeval timeout;
 
 	while (1) {
-		res = plcontainer_channel_receive(conn, &msg, MT_CALLREQ_BIT);
-
-		if (res < 0) {
-			plc_elog(ERROR, "Error receiving data from the peer: %d (%s)", res, strerror(errno));
-			break;
+		int num_fds = connection_wait(&fdset, listen_sock, all_connections);
+		if (num_fds <= 0) continue;
+		if (FD_ISSET(listen_sock, &fdset)) {
+			plcConn *conn = connection_init(listen_sock);
+			if (conn) {
+				int ret = connection_add(all_connections, conn);
+				if (ret < 0)
+					connection_close(conn);
+			}
 		}
-		plc_elog(DEBUG1, "Client receive a request: called function oid %u", ((plcMsgCallreq *) msg)->objectid);
-		handle_call((plcMsgCallreq *) msg, conn);
-		free_callreq((plcMsgCallreq *) msg, false, false);
+		for (int i = 0; i < MAX_CONNECTIONS; i++) {
+			plcConn *conn = all_connections[i];
+			if (conn == NULL) continue;
+			if (FD_ISSET(conn->sock, &fdset)) {
+				plcMessage *msg = NULL;
+				int res = plcontainer_channel_receive(conn, &msg, MT_CALLREQ_BIT);
+
+				if (res < 0) {
+					plc_elog(ERROR, "Error receiving data from the peer: %d (%s)", res, strerror(errno));
+					break;
+				}
+				plc_elog(DEBUG1, "Client receive a request: called function oid %u", ((plcMsgCallreq *) msg)->objectid);
+				handle_call((plcMsgCallreq *) msg, conn);
+				free_callreq((plcMsgCallreq *) msg, false, false);
+			}
+		}
 	}
 }
 
