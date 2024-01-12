@@ -308,10 +308,19 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 					strcpy(cid->udf_name, "No Infomation");
 				}
 			}
-
+/*
+ * `values` contains datums to form a tuple of type either
+ * - `container_info_type`, or
+ * - `container_summary_type`.
+ * per the `expectedDesc` of the UDF.
+ * 
+ * For this to work, it requires that
+ * - attributes of `container_summary_type` must be a prefix of `container_info_type`, and
+ * - the length of `values` must be the max of number of attributes of the two types.
+ */
 #define		CONTAINER_MAX_NUM_ATTS 7
 			Assert(attinmeta->tupdesc->natts <= CONTAINER_MAX_NUM_ATTS);
-			values = (char **) palloc0(CONTAINER_MAX_NUM_ATTS * sizeof(char *));
+			values = (char **) palloc(CONTAINER_MAX_NUM_ATTS * sizeof(char *));
 
 			values[0] = (char *) palloc(8 * sizeof(char));
 			snprintf(values[0], 8, "%s", dbidStr);
@@ -329,6 +338,10 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 				snprintf(values[5], 32, "%lf%%", containerCPUUsage);
 				values[6] = (char *) palloc(225 * sizeof(char));
 				snprintf(values[6], 224, "%s", cid->udf_name);
+			} else { /* The three columns should be NULL when container is removed. */
+				values[4] = NULL;
+				values[5] = NULL;
+				values[6] = NULL;
 			}
 			/* build a tuple */
 			tuple = BuildTupleFromCStrings(attinmeta, values);
