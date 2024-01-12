@@ -42,16 +42,13 @@ int main(int argc UNUSED, char **argv UNUSED) {
 
 	client_log_level = WARNING;
 
-	sock = start_listener();
 	plc_elog(LOG, "Client has started execution at %s", asctime(timeinfo));
 
 	// Initialize Python
 	status = python_init();
 
-	connection_wait(sock);
-	conn = connection_init(sock);
 	if (status == 0) {
-		receive_loop(handle_call, conn);
+		receive_loop(handle_call);
 	} else {
 		plc_raise_delayed_error();
 	}
