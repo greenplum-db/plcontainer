@@ -308,16 +308,16 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 					strcpy(cid->udf_name, "No Infomation");
 				}
 			}
-/*
- * `values` contains datums to form a tuple of type either
- * - `container_info_type`, or
- * - `container_summary_type`.
- * per the `expectedDesc` of the UDF.
- * 
- * For this to work, it requires that
- * - attributes of `container_summary_type` must be a prefix of `container_info_type`, and
- * - the length of `values` must be the max of number of attributes of the two types.
- */
+			/*
+			* `values` contains datums to form a tuple of type either
+			* - `container_info_type`, or
+			* - `container_summary_type`.
+			* per the `expectedDesc` of the UDF.
+			* 
+			* For this to work, it requires that
+			* - attributes of `container_summary_type` must be a prefix of `container_info_type`, and
+			* - the length of `values` must be the max of number of attributes of the two types.
+			*/
 #define		CONTAINER_MAX_NUM_ATTS 7
 			Assert(attinmeta->tupdesc->natts <= CONTAINER_MAX_NUM_ATTS);
 			values = (char **) palloc(CONTAINER_MAX_NUM_ATTS * sizeof(char *));
@@ -348,6 +348,18 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 
 			/* make the tuple into a datum */
 			result = HeapTupleGetDatum(tuple);
+
+			/* TODO: free JSON objects */
+			pfree(values[0]);
+			pfree(values[1]);
+			pfree(values[2]);
+			pfree(values[3]);
+			if (res >= 0) {
+				pfree(values[4]);
+				pfree(values[5]);
+				pfree(values[6]);
+			}
+			pfree(values);
 
 			SRF_RETURN_NEXT(funcctx, result);
 		} else {
