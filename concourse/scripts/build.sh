@@ -9,7 +9,8 @@ function build_all() {
     cmake /home/gpadmin/plcontainer_src \
         -DCONTAINER_NAME_SUFFIX_PYTHON="${CONTAINER_NAME_SUFFIX_PYTHON}" \
         -DCONTAINER_NAME_SUFFIX_R="${CONTAINER_NAME_SUFFIX_R}" \
-        -DGPPKG_V2_BIN=/home/gpadmin/bin_gppkg_v2/gppkg
+        -DGPPKG_V2_BIN=/home/gpadmin/bin_gppkg_v2/gppkg \
+        -DPG_SRC_DIR=/home/gpadmin/gpdb_src
     cmake --build .
     # for make install and build python3 python2 and r clients
     cmake --build . --target clients
