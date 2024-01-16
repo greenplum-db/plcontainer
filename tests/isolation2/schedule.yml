@@ -1,0 +1,4 @@
+# test: resgroup/resgroup_cpu_rate_limit
+# test: resgroup/resgroup_memory_limit
+
+test: container_info

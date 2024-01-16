@@ -11,6 +11,7 @@
 #include "cdb/cdbvars.h"
 
 #include "utils/builtins.h"
+#include "utils/faultinjector.h"
 #include "utils/guc.h"
 #include "libpq/libpq-be.h"
 #include "libpq-fe.h"
@@ -126,6 +127,8 @@ list_running_containers(pg_attribute_unused() PG_FUNCTION_ARGS) {
 		funcctx->attinmeta = attinmeta;
 
 		MemoryContextSwitchTo(oldcontext);
+
+		SIMPLE_FAULT_INJECTOR("before_get_container_info");
 	} else {
 		isFirstCall = false;
 	}

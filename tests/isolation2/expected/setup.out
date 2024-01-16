@@ -1,0 +1,6 @@
+CREATE EXTENSION plcontainer;
+CREATE EXTENSION
+CREATE EXTENSION gp_inject_fault;
+CREATE EXTENSION
+
+! export PGHOST=localhost
