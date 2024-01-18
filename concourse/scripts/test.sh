@@ -38,6 +38,7 @@ function _main() {
     plcontainer runtime-show
 
     time cmake --build . --target installcheck
+    time cmake --build . --target installcheck-isolation2
     # Test gppkg uninstall
     _uninstall_gppkg
     _install_gppkg

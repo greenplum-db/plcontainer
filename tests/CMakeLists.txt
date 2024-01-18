@@ -58,6 +58,16 @@ else()
     add_dependencies(installcheck testpy2 testpy testr)
 endif()
 
+RegressTarget_Add(installcheck-isolation2
+    INIT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/init_file
+    SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/isolation2/sql
+    EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/isolation2/expected
+    RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/isolation2/results
+    SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/isolation2/schedule.yml
+    REGRESS_OPTS ${REGRESS_OPTS} --dbname=isolation2
+    REGRESS_TYPE isolation2
+    REGRESS_ENV PL_TESTDB=isolation2)
+
 add_custom_target(prepare_runtime
     COMMAND
     CONTAINER_NAME_SUFFIX_PYTHON=${CONTAINER_NAME_SUFFIX_PYTHON}
