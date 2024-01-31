@@ -58,6 +58,9 @@ test: test_containernetwork
 test: test_config_gpu
 test: test_config_remote_docker
 
+# for the apply() function
+test: apply
+
 # Drop the extension - need to be last
 test: drop
 

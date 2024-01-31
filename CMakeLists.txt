@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.18)
 
 project(plcontainer)
 
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Gpdb.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Distro.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
@@ -248,8 +250,8 @@ add_custom_target(pyclient
     PYTHONPATH=
     docker run
     --entrypoint=
-    -v ${CMAKE_CURRENT_BINARY_DIR}/pyclient:/build
-    -v ${CMAKE_CURRENT_SOURCE_DIR}:/src
+    -v ${CMAKE_CURRENT_BINARY_DIR}/pyclient:/build:z
+    -v ${CMAKE_CURRENT_SOURCE_DIR}:/src:z
     -w /build
     -u ${my_UID}
     -it ${PYCLIENT_IMAGE}
@@ -294,6 +296,24 @@ add_dependencies(images_artifact
     py2client_image_artifact
     rclient_image_artifact)
 
+if(GP_MAJOR_VERSION VERSION_LESS_EQUAL 6)
+    add_custom_target(
+        extension_scripts
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND
+            cat 
+            management/sql/plcontainer_gp--1.0.0.sql
+            management/sql/plcontainer--1.0.0--1.1.0.sql 
+            >${CMAKE_CURRENT_BINARY_DIR}/plcontainer--1.1.0.sql
+        DEPENDS
+            management/sql/plcontainer_gp--1.0.0.sql
+            management/sql/plcontainer--1.0.0--1.1.0.sql
+        )
+    add_dependencies(plcontainer extension_scripts)
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/plcontainer--1.1.0.sql
+        DESTINATION share/postgresql/extension)
+endif()
 
 # Install
 install(
@@ -302,6 +322,9 @@ install(
 install(
     FILES management/sql/plcontainer_gp--1.0.0.sql
     RENAME plcontainer--1.0.0.sql
+    DESTINATION share/postgresql/extension)
+install(
+    FILES management/sql/plcontainer--1.0.0--1.1.0.sql
     DESTINATION share/postgresql/extension)
 install(
     FILES plcontainer.control
