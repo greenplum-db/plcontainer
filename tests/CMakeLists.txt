@@ -17,6 +17,18 @@ RegressTarget_Add(testpy
     REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy
     REGRESS_ENV PL_TESTDB=testpy)
 
+RegressTarget_Add(repeatpy
+    RUN_TIMES -1
+    INIT_FILE
+    ${CMAKE_CURRENT_SOURCE_DIR}/init_file
+    SQL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/sql
+    EXPECTED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/expected
+    RESULTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/results
+    DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/regress/data
+    SCHEDULE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/regress/pl_schedule_py
+    REGRESS_OPTS ${REGRESS_OPTS} --dbname=testpy
+    REGRESS_ENV PL_TESTDB=testpy)
+
 RegressTarget_Add(testpy2
     INIT_FILE
     ${CMAKE_CURRENT_SOURCE_DIR}/init_file
