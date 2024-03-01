@@ -57,7 +57,7 @@ set(CONTAINER_NAME_SUFFIX_PYTHON2 "" CACHE STRING "The container python2 image e
 set(CONTAINER_NAME_SUFFIX_R "" CACHE STRING "The container r image env for plcontainer")
 
 if("${CONTAINER_NAME_SUFFIX_PYTHON}" STREQUAL "")
-    set(CONTAINER_NAME_SUFFIX_PYTHON "python39.alpine")
+    set(CONTAINER_NAME_SUFFIX_PYTHON "python311.alpine")
 endif()
 
 if("${CONTAINER_NAME_SUFFIX_PYTHON2}" STREQUAL "")

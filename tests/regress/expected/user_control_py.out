@@ -4,7 +4,7 @@ import math
 return math.log10(100)
 $$ LANGUAGE plcontainer;
 -- start_ignore
-\! plcontainer runtime-add -r plc_python_user -i python39.alpine -l python3  -s use_container_logging=yes -s roles=gpadmin;
+\! plcontainer runtime-add -r plc_python_user -i python311.alpine -l python3  -s use_container_logging=yes -s roles=gpadmin;
 20180529:23:14:55:003322 plcontainer:localhost:gpadmin-[ERROR]:-runtime configuration exists for plc_python_user. You might want the runtime-replace command?
 20180529:23:14:55:003322 plcontainer:localhost:gpadmin-[ERROR]:-Update XML file Error
 20180529:23:14:55:003322 plcontainer:localhost:gpadmin-[ERROR]:-runtime configuration exists
@@ -24,7 +24,7 @@ SELECT pylog100();
 (1 row)
 
 -- start_ignore
-\! plcontainer runtime-replace -r plc_python_user -i python39.alpine -l python3  -s use_container_logging=yes -s roles=plc1;
+\! plcontainer runtime-replace -r plc_python_user -i python311.alpine -l python3  -s use_container_logging=yes -s roles=plc1;
 20180529:23:14:56:003419 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20180529:23:14:57:003419 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 SELECT plcontainer_refresh_local_config(false);
@@ -42,7 +42,7 @@ SELECT pylog100();
 (1 row)
 
 -- start_ignore
-\! plcontainer runtime-replace -r plc_python_user -i python39.alpine -l python3  -s use_container_logging=yes -s roles=plc1,gpadmin;
+\! plcontainer runtime-replace -r plc_python_user -i python311.alpine -l python3  -s use_container_logging=yes -s roles=plc1,gpadmin;
 20180529:23:14:57:003571 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20180529:23:14:58:003571 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 SELECT plcontainer_refresh_local_config(false);
@@ -60,7 +60,7 @@ SELECT pylog100();
 (1 row)
 
 -- start_ignore
-\! plcontainer runtime-replace -r plc_python_user -i python39.alpine -l python3  -s use_container_logging=yes -s roles=plc1;
+\! plcontainer runtime-replace -r plc_python_user -i python311.alpine -l python3  -s use_container_logging=yes -s roles=plc1;
 20180529:23:14:58:003757 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20180529:23:14:59:003757 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 SELECT plcontainer_refresh_local_config(false);
@@ -93,7 +93,7 @@ SELECT pylog100();
 ERROR:  plcontainer: Current user does not have privilege to use runtime plc_python_user (plcontainer.c:238)
 SET ROLE gpadmin;
 -- start_ignore
-\! plcontainer runtime-replace -r plc_python_user -i python39.alpine -l python3  -s use_container_logging=yes -s roles=gpadmin;
+\! plcontainer runtime-replace -r plc_python_user -i python311.alpine -l python3  -s use_container_logging=yes -s roles=gpadmin;
 20180529:23:14:59:003978 plcontainer:localhost:gpadmin-[INFO]:-Distributing file plcontainer_configuration.xml to all locations...
 20180529:23:15:00:003978 plcontainer:localhost:gpadmin-[INFO]:-Configuration has changed. Run "select * from plcontainer_refresh_config" in open sessions. New sessions will get new configuration automatically.
 SELECT plcontainer_refresh_local_config(false);

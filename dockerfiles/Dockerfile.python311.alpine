@@ -1,0 +1,7 @@
+FROM python:3.11-alpine
+
+EXPOSE 8080
+RUN apk add --no-cache gcc g++ cmake make musl-dev
+
+RUN mkdir -p /clientdir
+WORKDIR /clientdir
