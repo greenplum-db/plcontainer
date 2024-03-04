@@ -30,7 +30,7 @@ SELECT pyconf();
 -- start_ignore
 \! docker ps -a
 CONTAINER ID   IMAGE                    COMMAND                  CREATED          STATUS          PORTS     NAMES
-5a12213758b0   python39.alpine:latest   "/clientdir/py3clien…"   6 seconds ago    Up 1 second               wizardly_easley
+5a12213758b0   python311.alpine:latest   "/clientdir/py3clien…"   6 seconds ago    Up 1 second               wizardly_easley
 7f02df529fd5   r.alpine:latest          "/clientdir/rclient.…"   12 seconds ago   Up 11 seconds             optimistic_diffie
 eaeb00025f7b   r.alpine:latest          "/clientdir/rclient.…"   12 seconds ago   Up 11 seconds             bold_lederberg
 fd4bfcb0b29f   r.alpine:latest          "/clientdir/rclient.…"   12 seconds ago   Up 11 seconds             naughty_booth

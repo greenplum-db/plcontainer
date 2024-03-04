@@ -340,7 +340,7 @@ SELECT pyint(3);
 -- In such case, above cases will still succeed as unexpected.
 -- start_ignore
 \! docker container ls --all --format json 
-{"Command":"\"/clientdir/py3clien…\"","CreatedAt":"2024-01-08 03:46:59 -0500 EST","ID":"2e2f61b0a75b","Image":"python39.rocky8","Labels":"databaseid=6340,dbid=-1,owner=gpadmin,segindex=-1","LocalVolumes":"0","Mounts":"/home/gpadmin/…,/home/gpadmin/…,/tmp/plcontain…","Names":"naughty_heyrovsky","Networks":"","Ports":"","RunningFor":"Less than a second ago","Size":"0B","State":"running","Status":"Up Less than a second"}
+{"Command":"\"/clientdir/py3clien…\"","CreatedAt":"2024-01-08 03:46:59 -0500 EST","ID":"2e2f61b0a75b","Image":"python311.rocky8","Labels":"databaseid=6340,dbid=-1,owner=gpadmin,segindex=-1","LocalVolumes":"0","Mounts":"/home/gpadmin/…,/home/gpadmin/…,/tmp/plcontain…","Names":"naughty_heyrovsky","Networks":"","Ports":"","RunningFor":"Less than a second ago","Size":"0B","State":"running","Status":"Up Less than a second"}
 -- end_ignore
 SELECT count_containers_to_be_cleaned(-1);
  count_containers_to_be_cleaned 
